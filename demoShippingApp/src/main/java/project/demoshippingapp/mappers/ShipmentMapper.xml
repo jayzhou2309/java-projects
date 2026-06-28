@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║  ShipmentMapper.xml                                           ║
+    ║                                                               ║
+    ║  All SQL for the shipment table lives here.                   ║
+    ║  The namespace MUST match the fully-qualified interface name. ║
+    ╚═══════════════════════════════════════════════════════════════╝
+-->
+<mapper namespace="project.demoshippingapp.mappers;">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         RESULT MAP
+         Tells MyBatis how to map DB column names → Java field names.
+         map-underscore-to-camel-case in application.yml already handles
+         simple conversions, but listing them explicitly here makes the
+         mapping easy to read and change.
+    ════════════════════════════════════════════════════════════════════ -->
+    <resultMap id="ShipmentResultMap" type="Shipment">
+        <id     column="id"              property="id"/>
+        <result column="tracking_number" property="trackingNumber"/>
+        <result column="sender_name"     property="senderName"/>
+        <result column="receiver_name"   property="receiverName"/>
+        <result column="origin_address"  property="originAddress"/>
+        <result column="dest_address"    property="destAddress"/>
+        <result column="status"          property="status"/>
+        <result column="created_at"      property="createdAt"/>
+        <result column="updated_at"      property="updatedAt"/>
+    </resultMap>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         REUSABLE SQL FRAGMENTS
+         <sql> blocks can be included anywhere with <include refid="..."/>.
+         This avoids copy-pasting the same column list in every SELECT.
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <!-- All columns in the order used by every SELECT -->
+    <sql id="allColumns">
+        id, tracking_number, sender_name, receiver_name,
+        origin_address, dest_address, status, created_at, updated_at
+    </sql>
+
+    <!-- Standard ORDER BY clause reused across list queries -->
+    <sql id="defaultOrder">
+        ORDER BY created_at DESC
+    </sql>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         CREATE — insert
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <!--
+        useGeneratedKeys="true"  → tells the JDBC driver to return the
+                                   AUTO_INCREMENT value MySQL generated.
+        keyProperty="id"         → MyBatis writes that value into shipment.id
+                                   so the caller gets the new PK back.
+    -->
+    <insert id="insert" parameterType="Shipment"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO shipment (
+        tracking_number,
+        sender_name,
+        receiver_name,
+        origin_address,
+        dest_address,
+        status
+        ) VALUES (
+        #{trackingNumber},
+        #{senderName},
+        #{receiverName},
+        #{originAddress},
+        #{destAddress},
+        #{status}
+        )
+    </insert>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         READ — single row lookups
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <!--
+        Returns Optional<Shipment>: MyBatis returns null for no match,
+        and mybatis-spring wraps it in Optional.ofNullable automatically.
+    -->
+    <select id="selectById" parameterType="long" resultMap="ShipmentResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM   shipment
+        WHERE  id = #{id}
+    </select>
+
+    <select id="selectByTrackingNumber" parameterType="string" resultMap="ShipmentResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM   shipment
+        WHERE  tracking_number = #{trackingNumber}
+    </select>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         READ — list queries (simple filters)
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <select id="selectAll" resultMap="ShipmentResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM   shipment
+        <include refid="defaultOrder"/>
+    </select>
+
+    <!--
+        Exact match on status — caller passes "IN_TRANSIT" etc.
+    -->
+    <select id="selectByStatus" parameterType="string" resultMap="ShipmentResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM   shipment
+        WHERE  status = #{status}
+        <include refid="defaultOrder"/>
+    </select>
+
+    <!--
+        LIKE search — wrapping with % is done in SQL so the caller
+        can pass a plain name like "Alice" without worrying about wildcards.
+    -->
+    <select id="selectBySenderName" parameterType="string" resultMap="ShipmentResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM   shipment
+        WHERE  sender_name LIKE CONCAT('%', #{senderName}, '%')
+        <include refid="defaultOrder"/>
+    </select>
+
+    <select id="selectByReceiverName" parameterType="string" resultMap="ShipmentResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM   shipment
+        WHERE  receiver_name LIKE CONCAT('%', #{receiverName}, '%')
+        <include refid="defaultOrder"/>
+    </select>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         READ — dynamic multi-filter query
+         <if test="..."> blocks are only added to the SQL when the
+         parameter is not null, so callers can pass any combination.
+
+         Example calls:
+           selectByFilters("Alice", null,  "IN_TRANSIT")  → sender + status
+           selectByFilters(null,    "Bob",  null)          → receiver only
+           selectByFilters(null,    null,   null)          → all rows
+    ════════════════════════════════════════════════════════════════════ -->
+    <select id="selectByFilters" resultMap="ShipmentResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM   shipment
+
+        <!--
+            <where> is smarter than writing "WHERE 1=1":
+              • It adds WHERE only when at least one <if> is true
+              • It strips leading AND/OR from the first condition automatically
+        -->
+        <where>
+            <if test="senderName != null and senderName != ''">
+                AND sender_name LIKE CONCAT('%', #{senderName}, '%')
+            </if>
+            <if test="receiverName != null and receiverName != ''">
+                AND receiver_name LIKE CONCAT('%', #{receiverName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+
+        <include refid="defaultOrder"/>
+    </select>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         READ — pagination
+         LIMIT #{size} OFFSET #{offset} is the standard MySQL syntax.
+
+         Usage in service layer:
+           int page = 1;  // 1-based page number from the request
+           int size = 10;
+           int offset = (page - 1) * size;
+           List<Shipment> rows  = mapper.selectPage(offset, size);
+           int            total = mapper.countAll();
+    ════════════════════════════════════════════════════════════════════ -->
+    <select id="selectPage" resultMap="ShipmentResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM   shipment
+        <include refid="defaultOrder"/>
+        LIMIT  #{size}
+        OFFSET #{offset}
+    </select>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         COUNT
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <!-- resultType="int" is enough — no ResultMap needed for a scalar -->
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*)
+        FROM   shipment
+    </select>
+
+    <select id="countByStatus" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM   shipment
+        WHERE  status = #{status}
+    </select>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         UPDATE
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <!--
+        Partial update: touches only status + updated_at.
+        @Param("id") and @Param("newStatus") in the interface map to
+        #{id} and #{newStatus} here.
+    -->
+    <update id="updateStatus">
+        UPDATE shipment
+        SET    status     = #{newStatus},
+        updated_at = CURRENT_TIMESTAMP
+        WHERE  id         = #{id}
+    </update>
+
+    <!--
+        Full update: replaces every mutable column.
+        id / created_at / updated_at are intentionally excluded:
+          • id is the WHERE key — never changed
+          • created_at is immutable after insert
+          • updated_at is managed by MySQL's ON UPDATE trigger
+    -->
+    <update id="updateFull" parameterType="Shipment">
+        UPDATE shipment
+        SET    tracking_number = #{trackingNumber},
+        sender_name     = #{senderName},
+        receiver_name   = #{receiverName},
+        origin_address  = #{originAddress},
+        dest_address    = #{destAddress},
+        status          = #{status}
+        WHERE  id              = #{id}
+    </update>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         DELETE
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM shipment
+        WHERE  id = #{id}
+    </delete>
+
+    <!--
+        Bulk delete by status — useful for scheduled cleanup jobs.
+        Returns the number of rows removed.
+    -->
+    <delete id="deleteByStatus" parameterType="string">
+        DELETE FROM shipment
+        WHERE  status = #{status}
+    </delete>
+
+</mapper>

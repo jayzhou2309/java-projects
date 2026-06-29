@@ -12,7 +12,8 @@ public class KafkaTopicConfig {
 
     // Spring Bean for Kafka Topic
     public NewTopic newTopic() {
-        return TopicBuilder.name()
+        return TopicBuilder.name(topicName)
+                .build();
     }
 
 }

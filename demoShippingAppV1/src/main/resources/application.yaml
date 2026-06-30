@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: demoShippingAppV1
+  datasource:
+    url: jdbc:mysql://localhost:3306/ShippingApp?createDatabaseIfNotExist=true
+    username: root
+    password: ${DB_PASSWORD}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    clean-disabled: false
+    default-schema: ShippingApp
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: myGroup
+      client-id: ${spring.application.name}-consumer
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: project.demoshippingappv1.dto.event
+    producer:
+      client-id: ${spring.application.name}-producer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+
+app:
+  kafka:
+    topics:
+      shipment-created: shipment.created
+      shipment-status-updated: shipment.status.updated
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true

@@ -74,6 +74,10 @@
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
         </dependency>
     </dependencies>
@@ -128,7 +132,19 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>12.4.0</version>
+                <configuration>
+                    <url>jdbc:mysql://localhost:3306/paymentAppDB</url>
+                    <user>${DB_USERNAME}</user>
+                    <password>${DB_PASSWORD}</password>
+                    <cleanDisabled>false</cleanDisabled>
+                </configuration>
+            </plugin>
         </plugins>
+
     </build>
 
 </project>

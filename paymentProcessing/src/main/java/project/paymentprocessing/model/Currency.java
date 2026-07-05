@@ -1,5 +1,5 @@
 package project.paymentprocessing.model;
 
-public enum Currencies {
+public enum Currency {
     SGD, USD, EUR, GBP
 }

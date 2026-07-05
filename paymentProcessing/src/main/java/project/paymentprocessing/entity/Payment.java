@@ -2,7 +2,7 @@ package project.paymentprocessing.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import project.paymentprocessing.model.Currencies;
+import project.paymentprocessing.model.Currency;
 import project.paymentprocessing.model.Status;
 
 import java.math.BigDecimal;
@@ -28,7 +28,7 @@ public class Payment {
     private BigDecimal amount;
     @Column(name = "currency", nullable = false)
     @Enumerated(EnumType.STRING)
-    private Currencies currency;
+    private Currency currency;
     @Column(name = "status" ,nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status;

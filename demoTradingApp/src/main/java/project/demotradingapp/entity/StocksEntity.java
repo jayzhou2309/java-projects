@@ -29,7 +29,7 @@ public class StocksEntity {
     private BigDecimal currentPrice;
 
     @Column(name = "active")
-    private byte active;
+    private boolean active;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

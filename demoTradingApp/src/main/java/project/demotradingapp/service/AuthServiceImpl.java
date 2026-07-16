@@ -1,11 +1,17 @@
 package project.demotradingapp.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.auth.*;
 import project.demotradingapp.entity.UsersEntity;
 import project.demotradingapp.repository.UsersRepo;
+import project.demotradingapp.security.jwt.JWTService;
+import project.demotradingapp.security.user.UserAccountDetails;
+import project.demotradingapp.security.user.UserAccountDetailsService;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +20,9 @@ import java.time.LocalDateTime;
 public class AuthServiceImpl implements AuthService{
     private final UsersRepo usersRepo;
     private final PasswordEncoder passwordEncoder;
+    private final JWTService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final UserAccountDetailsService userAccountDetailsService;
 
 
     @Override
@@ -36,15 +45,18 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public LoginResponse login(LoginRequest request) {
-        // find the user
-        UsersEntity user = usersRepo.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid Username or Password"));
-        if (!passwordEncoder.matches(user.getPassword(), request.getPassword())){
-            throw new RuntimeException("Invalid Username or Password");
-        }
 
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+
+        UserDetails userDetails = userAccountDetailsService.loadUserByUsername(request.getUsername());
+
+        String token = jwtService.generateToken(userDetails);
+
+        // Geberate JWT
         return LoginResponse.builder()
-                .message("Login Successful")
+                .token(token)
                 .username(request.getUsername())
                 .build();
 

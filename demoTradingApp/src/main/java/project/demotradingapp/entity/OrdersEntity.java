@@ -26,12 +26,15 @@ public class OrdersEntity {
     @Column(name = "stock_id")
     private Long stockId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "order_type")
     private OrderType orderType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "side")
     private PositionSide side;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private OrderStatus status;
 

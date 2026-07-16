@@ -28,5 +28,5 @@ public class RefreshTokensEntity {
     private LocalDateTime expiry;
 
     @Column(name = "revoked")
-    private byte revoked;
+    private boolean revoked;
 }

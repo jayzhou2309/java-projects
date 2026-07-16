@@ -23,6 +23,7 @@ public class TransactionsEntity {
     @Column(name = "portfolio_id")
     private Long portfolioId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private TransactionType type;
 

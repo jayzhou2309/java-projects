@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.auth.*;
 import project.demotradingapp.entity.UsersEntity;
 import project.demotradingapp.repository.UsersRepo;
+import project.demotradingapp.security.jwt.JWTProperties;
 import project.demotradingapp.security.jwt.JWTService;
-import project.demotradingapp.security.user.UserAccountDetails;
 import project.demotradingapp.security.user.UserAccountDetailsService;
 
 import java.time.LocalDateTime;
@@ -23,6 +23,7 @@ public class AuthServiceImpl implements AuthService{
     private final JWTService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserAccountDetailsService userAccountDetailsService;
+    private final JWTProperties jWTProperties;
 
 
     @Override
@@ -44,7 +45,7 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
-    public LoginResponse login(LoginRequest request) {
+    public JWTResponse login(LoginRequest request) {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
@@ -52,18 +53,41 @@ public class AuthServiceImpl implements AuthService{
 
         UserDetails userDetails = userAccountDetailsService.loadUserByUsername(request.getUsername());
 
-        String token = jwtService.generateToken(userDetails);
+        String accessToken = jwtService.generateAccessToken(userDetails);
 
-        // Geberate JWT
-        return LoginResponse.builder()
-                .token(token)
-                .username(request.getUsername())
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
+
+        // Generate JWT
+        return JWTResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jWTProperties.getExpiration() / 1000)
                 .build();
 
     }
 
     @Override
     public JWTResponse refreshToken(RefreshTokenRequest request) {
-        return null;
+        String refreshToken = request.getRefreshToken();
+        String username = jwtService.extractUsername(refreshToken);
+        UserDetails userDetails = userAccountDetailsService.loadUserByUsername(username);
+        if(!jwtService.isTokenValid(refreshToken, userDetails)){
+            throw new RuntimeException("Invalid Refresh Token");
+        }
+
+        if(!"refresh".equals(jwtService.extractTokenType(refreshToken))){
+            throw new RuntimeException("Not a Refresh Token");
+        }
+
+        String newAccessToken = jwtService.generateAccessToken(userDetails);
+        String newRefreshToken = jwtService.generateRefreshToken(userDetails);
+
+        return JWTResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jWTProperties.getExpiration() / 1000)
+                .build();
     }
 }

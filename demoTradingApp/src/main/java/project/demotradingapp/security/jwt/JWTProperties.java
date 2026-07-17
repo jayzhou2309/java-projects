@@ -12,4 +12,5 @@ import javax.crypto.SecretKey;
 public class JWTProperties {
     private String secret;
     private Long expiration;
+    private Long refreshExpiration;
 }

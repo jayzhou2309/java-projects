@@ -6,7 +6,7 @@ public interface AuthService {
 
     void register(RegisterRequest request);
     // Pre JWT LoginResponse
-    LoginResponse login(LoginRequest request);
+    JWTResponse login(LoginRequest request);
     // JWTResponse login(LoginRequest request);
     JWTResponse refreshToken(RefreshTokenRequest request);
 }

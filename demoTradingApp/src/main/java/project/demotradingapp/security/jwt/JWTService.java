@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import javax.sound.midi.SysexMessage;
 import java.util.Date;
 
 @Service
@@ -23,18 +24,26 @@ public class JWTService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(UserDetails userDetails){
+    private String generateToken(
+            UserDetails userDetails,
+            Long expiration,
+            String type
+    ) {
         return Jwts.builder()
-                // Stores username as JWT Subject
                 .subject(userDetails.getUsername())
-                // Time when token was issued
                 .issuedAt(new Date())
-                // Expiration
-                .expiration(new Date(System.currentTimeMillis() + jwtProperties.getExpiration()))
-                // Sign the token to prevent tampering
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .claim("type", type)
                 .signWith(getSigningKey())
-                // compacts all to JWT String
                 .compact();
+    }
+
+    public String generateAccessToken(UserDetails userDetails){
+        return generateToken(userDetails, jwtProperties.getExpiration(), "access");
+    }
+
+    public String generateRefreshToken(UserDetails userDetails){
+        return generateToken(userDetails, jwtProperties.getRefreshExpiration(), "refresh");
     }
 
     // Extract Claims
@@ -48,6 +57,10 @@ public class JWTService {
 
     public String extractUsername(String token){
         return extractAllClaims(token).getSubject();
+    }
+
+    public String extractTokenType(String token){
+        return extractAllClaims(token).get("type", String.class);
     }
 
     private Date extractExpiration(String token){

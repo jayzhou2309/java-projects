@@ -51,7 +51,7 @@ public class JwtService{
         return extractAllClaims(token).getSubject();
     }
 
-    private Date extractExpiration(String token){
+    public Date extractExpiration(String token){
         return extractAllClaims(token).getExpiration();
     }
 

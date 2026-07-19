@@ -10,17 +10,21 @@ import java.math.BigDecimal;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
 public class HoldingsEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "portfolio_id")
-    private Long portfolioId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "portfolio_id")
+    private PortfoliosEntity portfolio;
 
-    @Column(name = "stock_id")
-    private Long stockId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_id")
+    private StocksEntity stock;
 
     @Column(name = "quantity")
     private Long quantity;
@@ -28,7 +32,7 @@ public class HoldingsEntity {
     @Column(name = "average_price")
     private BigDecimal averagePrice;
 
-    @Column(name = "version")
+    @Version
     private Long version;
 
 }

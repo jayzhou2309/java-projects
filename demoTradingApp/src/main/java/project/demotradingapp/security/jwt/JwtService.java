@@ -9,45 +9,37 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import javax.sound.midi.SysexMessage;
 import java.util.Date;
+
+
+// Subject: Username
+// Issued At
+// Expiration
+// Signing Key
 
 @Service
 @RequiredArgsConstructor
-public class JWTService {
+public class JwtService{
     private final JWTProperties jwtProperties;
 
-    private SecretKey getSigningKey() {
-        // Convert Secret to original key bytes
-        byte [] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
-        // Build a secretKey suitable for H256 signing
-        return Keys.hmacShaKeyFor(keyBytes);
+    private SecretKey getSigningKey(){
+        byte[] byteKey = Decoders.BASE64.decode(jwtProperties.getSecret());
+
+        return Keys.hmacShaKeyFor(byteKey);
     }
 
-    private String generateToken(
-            UserDetails userDetails,
-            Long expiration,
-            String type
-    ) {
+    public String generateAccessToken(
+            UserDetails userDetails
+    ){
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expiration))
-                .claim("type", type)
+                .expiration(new Date(System.currentTimeMillis() + jwtProperties.getExpiration()))
                 .signWith(getSigningKey())
                 .compact();
     }
 
-    public String generateAccessToken(UserDetails userDetails){
-        return generateToken(userDetails, jwtProperties.getExpiration(), "access");
-    }
-
-    public String generateRefreshToken(UserDetails userDetails){
-        return generateToken(userDetails, jwtProperties.getRefreshExpiration(), "refresh");
-    }
-
-    // Extract Claims
-    private Claims extractAllClaims(String token){
+    public Claims extractAllClaims(String token){
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
@@ -59,10 +51,6 @@ public class JWTService {
         return extractAllClaims(token).getSubject();
     }
 
-    public String extractTokenType(String token){
-        return extractAllClaims(token).get("type", String.class);
-    }
-
     private Date extractExpiration(String token){
         return extractAllClaims(token).getExpiration();
     }
@@ -72,8 +60,8 @@ public class JWTService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails){
-        return extractUsername(token).equals(userDetails.getUsername())
-                && !isTokenExpired(token);
+        return extractUsername(token).equals(userDetails.getUsername()) &&
+                !isTokenExpired(token);
     }
 
 }

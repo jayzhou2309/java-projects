@@ -2,6 +2,7 @@ package project.demojwt.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -26,7 +27,8 @@ public class User {
     @Column(name = "password")
     private String password;
     @Column(name = "enabled")
-    private boolean enabled;
+    @Builder.Default
+    private boolean enabled = true;
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
@@ -39,5 +41,14 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
 
-    private Set<Role> roleSet = new HashSet<>();
+    private Set<Role> roles = new HashSet<>();
+
+    public void prePersist() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

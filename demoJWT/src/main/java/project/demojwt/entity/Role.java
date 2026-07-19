@@ -23,5 +23,5 @@ public class Role {
 
     // mapped by the Type that owns the RS
     @ManyToMany(mappedBy = "roleSet")
-    private Set<User> userSet = new HashSet<>();
+    private Set<User> users = new HashSet<>();
 }

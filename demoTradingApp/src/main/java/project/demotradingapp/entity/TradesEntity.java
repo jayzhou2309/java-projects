@@ -1,9 +1,7 @@
 package project.demotradingapp.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,20 +11,25 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class TradesEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "buy_order_id")
-    private Long buyOrderId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "buy_order_id")
+    private OrdersEntity buyOrder;
 
-    @Column(name = "sell_order_id")
-    private Long sellOrderId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sell_order_id")
+    private OrdersEntity sellOrder;
 
-    @Column(name = "stock_id")
-    private Long stockId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_id")
+    private StocksEntity stock;
 
     @Column(name = "quantity")
     private Long quantity;
@@ -36,4 +39,6 @@ public class TradesEntity {
 
     @Column(name = "executed_at")
     private LocalDateTime executedAt;
+
+
 }

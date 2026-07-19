@@ -1,18 +1,19 @@
 package project.demotradingapp.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "stocks")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class StocksEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,4 +34,13 @@ public class StocksEntity {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "stock")
+    private List<OrdersEntity> orders;
+
+    @OneToMany(mappedBy = "stock")
+    private List<HoldingsEntity> holdings;
+
+    @OneToMany(mappedBy = "stock")
+    private List<TradesEntity> trades;
 }

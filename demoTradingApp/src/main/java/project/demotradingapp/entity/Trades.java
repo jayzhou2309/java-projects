@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
-public class TradesEntity {
+public class Trades {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -21,18 +21,18 @@ public class TradesEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "buy_order_id")
-    private OrdersEntity buyOrder;
+    private Orders buyOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sell_order_id")
-    private OrdersEntity sellOrder;
+    private Orders sellOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_id")
-    private StocksEntity stock;
+    private Stock stock;
 
     @Column(name = "quantity")
-    private Long quantity;
+    private BigDecimal quantity;
 
     @Column(name = "execution_price")
     private BigDecimal executionPrice;

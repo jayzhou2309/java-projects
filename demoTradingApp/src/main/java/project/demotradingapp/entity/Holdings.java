@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Getter
 @Setter
-public class HoldingsEntity {
+public class Holdings {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -20,14 +20,17 @@ public class HoldingsEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "portfolio_id")
-    private PortfoliosEntity portfolio;
+    private Portfolio portfolio;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_id")
-    private StocksEntity stock;
+    private Stock stock;
 
     @Column(name = "quantity")
-    private Long quantity;
+    private BigDecimal quantity;
+
+    @Column(name = "reserved_quantity")
+    private BigDecimal reservedQuantity;
 
     @Column(name = "average_price")
     private BigDecimal averagePrice;

@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
-public class TransactionsEntity {
+public class Transactions {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -23,7 +23,7 @@ public class TransactionsEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "portfolio_id")
-    private PortfoliosEntity portfolio;
+    private Portfolio portfolio;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type")

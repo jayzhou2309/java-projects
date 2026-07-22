@@ -3,6 +3,8 @@ package project.demotradingapp.dto.auth;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 public class JWTResponse {

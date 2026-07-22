@@ -19,7 +19,7 @@ import java.util.Set;
 @Getter
 @Setter
 @EntityListeners(AuditingEntityListener.class)
-public class UsersEntity {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -51,12 +51,12 @@ public class UsersEntity {
             joinColumns = @JoinColumn(name = "user_id", nullable = false),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<RolesEntity> roles = new HashSet<>();
+    private Set<Roles> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user")
-    private List<OrdersEntity> orders;
+    private List<Orders> orders;
 
     @OneToOne(mappedBy = "user")
-    private PortfoliosEntity portfolio;
+    private Portfolio portfolio;
 
 }

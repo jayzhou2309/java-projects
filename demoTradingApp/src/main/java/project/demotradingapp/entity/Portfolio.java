@@ -16,7 +16,7 @@ import java.util.List;
 @Builder
 @Getter
 @Setter
-public class PortfoliosEntity {
+public class Portfolio {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -24,7 +24,7 @@ public class PortfoliosEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private UsersEntity user;
+    private User user;
 
     @Column(name = "available_cash")
     private BigDecimal availableCash;
@@ -44,8 +44,8 @@ public class PortfoliosEntity {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "portfolio", fetch = FetchType.LAZY)
-    private List<HoldingsEntity> holdings;
+    private List<Holdings> holdings;
 
     @OneToMany(mappedBy = "portfolio", fetch = FetchType.LAZY)
-    private List<TransactionsEntity> transaction;
+    private List<Transactions> transaction;
 }

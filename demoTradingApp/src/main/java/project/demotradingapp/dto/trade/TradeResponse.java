@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class TradeResponse {
     private Long id;
     private String symbol;
-    private Long quantity;
+    private BigDecimal quantity;
     private BigDecimal executionPrice;
     private LocalDateTime executedAt;
     private Long buyOrderId;

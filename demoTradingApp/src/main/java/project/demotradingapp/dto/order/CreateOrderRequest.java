@@ -11,6 +11,6 @@ public class CreateOrderRequest {
     private OrderType orderType;
     private Long stockId;
     private PositionSide side;
-    private Long quantity;
+    private BigDecimal quantity;
     private BigDecimal price;
 }

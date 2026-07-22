@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.auth.JWTResponse;
 import project.demotradingapp.dto.auth.LoginRequest;
 import project.demotradingapp.dto.auth.RegisterRequest;
-import project.demotradingapp.entity.UsersEntity;
+import project.demotradingapp.entity.User;
 import project.demotradingapp.repository.UsersRepo;
 import project.demotradingapp.security.jwt.JWTProperties;
 import project.demotradingapp.security.jwt.JwtService;
@@ -38,14 +38,14 @@ public class AuthServiceImpl implements AuthService{
             throw new IllegalArgumentException("Email already exist");
         }
         // Register to DB
-        UsersEntity usersEntity = UsersEntity.builder()
+        User user = User.builder()
                         .username(request.getUsername())
                         .email(request.getEmail())
                         .password(passwordEncoder.encode(request.getPassword()))
                         .enabled(true)
                                 .build();
-        usersRepo.save(usersEntity);
-        UserDetails userDetails = new UserAccountDetails(usersEntity);
+        usersRepo.save(user);
+        UserDetails userDetails = new UserAccountDetails(user);
         userAccountDetailsService.loadUserByUsername(userDetails.getUsername());
         String accessToken = jwtService.generateAccessToken(userDetails);
 
@@ -63,13 +63,14 @@ public class AuthServiceImpl implements AuthService{
         );
 
         // Load the authenticated user
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        UserAccountDetails userDetails = (UserAccountDetails) authentication.getPrincipal();
+        User user = userDetails.getUser();
 
         // Generate Access Token with the User Details
         String accessToken = jwtService.generateAccessToken(userDetails);
 
         // Generate and Save Refresh Token
-        String refreshToken = refreshTokenService.generateRefreshToken(userDetails.getUsername());
+        String refreshToken = refreshTokenService.generateRefreshToken(user);
 
         return JWTResponse.builder()
                 .accessToken(accessToken)

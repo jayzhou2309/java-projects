@@ -1,11 +1,9 @@
 package project.demotradingapp.security.jwt;
 
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import project.demotradingapp.entity.UsersEntity;
+import project.demotradingapp.entity.User;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserAccountDetails implements UserDetails {
 
-    private final UsersEntity usersEntity;
+    private final User user;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -23,12 +21,12 @@ public class UserAccountDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return usersEntity.getPassword();
+        return user.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return usersEntity.getUsername();
+        return user.getUsername();
     }
 
     @Override
@@ -48,6 +46,10 @@ public class UserAccountDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return usersEntity.isEnabled();
+        return user.isEnabled();
+    }
+
+    public User getUser() {
+        return user;
     }
 }

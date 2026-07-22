@@ -6,6 +6,7 @@ import project.demotradingapp.model.OrderStatus;
 import project.demotradingapp.model.OrderType;
 import project.demotradingapp.model.PositionSide;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,11 +14,11 @@ import java.time.LocalDateTime;
 public class OrderResponse {
     private Long id;
     private String symbol;
-    private OrderType type;
+    private OrderType orderType;
     private OrderStatus status;
     private PositionSide side;
-    private Long quantity;
-    private Long remainingQuantity;
-    private Long price;
+    private BigDecimal quantity;
+    private BigDecimal remainingQuantity;
+    private BigDecimal price;
     private LocalDateTime createdAt;
 }

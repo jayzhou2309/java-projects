@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-public class StocksEntity {
+public class Stock {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -36,11 +36,11 @@ public class StocksEntity {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "stock")
-    private List<OrdersEntity> orders;
+    private List<Orders> orders;
 
     @OneToMany(mappedBy = "stock")
-    private List<HoldingsEntity> holdings;
+    private List<Holdings> holdings;
 
     @OneToMany(mappedBy = "stock")
-    private List<TradesEntity> trades;
+    private List<Trades> trades;
 }

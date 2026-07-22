@@ -20,7 +20,7 @@ import java.util.List;
 @Builder
 @Getter
 @Setter
-public class OrdersEntity {
+public class Orders {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -28,11 +28,11 @@ public class OrdersEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UsersEntity user;
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_id", nullable = false)
-    private StocksEntity stock;
+    private Stock stock;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_type")
@@ -47,10 +47,10 @@ public class OrdersEntity {
     private OrderStatus status;
 
     @Column(name = "quantity")
-    private Long quantity;
+    private BigDecimal quantity;
 
     @Column(name = "remaining_quantity")
-    private Long remainingQuantity;
+    private BigDecimal remainingQuantity;
 
     @Column(name = "price")
     private BigDecimal price;
@@ -67,8 +67,8 @@ public class OrdersEntity {
     private Long version;
 
     @OneToMany(mappedBy = "buyOrder", fetch = FetchType.LAZY)
-    private List<TradesEntity> buyTrades = new ArrayList<>();
+    private List<Trades> buyTrades = new ArrayList<>();
 
     @OneToMany(mappedBy = "sellOrder", fetch = FetchType.LAZY)
-    private List<TradesEntity> sellTrades = new ArrayList<>();
+    private List<Trades> sellTrades = new ArrayList<>();
 }

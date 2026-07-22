@@ -13,7 +13,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Getter
 @Setter
-public class RolesEntity {
+public class Roles {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -23,5 +23,5 @@ public class RolesEntity {
     private String name;
 
     @ManyToMany(mappedBy = "roles")
-    private Set<UsersEntity> users = new HashSet<>();
+    private Set<User> users = new HashSet<>();
 }

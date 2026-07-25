@@ -2,6 +2,8 @@ package project.demotradingapp.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.portfolio.DepositRequest;
 import project.demotradingapp.dto.portfolio.PortfolioResponse;
@@ -23,9 +25,9 @@ public class PortfolioService {
 
     public PortfolioResponse getPortfolio(User user){
 
-        Portfolio portfolios = portfolioRepo.findByUserUsername(user.getUsername());
+        Portfolio portfolio = portfolioRepo.findByUserUsername(user.getUsername());
 
-        return portfolioMapper.toPortfolioResponse(portfolios);
+        return portfolioMapper.toPortfolioResponse(portfolio);
     }
 
     @Transactional
@@ -55,5 +57,38 @@ public class PortfolioService {
         );
         return portfolioMapper.toPortfolioResponse(portfolio);
     }
+
+    public boolean hasSufficientCash(Portfolio portfolio, BigDecimal amount){
+        return portfolio.getAvailableCash().compareTo(amount) >= 0;
+    }
+
+    public void reserveCash(Portfolio portfolio, BigDecimal amount){
+        if (portfolio.getAvailableCash().compareTo(amount) >= 0){
+            portfolio.setAvailableCash(portfolio.getAvailableCash().subtract(amount));
+            portfolio.setReservedCash(portfolio.getReservedCash().add(amount));
+            portfolioRepo.save(portfolio);
+        } else {
+            throw new RuntimeException("Not enough Available Cash");
+        }
+    }
+
+    public void releaseReservedCash(Portfolio portfolio, BigDecimal amount){
+        portfolio.setReservedCash(portfolio.getReservedCash().subtract(amount));
+        portfolio.setAvailableCash(portfolio.getAvailableCash().add(amount));
+        portfolioRepo.save(portfolio);
+    }
+
+    public void deductReservedCash(Portfolio portfolio, BigDecimal amount){
+        portfolio.setReservedCash(portfolio.getReservedCash().subtract(amount));
+        portfolioRepo.save(portfolio);
+    }
+
+    public void refundDifference(Portfolio portfolio, BigDecimal reservedAmount, BigDecimal actualAmount){
+        BigDecimal refund = reservedAmount.subtract(actualAmount);
+        portfolio.setAvailableCash(portfolio.getAvailableCash().add(refund));
+        portfolioRepo.save(portfolio);
+    }
+
+
 
 }

@@ -58,13 +58,11 @@ public class HoldingService {
 
         holdings.setReservedQuantity(holdings.getReservedQuantity().subtract(quantity));
         holdings.setQuantity(holdings.getQuantity().subtract(quantity));
+        deleteHoldingIfEmpty(portfolio, stock);
 
-        if (holdings.getQuantity().compareTo(BigDecimal.ZERO) <= 0){
-            holdingsRepo.delete(holdings);
-            return;
+        if (holdings.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            holdingsRepo.save(holdings);
         }
-
-        holdingsRepo.save(holdings);
     }
 
     public void reserveShares(Portfolio portfolio, Stock stock, BigDecimal quantity){
@@ -82,12 +80,17 @@ public class HoldingService {
 
     public boolean hasSufficientShares(Portfolio portfolio, Stock stock, BigDecimal quantity){
         Holdings holdings = getHolding(portfolio, stock);
-        BigDecimal availabeShares = quantity.subtract(holdings.getReservedQuantity());
+        BigDecimal availabeShares = holdings.getQuantity().subtract(holdings.getReservedQuantity());
+
+        return availabeShares.compareTo(quantity) >= 0;
 
     }
 
-    public void deleteHoldingIfEmpty(Portfolio portfolio, Stock stock){
-
+    private void deleteHoldingIfEmpty(Portfolio portfolio, Stock stock){
+        Holdings holdings = getHolding(portfolio, stock);
+        if (holdings.getQuantity().compareTo(BigDecimal.ZERO) == 0){
+            holdingsRepo.delete(holdings);
+        }
     }
 
 }

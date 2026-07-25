@@ -57,13 +57,13 @@ public class RefreshTokenService {
         // create new refresh token
         String newRT = generateRefreshToken(oldRT.getUser());
         // generate access token
-        UserAccountDetails userAccountDetails = new UserAccountDetails(user);
-        String accessToken = jwtService.generateAccessToken(userAccountDetails);
+        UserAccountDetails userDetails = new UserAccountDetails(user);
+        String accessToken = jwtService.generateAccessToken(userDetails);
         // return response
         return JWTResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(newRT)
-                .expiresIn(jwtProperties.getRefreshExpiration())
+                .expiresIn(jwtProperties.getExpiration())
                 .tokenType("Bearer")
                 .build();
     }

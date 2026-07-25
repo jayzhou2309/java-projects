@@ -2,6 +2,7 @@ package project.demotradingapp.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ public class Stock {
     @Column(name = "active")
     private boolean active;
 
+    @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

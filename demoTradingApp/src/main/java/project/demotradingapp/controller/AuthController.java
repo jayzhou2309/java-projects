@@ -1,14 +1,15 @@
 package project.demotradingapp.controller;
 
+import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import project.demotradingapp.dto.auth.JWTResponse;
-import project.demotradingapp.dto.auth.LoginRequest;
-import project.demotradingapp.dto.auth.RegisterRequest;
+import project.demotradingapp.dto.auth.*;
+import project.demotradingapp.security.jwt.UserAccountDetails;
 import project.demotradingapp.service.AuthService;
 
 @RestController
@@ -26,6 +27,20 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<JWTResponse> login(@RequestBody LoginRequest request){
         return ResponseEntity.ok((authService.login(request)));
+    }
+
+    // Refresh
+    @PostMapping("/refresh")
+    public ResponseEntity<JWTResponse> refresh(@RequestBody RefreshTokenRequest request){
+        return ResponseEntity.ok(authService.refresh(request));
+    }
+
+    // Logout
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(Authentication authentication){
+        UserAccountDetails userAccountDetails = (UserAccountDetails) authentication.getPrincipal();
+        authService.logout(userAccountDetails.getUser());
+        return ResponseEntity.noContent().build(); // HTTP 204
     }
 
 }

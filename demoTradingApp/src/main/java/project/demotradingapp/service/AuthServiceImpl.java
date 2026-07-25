@@ -1,5 +1,6 @@
 package project.demotradingapp.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -7,9 +8,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import project.demotradingapp.dto.auth.JWTResponse;
-import project.demotradingapp.dto.auth.LoginRequest;
-import project.demotradingapp.dto.auth.RegisterRequest;
+import project.demotradingapp.dto.auth.*;
+import project.demotradingapp.entity.RefreshToken;
 import project.demotradingapp.entity.User;
 import project.demotradingapp.repository.UsersRepo;
 import project.demotradingapp.security.jwt.JWTProperties;
@@ -26,9 +26,10 @@ public class AuthServiceImpl implements AuthService{
     private final UserAccountDetailsService userAccountDetailsService;
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
-    private final JWTProperties jWTProperties;
+    private final JWTProperties jwtProperties;
 
     @Override
+    @Transactional
     public JWTResponse register(RegisterRequest request) {
         // Check DB if Exist
         if (usersRepo.findByUsername(request.getUsername()).isPresent()){
@@ -46,11 +47,14 @@ public class AuthServiceImpl implements AuthService{
                                 .build();
         usersRepo.save(user);
         UserDetails userDetails = new UserAccountDetails(user);
-        userAccountDetailsService.loadUserByUsername(userDetails.getUsername());
         String accessToken = jwtService.generateAccessToken(userDetails);
+        String refreshToken = refreshTokenService.generateRefreshToken(user);
 
         return JWTResponse.builder()
                 .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtProperties.getExpiration())
                 .build();
 
     }
@@ -75,9 +79,19 @@ public class AuthServiceImpl implements AuthService{
         return JWTResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .expiresIn(jWTProperties.getExpiration())
+                .expiresIn(jwtProperties.getExpiration())
                 .tokenType("Bearer")
                 .build();
 
+    }
+
+    @Override
+    public JWTResponse refresh(RefreshTokenRequest request){
+        return refreshTokenService.refreshAccessToken(request);
+    }
+
+    @Override
+    public void logout (User user){
+        refreshTokenService.revokeAllUserTokens(user);
     }
 }

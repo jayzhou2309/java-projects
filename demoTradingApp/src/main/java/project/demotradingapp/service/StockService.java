@@ -5,14 +5,17 @@ import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.stock.CreateStockRequest;
 import project.demotradingapp.dto.stock.StockResponse;
 import project.demotradingapp.dto.stock.UpdateStockPriceRequest;
+import project.demotradingapp.mapper.StockMapper;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class StockService {
-    public StockResponse getStock(Long stockId){
+    private final StockMapper stockMapper;
 
+    public StockResponse getStock(Long stockId){
+        return
     }
 
     public StockResponse getStockByTicker(String ticker){

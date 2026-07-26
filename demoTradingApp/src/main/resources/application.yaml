@@ -8,6 +8,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    clean-disabled: false
   jpa:
     hibernate:
       ddl-auto: validate

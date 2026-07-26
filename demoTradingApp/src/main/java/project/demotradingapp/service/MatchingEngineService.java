@@ -28,8 +28,8 @@ public class MatchingEngineService {
     @Transactional
     public void matchOrders(Long stockId){
         List<OrderStatus> statusList = List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED);
-        List<Orders> buyOrders = ordersRepo.findByStockIdAndSideAndStatusOrderByPriceDescCreatedAtAsc(stockId, PositionSide.BUY, statusList);
-        List<Orders> sellOrders = ordersRepo.findByStockIdAndSideAndStatusOrderByPriceAscCreatedAtAsc(stockId, PositionSide.SELL, statusList);
+        List<Orders> buyOrders = ordersRepo.findByStockIdAndSideAndStatusInOrderByPriceDescCreatedAtAsc(stockId, PositionSide.BUY, statusList);
+        List<Orders> sellOrders = ordersRepo.findByStockIdAndSideAndStatusInOrderByPriceDescCreatedAtDesc(stockId, PositionSide.SELL, statusList);
 
         while (!buyOrders.isEmpty() && !sellOrders.isEmpty()){
             Orders bestBuy = buyOrders.get(0);

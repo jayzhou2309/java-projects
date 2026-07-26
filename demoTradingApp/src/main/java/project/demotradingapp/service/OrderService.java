@@ -3,7 +3,6 @@ package project.demotradingapp.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import project.demotradingapp.dto.order.CancelOrderRequest;
 import project.demotradingapp.dto.order.CreateOrderRequest;
 import project.demotradingapp.dto.order.OrderResponse;
 import project.demotradingapp.entity.*;
@@ -18,6 +17,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
+
     private final UsersRepo usersRepo;
     private final OrdersRepo ordersRepo;
     private final PortfolioRepo portfolioRepo;
@@ -25,32 +25,51 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final PortfolioService portfolioService;
     private final HoldingService holdingService;
-    // Create a new order
+
+    // --- shared helpers ---
+
+    public Orders getOwnedOrder(Long orderId, User user) {
+        Orders order = ordersRepo.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Not your order");
+        }
+        return order;
+    }
+
+    private void releaseOrderReservation(Orders order) {
+        Portfolio portfolio = order.getUser().getPortfolio();
+        if (order.getSide() == PositionSide.BUY) {
+            BigDecimal refund = order.getRemainingQuantity().multiply(order.getPrice());
+            portfolioService.releaseReservedCash(portfolio, refund);
+        } else {
+            holdingService.releaseReservedShares(portfolio, order.getStock(), order.getRemainingQuantity());
+        }
+    }
+
+    // --- create ---
 
     @Transactional
-    public OrderResponse placeOrder(CreateOrderRequest request, User user){
-        // Error Checks
-        if (!usersRepo.existsByUsername(user.getUsername())){
+    public OrderResponse placeOrder(CreateOrderRequest request, User user) {
+        if (!usersRepo.existsByUsername(user.getUsername())) {
             throw new IllegalArgumentException("User does not exist");
         }
         if (request.getQuantity().compareTo(BigDecimal.ZERO) <= 0 ||
-        request.getPrice().compareTo(BigDecimal.ZERO) <= 0){
-            throw new IllegalArgumentException("Quantity or Price cant be less than 0");
+                request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Quantity and Price must be greater than 0");
         }
 
         Portfolio portfolio = portfolioRepo.findByUser(user);
         Stock stock = stocksRepo.findById(request.getStockId())
                 .orElseThrow(() -> new IllegalArgumentException("Stock not found"));
 
-
         BigDecimal totalCost = request.getPrice().multiply(request.getQuantity());
-        if (request.getSide() == PositionSide.BUY){
-            // Holdings are created/increased at trade execution
-            portfolioService.reserveCash(portfolio, totalCost);
-        }
 
-        if (request.getSide() == PositionSide.SELL){
-            if (!holdingService.hasSufficientShares(portfolio, stock, request.getQuantity())){
+        if (request.getSide() == PositionSide.BUY) {
+            // Holdings are created/increased at trade execution, not at placement.
+            portfolioService.reserveCash(portfolio, totalCost);
+        } else {
+            if (!holdingService.hasSufficientShares(portfolio, stock, request.getQuantity())) {
                 throw new IllegalArgumentException("Insufficient Shares");
             }
             holdingService.reserveShares(portfolio, stock, request.getQuantity());
@@ -68,93 +87,51 @@ public class OrderService {
                 .build();
 
         ordersRepo.save(order);
-
         return orderMapper.toOrderResponse(order);
     }
 
-    // Cancel an existing order
+    // --- cancel (single source of truth — used by both the DTO-based and id-based call sites) ---
+
     @Transactional
-    public void cancelOrder(CancelOrderRequest request, User user){
-        if (!usersRepo.existsByUsername(user.getUsername())){
-            throw new IllegalArgumentException("User does not exist");
-        }
-        Orders order = ordersRepo.findById(request.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("Order does not exist"));
-        if (!order.getUser().getId().equals(user.getId())){
-            throw new IllegalArgumentException("Not your order");
-        }
+    public void cancelOrder(Long orderId, User user) {
+        Orders order = getOwnedOrder(orderId, user);
+
         if (order.getStatus() != OrderStatus.PENDING &&
-            order.getStatus() != OrderStatus.PARTIALLY_FILLED){
+                order.getStatus() != OrderStatus.PARTIALLY_FILLED) {
             throw new IllegalArgumentException("Order cannot be cancelled");
         }
 
-        Portfolio portfolio = order.getUser().getPortfolio();
-
-        if (order.getSide() == PositionSide.BUY){
-            BigDecimal refund = order.getRemainingQuantity().multiply(order.getPrice());
-            portfolioService.releaseReservedCash(portfolio, refund);
-        } else {
-            holdingService.releaseReservedShares(portfolio, order.getStock(), order.getRemainingQuantity());
-        }
+        releaseOrderReservation(order);
 
         order.setStatus(OrderStatus.CANCELLED);
         ordersRepo.save(order);
     }
 
-    public List<OrderResponse> getAllOrders(User user){
-        List<Orders> ordersList = ordersRepo.getOrdersByUser(user);
-        return ordersList
+    // --- reads ---
+
+    public List<OrderResponse> getAllOrders(User user) {
+        return ordersRepo.getOrdersByUser(user)
                 .stream()
                 .map(orderMapper::toOrderResponse)
                 .toList();
     }
 
-    public OrderResponse getOrderById(Long orderId, User user){
-        Orders order = ordersRepo.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not Found"));
-        if (!order.getUser().getId().equals(user.getId())){
-            throw new IllegalArgumentException("User not Authenticated");
-        }
-        return orderMapper.toOrderResponse(order);
+    public OrderResponse getOrderById(Long orderId, User user) {
+        return orderMapper.toOrderResponse(getOwnedOrder(orderId, user));
     }
 
-    public void deleteOrderById(Long orderId, User user){
-        Orders order = ordersRepo.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not Found"));
-        if (!order.getUser().getId().equals(user.getId())){
-            throw new IllegalArgumentException("User not Authenticated");
-        }
-
-        // Release Reserved Cash
-        Portfolio portfolio = order.getUser().getPortfolio();
-        if (order.getSide() == PositionSide.BUY){
-            BigDecimal refund = order.getRemainingQuantity().multiply(order.getPrice());
-            portfolioService.releaseReservedCash(portfolio, refund);
-        } else {
-            holdingService.releaseReservedShares(portfolio, order.getStock(), order.getRemainingQuantity());
-        }
-        order.setStatus(OrderStatus.CANCELLED);
-        ordersRepo.save(order);
-    }
-
-    private List<OrderResponse> getOrdersByStatus(User user, List<OrderStatus> statusList){
-        return ordersRepo.findByUserAndStatusInOrderCreatedByDesc(user, statusList)
+    private List<OrderResponse> getOrdersByStatus(User user, List<OrderStatus> statusList) {
+        return ordersRepo.findByUserAndStatusInOrderByCreatedAtDesc(user, statusList)
                 .stream()
                 .map(orderMapper::toOrderResponse)
                 .toList();
     }
 
-    public List<OrderResponse> getOpenOrders(User user){
-        List<OrderStatus> statusList = List.of(
-                OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED
-        );
-        return getOrdersByStatus(user, statusList);
+    public List<OrderResponse> getOpenOrders(User user) {
+        return getOrdersByStatus(user, List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED));
     }
 
     public List<OrderResponse> getOrderHistory(User user) {
-        List<OrderStatus> statusList = List.of(
-                OrderStatus.FILLED, OrderStatus.CANCELLED
-        );
-        return getOrdersByStatus(user, statusList);
+        return getOrdersByStatus(user, List.of(OrderStatus.FILLED, OrderStatus.CANCELLED));
     }
 }

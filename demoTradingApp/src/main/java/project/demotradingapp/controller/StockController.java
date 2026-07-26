@@ -4,13 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import project.demotradingapp.dto.stock.CreateStockRequest;
 import project.demotradingapp.dto.stock.StockResponse;
 import project.demotradingapp.dto.stock.UpdateStockPriceRequest;
-import project.demotradingapp.entity.Stock;
-import project.demotradingapp.security.jwt.UserAccountDetails;
 import project.demotradingapp.service.StockService;
 
 import java.util.List;
@@ -20,7 +17,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StockController {
     private final StockService stockService;
-    private final DataSourceTransactionManager dataSourceTransactionManager;
 
     // GET    /stocks
     @GetMapping("/")

@@ -33,12 +33,7 @@ public class OrderController {
     public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long orderId, @AuthenticationPrincipal UserAccountDetails userAccountDetails){
         return ResponseEntity.ok(orderService.getOrderById(orderId, userAccountDetails.getUser()));
     }
-    // DELETE /orders/{id}
-    @DeleteMapping("/deleteOrder/{orderId}")
-    public ResponseEntity<Void> deleteOrderById(@PathVariable Long orderId, @AuthenticationPrincipal UserAccountDetails userAccountDetails){
-        orderService.deleteOrderById(orderId, userAccountDetails.getUser());
-        return ResponseEntity.noContent().build();
-    }
+
     // GET /orders/open
     @GetMapping("/open")
     public ResponseEntity<List<OrderResponse>> getOpenOrders(@AuthenticationPrincipal UserAccountDetails userAccountDetails){

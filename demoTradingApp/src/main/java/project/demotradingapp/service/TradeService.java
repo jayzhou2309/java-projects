@@ -18,7 +18,7 @@ public class TradeService {
     private final TradeMapper tradeMapper;
     public TradeResponse getTrade(Long tradeId) {
         Trades trade = tradesRepo.findById(tradeId)
-                .orElseThrow(() -> new RuntimeException("Trade ID does not exist"));
+                .orElseThrow(() -> new IllegalArgumentException("Trade ID does not exist"));
         return tradeMapper.toTradesResponse(trade);
     }
 

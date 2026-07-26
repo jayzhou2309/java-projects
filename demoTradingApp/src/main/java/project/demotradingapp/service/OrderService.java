@@ -7,7 +7,6 @@ import project.demotradingapp.dto.order.CancelOrderRequest;
 import project.demotradingapp.dto.order.CreateOrderRequest;
 import project.demotradingapp.dto.order.OrderResponse;
 import project.demotradingapp.entity.*;
-import project.demotradingapp.mapper.HoldingMapper;
 import project.demotradingapp.mapper.OrderMapper;
 import project.demotradingapp.model.OrderStatus;
 import project.demotradingapp.model.PositionSide;
@@ -23,53 +22,38 @@ public class OrderService {
     private final PortfolioRepo portfolioRepo;
     private final StocksRepo stocksRepo;
     private final OrderMapper orderMapper;
-    private final HoldingsRepo holdingsRepo;
+    private final PortfolioService portfolioService;
+    private final HoldingService holdingService;
     // Create a new order
 
     @Transactional
     public OrderResponse placeOrder(CreateOrderRequest request, User user){
         // Error Checks
         if (!usersRepo.existsByUsername(user.getUsername())){
-            throw new RuntimeException("User does not exist");
+            throw new IllegalArgumentException("User does not exist");
         }
-        if (request.getQuantity().compareTo(BigDecimal.ZERO) < 0 ||
-        request.getPrice().compareTo(BigDecimal.ZERO) < 0){
-            throw new RuntimeException("Quantity or Price cant be less than 0");
+        if (request.getQuantity().compareTo(BigDecimal.ZERO) <= 0 ||
+        request.getPrice().compareTo(BigDecimal.ZERO) <= 0){
+            throw new IllegalArgumentException("Quantity or Price cant be less than 0");
         }
 
         Portfolio portfolio = portfolioRepo.findByUser(user);
         Stock stock = stocksRepo.findById(request.getStockId())
-                .orElseThrow(() -> new RuntimeException("Stock not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Stock not found"));
 
 
         BigDecimal totalCost = request.getPrice().multiply(request.getQuantity());
-
-        if (portfolio.getAvailableCash().compareTo(totalCost) < 0) {
-            throw new RuntimeException("Insufficient Balance");
-        }
-        if (request.getSide() == PositionSide.SELL){
-            Holdings holdings = holdingsRepo.findByPortfolioAndStock(portfolio, stock)
-                    .orElseThrow(() -> new RuntimeException("Holding does not exist"));
-            BigDecimal availableShares = holdings.getQuantity().subtract(holdings.getReservedQuantity());
-            if (request.getQuantity().compareTo(availableShares) > 0){
-                throw new RuntimeException("Insufficient Shares");
-            }
-            holdings.setReservedQuantity(
-                    holdings.getReservedQuantity().add(request.getQuantity())
-            );
-            holdingsRepo.save(holdings);
-        }
-
         if (request.getSide() == PositionSide.BUY){
-            portfolio.setAvailableCash(
-                    portfolio.getAvailableCash().subtract(totalCost)
-            );
-            portfolio.setReservedCash(
-                    portfolio.getReservedCash().add(totalCost)
-            );
-            portfolioRepo.save(portfolio);
+            // Holdings are created/increased at trade execution
+            portfolioService.reserveCash(portfolio, totalCost);
         }
-        // NOT DONE: CREATE HOLDINGS IF BUY
+
+        if (request.getSide() == PositionSide.SELL){
+            if (!holdingService.hasSufficientShares(portfolio, stock, request.getQuantity())){
+                throw new IllegalArgumentException("Insufficient Shares");
+            }
+            holdingService.reserveShares(portfolio, stock, request.getQuantity());
+        }
 
         Orders order = Orders.builder()
                 .user(user)
@@ -88,45 +72,31 @@ public class OrderService {
     }
 
     // Cancel an existing order
-
+    @Transactional
     public void cancelOrder(CancelOrderRequest request, User user){
         if (!usersRepo.existsByUsername(user.getUsername())){
-            throw new RuntimeException("User does not exist");
+            throw new IllegalArgumentException("User does not exist");
         }
         Orders order = ordersRepo.findById(request.getOrderId())
-                .orElseThrow(() -> new RuntimeException("Order does not exist"));
+                .orElseThrow(() -> new IllegalArgumentException("Order does not exist"));
         if (!order.getUser().getId().equals(user.getId())){
-            throw new RuntimeException("Not your order");
+            throw new IllegalArgumentException("Not your order");
         }
         if (order.getStatus() != OrderStatus.PENDING &&
             order.getStatus() != OrderStatus.PARTIALLY_FILLED){
-            throw new RuntimeException("Order cannot be cancelled");
+            throw new IllegalArgumentException("Order cannot be cancelled");
         }
 
-        Stock stock = order.getStock();
         Portfolio portfolio = order.getUser().getPortfolio();
-        Holdings holdings = holdingsRepo.findByPortfolioAndStock(portfolio, stock)
-                .orElseThrow(() -> new RuntimeException("Holding not found"));
-
-        BigDecimal refund = order.getRemainingQuantity().multiply(order.getPrice());
 
         if (order.getSide() == PositionSide.BUY){
-            portfolio.setAvailableCash(
-                    portfolio.getAvailableCash().add(refund)
-            );
-            portfolio.setReservedCash(
-                    portfolio.getReservedCash().subtract(refund)
-            );
+            BigDecimal refund = order.getRemainingQuantity().multiply(order.getPrice());
+            portfolioService.releaseReservedCash(portfolio, refund);
         } else {
-            holdings.setReservedQuantity(
-                    holdings.getReservedQuantity().subtract(order.getRemainingQuantity())
-            );
+            holdingService.releaseReservedShares(portfolio, order.getStock(), order.getRemainingQuantity());
         }
 
         order.setStatus(OrderStatus.CANCELLED);
         ordersRepo.save(order);
-        portfolioRepo.save(portfolio);
-        holdingsRepo.save(holdings);
-
     }
 }

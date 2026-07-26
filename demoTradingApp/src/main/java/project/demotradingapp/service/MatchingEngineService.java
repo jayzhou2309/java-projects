@@ -7,14 +7,10 @@ import project.demotradingapp.entity.*;
 import project.demotradingapp.model.OrderStatus;
 import project.demotradingapp.model.OrderType;
 import project.demotradingapp.model.PositionSide;
-import project.demotradingapp.repository.HoldingsRepo;
 import project.demotradingapp.repository.OrdersRepo;
-import project.demotradingapp.repository.PortfolioRepo;
 import project.demotradingapp.repository.TradesRepo;
 
-import javax.sound.sampled.Port;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,9 +20,9 @@ import java.util.List;
 public class MatchingEngineService {
 
     private final OrdersRepo ordersRepo;
-    private final HoldingsRepo holdingsRepo;
-    private final PortfolioRepo portfolioRepo;
     private final TradesRepo tradesRepo;
+    private final HoldingService holdingService;
+    private final PortfolioService portfolioService;
 
     // Entry point
     @Transactional
@@ -58,114 +54,30 @@ public class MatchingEngineService {
     private void executeTrade(Orders buyOrder, Orders sellOrder){
         BigDecimal matchedQuantity = calculateMatchedQuantity(buyOrder, sellOrder);
         BigDecimal executionPrice = calculateExecutionPrice(buyOrder, sellOrder);
+
         Trades trade = createTrade(buyOrder, sellOrder, matchedQuantity, executionPrice);
-        updateBuyerHolding(buyOrder.getUser().getPortfolio(), buyOrder.getStock(), matchedQuantity, executionPrice);
-        updateBuyerPortfolio(buyOrder, executionPrice, matchedQuantity);
-        updateSellerPortfolio(sellOrder.getUser().getPortfolio(), executionPrice, matchedQuantity);
-        Holdings sellerHoldings = holdingsRepo.findByPortfolioAndStock(sellOrder.getUser().getPortfolio(), sellOrder.getStock())
-                .orElseThrow(() -> new RuntimeException("Holdings not found"));
-        updateSellerHolding(sellerHoldings, matchedQuantity);
+
+        holdingService.increaseHolding(buyOrder.getUser().getPortfolio(), buyOrder.getStock(), matchedQuantity, executionPrice);
+        holdingService.decreaseHolding(sellOrder.getUser().getPortfolio(), sellOrder.getStock(), matchedQuantity);
+
+        portfolioService.settleBuyerCash(buyOrder, executionPrice, matchedQuantity);
+        portfolioService.settleSellerCash(sellOrder, executionPrice, matchedQuantity);
+
         updateOrder(buyOrder, matchedQuantity);
         updateOrder(sellOrder, matchedQuantity);
         tradesRepo.save(trade);
-
     }
 
     // Order updates
     private void updateOrder(Orders order, BigDecimal matchedQuantity) {
         BigDecimal remaining = order.getRemainingQuantity().subtract(matchedQuantity);
 
-        order.setRemainingQuantity(remaining);
         if (remaining.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException();
         }
-        if (remaining.compareTo(BigDecimal.ZERO) == 0){
-            order.setStatus(OrderStatus.FILLED);
-        } else {
-            order.setStatus(OrderStatus.PARTIALLY_FILLED);
-        }
-
+        order.setRemainingQuantity(remaining);
+        order.setStatus(remaining.compareTo(BigDecimal.ZERO) == 0 ? OrderStatus.FILLED : OrderStatus.PARTIALLY_FILLED);
         ordersRepo.save(order);
-    }
-
-
-    // Portfolio updates
-    private void updateBuyerPortfolio(
-            Orders buyOrder,
-            BigDecimal executionPrice,
-            BigDecimal matchedQuantity
-    ) {
-        Portfolio portfolio = buyOrder.getUser().getPortfolio();
-
-        BigDecimal reservedAmount = buyOrder.getPrice().multiply(matchedQuantity);
-
-        BigDecimal actualAmount = executionPrice.multiply(matchedQuantity);
-
-        BigDecimal refund = reservedAmount.subtract(actualAmount);
-
-        portfolio.setReservedCash(portfolio.getReservedCash().subtract(reservedAmount));
-        portfolio.setAvailableCash(portfolio.getAvailableCash().add(refund));
-        portfolioRepo.save(portfolio);
-    }
-
-    private void updateSellerPortfolio(
-            Portfolio portfolio,
-            BigDecimal executionPrice,
-            BigDecimal matchedQuantity
-    ) {
-        BigDecimal proceeds = executionPrice.multiply(matchedQuantity);
-        portfolio.setAvailableCash(portfolio.getAvailableCash().add(proceeds));
-        portfolioRepo.save(portfolio);
-    }
-
-    // Holdings updates
-    private void updateBuyerHolding(
-            Portfolio portfolio,
-            Stock stock,
-            BigDecimal matchedQuantity,
-            BigDecimal executionPrice
-    ) {
-        // add stock if no stock exist
-        Holdings holdings = holdingsRepo.findByPortfolioAndStock(portfolio, stock)
-                .orElse(null);
-
-        if (holdings == null) {
-            holdings = Holdings.builder()
-                    .portfolio(portfolio)
-                    .stock(stock)
-                    .quantity(matchedQuantity)
-                    .reservedQuantity(BigDecimal.ZERO)
-                    .averagePrice(executionPrice)
-                    .build();
-        } else {
-            BigDecimal oldQuantity = holdings.getQuantity();
-            BigDecimal newQuantity = oldQuantity.add(matchedQuantity);
-
-            BigDecimal oldCost = holdings.getAveragePrice().multiply(oldQuantity);
-            BigDecimal newCost = executionPrice.multiply(matchedQuantity);
-
-            BigDecimal averagePrice = oldCost.add(newCost).divide(newQuantity, 8, RoundingMode.HALF_UP);
-
-            holdings.setQuantity(newQuantity);
-            holdings.setAveragePrice(averagePrice);
-        }
-
-        holdingsRepo.save(holdings);
-
-
-    }
-
-    private void updateSellerHolding(
-            Holdings holding,
-            BigDecimal matchedQuantity
-    ) {
-        holding.setReservedQuantity(holding.getReservedQuantity().subtract(matchedQuantity));
-        holding.setQuantity(holding.getQuantity().subtract(matchedQuantity));
-        if (holding.getQuantity().compareTo(BigDecimal.ZERO) == 0){
-            holdingsRepo.delete(holding);
-        } else {
-            holdingsRepo.save(holding);
-        }
     }
 
     // Trade creation
@@ -187,10 +99,7 @@ public class MatchingEngineService {
 
 
     // Price/quantity calculation
-    private BigDecimal calculateExecutionPrice(
-            Orders buyOrder,
-            Orders sellOrder
-    ) {
+    private BigDecimal calculateExecutionPrice(Orders buyOrder, Orders sellOrder) {
         OrderType buyType = buyOrder.getOrderType();
         OrderType sellType = sellOrder.getOrderType();
 
@@ -207,8 +116,6 @@ public class MatchingEngineService {
             return buyOrder.getPrice();
         }
 
-        // If buy is created before sell
-        // get the price of BUY
         return buyOrder.getCreatedAt().isBefore(sellOrder.getCreatedAt())
                 ? buyOrder.getPrice() : sellOrder.getPrice();
     }

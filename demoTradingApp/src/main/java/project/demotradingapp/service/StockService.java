@@ -10,7 +10,7 @@ import project.demotradingapp.entity.Stock;
 import project.demotradingapp.mapper.StockMapper;
 import project.demotradingapp.repository.StocksRepo;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -19,10 +19,15 @@ public class StockService {
     private final StockMapper stockMapper;
     private final StocksRepo stocksRepo;
 
-    public StockResponse getStock(Long stockId){
+    public StockResponse getStockResponse(Long stockId){
         Stock stock = stocksRepo.findById(stockId)
-                .orElseThrow(() -> new RuntimeException("Stock not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Stock not found"));
         return stockMapper.toStockResponse(stock);
+    }
+
+    public Stock getStock(Long stockId){
+        return stocksRepo.findById(stockId)
+                .orElseThrow(() -> new IllegalArgumentException("Stock not found"));
     }
 
     public StockResponse getStockByTicker(String ticker){
@@ -44,6 +49,9 @@ public class StockService {
         if (stocksRepo.existsBySymbol(request.getSymbol())){
             throw new IllegalArgumentException("Stock is already present");
         }
+        if (request.getCurrentPrice().compareTo(BigDecimal.ZERO) <= 0){
+            throw new IllegalArgumentException("Price must be greater than zero");
+        }
         Stock stock = Stock.builder()
                 .symbol(request.getSymbol())
                 .companyName(request.getCompanyName())
@@ -56,6 +64,9 @@ public class StockService {
 
     @Transactional
     public StockResponse updateStock(Long stockId, UpdateStockPriceRequest request){
+        if (request.getCurrentPrice().compareTo(BigDecimal.ZERO) <= 0){
+            throw new IllegalArgumentException("Price must be greater than zero");
+        }
         Stock stock = stocksRepo.findById(stockId)
                 .orElseThrow(() -> new IllegalArgumentException("Stock ID not found"));
         stock.setCurrentPrice(request.getCurrentPrice());

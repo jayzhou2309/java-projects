@@ -38,7 +38,9 @@ public class AuthController {
     // Logout
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(Authentication authentication){
-        UserAccountDetails userAccountDetails = (UserAccountDetails) authentication.getPrincipal();
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserAccountDetails userAccountDetails)) {
+            return ResponseEntity.status(401).build();
+        }
         authService.logout(userAccountDetails.getUser());
         return ResponseEntity.noContent().build(); // HTTP 204
     }

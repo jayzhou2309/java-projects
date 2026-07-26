@@ -26,11 +26,11 @@ public class PortfolioService {
     }
 
     @Transactional
-    public PortfolioResponse deposit(DepositRequest request){
+    public PortfolioResponse deposit(DepositRequest request, User user){
         if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0){
             throw new IllegalArgumentException("Deposit cant be negative");
         }
-        Portfolio portfolio = portfolioRepo.findByUser(request.getUser());
+        Portfolio portfolio = portfolioRepo.findByUser(user);
         portfolio.setAvailableCash(
                 portfolio.getAvailableCash().add(request.getAmount())
         );
@@ -39,11 +39,11 @@ public class PortfolioService {
     }
 
     @Transactional
-    public PortfolioResponse withdraw(WithdrawRequest request){
+    public PortfolioResponse withdraw(WithdrawRequest request, User user){
         if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0){
             throw new IllegalArgumentException("Withdrawals must be positive");
         }
-        Portfolio portfolio = portfolioRepo.findByUser(request.getUser());
+        Portfolio portfolio = portfolioRepo.findByUser(user);
         if (request.getAmount().compareTo(portfolio.getAvailableCash()) > 0){
             throw new IllegalArgumentException("Insufficient Funds");
         }

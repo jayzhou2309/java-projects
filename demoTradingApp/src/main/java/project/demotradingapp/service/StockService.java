@@ -1,12 +1,15 @@
 package project.demotradingapp.service;
 
+import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.stock.CreateStockRequest;
 import project.demotradingapp.dto.stock.StockResponse;
 import project.demotradingapp.dto.stock.UpdateStockPriceRequest;
+import project.demotradingapp.entity.Portfolio;
 import project.demotradingapp.entity.Stock;
+import project.demotradingapp.entity.User;
 import project.demotradingapp.mapper.StockMapper;
 import project.demotradingapp.repository.StocksRepo;
 

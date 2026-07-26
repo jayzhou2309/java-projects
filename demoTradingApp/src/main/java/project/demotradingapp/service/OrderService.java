@@ -13,6 +13,7 @@ import project.demotradingapp.model.PositionSide;
 import project.demotradingapp.repository.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -98,5 +99,62 @@ public class OrderService {
 
         order.setStatus(OrderStatus.CANCELLED);
         ordersRepo.save(order);
+    }
+
+    public List<OrderResponse> getAllOrders(User user){
+        List<Orders> ordersList = ordersRepo.getOrdersByUser(user);
+        return ordersList
+                .stream()
+                .map(orderMapper::toOrderResponse)
+                .toList();
+    }
+
+    public OrderResponse getOrderById(Long orderId, User user){
+        Orders order = ordersRepo.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not Found"));
+        if (!order.getUser().getId().equals(user.getId())){
+            throw new IllegalArgumentException("User not Authenticated");
+        }
+        return orderMapper.toOrderResponse(order);
+    }
+
+    public void deleteOrderById(Long orderId, User user){
+        Orders order = ordersRepo.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not Found"));
+        if (!order.getUser().getId().equals(user.getId())){
+            throw new IllegalArgumentException("User not Authenticated");
+        }
+
+        // Release Reserved Cash
+        Portfolio portfolio = order.getUser().getPortfolio();
+        if (order.getSide() == PositionSide.BUY){
+            BigDecimal refund = order.getRemainingQuantity().multiply(order.getPrice());
+            portfolioService.releaseReservedCash(portfolio, refund);
+        } else {
+            holdingService.releaseReservedShares(portfolio, order.getStock(), order.getRemainingQuantity());
+        }
+        order.setStatus(OrderStatus.CANCELLED);
+        ordersRepo.save(order);
+    }
+
+    private List<OrderResponse> getOrdersByStatus(User user, List<OrderStatus> statusList){
+        return ordersRepo.findByUserAndStatusInOrderCreatedByDesc(user, statusList)
+                .stream()
+                .map(orderMapper::toOrderResponse)
+                .toList();
+    }
+
+    public List<OrderResponse> getOpenOrders(User user){
+        List<OrderStatus> statusList = List.of(
+                OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED
+        );
+        return getOrdersByStatus(user, statusList);
+    }
+
+    public List<OrderResponse> getOrderHistory(User user) {
+        List<OrderStatus> statusList = List.of(
+                OrderStatus.FILLED, OrderStatus.CANCELLED
+        );
+        return getOrdersByStatus(user, statusList);
     }
 }

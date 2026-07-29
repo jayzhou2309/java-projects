@@ -20,6 +20,11 @@ public class PortfolioService {
     private final PortfolioRepo portfolioRepo;
     private final PortfolioMapper portfolioMapper;
 
+    // Service Usage
+    public Portfolio getPortfolioEntity(User user){
+        return portfolioRepo.findByUserUsername(user.getUsername());
+    }
+
     public PortfolioResponse getPortfolio(User user){
         Portfolio portfolio = portfolioRepo.findByUserUsername(user.getUsername());
         return portfolioMapper.toPortfolioResponse(portfolio);

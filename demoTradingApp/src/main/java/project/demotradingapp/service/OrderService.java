@@ -2,12 +2,15 @@ package project.demotradingapp.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.order.CreateOrderRequest;
 import project.demotradingapp.dto.order.OrderResponse;
 import project.demotradingapp.entity.*;
+import project.demotradingapp.kafka.events.OrderCreatedEvent;
 import project.demotradingapp.mapper.OrderMapper;
 import project.demotradingapp.model.OrderStatus;
+import project.demotradingapp.model.OrderType;
 import project.demotradingapp.model.PositionSide;
 import project.demotradingapp.repository.*;
 
@@ -21,10 +24,11 @@ public class OrderService {
     private final UsersRepo usersRepo;
     private final OrdersRepo ordersRepo;
     private final PortfolioRepo portfolioRepo;
-    private final StocksRepo stocksRepo;
     private final OrderMapper orderMapper;
     private final PortfolioService portfolioService;
     private final HoldingService holdingService;
+    private final StockService stockService;
+    private final MatchingEngineService matchingEngineService;
 
     // --- shared helpers ---
 
@@ -49,6 +53,20 @@ public class OrderService {
 
     // --- create ---
 
+    // Kafka Overload
+    @Transactional
+    public OrderResponse placeOrder(OrderCreatedEvent event){
+        User user = usersRepo.findById(event.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not Found"));
+        Stock stock = stockService.getStock(event.getStockId());
+
+        Orders saved = createAndReserveOrders(user, stock, event.getSide(), event.getOrderType(),
+                event.getQuantity(), event.getPrice());
+
+        matchingEngineService.matchOrders(stock.getId());
+        return orderMapper.toOrderResponse(saved);
+    }
+
     @Transactional
     public OrderResponse placeOrder(CreateOrderRequest request, User user) {
         if (!usersRepo.existsByUsername(user.getUsername())) {
@@ -59,35 +77,12 @@ public class OrderService {
             throw new IllegalArgumentException("Quantity and Price must be greater than 0");
         }
 
-        Portfolio portfolio = portfolioRepo.findByUser(user);
-        Stock stock = stocksRepo.findById(request.getStockId())
-                .orElseThrow(() -> new IllegalArgumentException("Stock not found"));
+        Stock stock = stockService.getStock(request.getStockId());
 
-        BigDecimal totalCost = request.getPrice().multiply(request.getQuantity());
+        Orders saved = createAndReserveOrders(user, stock, request.getSide(), request.getOrderType(),
+                request.getQuantity(), request.getPrice());
 
-        if (request.getSide() == PositionSide.BUY) {
-            // Holdings are created/increased at trade execution, not at placement.
-            portfolioService.reserveCash(portfolio, totalCost);
-        } else {
-            if (!holdingService.hasSufficientShares(portfolio, stock, request.getQuantity())) {
-                throw new IllegalArgumentException("Insufficient Shares");
-            }
-            holdingService.reserveShares(portfolio, stock, request.getQuantity());
-        }
-
-        Orders order = Orders.builder()
-                .user(user)
-                .stock(stock)
-                .orderType(request.getOrderType())
-                .side(request.getSide())
-                .status(OrderStatus.PENDING)
-                .quantity(request.getQuantity())
-                .remainingQuantity(request.getQuantity())
-                .price(request.getPrice())
-                .build();
-
-        ordersRepo.save(order);
-        return orderMapper.toOrderResponse(order);
+        return orderMapper.toOrderResponse(saved);
     }
 
     // --- cancel (single source of truth — used by both the DTO-based and id-based call sites) ---
@@ -133,5 +128,35 @@ public class OrderService {
 
     public List<OrderResponse> getOrderHistory(User user) {
         return getOrdersByStatus(user, List.of(OrderStatus.FILLED, OrderStatus.CANCELLED));
+    }
+
+    private Orders createAndReserveOrders(User user, Stock stock, PositionSide side, OrderType orderType,
+    BigDecimal quantity, BigDecimal price){
+        Portfolio portfolio = portfolioRepo.findByUser(user);
+
+        BigDecimal totalCost = price.multiply(quantity);
+
+        if (side == PositionSide.BUY) {
+            // Holdings are created/increased at trade execution, not at placement.
+            portfolioService.reserveCash(portfolio, totalCost);
+        } else {
+            if (!holdingService.hasSufficientShares(portfolio, stock, quantity)) {
+                throw new IllegalArgumentException("Insufficient Shares");
+            }
+            holdingService.reserveShares(portfolio, stock, quantity);
+        }
+
+        Orders order = Orders.builder()
+                .user(user)
+                .stock(stock)
+                .orderType(orderType)
+                .side(side  )
+                .status(OrderStatus.PENDING)
+                .quantity(quantity)
+                .remainingQuantity(quantity)
+                .price(price)
+                .build();
+
+        return ordersRepo.save(order);
     }
 }

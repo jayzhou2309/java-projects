@@ -1,6 +1,26 @@
 spring:
   application:
     name: demoTradingApp
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    consumer:
+      group-id: trading-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+    properties:
+      spring:
+        json:
+          trusted:
+            packages: "*"
+
+
   datasource:
     url: jdbc:mysql://localhost:3306/tradingDB
     username: ${DB_USERNAME}

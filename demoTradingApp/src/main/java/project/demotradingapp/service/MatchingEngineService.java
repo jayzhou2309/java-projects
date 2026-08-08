@@ -29,7 +29,7 @@ public class MatchingEngineService {
     public void matchOrders(Long stockId){
         List<OrderStatus> statusList = List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED);
         List<Orders> buyOrders = ordersRepo.findByStockIdAndSideAndStatusInOrderByPriceDescCreatedAtAsc(stockId, PositionSide.BUY, statusList);
-        List<Orders> sellOrders = ordersRepo.findByStockIdAndSideAndStatusInOrderByPriceDescCreatedAtDesc(stockId, PositionSide.SELL, statusList);
+        List<Orders> sellOrders = ordersRepo.findByStockIdAndSideAndStatusInOrderByPriceAscCreatedAtAsc(stockId, PositionSide.SELL, statusList);
 
         while (!buyOrders.isEmpty() && !sellOrders.isEmpty()){
             Orders bestBuy = buyOrders.get(0);
@@ -65,7 +65,7 @@ public class MatchingEngineService {
 
         updateOrder(buyOrder, matchedQuantity);
         updateOrder(sellOrder, matchedQuantity);
-        tradesRepo.save(trade);
+        Trades saved = tradesRepo.save(trade);
     }
 
     // Order updates

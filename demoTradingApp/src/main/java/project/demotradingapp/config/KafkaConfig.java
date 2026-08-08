@@ -5,9 +5,9 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.support.serializer.JsonSerializer;
-import project.demotradingapp.kafka.events.OrderCreatedEvent;
+import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,10 +16,18 @@ import java.util.Map;
 public class KafkaConfig {
     // Producer Side
     @Bean
-    public ProducerFactory<String, OrderCreatedEvent> producerFactory(){
+    // Generic Object Producer
+    public ProducerFactory<String, Object> producerFactory(){
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(config);
+    }
+
+    @Bean
+    public KafkaTemplate<String, Object> kafkaTemplate(
+            ProducerFactory<String, Object> producerFactory
+    ){
+        return new KafkaTemplate<>(producerFactory);
     }
 }

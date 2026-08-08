@@ -2,12 +2,10 @@ package project.demotradingapp.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.order.CreateOrderRequest;
 import project.demotradingapp.dto.order.OrderResponse;
 import project.demotradingapp.entity.*;
-import project.demotradingapp.kafka.events.OrderCreatedEvent;
 import project.demotradingapp.mapper.OrderMapper;
 import project.demotradingapp.model.OrderStatus;
 import project.demotradingapp.model.OrderType;
@@ -52,19 +50,9 @@ public class OrderService {
     }
 
     // --- create ---
-
-    // Kafka Overload
     @Transactional
-    public OrderResponse placeOrder(OrderCreatedEvent event){
-        User user = usersRepo.findById(event.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not Found"));
-        Stock stock = stockService.getStock(event.getStockId());
-
-        Orders saved = createAndReserveOrders(user, stock, event.getSide(), event.getOrderType(),
-                event.getQuantity(), event.getPrice());
-
-        matchingEngineService.matchOrders(stock.getId());
-        return orderMapper.toOrderResponse(saved);
+    public void triggerMatching(Long stockId) {
+        matchingEngineService.matchOrders(stockId);
     }
 
     @Transactional

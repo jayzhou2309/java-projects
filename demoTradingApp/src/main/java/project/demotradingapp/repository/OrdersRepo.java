@@ -15,9 +15,9 @@ public interface OrdersRepo extends JpaRepository<Orders, Long> {
 
     List<Orders> findByStockIdAndSideAndStatusInOrderByPriceDescCreatedAtAsc(Long stockId, PositionSide buy, List<OrderStatus> statusList);
 
-    List<Orders> findByStockIdAndSideAndStatusInOrderByPriceDescCreatedAtDesc(Long stockId, PositionSide sell, List<OrderStatus> statusList);
-
     List<Orders> getOrdersByUser(User user);
 
     List<Orders> findByUserAndStatusInOrderByCreatedAtDesc(User user, List<OrderStatus> statusList);
+
+    List<Orders> findByStockIdAndSideAndStatusInOrderByPriceAscCreatedAtAsc(Long stockId, PositionSide positionSide, List<OrderStatus> statusList);
 }

@@ -1,4 +1,4 @@
-package project.entities;
+package project.recommendationsalgo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -35,5 +35,5 @@ public class User {
 
     @Builder.Default
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Content> contents = new ArrayList<>();
+    private List<project.recommendationsalgo.entities.Content> contents = new ArrayList<>();
 }

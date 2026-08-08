@@ -1,4 +1,4 @@
-package project.entities;
+package project.recommendationsalgo.entities;
 
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -23,7 +23,7 @@ public class ContentMetrics {
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "content_id")
-    private Content content;
+    private project.recommendationsalgo.entities.Content content;
 
     @Column(name = "view_count", nullable = false)
     @Builder.Default

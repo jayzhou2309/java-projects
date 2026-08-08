@@ -1,4 +1,4 @@
-package project.repository;
+package project.recommendationsalgo.repository;
 
 import org.springframework.stereotype.Repository;
 

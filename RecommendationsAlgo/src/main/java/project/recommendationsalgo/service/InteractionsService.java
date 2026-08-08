@@ -1,4 +1,4 @@
-package project.service;
+package project.recommendationsalgo.service;
 
 import org.springframework.stereotype.Service;
 

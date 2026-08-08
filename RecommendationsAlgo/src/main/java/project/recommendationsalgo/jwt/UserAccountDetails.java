@@ -1,9 +1,10 @@
-package project.jwt;
+package project.recommendationsalgo.jwt;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import project.entities.User;
+import project.recommendationsalgo.entities.User;
 
 
 import java.util.Collection;
@@ -16,7 +17,7 @@ public class UserAccountDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override

@@ -1,7 +1,7 @@
-package project.repository;
+package project.recommendationsalgo.repository;
 
 import org.springframework.stereotype.Repository;
-import project.entities.User;
+import project.recommendationsalgo.entities.User;
 
 import java.util.Optional;
 

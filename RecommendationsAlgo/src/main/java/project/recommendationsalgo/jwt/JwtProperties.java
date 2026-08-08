@@ -1,4 +1,4 @@
-package project.jwt;
+package project.recommendationsalgo.jwt;
 
 import lombok.Getter;
 import lombok.Setter;

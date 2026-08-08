@@ -1,15 +1,13 @@
-package project.demotradingapp.security.jwt;
+package project.jwt;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import project.demotradingapp.entity.User;
+import project.entities.User;
+
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
-
 
 @RequiredArgsConstructor
 public class UserAccountDetails implements UserDetails {
@@ -18,14 +16,12 @@ public class UserAccountDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-                .collect(Collectors.toSet());`
+        return List.of();
     }
 
     @Override
     public String getPassword() {
-        return user.getPassword();
+        return user.getPasswordHash();
     }
 
     @Override
@@ -50,7 +46,7 @@ public class UserAccountDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return user.isEnabled();
+        return UserDetails.super.isEnabled();
     }
 
     public User getUser() {

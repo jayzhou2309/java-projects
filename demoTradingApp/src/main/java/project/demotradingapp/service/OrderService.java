@@ -2,6 +2,7 @@ package project.demotradingapp.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.consumer.internals.events.StreamsOnAllTasksLostCallbackCompletedEvent;
 import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.order.CreateOrderRequest;
 import project.demotradingapp.dto.order.OrderResponse;
@@ -28,7 +29,9 @@ public class OrderService {
     private final StockService stockService;
     private final MatchingEngineService matchingEngineService;
 
-    // --- shared helpers ---
+    // =========================
+    // ORDER OWNERSHIP
+    // =========================
 
     public Orders getOwnedOrder(Long orderId, User user) {
         Orders order = ordersRepo.findById(orderId)
@@ -39,41 +42,36 @@ public class OrderService {
         return order;
     }
 
-    private void releaseOrderReservation(Orders order) {
-        Portfolio portfolio = order.getUser().getPortfolio();
-        if (order.getSide() == PositionSide.BUY) {
-            BigDecimal refund = order.getRemainingQuantity().multiply(order.getPrice());
-            portfolioService.releaseReservedCash(portfolio, refund);
-        } else {
-            holdingService.releaseReservedShares(portfolio, order.getStock(), order.getRemainingQuantity());
-        }
-    }
-
-    // --- create ---
-    @Transactional
-    public void triggerMatching(Long stockId) {
-        matchingEngineService.matchOrders(stockId);
-    }
+    // =========================
+    // CREATE
+    // =========================
 
     @Transactional
     public OrderResponse placeOrder(CreateOrderRequest request, User user) {
-        if (!usersRepo.existsByUsername(user.getUsername())) {
-            throw new IllegalArgumentException("User does not exist");
-        }
-        if (request.getQuantity().compareTo(BigDecimal.ZERO) <= 0 ||
-                request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Quantity and Price must be greater than 0");
-        }
-
+        validateOrderRequest(request);
         Stock stock = stockService.getStock(request.getStockId());
+        Portfolio portfolio = portfolioRepo.findByUser(user);
 
-        Orders saved = createAndReserveOrders(user, stock, request.getSide(), request.getOrderType(),
-                request.getQuantity(), request.getPrice());
+        reserveFundOrShares(portfolio, stock, request);
 
-        return orderMapper.toOrderResponse(saved);
+        Orders order = Orders.builder()
+                .user(user)
+                .stock(stock)
+                .orderType(request.getOrderType())
+                .side(request.getSide())
+                .quantity(request.getQuantity())
+                .remainingQuantity(request.getQuantity())
+                .price(request.getPrice())
+                .build();
+
+        Orders savedOrder = ordersRepo.save(order);
+
+        return orderMapper.toOrderResponse(savedOrder);
     }
 
-    // --- cancel (single source of truth — used by both the DTO-based and id-based call sites) ---
+    // =========================
+    // CANCEL
+    // =========================
 
     @Transactional
     public void cancelOrder(Long orderId, User user) {
@@ -87,12 +85,16 @@ public class OrderService {
         releaseOrderReservation(order);
 
         order.setStatus(OrderStatus.CANCELLED);
+
         ordersRepo.save(order);
     }
 
-    // --- reads ---
+    // =========================
+    // READ
+    // =========================
 
     public List<OrderResponse> getAllOrders(User user) {
+
         return ordersRepo.getOrdersByUser(user)
                 .stream()
                 .map(orderMapper::toOrderResponse)
@@ -103,19 +105,43 @@ public class OrderService {
         return orderMapper.toOrderResponse(getOwnedOrder(orderId, user));
     }
 
-    private List<OrderResponse> getOrdersByStatus(User user, List<OrderStatus> statusList) {
-        return ordersRepo.findByUserAndStatusInOrderByCreatedAtDesc(user, statusList)
-                .stream()
-                .map(orderMapper::toOrderResponse)
-                .toList();
-    }
-
     public List<OrderResponse> getOpenOrders(User user) {
         return getOrdersByStatus(user, List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED));
     }
 
     public List<OrderResponse> getOrderHistory(User user) {
         return getOrdersByStatus(user, List.of(OrderStatus.FILLED, OrderStatus.CANCELLED));
+    }
+
+    // =========================
+    // RESERVATION
+    // =========================
+
+    private void reserveFundOrShares(
+            Portfolio portfolio,
+            Stock stock,
+            CreateOrderRequest request
+    ){
+        BigDecimal quantity = request.getQuantity();
+        BigDecimal price = request.getPrice();
+        if (request.getSide() == PositionSide.BUY){
+            BigDecimal totalCost = price.multiply(quantity);
+            portfolioService.reserveCash(portfolio, totalCost);
+        } else {
+            holdingService.reserveShares(portfolio, stock, quantity);
+        }
+    }
+
+    private void releaseOrderReservation(Orders order){
+        Portfolio portfolio = order.getUser().getPortfolio();
+        if (order.getSide() == PositionSide.BUY){
+            BigDecimal refund =
+                    order.getRemainingQuantity()
+                            .multiply(order.getPrice());
+            portfolioService.releaseReservedCash(portfolio, refund);
+        } else {
+            holdingService.releaseReservedShares(portfolio, order.getStock(), order.getRemainingQuantity());
+        }
     }
 
     private Orders createAndReserveOrders(User user, Stock stock, PositionSide side, OrderType orderType,
@@ -146,5 +172,26 @@ public class OrderService {
                 .build();
 
         return ordersRepo.save(order);
+    }
+
+    // =========================
+    // HELPERS
+    // =========================
+
+    private List<OrderResponse> getOrdersByStatus(User user, List<OrderStatus> statusList) {
+        return ordersRepo.findByUserAndStatusInOrderByCreatedAtDesc(user, statusList)
+                .stream()
+                .map(orderMapper::toOrderResponse)
+                .toList();
+    }
+
+    private void validateOrderRequest(CreateOrderRequest request){
+        if (request.getQuantity().compareTo(BigDecimal.ZERO) <= 0){
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+
+        if (request.getPrice().compareTo(BigDecimal.ZERO) <= 0){
+            throw new IllegalArgumentException("Price must be greater than 0");
+        }
     }
 }

@@ -27,9 +27,18 @@ public class MatchingEngineService {
     // Entry point
     @Transactional
     public void matchOrders(Long stockId){
-        List<OrderStatus> statusList = List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED);
-        List<Orders> buyOrders = ordersRepo.findByStockIdAndSideAndStatusInOrderByPriceDescCreatedAtAsc(stockId, PositionSide.BUY, statusList);
-        List<Orders> sellOrders = ordersRepo.findByStockIdAndSideAndStatusInOrderByPriceAscCreatedAtAsc(stockId, PositionSide.SELL, statusList);
+        List<OrderStatus> statusList = List.of(OrderStatus.PENDING,
+                OrderStatus.PARTIALLY_FILLED);
+        List<Orders> buyOrders =
+                ordersRepo.findByStockIdAndSideAndStatusInOrderByPriceDescCreatedAtAsc(
+                        stockId,
+                        PositionSide.BUY,
+                        statusList);
+        List<Orders> sellOrders =
+                ordersRepo.findByStockIdAndSideAndStatusInOrderByPriceAscCreatedAtAsc(
+                        stockId,
+                        PositionSide.SELL,
+                        statusList);
 
         while (!buyOrders.isEmpty() && !sellOrders.isEmpty()){
             Orders bestBuy = buyOrders.get(0);
@@ -51,32 +60,52 @@ public class MatchingEngineService {
     }
 
     // Core matching
-    private void executeTrade(Orders buyOrder, Orders sellOrder){
+    private void executeTrade(Orders buyOrder,
+                              Orders sellOrder){
         BigDecimal matchedQuantity = calculateMatchedQuantity(buyOrder, sellOrder);
         BigDecimal executionPrice = calculateExecutionPrice(buyOrder, sellOrder);
 
-        Trades trade = createTrade(buyOrder, sellOrder, matchedQuantity, executionPrice);
+        Trades trade = createTrade(
+                buyOrder,
+                sellOrder,
+                matchedQuantity,
+                executionPrice);
 
-        holdingService.increaseHolding(buyOrder.getUser().getPortfolio(), buyOrder.getStock(), matchedQuantity, executionPrice);
-        holdingService.decreaseHolding(sellOrder.getUser().getPortfolio(), sellOrder.getStock(), matchedQuantity);
+        holdingService.increaseHolding(buyOrder.getUser().getPortfolio(),
+                buyOrder.getStock(),
+                matchedQuantity,
+                executionPrice);
 
-        portfolioService.settleBuyerCash(buyOrder, executionPrice, matchedQuantity);
-        portfolioService.settleSellerCash(sellOrder, executionPrice, matchedQuantity);
+        holdingService.decreaseHolding(sellOrder.getUser().getPortfolio(),
+                sellOrder.getStock(),
+                matchedQuantity);
+
+        portfolioService.settleBuyerCash(buyOrder,
+                executionPrice,
+                matchedQuantity);
+        portfolioService.settleSellerCash(sellOrder,
+                executionPrice,
+                matchedQuantity);
 
         updateOrder(buyOrder, matchedQuantity);
         updateOrder(sellOrder, matchedQuantity);
-        Trades saved = tradesRepo.save(trade);
+        tradesRepo.save(trade);
     }
 
     // Order updates
-    private void updateOrder(Orders order, BigDecimal matchedQuantity) {
+    private void updateOrder(Orders order,
+                             BigDecimal matchedQuantity) {
         BigDecimal remaining = order.getRemainingQuantity().subtract(matchedQuantity);
 
         if (remaining.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Matched Quantity exceeds Remaining Quantity");
         }
+
         order.setRemainingQuantity(remaining);
-        order.setStatus(remaining.compareTo(BigDecimal.ZERO) == 0 ? OrderStatus.FILLED : OrderStatus.PARTIALLY_FILLED);
+        order.setStatus(
+                remaining.compareTo(BigDecimal.ZERO) == 0
+                        ? OrderStatus.FILLED
+                        : OrderStatus.PARTIALLY_FILLED);
         ordersRepo.save(order);
     }
 
@@ -99,38 +128,41 @@ public class MatchingEngineService {
 
 
     // Price/quantity calculation
-    private BigDecimal calculateExecutionPrice(Orders buyOrder, Orders sellOrder) {
-        OrderType buyType = buyOrder.getOrderType();
-        OrderType sellType = sellOrder.getOrderType();
+    private BigDecimal calculateExecutionPrice(Orders buyOrder,
+                                               Orders sellOrder) {
 
         if (buyOrder.getOrderType() == OrderType.MARKET
                 && sellOrder.getOrderType() == OrderType.MARKET){
             throw new IllegalArgumentException("Cannot execute Market to Market");
         }
 
-        if (buyType == OrderType.MARKET){
+        if (buyOrder.getOrderType() == OrderType.MARKET){
             return sellOrder.getPrice();
         }
 
-        if (sellType == OrderType.MARKET){
+        if (sellOrder.getOrderType() == OrderType.MARKET){
             return buyOrder.getPrice();
         }
 
-        return buyOrder.getCreatedAt().isBefore(sellOrder.getCreatedAt())
-                ? buyOrder.getPrice() : sellOrder.getPrice();
+        return buyOrder.getCreatedAt()
+                .isBefore(sellOrder.getCreatedAt())
+                ? buyOrder.getPrice()
+                : sellOrder.getPrice();
     }
 
-    private boolean canMatch(Orders buyOrder, Orders sellOrders){
+    private boolean canMatch(Orders buyOrder,
+                             Orders sellOrders){
         if (buyOrder.getOrderType() == OrderType.MARKET
-        && sellOrders.getOrderType() == OrderType.MARKET){
+            && sellOrders.getOrderType() == OrderType.MARKET){
             return false;
         }
 
         if (buyOrder.getOrderType() == OrderType.MARKET
-        || sellOrders.getOrderType() == OrderType.MARKET){
+            || sellOrders.getOrderType() == OrderType.MARKET){
             return true;
         }
-        return buyOrder.getPrice().compareTo(sellOrders.getPrice()) >= 0;
+        return buyOrder.getPrice()
+                .compareTo(sellOrders.getPrice()) >= 0;
     }
 
     private BigDecimal calculateMatchedQuantity(

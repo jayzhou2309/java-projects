@@ -2,7 +2,6 @@ package project.demotradingapp.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.portfolio.HoldingResponse;
 import project.demotradingapp.entity.Holdings;
@@ -22,18 +21,18 @@ public class HoldingService {
     private final HoldingsRepo holdingsRepo;
     private final HoldingMapper holdingMapper;
 
+    // =========================
+    // READ
+    // =========================
+
     public Holdings getHoldings(Portfolio portfolio, Stock stock){
         return holdingsRepo.findByPortfolioAndStock(portfolio, stock)
                 .orElse(null);
     }
 
     public HoldingResponse getHoldingForStockResponse(Portfolio portfolio, Stock stock){
-        Holdings holding = getHoldings(portfolio, stock);
-        if (holding != null){
-            return holdingMapper.toHoldingsResponse(holding);
-        } else {
-            throw new IllegalArgumentException("Holdings not found");
-        }
+        Holdings holding = requireHolding(portfolio, stock);
+        return holdingMapper.toHoldingsResponse(holding);
     }
 
 
@@ -44,17 +43,15 @@ public class HoldingService {
                 .toList();
     }
 
-    // CHECK HOLDING EXIST
-    private Holdings requireHolding(Portfolio portfolio, Stock stock){
-        Holdings holdings = getHoldings(portfolio, stock);
-        if (holdings == null){
-            throw new IllegalArgumentException("Holding not Found");
-        }
-        return holdings;
-    }
+    // =========================
+    // CREATE / UPDATE
+    // =========================
 
     @Transactional
-    public Holdings increaseHolding(Portfolio portfolio, Stock stock, BigDecimal quantity, BigDecimal executionPrice){
+    public Holdings increaseHolding(Portfolio portfolio,
+                                    Stock stock,
+                                    BigDecimal quantity,
+                                    BigDecimal executionPrice){
         Holdings holdings = getHoldings(portfolio, stock);
         if (holdings == null){
             holdings = Holdings.builder()
@@ -66,12 +63,15 @@ public class HoldingService {
                     .build();
             return holdingsRepo.save(holdings);
         }
-        BigDecimal oldCost = holdings.getAveragePrice().multiply(holdings.getQuantity());
-        BigDecimal newCost = executionPrice.multiply(quantity);
-        BigDecimal oldQuantity = holdings.getQuantity();
-        BigDecimal newQuantity = oldQuantity.add(quantity);
-
-        BigDecimal newAverage = oldCost.add(newCost).divide(newQuantity, 8, RoundingMode.HALF_UP);
+        BigDecimal oldCost =
+                holdings.getAveragePrice().multiply(holdings.getQuantity());
+        BigDecimal newCost =
+                executionPrice.multiply(quantity);
+        BigDecimal newQuantity =
+                holdings.getQuantity().add(quantity);
+        BigDecimal newAverage =
+                oldCost.add(newCost)
+                        .divide(newQuantity, 8, RoundingMode.HALF_UP);
 
         holdings.setQuantity(newQuantity);
         holdings.setAveragePrice(newAverage);
@@ -79,15 +79,20 @@ public class HoldingService {
     }
 
     @Transactional
-    public void decreaseHolding(Portfolio portfolio, Stock stock, BigDecimal quantity){
+    public void decreaseHolding(Portfolio portfolio,
+                                Stock stock,
+                                BigDecimal quantity){
         Holdings holdings = requireHolding(portfolio, stock);
 
         if (quantity.compareTo(holdings.getReservedQuantity()) > 0){
             throw new IllegalArgumentException("Insufficient Reserved Shares");
         }
 
-        holdings.setReservedQuantity(holdings.getReservedQuantity().subtract(quantity));
-        holdings.setQuantity(holdings.getQuantity().subtract(quantity));
+        holdings.setQuantity(
+                holdings.getQuantity().subtract(quantity));
+
+        holdings.setReservedQuantity(
+                holdings.getReservedQuantity().subtract(quantity));
 
         if (holdings.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
             holdingsRepo.delete(holdings);
@@ -96,27 +101,71 @@ public class HoldingService {
         }
     }
 
+    // =========================
+    // RESERVATION
+    // =========================
+
     @Transactional
-    public void reserveShares(Portfolio portfolio, Stock stock, BigDecimal quantity){
+    public void reserveShares(Portfolio portfolio,
+                              Stock stock,
+                              BigDecimal quantity){
         Holdings holdings = requireHolding(portfolio, stock);
-        // User sell order reserves shares
-        holdings.setReservedQuantity(holdings.getReservedQuantity().add(quantity));
+        BigDecimal availableShares =
+                holdings.getQuantity()
+                                .subtract(holdings.getReservedQuantity());
+
+        if (quantity.compareTo(availableShares) > 0){
+            throw new IllegalArgumentException("Insufficient Availablw Shares");
+        }
+
+        holdings.setReservedQuantity(
+                holdings.getReservedQuantity().add(quantity));
+
         holdingsRepo.save(holdings);
     }
 
     @Transactional
-    public void releaseReservedShares(Portfolio portfolio, Stock stock, BigDecimal quantity){
-        // when user cancels sell order, release reserved shares
+    public void releaseReservedShares(Portfolio portfolio,
+                                      Stock stock,
+                                      BigDecimal quantity){
         Holdings holdings = requireHolding(portfolio, stock);
-        holdings.setReservedQuantity(holdings.getReservedQuantity().subtract(quantity));
+        if (quantity.compareTo(holdings.getReservedQuantity()) > 0){
+            throw new IllegalArgumentException("Cannot release more shares than reserved");
+        }
+
+        holdings.setReservedQuantity(
+                holdings.getReservedQuantity().subtract(quantity));
+
         holdingsRepo.save(holdings);
     }
 
-    public boolean hasSufficientShares(Portfolio portfolio, Stock stock, BigDecimal quantity){
+    // =========================
+    // VALIDATION
+    // =========================
+
+    public boolean hasSufficientShares(Portfolio portfolio,
+                                       Stock stock,
+                                       BigDecimal quantity){
         Holdings holdings = getHoldings(portfolio, stock);
+
         if (holdings == null) return false;
-        BigDecimal availabeShares = holdings.getQuantity().subtract(holdings.getReservedQuantity());
+
+        BigDecimal availabeShares =
+                holdings.getQuantity()
+                        .subtract(holdings.getReservedQuantity());
 
         return availabeShares.compareTo(quantity) >= 0;
+    }
+
+    // =========================
+    // HELPER
+    // =========================
+
+    private Holdings requireHolding(Portfolio portfolio, Stock stock){
+        Holdings holdings = getHoldings(portfolio, stock);
+        if (holdings == null){
+            throw new IllegalArgumentException("Holding not Found");
+        }
+        return holdings;
     }
 }

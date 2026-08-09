@@ -9,13 +9,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.auth.*;
-import project.demotradingapp.entity.RefreshToken;
 import project.demotradingapp.entity.User;
 import project.demotradingapp.repository.UsersRepo;
 import project.demotradingapp.security.jwt.JWTProperties;
 import project.demotradingapp.security.jwt.JwtService;
 import project.demotradingapp.security.jwt.UserAccountDetails;
-import project.demotradingapp.security.jwt.UserAccountDetailsService;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +21,6 @@ public class AuthServiceImpl implements AuthService{
     private final UsersRepo usersRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final UserAccountDetailsService userAccountDetailsService;
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
     private final JWTProperties jwtProperties;
@@ -32,10 +29,10 @@ public class AuthServiceImpl implements AuthService{
     @Transactional
     public JWTResponse register(RegisterRequest request) {
         // Check DB if Exist
-        if (usersRepo.findByUsername(request.getUsername()).isPresent()){
+        if (usersRepo.existsByUsername(request.getUsername())){
             throw new IllegalArgumentException("Username already exist");
         }
-        if (usersRepo.findByEmail(request.getEmail()).isPresent()){
+        if (usersRepo.existsByEmail(request.getEmail())){
             throw new IllegalArgumentException("Email already exist");
         }
         // Register to DB
@@ -44,19 +41,12 @@ public class AuthServiceImpl implements AuthService{
                         .email(request.getEmail())
                         .password(passwordEncoder.encode(request.getPassword()))
                         .enabled(true)
-                                .build();
+                        .build();
+
         usersRepo.save(user);
+
         UserDetails userDetails = new UserAccountDetails(user);
-        String accessToken = jwtService.generateAccessToken(userDetails);
-        String refreshToken = refreshTokenService.generateRefreshToken(user);
-
-        return JWTResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(jwtProperties.getExpiration())
-                .build();
-
+        return createJWTResponse(userDetails, user);
     }
 
     @Override
@@ -69,20 +59,7 @@ public class AuthServiceImpl implements AuthService{
         // Load the authenticated user
         UserAccountDetails userDetails = (UserAccountDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
-
-        // Generate Access Token with the User Details
-        String accessToken = jwtService.generateAccessToken(userDetails);
-
-        // Generate and Save Refresh Token
-        String refreshToken = refreshTokenService.generateRefreshToken(user);
-
-        return JWTResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .expiresIn(jwtProperties.getExpiration())
-                .tokenType("Bearer")
-                .build();
-
+        return createJWTResponse(userDetails, user);
     }
 
     @Override
@@ -93,5 +70,17 @@ public class AuthServiceImpl implements AuthService{
     @Override
     public void logout (User user){
         refreshTokenService.revokeAllUserTokens(user);
+    }
+
+    private JWTResponse createJWTResponse(UserDetails userDetails, User user){
+        String accessToken = jwtService.generateAccessToken(userDetails);
+        String refreshToken = refreshTokenService.generateRefreshToken(user);
+
+        return JWTResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtProperties.getExpiration())
+                .build();
     }
 }

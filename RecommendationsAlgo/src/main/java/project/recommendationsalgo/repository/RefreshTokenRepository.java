@@ -2,8 +2,8 @@ package project.recommendationsalgo.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import project.recommendationsalgo.entities.Interactions;
+import project.recommendationsalgo.entities.RefreshToken;
 
 @Repository
-public interface InteractionsRepository extends JpaRepository<Interactions, Long> {
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 }

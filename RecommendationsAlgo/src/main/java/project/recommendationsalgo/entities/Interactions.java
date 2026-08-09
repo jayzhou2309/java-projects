@@ -1,12 +1,9 @@
 package project.recommendationsalgo.entities;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import project.recommendationsalgo.User;
+
 
 import java.time.LocalDateTime;
 
@@ -16,6 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class Interactions {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,11 +26,11 @@ public class Interactions {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "content_id", nullable = false)
-    private project.recommendationsalgo.entities.Content content;
+    private Content content;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 20)
-    private project.recommendationsalgo.entities.InteractionType interactionType;
+    private InteractionType interactionType;
 
     @Column(name = "watch_duration_sec")
     private Integer watchDurationSec;

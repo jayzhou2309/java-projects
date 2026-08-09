@@ -1,10 +1,7 @@
 package project.recommendationsalgo.entities;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -15,6 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class ContentMetrics {
     @Id
     @Column(name = "content_id")
@@ -23,7 +21,7 @@ public class ContentMetrics {
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "content_id")
-    private project.recommendationsalgo.entities.Content content;
+    private Content content;
 
     @Column(name = "view_count", nullable = false)
     @Builder.Default

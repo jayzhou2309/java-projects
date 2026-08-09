@@ -11,37 +11,37 @@ import project.demotradingapp.service.OrderService;
 
 import java.util.List;
 
-@RequestMapping("/api/orders")
+@RequestMapping("/api/orders/")
 @RequiredArgsConstructor
 @RestController
 public class OrderController {
     private final OrderService orderService;
 
     // GET    /orders
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<OrderResponse>> getAllOrders(@AuthenticationPrincipal UserAccountDetails userAccountDetails){
         return ResponseEntity.ok(orderService.getAllOrders(userAccountDetails.getUser()));
     }
 
     // POST   /orders
-    @PostMapping("/createOrders")
+    @PostMapping("createOrders")
     public ResponseEntity<OrderResponse> createOrder(@RequestBody CreateOrderRequest request, @AuthenticationPrincipal UserAccountDetails userAccountDetails){
         return ResponseEntity.ok(orderService.placeOrder(request, userAccountDetails.getUser()));
     }
     // GET    /orders/{id}
-    @GetMapping("/{orderId}")
+    @GetMapping("{orderId}")
     public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long orderId, @AuthenticationPrincipal UserAccountDetails userAccountDetails){
         return ResponseEntity.ok(orderService.getOrderById(orderId, userAccountDetails.getUser()));
     }
 
     // GET /orders/open
-    @GetMapping("/open")
+    @GetMapping("open")
     public ResponseEntity<List<OrderResponse>> getOpenOrders(@AuthenticationPrincipal UserAccountDetails userAccountDetails){
         return ResponseEntity.ok(orderService.getOpenOrders(userAccountDetails.getUser()));
     }
 
     // GET /orders/history
-    @GetMapping("/history")
+    @GetMapping("history")
     public ResponseEntity<List<OrderResponse>> getOrderHistory(@AuthenticationPrincipal UserAccountDetails userAccountDetails){
         return ResponseEntity.ok(orderService.getOrderHistory(userAccountDetails.getUser()));
     }

@@ -29,7 +29,7 @@ public class HoldingsController {
         return ResponseEntity.ok(holdingService.getHoldingsForPortfolio(userAccountDetails.getUser().getPortfolio()));
     }
     // GET /holdings/{stockId}
-    @GetMapping("/{stockId}")
+    @GetMapping("{stockId}")
     public ResponseEntity<HoldingResponse> getHoldingForStock(@PathVariable Long stockId, @AuthenticationPrincipal UserAccountDetails userAccountDetails){
         Portfolio portfolio = userAccountDetails.getUser().getPortfolio();
         Stock stock = stockService.getStock(stockId);

@@ -29,7 +29,11 @@ public class HoldingService {
 
     public HoldingResponse getHoldingForStockResponse(Portfolio portfolio, Stock stock){
         Holdings holding = getHoldings(portfolio, stock);
-        return holdingMapper.toHoldingsResponse(holding);
+        if (holding != null){
+            return holdingMapper.toHoldingsResponse(holding);
+        } else {
+            throw new IllegalArgumentException("Holdings not found");
+        }
     }
 
 

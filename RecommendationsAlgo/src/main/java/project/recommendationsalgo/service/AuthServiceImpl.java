@@ -5,6 +5,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.recommendationsalgo.dto.JWT.JWTResponse;
 import project.recommendationsalgo.dto.JWT.LoginRequest;
@@ -25,31 +26,30 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenService refreshTokenService;
     private final JwtProperties jwtProperties;
     private final AuthenticationManager authenticationManager;
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public JWTResponse register(RegisterRequest request) {
         // Check UserDB for user
-        if (userRepository.findByUsername(request.getUsername()).isPresent()){
+        if (userRepository.existsByUsername(request.getUsername())){
             throw new IllegalArgumentException("Username already exist");
         }
-        if (userRepository.findByEmail(request.getEmail()).isPresent()){
+        if (userRepository.existsByEmail(request.getEmail())){
             throw new IllegalArgumentException("Email already exist");
         }
-        User user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .passwordHash(request.getPassword())
-                .build();
-        userRepository.save(user);
+        User user = userService.create(request.getUsername(), request.getEmail(), passwordEncoder.encode(request.getPassword()));
         UserDetails userDetails = new UserAccountDetails(user);
         String accessToken = jwtService.generateAccessToken(userDetails);
         String refreshToken = refreshTokenService.generateRefreshToken(user);
+
         return JWTResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer ")
                 .expiresIn(jwtProperties.getExpiration())
                 .build();
+
     }
 
     @Override

@@ -16,5 +16,5 @@ public interface RefreshTokensRepo extends JpaRepository<RefreshToken, Long> {
 
     void deleteByExpiryBefore(LocalDateTime time);
 
-    List<RefreshToken> findByRevokedAndUser(boolean revoked, User user);
+    List<RefreshToken> findByRevokedAndUser(boolean b, User user);
 }

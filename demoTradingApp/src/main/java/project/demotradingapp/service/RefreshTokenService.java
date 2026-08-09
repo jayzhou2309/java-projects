@@ -87,7 +87,7 @@ public class RefreshTokenService {
     @Transactional
     public void revokeAllUserTokens(User user){
         if (!user.isEnabled()) {
-            throw new RuntimeException("User is disabled");
+            throw new IllegalArgumentException("User is disabled");
         }
         List<RefreshToken> activeTokens = refreshTokensRepo.findByRevokedAndUser(false, user);
         activeTokens.forEach(token -> token.setRevoked(true));

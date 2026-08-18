@@ -14,8 +14,8 @@ import java.util.Map;
 @Builder
 @Getter
 @Setter
-@NoArgsConstructor
 @Table(name = "content")
+@NoArgsConstructor
 @AllArgsConstructor
 public class Content {
     @Id

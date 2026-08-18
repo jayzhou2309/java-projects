@@ -20,14 +20,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final UsersRepo usersRepo;
     private final OrdersRepo ordersRepo;
     private final PortfolioRepo portfolioRepo;
     private final OrderMapper orderMapper;
     private final PortfolioService portfolioService;
     private final HoldingService holdingService;
     private final StockService stockService;
-    private final MatchingEngineService matchingEngineService;
 
     // =========================
     // ORDER OWNERSHIP

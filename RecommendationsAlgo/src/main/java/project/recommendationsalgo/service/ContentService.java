@@ -5,10 +5,13 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import project.recommendationsalgo.dto.content.ContentResponse;
 import project.recommendationsalgo.dto.content.CreateContentRequest;
+import project.recommendationsalgo.dto.content.UpdateTitleRequest;
 import project.recommendationsalgo.entities.Content;
 import project.recommendationsalgo.entities.User;
 import project.recommendationsalgo.mapper.ContentMapper;
 import project.recommendationsalgo.repository.ContentRepository;
+
+import java.nio.file.AccessDeniedException;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +65,25 @@ public class ContentService {
         Pageable creatorPage = capPageSize(pageable, 50);
         return contentRepository.findByCreator(creator, creatorPage)
                 .map(ContentMapper::toContentResponse);
+    }
+
+    public ContentResponse updateContentTitle(UpdateTitleRequest request, Long id, User requestor) throws AccessDeniedException {
+        Content content = contentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Content does not Exist"));
+        if (!content.getCreator().equals(requestor)){
+            throw new AccessDeniedException("No Access");
+        }
+        content.setTitle(request.getTitle());
+        contentRepository.save(content);
+        return ContentMapper.toContentResponse(content);
+    }
+
+    public void deleteContent(Long id, User requestor) throws AccessDeniedException {
+        Content content = contentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Content does not Exist"));
+        if (!content.getCreator().equals(requestor)){
+            throw new AccessDeniedException("No Access");
+        }
     }
 
     // Existence check — cheap validation before creating an Interaction referencing a contentId

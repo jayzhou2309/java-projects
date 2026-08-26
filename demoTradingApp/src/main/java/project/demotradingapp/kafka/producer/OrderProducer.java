@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class OrderProducer {
-    private final KafkaTemplate<String, Long> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private static final Logger log = LoggerFactory.getLogger(OrderProducer.class);
 
     public void publish(Long stockId){

@@ -17,7 +17,6 @@ import java.nio.file.AccessDeniedException;
 @RequiredArgsConstructor
 public class ContentService {
     private final ContentRepository contentRepository;
-    private final ContentMapper contentMapper;
 
     // Create — creator resolved from authenticated principal, from Controller;
     public ContentResponse create(CreateContentRequest request, User creator){
@@ -28,14 +27,14 @@ public class ContentService {
                 .creator(creator)
                 .build();
         contentRepository.save(content);
-        return contentMapper.toContentResponse(content);
+        return ContentMapper.toContentResponse(content);
     }
 
     // Single lookup — throws if not found (backs GET /content/{id})
     public ContentResponse getById(Long id){
         Content content = contentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Content ID does not exist"));
-        return contentMapper.toContentResponse(content);
+        return ContentMapper.toContentResponse(content);
     }
 
     // Paginated list (backs GET /content) — enforce a max page size, never unbounded

@@ -48,18 +48,23 @@ public class OrderService {
     public OrderResponse placeOrder(CreateOrderRequest request, User user) {
         validateOrderRequest(request);
         Stock stock = stockService.getStock(request.getStockId());
-        Portfolio portfolio = portfolioRepo.findByUser(user);
+        Portfolio portfolio = portfolioRepo.findByUser(user)
+                .orElseThrow(() -> new IllegalArgumentException("Portfolio Not Found"));
 
-        reserveFundOrShares(portfolio, stock, request);
+        BigDecimal effectivePrice = request.getOrderType() == OrderType.MARKET
+                ? stock.getCurrentPrice() : request.getPrice();
+
+        reserveFundOrShares(portfolio, stock, request, effectivePrice);
 
         Orders order = Orders.builder()
                 .user(user)
                 .stock(stock)
                 .orderType(request.getOrderType())
                 .side(request.getSide())
+                .status(OrderStatus.PENDING)
                 .quantity(request.getQuantity())
                 .remainingQuantity(request.getQuantity())
-                .price(request.getPrice())
+                .price(effectivePrice)
                 .build();
 
         Orders savedOrder = ordersRepo.save(order);
@@ -115,15 +120,16 @@ public class OrderService {
     // RESERVATION
     // =========================
 
+    // NPE if Market BUY Order comes with price == null
     private void reserveFundOrShares(
             Portfolio portfolio,
             Stock stock,
-            CreateOrderRequest request
+            CreateOrderRequest request,
+            BigDecimal effectivePrice
     ){
         BigDecimal quantity = request.getQuantity();
-        BigDecimal price = request.getPrice();
         if (request.getSide() == PositionSide.BUY){
-            BigDecimal totalCost = price.multiply(quantity);
+            BigDecimal totalCost = effectivePrice.multiply(quantity);
             portfolioService.reserveCash(portfolio, totalCost);
         } else {
             holdingService.reserveShares(portfolio, stock, quantity);
@@ -144,7 +150,8 @@ public class OrderService {
 
     private Orders createAndReserveOrders(User user, Stock stock, PositionSide side, OrderType orderType,
     BigDecimal quantity, BigDecimal price){
-        Portfolio portfolio = portfolioRepo.findByUser(user);
+        Portfolio portfolio = portfolioRepo.findByUser(user)
+                .orElseThrow(() -> new IllegalArgumentException("Portfolio Not Found"));
 
         BigDecimal totalCost = price.multiply(quantity);
 
@@ -184,11 +191,12 @@ public class OrderService {
     }
 
     private void validateOrderRequest(CreateOrderRequest request){
-        if (request.getQuantity().compareTo(BigDecimal.ZERO) <= 0){
+        if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0){
             throw new IllegalArgumentException("Quantity must be greater than 0");
         }
 
-        if (request.getPrice().compareTo(BigDecimal.ZERO) <= 0){
+        if (request.getOrderType() == OrderType.LIMIT &&
+                request.getPrice() == null || request.getPrice().compareTo(BigDecimal.ZERO) <= 0){
             throw new IllegalArgumentException("Price must be greater than 0");
         }
     }

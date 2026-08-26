@@ -13,6 +13,7 @@ public class OrderMapper {
 
     public OrderResponse toOrderResponse(Orders orders){
         return OrderResponse.builder()
+                .id(orders.getId())
                 .symbol(orders.getStock().getSymbol())
                 .orderType(orders.getOrderType())
                 .status(orders.getStatus())

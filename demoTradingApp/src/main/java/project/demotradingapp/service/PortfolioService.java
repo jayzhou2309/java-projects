@@ -22,11 +22,13 @@ public class PortfolioService {
 
     // Service Usage
     public Portfolio getPortfolioEntity(User user){
-        return portfolioRepo.findByUserUsername(user.getUsername());
+        return portfolioRepo.findByUserUsername(user.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("Portfolio Not Found"));
     }
 
     public PortfolioResponse getPortfolio(User user){
-        Portfolio portfolio = portfolioRepo.findByUserUsername(user.getUsername());
+        Portfolio portfolio = portfolioRepo.findByUserUsername(user.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("Portfolio Not Found"));
         return portfolioMapper.toPortfolioResponse(portfolio);
     }
 
@@ -35,7 +37,8 @@ public class PortfolioService {
         if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0){
             throw new IllegalArgumentException("Deposit cant be negative");
         }
-        Portfolio portfolio = portfolioRepo.findByUser(user);
+        Portfolio portfolio = portfolioRepo.findByUser(user)
+                .orElseThrow(() -> new IllegalArgumentException("Portfolio Not Found"));
         portfolio.setAvailableCash(
                 portfolio.getAvailableCash().add(request.getAmount())
         );
@@ -48,7 +51,8 @@ public class PortfolioService {
         if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0){
             throw new IllegalArgumentException("Withdrawals must be positive");
         }
-        Portfolio portfolio = portfolioRepo.findByUser(user);
+        Portfolio portfolio = portfolioRepo.findByUser(user)
+                .orElseThrow(() -> new IllegalArgumentException("Portfolio Not Found"));
         if (request.getAmount().compareTo(portfolio.getAvailableCash()) > 0){
             throw new IllegalArgumentException("Insufficient Funds");
         }

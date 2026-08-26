@@ -12,6 +12,7 @@ import project.demotradingapp.entity.Stock;
 public class StockMapper {
     public StockResponse toStockResponse(Stock stock){
         return StockResponse.builder()
+                .id(stock.getId())
                 .symbol(stock.getSymbol())
                 .currentPrice(stock.getCurrentPrice())
                 .active(stock.isActive())

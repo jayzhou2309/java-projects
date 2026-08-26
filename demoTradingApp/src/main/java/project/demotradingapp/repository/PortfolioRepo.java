@@ -6,11 +6,12 @@ import project.demotradingapp.entity.Portfolio;
 import project.demotradingapp.entity.User;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PortfolioRepo extends JpaRepository<Portfolio, Long> {
 
-    Portfolio findByUserUsername(String user);
+    Optional<Portfolio> findByUserUsername(String user);
 
-    Portfolio findByUser(User user);
+    Optional<Portfolio> findByUser(User user);
 }

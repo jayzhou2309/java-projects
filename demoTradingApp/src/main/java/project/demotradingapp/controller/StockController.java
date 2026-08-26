@@ -32,7 +32,7 @@ public class StockController {
 
     // GET    /stocks/symbol/{symbol}
     @GetMapping("symbol/{symbol}")
-    public ResponseEntity<StockResponse> getStockSymbol(@RequestBody String ticker){
+    public ResponseEntity<StockResponse> getStockSymbol(@PathVariable String ticker){
         return ResponseEntity.ok(stockService.getStockByTicker(ticker));
     }
 

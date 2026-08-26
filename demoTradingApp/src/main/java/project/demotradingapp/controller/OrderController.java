@@ -45,4 +45,10 @@ public class OrderController {
     public ResponseEntity<List<OrderResponse>> getOrderHistory(@AuthenticationPrincipal UserAccountDetails userAccountDetails){
         return ResponseEntity.ok(orderService.getOrderHistory(userAccountDetails.getUser()));
     }
+
+    @DeleteMapping("cancel/{id}")
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId, @AuthenticationPrincipal UserAccountDetails userAccountDetails){
+        orderService.cancelOrder(orderId, userAccountDetails.getUser());
+        return ResponseEntity.noContent().build();
+    }
 }

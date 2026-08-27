@@ -1,4 +1,7 @@
 package project.demotradingapp.execeptions;
 
-public class ForbiddenException {
+public class ForbiddenException extends RuntimeException{
+    public ForbiddenException(String message){
+        super(message);
+    }
 }

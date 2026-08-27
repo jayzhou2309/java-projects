@@ -26,6 +26,8 @@ public class HoldingsController {
     // GET /holdings
     @GetMapping
     public ResponseEntity<List<HoldingResponse>> getHoldings(@AuthenticationPrincipal UserAccountDetails userAccountDetails){
+        System.out.println("Holding Controller Hit");
+        System.out.println("USER " + userAccountDetails.getUsername());
         return ResponseEntity.ok(holdingService.getHoldingsForPortfolio(userAccountDetails.getUser().getPortfolio()));
     }
     // GET /holdings/{stockId}
@@ -35,4 +37,6 @@ public class HoldingsController {
         Stock stock = stockService.getStock(stockId);
         return ResponseEntity.ok(holdingService.getHoldingForStockResponse(portfolio, stock));
     }
+
+
 }

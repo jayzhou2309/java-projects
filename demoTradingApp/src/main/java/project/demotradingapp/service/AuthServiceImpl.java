@@ -9,11 +9,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.auth.*;
+import project.demotradingapp.entity.Roles;
 import project.demotradingapp.entity.User;
+import project.demotradingapp.repository.RolesRepo;
 import project.demotradingapp.repository.UsersRepo;
 import project.demotradingapp.security.jwt.JWTProperties;
 import project.demotradingapp.security.jwt.JwtService;
 import project.demotradingapp.security.jwt.UserAccountDetails;
+
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class AuthServiceImpl implements AuthService{
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
     private final JWTProperties jwtProperties;
+    private final RolesRepo rolesRepo;
 
     @Override
     @Transactional
@@ -35,12 +40,17 @@ public class AuthServiceImpl implements AuthService{
         if (usersRepo.existsByEmail(request.getEmail())){
             throw new IllegalArgumentException("Email already exist");
         }
+
+        Roles userRole = rolesRepo.findByName("USER")
+                .orElseThrow(() -> new IllegalArgumentException("USER role not found"));
+
         // Register to DB
         User user = User.builder()
                         .username(request.getUsername())
                         .email(request.getEmail())
                         .password(passwordEncoder.encode(request.getPassword()))
                         .enabled(true)
+                        .roles(Set.of(userRole))
                         .build();
 
         usersRepo.save(user);

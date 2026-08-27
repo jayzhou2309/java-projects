@@ -4,13 +4,17 @@ import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import project.demotradingapp.dto.auth.*;
+import project.demotradingapp.entity.User;
 import project.demotradingapp.security.jwt.UserAccountDetails;
 import project.demotradingapp.service.AuthService;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -43,6 +47,22 @@ public class AuthController {
         }
         authService.logout(userAccountDetails.getUser());
         return ResponseEntity.noContent().build(); // HTTP 204
+    }
+
+    // For testing and Checking User Role
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication){
+        System.out.println("Authentication " + authentication);
+        System.out.println("Principal " + authentication.getPrincipal());
+        System.out.println("Authorities " + authentication.getAuthorities());
+
+        UserAccountDetails details = (UserAccountDetails) authentication.getPrincipal();
+
+        User user = details.getUser();
+
+        return ResponseEntity.ok(
+                Map.of("username", details.getUsername(), "roles", details.getAuthorities())
+        );
     }
 
 }

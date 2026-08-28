@@ -11,4 +11,5 @@ public interface AuthService {
     JWTResponse login(LoginRequest request);
     JWTResponse refresh(RefreshTokenRequest request);
     void logout(User user);
+    JWTResponse createAdminRequest(RegisterRequest request);
 }

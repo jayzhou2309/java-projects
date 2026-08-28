@@ -20,6 +20,12 @@ public class OrderController {
     // GET    /orders
     @GetMapping
     public ResponseEntity<List<OrderResponse>> getAllOrders(@AuthenticationPrincipal UserAccountDetails userAccountDetails){
+
+
+        System.out.println("ORDER CONTROLLER HIT");
+        System.out.println("USER: " + userAccountDetails.getUsername());
+        System.out.println("AUTHORITIES: " + userAccountDetails.getAuthorities());
+
         return ResponseEntity.ok(orderService.getAllOrders(userAccountDetails.getUser()));
     }
 

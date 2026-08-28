@@ -65,4 +65,9 @@ public class AuthController {
         );
     }
 
+    @PostMapping("/create-admin")
+    public ResponseEntity<JWTResponse> createAdmin(@RequestBody RegisterRequest request){
+        return ResponseEntity.ok(authService.createAdminRequest(request));
+    }
+
 }

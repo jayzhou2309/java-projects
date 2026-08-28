@@ -11,12 +11,15 @@ import org.springframework.stereotype.Service;
 import project.demotradingapp.dto.auth.*;
 import project.demotradingapp.entity.Roles;
 import project.demotradingapp.entity.User;
+import project.demotradingapp.execeptions.BadRequestExeception;
+import project.demotradingapp.execeptions.ResourceNotFoundException;
 import project.demotradingapp.repository.RolesRepo;
 import project.demotradingapp.repository.UsersRepo;
 import project.demotradingapp.security.jwt.JWTProperties;
 import project.demotradingapp.security.jwt.JwtService;
 import project.demotradingapp.security.jwt.UserAccountDetails;
 
+import java.nio.file.ReadOnlyFileSystemException;
 import java.util.Set;
 
 @Service
@@ -92,5 +95,31 @@ public class AuthServiceImpl implements AuthService{
                 .tokenType("Bearer")
                 .expiresIn(jwtProperties.getExpiration())
                 .build();
+    }
+
+    @Transactional
+    public JWTResponse createAdminRequest(RegisterRequest request){
+        if (usersRepo.existsByUsername(request.getUsername())){
+            throw new BadRequestExeception("Username already exist");
+        }
+
+        if (usersRepo.existsByEmail(request.getEmail())){
+            throw new BadRequestExeception("Email already exist");
+        }
+
+        Roles adminRole = rolesRepo.findByName("ADMIN")
+                .orElseThrow(() -> new ResourceNotFoundException("ADMIN role not found"));
+
+        User user = User.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .email(request.getEmail())
+                .enabled(true)
+                .roles(Set.of(adminRole))
+                .build();
+
+        usersRepo.save(user);
+        UserDetails userDetails = new UserAccountDetails(user);
+        return createJWTResponse(userDetails, user);
     }
 }

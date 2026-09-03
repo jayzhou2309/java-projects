@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: RAGDemo
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-5-nano
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+
+logging:
+  level:
+    org.apache.pdfbox.pdmodel.font.FileSystemFontProvider: error

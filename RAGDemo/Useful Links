@@ -1,0 +1,12 @@
+EDGAR
+- Company Tickers -> CIK: https://www.sec.gov/files/company_tickers.json?utm_source=chatgpt.com
+- CIK Filing History: https://data.sec.gov/submissions/CIK0000320193.json
+    - Returns
+        CIK:              0000320193
+        accessionNumber:  0000320193-25-000079
+        primaryDocument:  aapl-20250927.htm
+    - https://www.sec.gov/Archives/edgar/data/
+        {CIK-without-leading-zeroes}/
+        {accession-without-dashes}/
+        {primaryDocument}
+    - Ingestion PipeLine -> Download -> Parse into Section Aware Chunks -> Embed -> PGVectorDB

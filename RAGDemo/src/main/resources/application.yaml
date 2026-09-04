@@ -1,6 +1,28 @@
 spring:
   application:
     name: RAGDemo
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ragdemo
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  security:
+    user:
+      name: ${DEV-USER-PW}
+      password: ${DEV-USER-PW}
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+app:
+  ingestion:
+    enabled: false
+  sec:
+    base-url: "https://data.sec.gov"
+    user-agent: ${USER-AGENT}
+  secclient:
+    stock-data-init: false
+
 
   ai:
     openai:

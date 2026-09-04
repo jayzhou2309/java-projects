@@ -13,7 +13,7 @@ public class ChatController {
     @GetMapping("/")
     public String chat(){
         return chatClient.prompt()
-                .user("How does this affect stock price?")
+                .user("Buy or Sell")
                 .call()
                 .content();
     }

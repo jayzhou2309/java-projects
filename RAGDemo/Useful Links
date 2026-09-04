@@ -4,7 +4,7 @@ EDGAR
     - Returns
         CIK:              0000320193
         accessionNumber:  0000320193-25-000079
-        primaryDocument:  aapl-20250927.htm
+        primaryDocument:  aapl-20250927.html
     - https://www.sec.gov/Archives/edgar/data/
         {CIK-without-leading-zeroes}/
         {accession-without-dashes}/

@@ -1,0 +1,3 @@
+ALTER TYPE filing_type RENAME VALUE '10-K' TO 'TEN_K';
+ALTER TYPE filing_type RENAME VALUE '10-Q' TO 'TEN_Q';
+ALTER TYPE filing_type RENAME VALUE '8-K' TO 'EIGHT_K';

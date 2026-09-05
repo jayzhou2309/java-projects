@@ -9,11 +9,10 @@ import org.springframework.web.client.RestClient;
 import java.net.http.HttpClient;
 
 @Configuration
-public class RestClientConfig {
-
+public class SECArchiveRestClientConfig {
     @Bean
-    public RestClient secRestClient(
-            @Value("${app.sec.base-url}") String baseUrl
+    public RestClient secArchiveRestClient(
+            @Value("${app.sec.archive-base-url}") String baseUrl
     ) {
         HttpClient httpClient = HttpClient.newHttpClient();
         return RestClient.builder()

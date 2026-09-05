@@ -17,8 +17,15 @@ spring:
 app:
   ingestion:
     enabled: false
+
   sec:
+    filing-types:
+      - 10-K
+      - 10-Q
+      - 8-K
+    filings-per-type: 1
     base-url: "https://data.sec.gov"
+    archive-base-url: "https://www.sec.gov"
     user-agent: ${USER-AGENT}
   secclient:
     stock-data-init: false
@@ -37,3 +44,4 @@ app:
 logging:
   level:
     org.apache.pdfbox.pdmodel.font.FileSystemFontProvider: error
+    org.springframework.security: DEBUG

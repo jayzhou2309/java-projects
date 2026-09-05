@@ -12,14 +12,15 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // Open endpoints — health checks, actuator info, etc.
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        // Everything else requires authentication
+                        .requestMatchers(
+                                "/actuator/health",
+                                "/actuator/info",
+                                "/ingest-sec",
+                                "/chat"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
-                // Basic auth for now — swap for API-key or JWT auth later
-                .httpBasic(basic -> {})
-                // CSRF is for browser/form clients; safe to disable for a stateless API used via curl/Postman
+                .httpBasic(httpBasic -> httpBasic.disable())
                 .csrf(csrf -> csrf.disable());
 
         return http.build();

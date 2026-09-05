@@ -8,10 +8,13 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import project.ragdemo.stock.Stock;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "filings",
@@ -30,13 +33,15 @@ import java.time.LocalDateTime;
 public class Filing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "stock_id", nullable = false)
     private Stock stock;
 
+
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "filing_type", nullable = false)
     private FilingType filingType;
 
@@ -51,6 +56,7 @@ public class Filing {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Builder.Default
     private FilingStatus status = FilingStatus.PENDING;
 

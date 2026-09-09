@@ -1,0 +1,77 @@
+[
+  {
+    "original": "src/test/java/project/ragdemo/market/IBKRClientTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/market/IBKRClientTest.java",
+    "sha256": "5bfed76927a24ef2e9262ecf34679ef854fd728561ff7e0ee25fced8e295bc4f"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/market/IBKRLiveTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/market/IBKRLiveTest.java",
+    "sha256": "89e9f235de1d78583df582edd7fe5b1d493059ef7d799eff41ef6ec831ed49c4"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/market/MarketDataServiceTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/market/MarketDataServiceTest.java",
+    "sha256": "59696c475501e9bb7ed62a67545794606fc2b0e4d5f8c3a670bc25be0b1ec6e2"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/market/IBKRSocketQuoteClientTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/market/IBKRSocketQuoteClientTest.java",
+    "sha256": "f3110e0be8c278f3a286d14e8dcd173e519e5f0ac4d491a94cb5b8f30b9f5a24"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/research/Phase3EvidenceTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/research/Phase3EvidenceTest.java",
+    "sha256": "36ab790a2a8462ff31cabe7e2e408bbba7d3aff0986a7b411873bfb8dfa8a5ce"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/research/ResearchOrchestratorTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/research/ResearchOrchestratorTest.java",
+    "sha256": "3acb7124e2a1ad224f2e19de9a11466bf269fec2afebd8568dbc8d179c3a304b"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/research/QueryPlanningAgentTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/research/QueryPlanningAgentTest.java",
+    "sha256": "923e3b6213b9447fce0d8c36236772a73d1a33272c798a18d273be655d759c28"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/research/AgentRunnerTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/research/AgentRunnerTest.java",
+    "sha256": "757851d9732e36fedc48835813f6406372e01254b3f9c595507c56a0481927e4"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/recommendation/RecommendationGeneratorTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/recommendation/RecommendationGeneratorTest.java",
+    "sha256": "75b6eac61963749195879c5924b8a53d70f0548b57939b09f4978324dc1112dc"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/recommendation/RecommendationBaselineTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/recommendation/RecommendationBaselineTest.java",
+    "sha256": "8b0dcd8b1f438586a90c11e5f0f6b1bdda8fd343fb3f8242bed8d19b21b05656"
+  },
+  {
+    "original": "src/test/java/project/ragdemo/monitoring/RunMonitorTest.java",
+    "archived": "archive/pre-prd/src/test/java/project/ragdemo/monitoring/RunMonitorTest.java",
+    "sha256": "5966c14d8dd3759a1498c99f08b07e6e777d96e08201f611a17ab8a94534744b"
+  },
+  {
+    "original": "src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker",
+    "archived": "archive/pre-prd/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker",
+    "sha256": "8eca853a5a457f17e0479b71dfbe95f2a13aff9eeff250261ecdc8ca9b847a6a"
+  },
+  {
+    "original": "src/test/resources/evaluation/baseline.properties",
+    "archived": "archive/pre-prd/src/test/resources/evaluation/baseline.properties",
+    "sha256": "b2b2c0075eef263d716494e268382361bcadebd84dd4a00f57def56416722ec7"
+  },
+  {
+    "original": "src/main/resources/static/monitor.js",
+    "archived": "archive/pre-prd/src/main/resources/static/monitor.js",
+    "sha256": "eda452da7e76dce88373222195bd39dc185b5be1a7f28ca338f26b270637f127"
+  },
+  {
+    "original": "src/main/resources/static/monitor.html",
+    "archived": "archive/pre-prd/src/main/resources/static/monitor.html",
+    "sha256": "694dbb89b3eed5f2559851d216b7e61453942b8b50a00f182052bf1a9c957253"
+  }
+]

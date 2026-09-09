@@ -1,0 +1,42 @@
+name: RAGDemo Phase 1
+on:
+  pull_request:
+    paths: ['RAGDemo/**', '.github/workflows/ragdemo-phase1.yml']
+  push:
+    paths: ['RAGDemo/**', '.github/workflows/ragdemo-phase1.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: RAGDemo
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: '5433'
+      POSTGRES_DB: ragdemo
+      POSTGRES_USER: ragdemo
+      POSTGRES_PASSWORD: ci-database-only-password
+      APP_AUTH_USERNAME: ci-researcher
+      APP_AUTH_PASSWORD: ci-application-only-password
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: RAGDemo/pom.xml
+      - name: Start isolated PostgreSQL with required extensions
+        run: docker compose up -d --wait database
+      - name: Compile and run unit, security, migration and repository tests
+        run: ./mvnw -B -Pintegration verify
+      - name: Database diagnostics on failure
+        if: failure()
+        run: docker compose logs --tail=100 database
+      - name: Stop CI containers
+        if: always()
+        run: docker compose down

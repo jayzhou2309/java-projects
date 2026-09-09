@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research activity monitor</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#e6edf6;background:#101725;color-scheme:dark}
+    body{max-width:1100px;margin:40px auto;padding:0 24px}h1{margin-bottom:8px}p{color:#aabbd0;line-height:1.6}
+    .layout{display:grid;grid-template-columns:280px 1fr;gap:24px;margin-top:24px}section,aside{background:#182235;border:1px solid #304158;border-radius:12px;padding:20px}
+    button{display:block;width:100%;text-align:left;background:#243249;color:inherit;border:1px solid #42536b;border-radius:6px;padding:12px;margin:8px 0;cursor:pointer}button[aria-pressed=true]{border-color:#78c4ff;background:#304867}
+    .stage{padding:12px 0;border-bottom:1px solid #304158}.status{font-size:.8rem;margin-left:12px;color:#9dcfff}.FAILED{color:#ffaaaa}.COMPLETED{color:#88e0bc}ol{padding-left:22px}li{margin:12px 0;line-height:1.5}time{color:#aabbd0;font-size:.85rem}#connection{color:#9dcfff}#run-title{overflow-wrap:anywhere;font-size:1rem}
+    @media(max-width:700px){.layout{grid-template-columns:1fr}}
+  </style>
+  <script src="/monitor.js" defer></script>
+</head>
+<body>
+  <h1>Research activity</h1>
+  <p>Live operational activity, refreshed every second. Run a request through <code>/recommendations?query=...</code> to see progress.</p>
+  <div id="connection" role="status">Connecting…</div>
+  <p>Connected: query planning, SEC research, market research, and recommendation generation. SEC and required market research run concurrently. Stages report attempts, elapsed time, skips, and timeouts.</p>
+  <div class="layout">
+    <aside><h2>Recent runs</h2><div id="runs">No requests recorded yet.</div></aside>
+    <section><h2 id="run-title">Select a run</h2><div id="stages"></div><h2>Activity timeline</h2><ol id="events"></ol></section>
+  </div>
+</body>
+</html>

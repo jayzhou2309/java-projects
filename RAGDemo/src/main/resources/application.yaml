@@ -2,46 +2,31 @@ spring:
   application:
     name: RAGDemo
   datasource:
-    url: jdbc:postgresql://localhost:5432/ragdemo
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
-  security:
-    user:
-      name: ${DEV-USER-PW}
-      password: ${DEV-USER-PW}
-
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${POSTGRES_DB:ragdemo}
+    username: ${POSTGRES_USER:ragdemo}
+    password: ${POSTGRES_PASSWORD}
+  docker:
+    compose:
+      enabled: false
   flyway:
     enabled: true
-    baseline-on-migrate: true
+    baseline-on-migrate: false
+    clean-disabled: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+
+server:
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
 
 app:
-  ingestion:
-    enabled: false
-
-  sec:
-    filing-types:
-      - 10-K
-      - 10-Q
-      - 8-K
-    filings-per-type: 1
-    base-url: "https://data.sec.gov"
-    archive-base-url: "https://www.sec.gov"
-    user-agent: ${USER-AGENT}
-  secclient:
-    stock-data-init: false
-
-
-  ai:
-    openai:
-      api-key: ${OPENAI_API_KEY}
-      chat:
-        options:
-          model: gpt-5-nano
-    vectorstore:
-      pgvector:
-        initialize-schema: true
-
-logging:
-  level:
-    org.apache.pdfbox.pdmodel.font.FileSystemFontProvider: error
-    org.springframework.security: DEBUG
+  auth:
+    username: ${APP_AUTH_USERNAME:}
+    password: ${APP_AUTH_PASSWORD:}

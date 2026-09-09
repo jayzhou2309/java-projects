@@ -1,65 +1,50 @@
 package project.ragdemo.stock;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import project.ragdemo.sec.Filing;
+import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.Objects;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
+/** Current security master; historical identifiers are stored separately. */
 @Entity
 @Table(name = "stocks")
-@Builder
-@Getter
-@Setter
-@RequiredArgsConstructor
-@AllArgsConstructor
 public class Stock {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false, unique = true, length = 10)
+    @Column(nullable = false, length = 10, unique = true)
     private String symbol;
-
-    @Column(name = "company_name", nullable = false)
+    @Column(name = "company_name", nullable = false, length = 255)
     private String companyName;
-
     @Column(length = 20)
     private String exchange;
-
     @Column(length = 100)
     private String sector;
-
     @Column(length = 100)
     private String industry;
-
-    @Column(nullable = false, unique = true, length = 10)
+    @Column(nullable = false, length = 10, unique = true)
     private String cik;
-
     @Column(name = "is_active", nullable = false)
     private boolean active;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
-    @OneToMany(mappedBy = "stock")
-    private List<Filing> filingList;
+    protected Stock() {}
+
+    public Stock(String symbol, String companyName, String cik, Instant recordedAt) {
+        this.symbol = Objects.requireNonNull(symbol);
+        this.companyName = Objects.requireNonNull(companyName);
+        this.cik = Objects.requireNonNull(cik);
+        this.createdAt = Objects.requireNonNull(recordedAt);
+        this.updatedAt = recordedAt;
+        this.active = true;
+    }
+
+    public Long getId() { return id; }
+    public String getSymbol() { return symbol; }
+    public String getCompanyName() { return companyName; }
+    public String getCik() { return cik; }
+    public boolean isActive() { return active; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
 }

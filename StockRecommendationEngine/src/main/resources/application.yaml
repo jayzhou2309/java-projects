@@ -24,7 +24,7 @@ spring:
 
   ai:
     model:
-      chat: none
+      chat: ${CHAT_MODEL_PROVIDER:none}
       embedding: openai
       audio:
         speech: none
@@ -32,6 +32,10 @@ spring:
 
     openai:
       api-key: ${OPENAI_API_KEY}
+
+      chat:
+        timeout: 20s
+        max-retries: 0
 
       embedding:
         model: text-embedding-3-small
@@ -43,3 +47,39 @@ sec:
   tickers-url: https://www.sec.gov/files/company_tickers.json
   submissions-base-url: https://data.sec.gov/submissions
   archives-base-url: https://www.sec.gov/Archives/edgar/data
+
+rag:
+  retrieval:
+    default-top-k: 5
+    candidate-count: 40
+    latest-filings-only: true
+    # Requires a FilingReranker adapter before enabling.
+    reranking-enabled: false
+
+# Opt-in single-owner integration. The configured account never comes from model arguments.
+integration:
+  access:
+    token: ${INTEGRATION_ACCESS_TOKEN:}
+
+broker:
+  ibkr:
+    enabled: ${IBKR_ENABLED:false}
+    base-url: ${IBKR_BASE_URL:https://localhost:5000/v1/api}
+    account-id: ${IBKR_ACCOUNT_ID:}
+    certificate: ${IBKR_CERTIFICATE:}
+    timeout-ms: 5000
+    request-interval-ms: 500
+    max-position-pages: 20
+    snapshot-attempts: 3
+
+recommendation:
+  enabled: ${RECOMMENDATION_ENABLED:false}
+  model: ${RECOMMENDATION_MODEL:}
+  max-model-calls: 6
+  max-tool-calls: 10
+  deadline-ms: 60000
+  max-output-tokens: 1200
+  max-observed-tokens: 16000
+  max-tool-result-chars: 24000
+  max-context-chars: 80000
+  max-quote-age-seconds: 120

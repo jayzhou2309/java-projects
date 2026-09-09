@@ -1,0 +1,39 @@
+package project.stockrecommendationengine.rag.controller;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import project.stockrecommendationengine.rag.dto.IngestionRequest;
+import project.stockrecommendationengine.rag.ingestion.FilingIngestionService;
+
+@RestController
+@RequiredArgsConstructor
+@Slf4j
+@RequestMapping("/api/rag")
+public class FilingIngestionController {
+    private final FilingIngestionService filingIngestionService;
+
+    @PostMapping("/ingest")
+    public ResponseEntity<Void> ingest (
+            @Valid @RequestBody IngestionRequest request
+            ) {
+        long started = System.nanoTime();
+        log.info("Ingestion request received: ticker={}, filingTypes={}, limit={}",
+                request.ticker(), request.filingTypes(), request.limit());
+        try {
+            filingIngestionService.ingest(request.ticker(), request.filingTypes(), request.limit());
+            log.info("Ingestion request completed: ticker={}, elapsedMs={}",
+                    request.ticker(), (System.nanoTime() - started) / 1_000_000);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException failure) {
+            log.error("Ingestion request failed: ticker={}, elapsedMs={}",
+                    request.ticker(), (System.nanoTime() - started) / 1_000_000, failure);
+            throw failure;
+        }
+    }
+}

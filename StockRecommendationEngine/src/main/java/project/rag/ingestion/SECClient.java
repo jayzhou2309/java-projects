@@ -2,7 +2,6 @@ package project.rag.ingestion;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cglib.core.Local;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -20,9 +19,7 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class SECClient {
-    private final ObjectMapper objectMapper;
     private final RestClient restClient = RestClient.create();
-    private final MapperBuilder mapperBuilder;
 
     @Value("${sec.user-agent}")
     private String userAgent;
@@ -56,8 +53,11 @@ public class SECClient {
     }
 
     public List<SECFilingMetadata> getRecentFilings(
-            String ticker, List<String> filingTypes
+            String ticker, List<String> filingTypes, int limit
     ) {
+        if (limit <= 0){
+            throw new IllegalArgumentException("Limit must be greater than 0");
+        }
         String cik = resolveCik(ticker);
         String paddedCik = String.format("%010d", Long.parseLong(cik));
         String url = submissionsBaseUrl + "/CIK" + paddedCik + ".json";
@@ -81,17 +81,20 @@ public class SECClient {
             String accessionNo = recent.accessionNumber().get(i);
             String accessionWithoutDashes =
                     accessionNo.replace("-","");
-            String primaryDocument = recent.accessionNumber().get(i);
+
+            String primaryDocument = recent.primaryDocument().get(i);
 
             LocalDate filingDate = LocalDate.parse(
                     recent.filingDate().get(i)
             );
             LocalDate reportDate = null;
             String reportDataValue = recent.reportDate().get(i);
-            if (reportDataValue == null &&
+
+            if (reportDataValue != null &&
             !reportDataValue.isBlank()){
                 reportDate = LocalDate.parse(reportDataValue);
             }
+
             String sourceUrl =
                     archivesBaseUrl + "/" + Long.parseLong(cik) + "/" + accessionWithoutDashes
                     + "/" + primaryDocument;
@@ -108,6 +111,8 @@ public class SECClient {
                             sourceUrl
                     )
             );
+
+            if (results.size() >= limit) break;
         }
         return results;
     }

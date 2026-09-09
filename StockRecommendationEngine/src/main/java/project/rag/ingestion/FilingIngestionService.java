@@ -3,6 +3,7 @@ package project.rag.ingestion;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import project.rag.dto.EmbeddedFilingChunk;
 import project.rag.dto.FilingChunkData;
 import project.rag.dto.FilingSection;
 import project.rag.dto.SECFilingMetadata;
@@ -25,14 +26,15 @@ public class FilingIngestionService {
     @Transactional
     public void ingest(
             String ticker,
-            List<String> filingTypes
+            List<String> filingTypes,
+            int limit
     ) {
         String normalizedTicker = ticker.toUpperCase();
         String cik = secClient.resolveCik(normalizedTicker);
         List<SECFilingMetadata> filings =
                 secClient.getRecentFilings(
                         normalizedTicker,
-                        filingTypes
+                        filingTypes, limit
                 );
         for (SECFilingMetadata metadata : filings) {
             if (filingRepository.existsByAccessionNo(metadata.accessionNo())){
@@ -61,21 +63,32 @@ public class FilingIngestionService {
         filingRepository.save(filing);
 
         try {
-            // SEC HTML
+            // 1. SEC HTML
             String html = secClient.fetchFilingHTML(metadata.sourceUrl());
             filing.setIngestionStatus("FETCHED");
 
-            // HTML -> Sementic SEC Sections
+            // 2. HTML -> Sementic SEC Sections
             List<FilingSection> sections = filingHtmlParser.parse(html);
             filing.setIngestionStatus("PARSED");
 
-            // Sections -> chunks
+            // 3. Sections -> chunks
             List<FilingChunkData> chunks = filingChunker.chunk(sections);
             filing.setIngestionStatus("CHUNKED");
+
+            // 4. Chunks -> Embeddings
+            List<EmbeddedFilingChunk> embeddedChunks = filingEmbeddingService.embedChunks(chunks);
+
+            // 5. DTO -> JPA Entities
+            List<FilingChunk> chunkEntities = toEntities(filing, embeddedChunks);
+
+            // 6. Attach chunks to filing
+            filing.getChunks().addAll(chunkEntities);
+            filing.setIngestionStatus("EMBEDDED");
+
             filingRepository.save(filing);
 
         } catch (Exception e) {
-            filing.setIngestionStatus("Failed");
+            filing.setIngestionStatus("FAILED");
             filing.setIngestionError(e.getMessage());
             filingRepository.save(filing);
             throw e;
@@ -85,23 +98,26 @@ public class FilingIngestionService {
 
     private List<FilingChunk> toEntities(
             SECFiling filing,
-            List<FilingChunkData> chunks
+            List<EmbeddedFilingChunk> embeddedChunks
     ) {
-        return chunks.stream()
-                .map(chunk -> FilingChunk.builder()
-                        .filing(filing)
-                        .chunkIndex(chunk.chunkIndex())
-                        .sectionKey(chunk.sectionKey())
-                        .sectionTitle(chunk.sectionTitle())
-                        .sectionChunkIndex(
-                                chunk.sectionChunkIndex()
-                        )
-                        .content(chunk.content())
-                        .startChar(chunk.startChar())
-                        .endChar(chunk.endChar())
-                        .tokenCount(chunk.tokenCount())
-                        .build()
-                )
+        return embeddedChunks.stream()
+                .map(embedded -> {
+                    FilingChunkData chunk = embedded.chunkData();
+                    return FilingChunk.builder()
+                            .filing(filing)
+                            .chunkIndex(chunk.chunkIndex())
+                            .sectionKey(chunk.sectionKey())
+                            .sectionTitle(chunk.sectionTitle())
+                            .sectionChunkIndex(
+                                    chunk.sectionChunkIndex()
+                            )
+                            .content(chunk.content())
+                            .startChar(chunk.startChar())
+                            .endChar(chunk.endChar())
+                            .tokenCount(chunk.tokenCount())
+                            .embedding(embedded.embedding())
+                            .build();
+                })
                 .toList();
     }
 }

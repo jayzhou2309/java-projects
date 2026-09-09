@@ -23,6 +23,9 @@ public class FilingEmbeddingService {
     public List<EmbeddedFilingChunk> embedChunks(
             List<FilingChunkData> chunks
     ) {
+        if (chunks == null || chunks.isEmpty()) {
+            return List.of();
+        }
         return chunks.stream()
                 .map(chunk ->
                         new EmbeddedFilingChunk(
@@ -31,6 +34,5 @@ public class FilingEmbeddingService {
                         )
                 )
                 .toList();
-
     }
 }

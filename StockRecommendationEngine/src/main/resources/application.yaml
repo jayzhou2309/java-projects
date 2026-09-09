@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: StockRecommendationEngine
+
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:rag_db}
+    username: ${POSTGRES_USER:root}
+    password: ${POSTGRES_PASSWORD:root123}
+    jpa:
+
+      hibernate:
+        ddl-auto: validate
+
+      properties:
+        hibernate:
+          format_sql: true
+
+    flyway:
+      enabled: true
+      locations: classpath:db/migration

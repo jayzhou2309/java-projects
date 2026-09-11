@@ -1,0 +1,13 @@
+[tion-specialist] Recommendation run=a2a74d5f-b959-4e15-a1c8-eb9bd0fa2d88 tool=BROKER:findInstrument outcome=OK elapsedMs=472
+[tion-specialist] TWS quote request=3 conid=272093 exchange=SMART requestedType=3
+[tion-specialist] Recommendation run=a2a74d5f-b959-4e15-a1c8-eb9bd0fa2d88 tool=RAG:searchFilings outcome=OK elapsedMs=647
+[tion-specialist] Recommendation run=a2a74d5f-b959-4e15-a1c8-eb9bd0fa2d88 tool=MANAGER:researchFilings outcome=OK elapsedMs=4083
+[tion-specialist] TWS quote request=3 availability=UNAVAILABLE rawType=null hasPrice=false hasLast=false hasBid=false hasAsk=false updatedAt=null notSubscribed=false
+[tion-specialist] Recommendation run=a2a74d5f-b959-4e15-a1c8-eb9bd0fa2d88 tool=BROKER:getQuote outcome=OK elapsedMs=5541
+[tion-specialist] TWS history request=5 conid=272093 days=120
+[  tws-callbacks] TWS warning request=5 code=2188
+[tion-specialist] TWS history request=5 bars=120 first=2026-03-20 last=2026-09-10
+[tion-specialist] Quant analysis conid=272093 bars=120 asOf=2026-09-10 fromCache=false stale=false limitations=[]
+[tion-specialist] Recommendation run=a2a74d5f-b959-4e15-a1c8-eb9bd0fa2d88 tool=BROKER:analyzePriceHistory outcome=OK elapsedMs=1097
+[tion-specialist] Recommendation run=a2a74d5f-b959-4e15-a1c8-eb9bd0fa2d88 tool=MANAGER:researchBroker outcome=OK elapsedMs=8723
+[ommendation-run] Recommendation run=a2a74d5f-b959-4e15-a1c8-eb9bd0fa2d88 status=PARTIAL modelCalls=5 observedTokens=10224 levels=false confidence=0.51

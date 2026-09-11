@@ -1,0 +1,6 @@
+14:29:51.837 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS history request=2 conid=265598 days=120
+14:29:52.466 [tws-callbacks] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS warning request=2 code=2188
+14:29:52.483 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS history request=2 bars=120 first=2026-03-20 last=2026-09-10
+TWS_HISTORY bars=120 first=2026-03-20 last=2026-09-10
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.791 s -- in project.stockrecommendationengine.broker.ibkr.IbkrLiveTests
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0

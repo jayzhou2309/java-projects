@@ -210,7 +210,74 @@ class IbkrBrokerAdapterTests {
     @Test void socketBoundaryContainsNoOrderMethods() {
         assertThat(TwsTransport.class.getDeclaredMethods()).extracting(m -> m.getName())
                 .containsExactlyInAnyOrder("connect", "connected", "requestTime", "search", "contract", "positions",
-                        "cancelPositions", "quote", "cancelQuote", "close");
+                        "cancelPositions", "quote", "cancelQuote", "history", "cancelHistory", "close");
+    }
+    @Test void dailyBarsArriveSortedWithContractMetadataAndNoCancellationAfterEnd() {
+        transport.historyAction = id -> {
+            transport.callback.historicalData(id, bar("20260910", 101, 105, 100, 104, 5000));
+            transport.callback.historicalData(id, bar("20260909 US/Eastern", 100, 103, 99, 101, 4000));
+            transport.callback.historicalData(id, bar("20260910", 101, 106, 100, 105, 5500));
+            transport.callback.historicalDataEnd(id, "", "");
+        };
+        var history = broker.getDailyBars(265598, 30);
+        assertThat(history.conid()).isEqualTo(265598);
+        assertThat(history.symbol()).isEqualTo("AAPL");
+        assertThat(history.currency()).isEqualTo("USD");
+        assertThat(history.observedAt()).isNotNull();
+        assertThat(history.bars()).extracting(b -> b.date().toString()).containsExactly("2026-09-09", "2026-09-10");
+        assertThat(history.bars().get(1).close()).isEqualByComparingTo("105");
+        assertThat(history.bars().get(1).volume()).isEqualByComparingTo("5500");
+        assertThat(transport.historyDays).isEqualTo(30);
+        assertThat(transport.historyCancelled).isZero();
+    }
+    @Test void incompleteHistoryTimesOutAndCancels() {
+        transport.historyAction = id -> transport.callback.historicalData(id, bar("20260910", 101, 105, 100, 104, 1));
+        assertCode("UNAVAILABLE", () -> broker.getDailyBars(265598, 30));
+        assertThat(transport.historyCancelled).isEqualTo(1);
+    }
+    @Test void invalidBarsAreRejectedRatherThanStored() {
+        transport.historyAction = id -> transport.callback.historicalData(id, bar("20260910", 101, 99, 100, 104, 1));
+        assertCode("INVALID_RESPONSE", () -> broker.getDailyBars(265598, 30));
+        transport.historyAction = id -> transport.callback.historicalData(id, bar("finished", 101, 105, 100, 104, 1));
+        assertCode("INVALID_RESPONSE", () -> broker.getDailyBars(265598, 30));
+        transport.historyAction = id -> transport.callback.historicalData(id, bar("20260910", 0, 105, 100, 104, 1));
+        assertCode("INVALID_RESPONSE", () -> broker.getDailyBars(265598, 30));
+        assertThat(transport.historyCancelled).isEqualTo(3);
+    }
+    @Test void missingVolumeIsNullAndUnrelatedRequestIdsAreIgnored() {
+        transport.historyAction = id -> {
+            transport.callback.historicalData(id + 7, bar("20260901", 1, 1, 1, 1, 1));
+            transport.callback.historicalData(id, new Bar("20260910", 101, 105, 100, 104, Decimal.INVALID, 1, Decimal.ONE));
+            transport.callback.historicalDataEnd(id, "", "");
+        };
+        var history = broker.getDailyBars(265598, 30);
+        assertThat(history.bars()).hasSize(1);
+        assertThat(history.bars().get(0).volume()).isNull();
+    }
+    @Test void historyArgumentsAreBoundedBeforeConnecting() {
+        assertCode("INVALID_ARGUMENT", () -> broker.getDailyBars(265598, 0));
+        assertCode("INVALID_ARGUMENT", () -> broker.getDailyBars(265598, TwsClient.MAX_HISTORY_DAYS + 1));
+        assertCode("INVALID_ARGUMENT", () -> broker.getDailyBars(0, 30));
+        assertThat(transport.connects).isZero();
+    }
+    @Test void requestScopedWarningsDoNotFailTheRequest() {
+        transport.historyAction = id -> {
+            transport.callback.error(id, 0, 2174, "time zone warning", "");
+            transport.callback.historicalData(id, bar("20260910", 101, 105, 100, 104, 1));
+            transport.callback.historicalDataEnd(id, "", "");
+        };
+        assertThat(broker.getDailyBars(265598, 30).bars()).hasSize(1);
+        transport.quoteAction = id -> {
+            transport.callback.error(id, 0, 2119, "farm connecting", "");
+            transport.callback.marketDataType(id, 3);
+            transport.callback.tickPrice(id, 68, 100, new TickAttrib());
+        };
+        assertThat(broker.getQuote(265598).hasPrice()).isTrue();
+    }
+    @Test void historyProviderErrorsAreSanitizedAndCancelled() {
+        transport.historyAction = id -> transport.callback.error(id, 0, 162, "HMDS query returned no data", "");
+        assertCode("UNAVAILABLE", () -> broker.getDailyBars(265598, 30));
+        assertThat(transport.historyCancelled).isEqualTo(1);
     }
 
     private static Contract stock(int id) {
@@ -219,6 +286,9 @@ class IbkrBrokerAdapterTests {
         return c;
     }
     private static ContractDescription description(Contract c) { return new ContractDescription(c, new String[0]); }
+    private static Bar bar(String time, double open, double high, double low, double close, long volume) {
+        return new Bar(time, open, high, low, close, Decimal.get(volume), 1, Decimal.get(close));
+    }
     private static void assertCode(String code, org.assertj.core.api.ThrowableAssert.ThrowingCallable action) {
         assertThatThrownBy(action).isInstanceOf(BrokerException.class).hasMessage(code);
     }
@@ -226,9 +296,9 @@ class IbkrBrokerAdapterTests {
         EWrapper callback;
         boolean connected, sendHandshake = true, sendHeartbeat = true;
         int connects, timeRequests, positionRequests, positionsCancelled, quotesCancelled, quoteId, requestedDataType;
-        int detailConid;
+        int detailConid, historyDays, historyCancelled;
         String positionsAccount, searchSymbol;
-        IntConsumer quoteAction = id -> {}, positionAction = id -> {}, searchAction = id -> {};
+        IntConsumer quoteAction = id -> {}, positionAction = id -> {}, searchAction = id -> {}, historyAction = id -> {};
         @Override public void connect(EWrapper callback, IbkrProperties properties) {
             this.callback = callback; connected = true; connects++;
             if (sendHandshake) {
@@ -247,6 +317,8 @@ class IbkrBrokerAdapterTests {
         @Override public void cancelPositions(int id) { positionsCancelled++; }
         @Override public void quote(int id, Contract contract, int dataType) { quoteId = id; requestedDataType = dataType; quoteAction.accept(id); }
         @Override public void cancelQuote(int id) { quotesCancelled++; }
+        @Override public void history(int id, Contract contract, int days) { historyDays = days; historyAction.accept(id); }
+        @Override public void cancelHistory(int id) { historyCancelled++; }
         @Override public void close() { connected = false; }
     }
 }

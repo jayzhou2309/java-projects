@@ -1,0 +1,31 @@
+{
+    "conid": 265598,
+    "symbol": "AAPL",
+    "currency": "USD",
+    "source": "TWS_DAILY_TRADES",
+    "fromCache": false,
+    "observedAt": "2026-09-11T06:37:39.644527Z",
+    "asOf": "2026-09-10",
+    "barCount": 120,
+    "lastClose": 326.57,
+    "atr": 7.8907,
+    "atrPeriod": 14,
+    "realizedVolatility": 0.2335,
+    "volatilityPeriod": 20,
+    "shortSma": 315.2755,
+    "shortSmaPeriod": 20,
+    "longSma": 317.2164,
+    "longSmaPeriod": 50,
+    "momentum": 0.0805,
+    "trend": "ABOVE_LONG_SMA",
+    "longLevels": {
+        "takeProfit": 342.35,
+        "stopLoss": 318.68
+    },
+    "shortLevels": {
+        "takeProfit": 310.79,
+        "stopLoss": 334.46
+    },
+    "levelMethod": "ATR_MULTIPLE_OF_LAST_CLOSE",
+    "limitations": []
+}

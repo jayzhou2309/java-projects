@@ -30,7 +30,7 @@ The application does not accept an IBKR username or password. It connects to the
 
 ## Configuration
 
-| Property | Default | Meaning |~~~~~~~~
+| Property | Default | Meaning |
 |---|---|---|
 | broker.ibkr.enabled | false | Opt-in broker bean creation |
 | broker.ibkr.host | 127.0.0.1 | TWS socket host |
@@ -50,6 +50,7 @@ TWS mode 1 is realtime, 2 frozen, 3 delayed, and 4 delayed-frozen. The default 4
 - `TwsSocketTransport` uses `EClientSocket`, `EReader`, and `EJavaSignal`. Its narrow interface exposes read requests and subscription cancellation, with no order methods.
 - `TwsClient` correlates callbacks by request ID, bounds waiting, ignores late callbacks, and fails pending reads on disconnect. A later request reconnects the socket; it never performs login or session takeover. Operations are serialized because TWS's requested market-data mode is connection-wide. Symbol searches are spaced at least one second apart.
 - `IbkrBrokerAdapter` exposes the existing `BrokerReadService` operations. The recommendation manager and broker specialist require no alternative tool protocol.
+- Request-scoped IBKR codes 2100–2199 are warnings (farm status, time-zone notes) and are logged by code without failing the pending read. Other request-scoped codes still fail the read with a sanitized code.
 
 ### Session and account reads
 
@@ -69,6 +70,10 @@ Availability comes from callback type 1/2/3/4 as REALTIME/FROZEN/DELAYED/DELAYED
 
 Missing, nonpositive, nonfinite, and sentinel prices remain null. A type callback can identify delayed data even with no price. `updatedAt` is populated only from last-trade timestamp ticks 45/88; receipt time is separately recorded as `observedAt` and is not substituted for quote freshness. Timestamps may be missing, especially for frozen quotes. A delayed, frozen, untimestamped, or empty quote cannot make a recommendation COMPLETE.
 
+### Daily bars
+
+`GET /api/broker/history/265598?days=120` resolves the stock through `reqContractDetails`, then calls `reqHistoricalData` with a `days + " D"` duration, `1 day` bars, `TRADES`, regular trading hours only, `yyyyMMdd` dates, and no streaming updates. IBKR counts trading days for a day-unit duration, so 120 returns about 120 bars spanning roughly six months; the maximum is 365. Bars are validated (parseable date, positive finite prices, high ≥ low), sorted ascending, and returned with the contract symbol and currency plus a retrieval timestamp. Invalid volume becomes null. A request that reaches `historicalDataEnd` is not cancelled; an incomplete or failed one is. Historical requests are subject to IBKR pacing; the [quant layer](Quant.md) stores bars so repeated analyses do not repeat requests.
+
 ### Errors
 
 The existing sanitized broker error codes and HTTP mappings remain: INVALID_ARGUMENT (400), ACCOUNT_NOT_ALLOWED (403), RATE_LIMITED (429), INVALID_RESPONSE (502), and unavailable/session/position-limit/interruption failures (503). TWS messages are not exposed because they may contain account or connection details. A quote with no prices at the collection deadline returns a structured quote with null prices; it is not presented as a verified current quote.
@@ -84,6 +89,9 @@ IBKR_CLIENT_ID=72 ./mvnw -Dtest=IbkrLiveTests -Dibkr.live=true test
 
 # Optional quote test; fails unless a usable price arrives.
 IBKR_CLIENT_ID=72 ./mvnw -Dtest=IbkrLiveTests -Dibkr.live=true -Dibkr.live.conid=265598 test
+
+# Optional daily-bar test; requires no market-data subscription.
+IBKR_CLIENT_ID=72 ./mvnw -Dtest=IbkrLiveTests -Dibkr.live=true -Dibkr.live.history=true test
 
 # Opt-in position read; requires IBKR_ACCOUNT_ID, sends no positions to a model.
 IBKR_CLIENT_ID=72 ./mvnw -Dtest=IbkrLiveTests -Dibkr.live=true -Dibkr.live.positions=true test
@@ -158,3 +166,12 @@ The 2026-09-11 live run reproduced the same result in both clients. Java returne
 seconds. The Python probe received only status codes 2104, 2106, and 2158, with
 no `marketDataType` callback or delayed ticks after ten seconds. These are market
 data farm status messages, not quote data.
+
+## Delayed data delivered — 2026-09-11, 14:04–14:10 SGT
+
+- At 14:04 the Java quote check in modes 4 and 3 still returned `UNAVAILABLE` with no callbacks, matching every earlier run.
+- A broader official-SDK probe on the same TWS session then requested, in order: EUR.USD realtime (rejected as unsupported by the old Python SDK version), AAPL mode 1 (error 10089 as before), AAPL mode 3 streaming (nothing for eight seconds), AAPL mode 3 **snapshot**, AAPL mode 4, AAPL daily history, and SPY mode 3. From the snapshot request onward every request answered within one second: `marketDataType=3`, error 10167 ("not subscribed, displaying delayed market data"), delayed bid/ask ticks 66/67, and delayed close tick 75. Two further fresh-session probes and a fresh Java session (14:08) also received `marketDataType=3` and 10167 immediately. What changed on the TWS side between 14:04 and 14:06 is not established; no settings were changed.
+- Outside regular hours TWS sends delayed bid/ask briefly, then overwrites them with −1, sends delayed last as 0, and carries the only real price in delayed close (tick 75). The Java adapter maps ticks 1/2/4/66/67/68 only and lets the later −1 replace earlier values, so it reported `availability=DELAYED`, `hasPrice=false` at 14:08 despite valid delayed data. During regular hours (21:30–04:00 SGT) fields 66/67/68 are expected to carry prices; this was not verified. Mapping tick 75 as a closing price and retaining the last positive bid/ask are the remaining adapter improvements for closed-market quotes.
+- A mode 4 request was answered with type 3; the reported type is what the application exposes, as documented above.
+- Historical daily bars (`reqHistoricalData`, TRADES, regular hours) were delivered without any subscription: 120 AAPL bars in 0.6 seconds, preceded by warning code 2188. See [Quant.md](Quant.md) for the consumer.
+- Evidence: [delayed mapping quote](live-runs/2026-09-10-delayed-mapping/quote.json) from earlier attempts, [TWS history run](live-runs/2026-09-11-quant/tws-history-live.log), and the probe scripts in the session scratchpad (not retained in the repository).

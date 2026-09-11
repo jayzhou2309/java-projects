@@ -18,4 +18,6 @@ public class BrokerController {
     @GetMapping("/positions") public Portfolio positions() { return broker.getPositions(); }
     @GetMapping("/instruments") public List<Instrument> instruments(@RequestParam String symbol) { return broker.searchInstruments(symbol); }
     @GetMapping("/quotes/{conid}") public Quote quote(@PathVariable long conid) { return broker.getQuote(conid); }
+    @GetMapping("/history/{conid}") public PriceHistory history(@PathVariable long conid,
+            @RequestParam(defaultValue = "120") int days) { return broker.getDailyBars(conid, days); }
 }

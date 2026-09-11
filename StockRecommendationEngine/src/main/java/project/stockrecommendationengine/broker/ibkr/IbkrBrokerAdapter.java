@@ -18,4 +18,5 @@ public class IbkrBrokerAdapter implements BrokerReadService {
     @Override public Portfolio getPositions() { return client.positions(); }
     @Override public List<Instrument> searchInstruments(String symbol) { return client.search(symbol); }
     @Override public Quote getQuote(long conid) { return client.quote(conid); }
+    @Override public PriceHistory getDailyBars(long conid, int days) { return client.bars(conid, days); }
 }

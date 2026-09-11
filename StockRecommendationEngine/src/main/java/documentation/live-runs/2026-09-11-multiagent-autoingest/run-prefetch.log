@@ -1,0 +1,5 @@
+[tion-specialist] Recommendation run=5e049902-ceb2-4bd8-8f3a-93068935073e tool=BROKER:findInstrument outcome=OK elapsedMs=506
+[tion-specialist] Recommendation run=5e049902-ceb2-4bd8-8f3a-93068935073e tool=MANAGER:researchBroker outcome=OK elapsedMs=2183
+[tion-specialist] Recommendation run=5e049902-ceb2-4bd8-8f3a-93068935073e tool=RAG:searchFilings outcome=OK elapsedMs=1348
+[tion-specialist] Recommendation run=5e049902-ceb2-4bd8-8f3a-93068935073e tool=MANAGER:researchFilings outcome=OK elapsedMs=4915
+[ommendation-run] Recommendation run=5e049902-ceb2-4bd8-8f3a-93068935073e status=PARTIAL modelCalls=5 observedTokens=7300 levels=false confidence=0.25

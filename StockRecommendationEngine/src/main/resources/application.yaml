@@ -74,12 +74,33 @@ broker:
     market-data-type: ${IBKR_MARKET_DATA_TYPE:4}
     max-positions: 1000
 
+# Deterministic price statistics from broker daily bars. Requires the broker integration.
+quant:
+  enabled: ${QUANT_ENABLED:false}
+  history-days: 120
+  refresh-hours: 12
+  min-bars: 60
+  max-bar-age-days: 5
+  atr-period: 14
+  volatility-period: 20
+  short-sma-period: 20
+  long-sma-period: 50
+  take-profit-atr-multiple: 2.0
+  stop-loss-atr-multiple: 1.0
+
 recommendation:
   enabled: ${RECOMMENDATION_ENABLED:false}
   model: ${RECOMMENDATION_MODEL:}
   max-model-calls: 10
-  max-tool-calls: 10
-  deadline-ms: 60000
+  max-tool-calls: 12
+  deadline-ms: ${RECOMMENDATION_DEADLINE_MS:120000}
+  # Manager delegations to both specialists run concurrently on a shared pool.
+  parallel-specialists: true
+  # A ticker with no embedded filings triggers ingestion of the latest filing per type before RAG research.
+  auto-ingest: true
+  auto-ingest-filing-types: 10-K,10-Q
+  # Several listings without a request conid: the single listing in this currency is used and disclosed.
+  preferred-currency: USD
   max-output-tokens: 1200
   max-observed-tokens: 16000
   max-tool-result-chars: 24000

@@ -3,6 +3,8 @@ package project.stockrecommendationengine.broker.ibkr;
 import com.ib.client.*;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,6 +18,8 @@ import static project.stockrecommendationengine.broker.BrokerException.Code.*;
 /** Bounded synchronous reads over correlated TWS callbacks; connects lazily, never logs in or places orders. */
 @Slf4j
 public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
+    /** IBKR accepts day-unit durations up to one year; longer history needs a different unit and pacing plan. */
+    static final int MAX_HISTORY_DAYS = 365;
     private final TwsTransport transport;
     private final IbkrProperties properties;
     // TWS market-data mode is connection-wide; serialize requests and bound callers waiting for the socket.
@@ -99,17 +103,7 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
     public Quote quote(long conid) {
         if (conid <= 0 || conid > Integer.MAX_VALUE) throw new BrokerException(INVALID_ARGUMENT);
         return execute(() -> {
-            int detailId = ids.getAndIncrement();
-            var details = new Details(conid);
-            pending.put(detailId, details);
-            Contract contract;
-            try {
-                transport.contract(detailId, conid);
-                contract = await(details.result);
-            } finally {
-                // Contract details is a finite request. Late callbacks are ignored after timeout.
-                pending.remove(detailId);
-            }
+            Contract contract = resolveContract(conid);
             int id = ids.getAndIncrement();
             var request = new Prices(conid);
             pending.put(id, request);
@@ -139,6 +133,41 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
                 transport.cancelQuote(id);
             }
         });
+    }
+
+    public PriceHistory bars(long conid, int days) {
+        if (conid <= 0 || conid > Integer.MAX_VALUE || days < 1 || days > MAX_HISTORY_DAYS) throw new BrokerException(INVALID_ARGUMENT);
+        return execute(() -> {
+            Contract contract = resolveContract(conid);
+            int id = ids.getAndIncrement();
+            var request = new History(days);
+            pending.put(id, request);
+            try {
+                log.info("TWS history request={} conid={} days={}", id, conid, days);
+                transport.history(id, contract, days);
+                var bars = await(request.result);
+                log.info("TWS history request={} bars={} first={} last={}", id, bars.size(),
+                        bars.isEmpty() ? null : bars.get(0).date(), bars.isEmpty() ? null : bars.get(bars.size() - 1).date());
+                return new PriceHistory(conid, contract.symbol(), contract.currency(), Instant.now(), bars);
+            } finally {
+                pending.remove(id);
+                // A request that reached its end marker needs no cancellation; incomplete ones must not keep streaming.
+                if (!request.result.isDone() || request.result.isCompletedExceptionally()) transport.cancelHistory(id);
+            }
+        });
+    }
+
+    private Contract resolveContract(long conid) {
+        int detailId = ids.getAndIncrement();
+        var details = new Details(conid);
+        pending.put(detailId, details);
+        try {
+            transport.contract(detailId, conid);
+            return await(details.result);
+        } finally {
+            // Contract details is a finite request. Late callbacks are ignored after timeout.
+            pending.remove(detailId);
+        }
     }
 
     private <T> T execute(Supplier<T> action) {
@@ -240,6 +269,32 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
     @Override public void positionMultiEnd(int id) {
         if (pending.get(id) instanceof Positions request) request.result.complete(List.copyOf(request.values.values()));
     }
+    @Override public void historicalData(int id, Bar bar) {
+        if (!(pending.get(id) instanceof History request)) return;
+        LocalDate date = barDate(bar.time());
+        BigDecimal open = price(bar.open()), high = price(bar.high()), low = price(bar.low()), close = price(bar.close());
+        if (date == null || open == null || high == null || low == null || close == null || high.compareTo(low) < 0) {
+            request.fail(INVALID_RESPONSE);
+            return;
+        }
+        BigDecimal volume = Decimal.isValid(bar.volume()) && bar.volume().value().signum() >= 0 ? bar.volume().value() : null;
+        request.values.put(date, new DailyBar(date, open, high, low, close, volume));
+        // The day-unit duration bounds the bar count; anything larger is not the requested daily series.
+        if (request.values.size() > request.days) request.fail(INVALID_RESPONSE);
+    }
+    @Override public void historicalDataEnd(int id, String start, String end) {
+        if (pending.get(id) instanceof History request) request.result.complete(List.copyOf(request.values.values()));
+    }
+    private static LocalDate barDate(String time) {
+        if (time == null) return null;
+        String digits = time.trim();
+        if (digits.length() < 8) return null;
+        try { return LocalDate.parse(digits.substring(0, 8), DateTimeFormatter.BASIC_ISO_DATE); }
+        catch (RuntimeException ex) { return null; }
+    }
+    private static BigDecimal price(double value) {
+        return Double.isFinite(value) && value > 0 && value != Double.MAX_VALUE ? BigDecimal.valueOf(value) : null;
+    }
     @Override public void marketDataType(int id, int type) {
         if (pending.get(id) instanceof Prices request) synchronized (request) {
             request.type = type;
@@ -281,7 +336,9 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
         if (code == 10197) competing = true;
         Pending<?> request = pending.get(id);
         if (request == null) return;
-        if (code == 2104 || code == 2106 || code == 2107 || code == 2108 || code == 2158 || code == 10167) return;
+        // IBKR reserves 2100-2199 for warnings (farm status, time-zone notes); a request-scoped one is not a failure.
+        if (code >= 2100 && code <= 2199) { log.info("TWS warning request={} code={}", id, code); return; }
+        if (code == 10167) return;
         if (request instanceof Prices prices && (code == 354 || code == 10089)) {
             log.warn("TWS market-data subscription rejected request={} conid={} code={} "
                             + "requestedType={} actualType={}",
@@ -326,6 +383,11 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
     }
     private static final class Positions extends Pending<List<Position>> {
         final Map<Long, Position> values = new LinkedHashMap<>();
+    }
+    private static final class History extends Pending<List<DailyBar>> {
+        final int days;
+        final Map<LocalDate, DailyBar> values = new TreeMap<>();
+        History(int days) { this.days = days; }
     }
     private static final class Prices extends Pending<Void> {
         final long conid;

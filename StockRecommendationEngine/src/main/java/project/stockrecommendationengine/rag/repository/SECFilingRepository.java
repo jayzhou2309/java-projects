@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface SECFilingRepository extends JpaRepository<SECFiling, Long> {
     Optional<SECFiling> findByAccessionNo(String accessionNo);
+    boolean existsByTickerAndIngestionStatus(String ticker, String ingestionStatus);
 }

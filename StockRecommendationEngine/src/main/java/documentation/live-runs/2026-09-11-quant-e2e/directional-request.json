@@ -1,0 +1,6 @@
+{
+  "ticker": "AAPL",
+  "question": "Given the risk factors in the latest filings and the current price trend, momentum and volatility statistics, is the setup bullish or bearish?",
+  "conid": 265598,
+  "includePortfolio": false
+}

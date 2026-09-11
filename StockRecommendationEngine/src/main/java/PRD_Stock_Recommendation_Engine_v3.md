@@ -122,11 +122,11 @@ Implementation is phased; work may be delegated to sub-agents under skill files,
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Infrastructure (build, DB/extensions, core entities, security, migration/upgrade tests) | Implemented, locally validated; remote CI pending |
-| 2 | Market data ingestion | Planned |
-| 3 | SEC RAG pipeline | Planned |
-| 4 | ML baseline / confidence scoring | Planned |
-| 5 | Specialist agents | Planned |
-| 6 | Orchestration | Planned |
+| 2 | Market data ingestion | Partial: TWS delayed quotes and stored daily bars ([IBKR.md](documentation/IBKR.md)); no Kafka/TimescaleDB |
+| 3 | SEC RAG pipeline | Implemented: ingestion, filtered vector retrieval, rebuild workflow ([RAG.md](documentation/RAG.md)) |
+| 4 | ML baseline / confidence scoring | Partial: deterministic ATR levels and an uncalibrated input-coverage confidence ([Quant.md](documentation/Quant.md)); no backtest or ensemble terms |
+| 5 | Specialist agents | Partial: RAG and broker specialists under a manager ([Agent_Harness.md](documentation/Agent_Harness.md)) |
+| 6 | Orchestration | Partial: bounded explicit tool loop, no MCP or multi-user |
 | 7 | Critic and synthesis | Planned |
 | 8 | Memory | Planned |
 | 9 | Evaluation platform | Planned |

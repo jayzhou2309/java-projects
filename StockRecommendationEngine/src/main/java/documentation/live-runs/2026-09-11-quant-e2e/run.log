@@ -1,0 +1,18 @@
+p.s.r.RecommendationService              : Recommendation run=e330389a-fb34-4b8c-b2e6-3d62e2f4ac2f tool=RAG:searchFilings outcome=OK elapsedMs=847
+p.s.r.RecommendationService              : Recommendation run=e330389a-fb34-4b8c-b2e6-3d62e2f4ac2f tool=MANAGER:researchFilings outcome=OK elapsedMs=4104
+p.s.broker.ibkr.TwsClient                : TWS quote request=3 conid=265598 exchange=SMART requestedType=3
+p.s.broker.ibkr.TwsClient                : TWS quote request=3 availability=UNAVAILABLE rawType=null hasPrice=false hasLast=false hasBid=false hasAsk=false updatedAt=null notSubscribed=false
+p.s.r.RecommendationService              : Recommendation run=e330389a-fb34-4b8c-b2e6-3d62e2f4ac2f tool=BROKER:getQuote outcome=OK elapsedMs=5542
+p.s.quant.QuantAnalysisService           : Quant analysis conid=265598 bars=120 asOf=2026-09-10 fromCache=true stale=false limitations=[]
+p.s.r.RecommendationService              : Recommendation run=e330389a-fb34-4b8c-b2e6-3d62e2f4ac2f tool=BROKER:analyzePriceHistory outcome=OK elapsedMs=22
+p.s.r.RecommendationService              : Recommendation run=e330389a-fb34-4b8c-b2e6-3d62e2f4ac2f tool=MANAGER:researchBroker outcome=OK elapsedMs=7774
+p.s.r.RecommendationService              : Recommendation run=e330389a-fb34-4b8c-b2e6-3d62e2f4ac2f status=PARTIAL modelCalls=6 observedTokens=11129 levels=false confidence=0.59
+p.s.r.RecommendationService              : Recommendation run=0b4a3bb3-298c-438e-af1f-d579dda5af74 tool=RAG:searchFilings outcome=OK elapsedMs=1818
+p.s.r.RecommendationService              : Recommendation run=0b4a3bb3-298c-438e-af1f-d579dda5af74 tool=MANAGER:researchFilings outcome=OK elapsedMs=4913
+p.s.broker.ibkr.TwsClient                : TWS quote request=6 conid=265598 exchange=SMART requestedType=3
+p.s.broker.ibkr.TwsClient                : TWS quote request=6 availability=UNAVAILABLE rawType=null hasPrice=false hasLast=false hasBid=false hasAsk=false updatedAt=null notSubscribed=false
+p.s.r.RecommendationService              : Recommendation run=0b4a3bb3-298c-438e-af1f-d579dda5af74 tool=BROKER:getQuote outcome=OK elapsedMs=5273
+p.s.quant.QuantAnalysisService           : Quant analysis conid=265598 bars=120 asOf=2026-09-10 fromCache=true stale=false limitations=[]
+p.s.r.RecommendationService              : Recommendation run=0b4a3bb3-298c-438e-af1f-d579dda5af74 tool=BROKER:analyzePriceHistory outcome=OK elapsedMs=9
+p.s.r.RecommendationService              : Recommendation run=0b4a3bb3-298c-438e-af1f-d579dda5af74 tool=MANAGER:researchBroker outcome=OK elapsedMs=8510
+p.s.r.RecommendationService              : Recommendation run=0b4a3bb3-298c-438e-af1f-d579dda5af74 status=PARTIAL modelCalls=7 observedTokens=11561 levels=false confidence=0.58

@@ -14,5 +14,7 @@ interface TwsTransport extends AutoCloseable {
     void cancelPositions(int id);
     void quote(int id, Contract contract, int dataType);
     void cancelQuote(int id);
+    void history(int id, Contract contract, int days);
+    void cancelHistory(int id);
     @Override void close();
 }

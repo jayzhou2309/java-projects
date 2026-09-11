@@ -1,0 +1,9 @@
+p.s.broker.ibkr.TwsClient                : TWS history request=2 conid=265598 days=120
+2026-09-11T14:31:09.172+08:00  INFO 92580 --- [StockRecommendationEngine] [  tws-callbacks] p.s.broker.ibkr.TwsClient                : TWS warning request=2 code=2188
+p.s.broker.ibkr.TwsClient                : TWS history request=2 bars=120 first=2026-03-20 last=2026-09-10
+p.s.quant.QuantAnalysisService           : Quant analysis conid=265598 bars=120 asOf=2026-09-10 fromCache=false stale=false limitations=[]
+QUANT_LIVE first=QuantAnalysis[conid=265598, symbol=AAPL, currency=USD, source=TWS_DAILY_TRADES, fromCache=false, observedAt=2026-09-11T06:31:09.189607Z, asOf=2026-09-10, barCount=120, lastClose=326.57, atr=7.8907, atrPeriod=14, realizedVolatility=0.2335, volatilityPeriod=20, shortSma=315.2755, shortSmaPeriod=20, longSma=317.2164, longSmaPeriod=50, momentum=0.0805, trend=ABOVE_LONG_SMA, longLevels=Levels[takeProfit=342.35, stopLoss=318.68], shortLevels=Levels[takeProfit=310.79, stopLoss=334.46], levelMethod=ATR_MULTIPLE_OF_LAST_CLOSE, limitations=[]]
+p.s.quant.QuantAnalysisService           : Quant analysis conid=265598 bars=120 asOf=2026-09-10 fromCache=true stale=false limitations=[]
+QUANT_LIVE second.fromCache=true limitations=[]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.199 s -- in project.stockrecommendationengine.broker.ibkr.IbkrQuantLiveTests
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0

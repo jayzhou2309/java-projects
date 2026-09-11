@@ -2,6 +2,7 @@ package project.stockrecommendationengine.broker;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 public final class BrokerData {
@@ -25,4 +26,10 @@ public final class BrokerData {
                         String rawAvailability) {
         public boolean hasPrice() { return last != null || bid != null || ask != null; }
     }
+    /** One regular-trading-hours daily bar. Volume is null when the provider reports it as unavailable. */
+    public record DailyBar(LocalDate date, BigDecimal open, BigDecimal high, BigDecimal low,
+                           BigDecimal close, BigDecimal volume) { }
+    /** Ascending daily bars for one contract. observedAt is retrieval time, not a market timestamp. */
+    public record PriceHistory(long conid, String symbol, String currency, Instant observedAt,
+                               List<DailyBar> bars) { }
 }

@@ -62,6 +62,11 @@ final class TwsSocketTransport implements TwsTransport {
         client.reqMktData(id, contract, "", false, false, List.of());
     }
     @Override public void cancelQuote(int id) { if (connected()) client.cancelMktData(id); }
+    @Override public void history(int id, Contract contract, int days) {
+        // Regular trading hours, daily TRADES bars, yyyyMMdd bar dates, no streaming updates.
+        client.reqHistoricalData(id, contract, "", days + " D", "1 day", "TRADES", 1, 1, false, List.of());
+    }
+    @Override public void cancelHistory(int id) { if (connected()) client.cancelHistoricalData(id); }
     @Override public void close() {
         if (client != null) client.eDisconnect();
         if (socket != null) try { socket.close(); } catch (Exception ignored) { }

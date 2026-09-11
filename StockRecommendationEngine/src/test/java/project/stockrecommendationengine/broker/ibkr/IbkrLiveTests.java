@@ -42,6 +42,18 @@ class IbkrLiveTests {
     }
 
     @Test
+    @EnabledIfSystemProperty(named = "ibkr.live.history", matches = "true")
+    void receivesDailyBars() {
+        try (var client = new TwsClient(new TwsSocketTransport(), properties())) {
+            var history = new IbkrBrokerAdapter(client).getDailyBars(265598, 120);
+            System.out.println("TWS_HISTORY bars=" + history.bars().size() + " first="
+                    + (history.bars().isEmpty() ? null : history.bars().get(0).date()) + " last="
+                    + (history.bars().isEmpty() ? null : history.bars().get(history.bars().size() - 1).date()));
+            assertThat(history.bars()).as("TWS must deliver daily bars without a market-data subscription").isNotEmpty();
+        }
+    }
+
+    @Test
     @EnabledIfSystemProperty(named = "ibkr.live.conid", matches = ".+")
     void receivesUsableQuote() {
         try (var client = new TwsClient(new TwsSocketTransport(), properties())) {

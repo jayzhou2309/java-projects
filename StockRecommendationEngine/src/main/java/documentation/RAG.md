@@ -330,6 +330,7 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * [Agent Harness](Agent_Harness.md) documents the opt-in qualitative research loop using FilingRetrievalService.
     * [Direct IBKR Integration](IBKR.md) documents broker reads, TWS socket configuration, and diagnostics.
     * Ingestion and retrieval remain usable when broker and recommendation features are disabled.
+    * Since 2026-09-11 the recommendation loop ingests the latest 10-K and 10-Q itself when a requested ticker has no EMBEDDED filings, using the same ingestion service and locks.
 
 * Change log — 2026-09-10: chunk quality and retrieval redundancy
     * Read-only database audit found 6 filings and 189 chunks, with no duplicate accession numbers, filing source URLs, or per-filing chunk indexes. Repeated text included contents entries and legitimate short disclosures.

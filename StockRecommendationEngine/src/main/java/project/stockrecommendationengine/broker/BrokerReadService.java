@@ -10,4 +10,6 @@ public interface BrokerReadService {
     Portfolio getPositions();
     List<Instrument> searchInstruments(String symbol);
     Quote getQuote(long conid);
+    /** Up to the requested number of regular-hours daily bars (IBKR counts trading days for a day-unit duration), oldest first. */
+    PriceHistory getDailyBars(long conid, int days);
 }

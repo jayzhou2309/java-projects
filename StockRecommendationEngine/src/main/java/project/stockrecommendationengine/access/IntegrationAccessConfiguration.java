@@ -12,6 +12,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import project.stockrecommendationengine.broker.api.BrokerController;
 import project.stockrecommendationengine.broker.ibkr.IbkrProperties;
+import project.stockrecommendationengine.quant.QuantController;
 import project.stockrecommendationengine.recommendation.RecommendationController;
 
 /** Authorize the resolved controller, avoiding alternate URL encodings bypassing a path-prefix filter. */
@@ -32,6 +33,7 @@ public class IntegrationAccessConfiguration implements WebMvcConfigurer, Handler
     @Override public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (!(handler instanceof HandlerMethod method)
                 || !(BrokerController.class.isAssignableFrom(method.getBeanType())
+                || QuantController.class.isAssignableFrom(method.getBeanType())
                 || RecommendationController.class.isAssignableFrom(method.getBeanType()))) return true;
         response.setHeader("Cache-Control", "no-store");
         String supplied = request.getHeader("Authorization");

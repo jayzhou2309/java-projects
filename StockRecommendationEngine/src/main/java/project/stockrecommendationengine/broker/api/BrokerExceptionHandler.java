@@ -5,8 +5,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import project.stockrecommendationengine.broker.BrokerException;
+import project.stockrecommendationengine.quant.QuantController;
 
-@RestControllerAdvice(assignableTypes = BrokerController.class)
+@RestControllerAdvice(assignableTypes = {BrokerController.class, QuantController.class})
 public class BrokerExceptionHandler {
     @ExceptionHandler(BrokerException.class)
     public ResponseEntity<?> handle(BrokerException ex) {

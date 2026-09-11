@@ -1,0 +1,31 @@
+[tion-specialist] Finding SEC filings: ticker=MSFT, filingTypes=[10-K], limit=1
+[tion-specialist] Recommendation run=3eb3520f-f5e4-428c-9e90-e47470f0906b tool=MANAGER:researchBroker outcome=OK elapsedMs=1010
+[tion-specialist] Found 1 matching filings for ticker=MSFT
+[tion-specialist] Processing filing: ticker=MSFT, accession=0001193125-26-323660, type=10-K, date=2026-07-29
+[tion-specialist] Checking stored filing: accession=0001193125-26-323660
+[tion-specialist] Downloading filing HTML: accession=0001193125-26-323660
+[tion-specialist] Parsing filing HTML: accession=0001193125-26-323660, characters=8585501
+[tion-specialist] Parsed filing: accession=0001193125-26-323660, sections=133; chunking sections
+[tion-specialist] Chunking completed: accession=0001193125-26-323660, chunks=163
+[tion-specialist] Embedding filing chunks: accession=0001193125-26-323660, chunks=163
+[tion-specialist] Embeddings completed: accession=0001193125-26-323660, chunks=163
+[tion-specialist] Saving filing: accession=0001193125-26-323660, replacingChunks=0, newChunks=163
+[tion-specialist] Filing and chunks flushed; awaiting commit: accession=0001193125-26-323660
+[tion-specialist] Filing transaction committed: ticker=MSFT, accession=0001193125-26-323660, elapsedMs=40286
+[tion-specialist] Finding SEC filings: ticker=MSFT, filingTypes=[10-Q], limit=1
+[tion-specialist] Found 1 matching filings for ticker=MSFT
+[tion-specialist] Processing filing: ticker=MSFT, accession=0001193125-26-191507, type=10-Q, date=2026-04-29
+[tion-specialist] Checking stored filing: accession=0001193125-26-191507
+[tion-specialist] Downloading filing HTML: accession=0001193125-26-191507
+[tion-specialist] Parsing filing HTML: accession=0001193125-26-191507, characters=7731948
+[tion-specialist] Parsed filing: accession=0001193125-26-191507, sections=78; chunking sections
+[tion-specialist] Chunking completed: accession=0001193125-26-191507, chunks=95
+[tion-specialist] Embedding filing chunks: accession=0001193125-26-191507, chunks=95
+[tion-specialist] Embeddings completed: accession=0001193125-26-191507, chunks=95
+[tion-specialist] Saving filing: accession=0001193125-26-191507, replacingChunks=0, newChunks=95
+[tion-specialist] Filing and chunks flushed; awaiting commit: accession=0001193125-26-191507
+[tion-specialist] Filing transaction committed: ticker=MSFT, accession=0001193125-26-191507, elapsedMs=22888
+[tion-specialist] Recommendation run=3eb3520f-f5e4-428c-9e90-e47470f0906b tool=RAG:ingestFilings outcome=OK elapsedMs=66126
+[tion-specialist] Recommendation run=3eb3520f-f5e4-428c-9e90-e47470f0906b tool=RAG:searchFilings outcome=OK elapsedMs=319
+[tion-specialist] Recommendation run=3eb3520f-f5e4-428c-9e90-e47470f0906b tool=MANAGER:researchFilings outcome=OK elapsedMs=69434
+[ommendation-run] Recommendation run=3eb3520f-f5e4-428c-9e90-e47470f0906b status=PARTIAL modelCalls=5 observedTokens=6785 levels=false confidence=0.25

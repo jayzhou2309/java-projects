@@ -1,0 +1,143 @@
+{
+  "runId": "87670e60-68ce-46e5-a067-fdec2af5e5d8",
+  "ticker": "AAPL",
+  "status": "PARTIAL",
+  "assessment": "NEUTRAL",
+  "reasoning": "Apple's most recent SEC filings detail substantial business risks, including cyber threats, heightened legal and regulatory scrutiny, antitrust investigations, and ongoing as well as unresolved litigation, any of which could materially impact business practices or financial performance. Recent legal developments, particularly regarding App Store commissions and antitrust claims, highlight a persistently uncertain legal environment, with appeals pending up to the Supreme Court. These filings adequately detail disclosed risks up to the most recent reporting periods, but evidence is limited to company-reported risk factors and legal proceedings; more recent or undisclosed risks may not be captured. The broker specialist confirmed the valid NASDAQ contract (conid 265598) but could not provide a current IBKR quote, limiting any market-based assessment. Overall, risks are significant and intensifying, but there is insufficient evidence in these sources alone to shift the overall qualitative assessment to bullish or bearish.",
+  "sources": [
+    {
+      "chunkId": 206,
+      "filingId": 3,
+      "ticker": "AAPL",
+      "cik": "0000320193",
+      "accessionNo": "0000320193-25-000079",
+      "filingType": "10-K",
+      "filingDate": "2025-10-31",
+      "reportDate": "2025-09-27",
+      "sectionKey": "ITEM_1A",
+      "sectionTitle": "Risk Factors",
+      "chunkIndex": 16,
+      "content": "s across various industries, the Company is at a relatively greater risk of being targeted because of its high profile and the value of the confidential information it creates, owns, manages, stores and processes.\nApple Inc. | 2025 Form 10-K | 11\nAs with all companies, the security the Company has implemented may not be sufficient for all eventualities and are vulnerable to hacking, ransomware attacks, employee error, malfeasance, system error, faulty password management or other irregularities. For example, third parties can fraudulently induce the Company\u2019s or its suppliers\u2019 and other third parties\u2019 employees or customers into disclosing usernames, passwords or other sensitive information, which can, in turn, be used for unauthorized access to the Company\u2019s or such suppliers\u2019 or third parties\u2019 systems and services. To help protect customers and the Company, the Company deploys and makes available technologies like multifactor authentication, monitors its services and systems for unusual activity and may freeze accounts under suspicious circumstances, which, among other things, can result in the delay or loss of customer orders or impede customer access to the Company\u2019s products and services.\nWhile the Company maintains insurance coverage that is intended to address certain aspects of data security risks, such insurance coverage may be insufficient to cover all losses or all types of claims that may arise.\nInvestment in new business strategies, commercial relationships and acquisitions could disrupt the Company\u2019s ongoing business, present risks not originally contemplated, and materially adversely affect the Company\u2019s business, reputation, results of operations and financial condition.\nThe Company has invested, and in the future may invest, in new business strategies, commercial relationships and acquisitions. Such endeavors may involve significant risks and uncertainties, including distraction of management from current operations, greater-than-expected liabilities and expenses, economic, political, legal and regulatory challenges associated with operating in new businesses, regions or countries, inadequate return on capital, potential impairment of tangible and intangible assets, and significant write-offs. Some transactions, including investments and acquisitions, are exposed to additional risks, including failing to obtain required regulatory approvals on a timely basis or at all, a counterparty\u2019s failure to perform or deliver as anticipated, or the imposition of onerous conditions that could delay or prevent the Company from completing a transaction or otherwise limit the Company\u2019s ability to fully realize the anticipated benefits of a transaction. New business strategies and ventures are inherently risky and may not be successful. The Company\u2019s business strategies and investments may not be successful, which could materially adversely affect the Company\u2019s business, reputation, results of operations, financial condition and stock price.\nLegal and Regulatory Compliance Risks\nThe Company\u2019s business, results of operations and financial condition could be adversely impacted by unfavorable results of legal proceedings or government investigations.\nThe Company is subject to various claims, legal proceedings and government investigations that have arisen in the ordinary course of business and have not yet been fully resolved, and new matters may arise in the future. In addition, the Company enters into agreements that include indemnification provisions that can subject the Company to costs and damages in the event of a claim against an indemnified third party.",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+      "similarityScore": 0.6571875076807963
+    },
+    {
+      "chunkId": 207,
+      "filingId": 3,
+      "ticker": "AAPL",
+      "cik": "0000320193",
+      "accessionNo": "0000320193-25-000079",
+      "filingType": "10-K",
+      "filingDate": "2025-10-31",
+      "reportDate": "2025-09-27",
+      "sectionKey": "ITEM_1A",
+      "sectionTitle": "Risk Factors",
+      "chunkIndex": 17,
+      "content": "mpacted by unfavorable results of legal proceedings or government investigations.\nThe Company is subject to various claims, legal proceedings and government investigations that have arisen in the ordinary course of business and have not yet been fully resolved, and new matters may arise in the future. In addition, the Company enters into agreements that include indemnification provisions that can subject the Company to costs and damages in the event of a claim against an indemnified third party. The number of claims, legal proceedings and government investigations involving the Company, and the alleged magnitude of such claims, proceedings and government investigations, has generally increased over time and may continue to increase.\nThe Company has faced and continues to face a significant number of patent claims relating to its standards-enabled products, and new claims may arise in the future, including as a result of new legal or regulatory frameworks. For example, technology, data and other intellectual property asset\u2013holding companies frequently assert their intellectual property rights and seek royalties and often enter into litigation based on allegations of infringement or other violations of intellectual property rights. These risks, and the risks of novel claims being attempted, may be exacerbated as new and emerging technologies, including machine learning and artificial intelligence, are further integrated into the Company\u2019s products and services. The Company is vigorously defending infringement actions in courts in several U.S. jurisdictions, as well as internationally in various countries. The plaintiffs in these actions frequently seek broad injunctive relief and substantial damages.\nRegardless of the merit of particular claims, defending against litigation or responding to government investigations can be expensive, time-consuming and disruptive to the Company\u2019s operations. In recognition of these considerations, the Company may enter into agreements or other arrangements to settle litigation and resolve such challenges. However, such agreements may not always be available on acceptable terms, and litigation may still arise. Such agreements can also significantly reduce the Company\u2019s revenue and increase the Company\u2019s cost of sales and operating expenses, materially adversely affecting the Company\u2019s business, results of operations, financial condition and stock price. Additionally, such agreements may require the Company to change its business practices and limit the Company\u2019s ability to offer certain products and services.\nApple Inc. | 2025 Form 10-K | 12\nThe outcome of litigation or government investigations is inherently uncertain. If one or more legal matters were resolved against the Company or an indemnified third party in a reporting period for amounts above management\u2019s expectations, the Company\u2019s results of operations, financial condition and stock price for that reporting period could be materially adversely affected. Further, such an outcome can result in significant monetary damages, disgorgement of revenue or profits, remedial corporate measures or injunctive relief against the Company. Adverse resolution of legal matters has from time to time required, and can in the future require, the Company to change its business practices.",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+      "similarityScore": 0.6612658265262501
+    },
+    {
+      "chunkId": 209,
+      "filingId": 3,
+      "ticker": "AAPL",
+      "cik": "0000320193",
+      "accessionNo": "0000320193-25-000079",
+      "filingType": "10-K",
+      "filingDate": "2025-10-31",
+      "reportDate": "2025-09-27",
+      "sectionKey": "ITEM_1A",
+      "sectionTitle": "Risk Factors",
+      "chunkIndex": 19,
+      "content": "chine learning and artificial intelligence features, and must navigate new legal, regulatory and ethical considerations relating to such technologies.\nRegulatory changes and other actions that materially adversely affect the Company\u2019s business may be announced with little or no advance notice and the Company may not be able to effectively mitigate all adverse impacts from such measures. For example, the Company is subject to changing regulations relating to the export and import of its products. The Company\u2019s programs, policies and procedures may not be effective in preventing a violation or a claim of a violation. As a result, the Company\u2019s products could be banned, delayed or prohibited from importation, which could materially adversely affect the Company\u2019s business, reputation, results of operations, financial condition and stock price.\nVaried stakeholder expectations about social and other issues expose the Company to potential liabilities, increased costs, reputational harm, and other adverse effects on the Company\u2019s business.\nVarious stakeholders, including governments, regulators, investors, employees, customers and others, have differing expectations about a wide range of social and other issues related to the Company\u2019s business. The Company makes statements about its values, including the environmental and societal impact of its business, through various reports, information provided on the Company\u2019s website, and in press statements and other communications. The Company also pursues environmental and other goals and initiatives that involve risks and uncertainties, require investments, and depend in part on third-party performance or data that is outside the Company\u2019s control, and the Company may not be able to fully achieve all of its goals and initiatives. Efforts by the Company to advance its business and values, or achieve its goals and further its initiatives, or to align with stakeholders\u2019 expectations, or comply with evolving, varied and at times conflicting federal, state and international laws, executive orders, regulations and standards, or any failure or perceived failure to do so, can result in adverse reactions by consumers and other stakeholders, including the commencement of legal and regulatory proceedings against the Company, and can materially adversely affect the Company\u2019s business, reputation, results of operations, financial condition and stock price.\nApple Inc. | 2025 Form 10-K | 13\nThe technology industry, including, in some instances, the Company, is subject to intense media, political and regulatory scrutiny, which exposes the Company to increasing regulation, government investigations, legal actions and penalties.\nFrom time to time, the Company has made changes to its business, including actions taken in response to litigation, competition, market conditions and legal and regulatory requirements. The Company expects to make further business changes in the future. For example, in the U.S., the Company has implemented changes to how developers communicate with consumers within apps on the U.S. storefront of the iOS and iPadOS App Store regarding alternative purchasing mechanisms and is currently subject to a court order preventing it from imposing any commission or fee on certain purchases that consumers make.\nGlobally, several jurisdictions have adopted, or may in the future adopt, competition-related laws and regulations imposing wide-ranging obligations on technology companies and significant limitations on businesses, including the Company.",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+      "similarityScore": 0.6536498467853432
+    },
+    {
+      "chunkId": 285,
+      "filingId": 4,
+      "ticker": "AAPL",
+      "cik": "0000320193",
+      "accessionNo": "0000320193-26-000020",
+      "filingType": "10-Q",
+      "filingDate": "2026-07-31",
+      "reportDate": "2026-06-27",
+      "sectionKey": "ITEM_1",
+      "sectionTitle": "Legal Proceedings",
+      "chunkIndex": 19,
+      "content": "the 2021 Injunction and enjoined the Company from imposing any commission or any fee on purchases that consumers make outside an app; restricting, conditioning, limiting, or prohibiting how developers guide consumers to purchases outside an app; or otherwise interfering with a consumer\u2019s choice to proceed in or out of an app (the \u201c2025 Injunction\u201d). The Company appealed the California District Court\u2019s April 2025 decision to the U.S. Court of Appeals for the Ninth Circuit (\u201cNinth Circuit Court\u201d). On December 11, 2025, the Ninth Circuit Court issued an order upholding the 2025 Injunction in part and modifying certain aspects to allow the Company to require parity in size, form and placement between the Company\u2019s in-app purchase and any links for consumers to make purchases outside an app. The Ninth Circuit Court also held that the Company can charge some commission on link-out purchases, and remanded to the California District Court to further amend or modify the 2025 Injunction, consistent with the Ninth Circuit Court\u2019s order. On May 21, 2026, the Company filed a petition seeking Supreme Court review of the Ninth Circuit Court\u2019s opinion. On June 30, 2026, the Supreme Court granted the Company\u2019s petition to review the applicable legal standard for civil contempt. The Company is seeking a stay of the California District Court proceedings pending the Supreme Court\u2019s decision on the question under review.\nOther Legal Proceedings\nThe Company is subject to other legal proceedings and claims that have not been fully resolved and that have arisen in the ordinary course of business. The Company settled certain matters during the third quarter of 2026 that did not individually or in the aggregate have a material impact on the Company\u2019s financial condition or operating results. The outcome of litigation is inherently uncertain. If one or more legal matters were resolved against the Company in a reporting period for amounts above management\u2019s expectations, the Company\u2019s financial condition and operating results for that reporting period could be materially adversely affected.\nApple Inc. | Q3 2026 Form 10-Q | 20",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/aapl-20260627.htm",
+      "similarityScore": 0.6294258173103854
+    },
+    {
+      "chunkId": 289,
+      "filingId": 4,
+      "ticker": "AAPL",
+      "cik": "0000320193",
+      "accessionNo": "0000320193-26-000020",
+      "filingType": "10-Q",
+      "filingDate": "2026-07-31",
+      "reportDate": "2026-06-27",
+      "sectionKey": "ITEM_1A",
+      "sectionTitle": "Risk Factors",
+      "chunkIndex": 23,
+      "content": "equirements have in the past, and may in the future, cause the Company to not launch or maintain products, services and features, such as Siri AI, in certain jurisdictions. Any of these outcomes can have a negative impact on the Company\u2019s competitive advantage and materially adversely affect its business, results of operations, financial condition and stock price.\nThe Company has also continued to make changes to its DMA compliance plan in response to feedback and engagement with the Commission. Although the Company\u2019s DMA compliance plan is intended to address the DMA\u2019s obligations, it has been challenged by the Commission and may be challenged further by private litigants. The DMA provides for significant fines and penalties for noncompliance. While the changes introduced by the Company in the EU are intended to reduce new privacy and security risks that the DMA poses to EU users, many risks will remain. Changes to the Company\u2019s business in response to the DMA or other laws and regulations in the EU or in other jurisdictions, including the U.S., could materially adversely affect the Company\u2019s business, reputation, results of operations, financial condition and stock price.\nThe Company is also currently subject to antitrust investigations and litigation in various jurisdictions around the world, which can result in legal proceedings and claims against the Company that could, individually or in the aggregate, have a material adverse impact on the Company\u2019s business, results of operations, financial condition and stock price. For example, the Company is subject to civil antitrust lawsuits in the U.S. alleging monopolization or attempted monopolization in the markets for \u201cperformance smartphones\u201d and \u201csmartphones\u201d generally in violation of U.S. antitrust laws. In addition, the Company is the subject of investigations in Europe and other jurisdictions relating to App Store terms and conditions. If such investigations or litigation are resolved against the Company, the Company can be exposed to significant fines and may be required to make further changes to its business practices, all of which could materially adversely affect the Company\u2019s business, reputation, results of operations, financial condition and stock price.\nApple Inc. | Q3 2026 Form 10-Q | 22\nFurther, the Company has commercial relationships with other companies in the technology industry that are or may become subject to investigations and litigation that, if resolved against those other companies, could materially adversely affect the Company\u2019s commercial relationships with those business partners and materially adversely affect the Company\u2019s business, results of operations, financial condition and stock price. For example, the Company earns revenue from licensing arrangements with Google LLC (\u201cGoogle\u201d) and other companies to offer their search services on the Company\u2019s platforms and applications, and certain of these arrangements are currently subject to government investigations and legal proceedings. On August 5, 2024, Google was found to have violated U.S. antitrust laws. In connection with this finding, on September 2, 2025, the U.S. District Court for the District of Columbia (\u201cD.C. District Court\u201d) ordered certain remedies. The court\u2019s order is subject to further proceedings before the D.C. District Court, which may result in changes to the interpretation or application of the remedies ordered by the court, as well as new or changed remedies being ordered. The court\u2019s order was appealed by both the DOJ and Google. A reversal of the order on appeal could result in imposition of certain remedies initially proposed by the DOJ, such as those prohibiting Google from offering the Company commercial terms for search distribution.",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/aapl-20260627.htm",
+      "similarityScore": 0.6318639788476408
+    }
+  ],
+  "quotes": [
+    {
+      "conid": 265598,
+      "last": null,
+      "bid": null,
+      "ask": null,
+      "updatedAt": "2026-09-10T06:20:52.981Z",
+      "observedAt": "2026-09-10T06:20:53.591401Z",
+      "availability": "UNAVAILABLE",
+      "rawAvailability": "DB"
+    }
+  ],
+  "limitations": [
+    "QUANT_MODULE_NOT_IMPLEMENTED: trading targets, sizing and calibrated confidence are unavailable",
+    "findInstrument:INVALID_ARGUMENT",
+    "NO_VERIFIED_CURRENT_QUOTE"
+  ],
+  "toolTrace": [
+    {
+      "tool": "RAG:searchFilings",
+      "outcome": "OK",
+      "elapsedMs": 280
+    },
+    {
+      "tool": "MANAGER:researchFilings",
+      "outcome": "OK",
+      "elapsedMs": 3011
+    },
+    {
+      "tool": "BROKER:findInstrument",
+      "outcome": "INVALID_ARGUMENT",
+      "elapsedMs": 0
+    },
+    {
+      "tool": "BROKER:findInstrument",
+      "outcome": "OK",
+      "elapsedMs": 1091
+    },
+    {
+      "tool": "BROKER:getQuote",
+      "outcome": "OK",
+      "elapsedMs": 1948
+    },
+    {
+      "tool": "MANAGER:researchBroker",
+      "outcome": "OK",
+      "elapsedMs": 7270
+    }
+  ],
+  "modelCalls": 8,
+  "observedTokens": 11352,
+  "takeProfit": null,
+  "stopLoss": null,
+  "confidence": null
+}

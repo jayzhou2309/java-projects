@@ -33,9 +33,27 @@ public class FilingHtmlParser {
 
         Document document = Jsoup.parse(html);
 
+        removeContentsTables(document);
         cleanDocument(document);
 
         return extractSections(document);
+    }
+
+    // Remove navigation tables only when multiple Item links resolve to body headings.
+    // Ordinary financial tables and unlinked short disclosures remain intact.
+    private void removeContentsTables(Document document) {
+        for (Element table : document.select("table")) {
+            long bodyLinks = table.select("a[href^=#]").stream().filter(link -> {
+                if (!ITEM_PATTERN.matcher(normalize(link.text())).matches()) return false;
+                String targetId = link.attr("href").substring(1);
+                Element target = document.getElementById(targetId);
+                if (target == null) {
+                    target = document.getElementsByAttributeValue("name", targetId).first();
+                }
+                return target != null && !target.parents().contains(table);
+            }).map(link -> link.attr("href")).distinct().count();
+            if (bodyLinks >= 2) table.remove();
+        }
     }
 
     private void cleanDocument(Document document) {

@@ -1,0 +1,2 @@
+2026-09-10T14:20:20.251+08:00  INFO 39918 --- [StockRecommendationEngine] [ommendation-run] p.s.r.RecommendationService              : Recommendation run=de68174e-29df-4646-a5a6-3f811d772e84 tool=RAG:searchFilings outcome=OK elapsedMs=758
+2026-09-10T14:20:20.511+08:00  INFO 39918 --- [StockRecommendationEngine] [ommendation-run] p.s.r.RecommendationService              : Recommendation run=de68174e-29df-4646-a5a6-3f811d772e84 tool=RAG:searchFilings outcome=OK elapsedMs=259

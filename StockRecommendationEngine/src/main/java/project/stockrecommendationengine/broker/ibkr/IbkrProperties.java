@@ -14,22 +14,17 @@ import org.springframework.validation.annotation.Validated;
 @Setter
 public class IbkrProperties {
     private boolean enabled;
-    private String baseUrl = "https://localhost:5000/v1/api";
-    private String certificate = "";
+    @NotBlank private String host = "127.0.0.1";
+    @Min(1) @Max(65535) private int port = 7497;
+    @Min(1) @Max(2147483647) private int clientId = 71;
     private String accountId = "";
-    @Min(100) @Max(30000) private int timeoutMs = 5000;
-    @Min(100) @Max(10000) private int requestIntervalMs = 500;
-    @Min(1) @Max(100) private int maxPositionPages = 20;
-    @Min(1) @Max(5) private int snapshotAttempts = 3;
+    @Min(100) @Max(30000) private int timeoutMs = 10000;
+    @Min(500) @Max(15000) private int quoteWaitMs = 5000;
+    @Min(1) @Max(4) private int marketDataType = 4;
+    @Min(1) @Max(10000) private int maxPositions = 1000;
 
-    @AssertTrue(message = "Enabled IBKR requires an account ID and an HTTPS base URL without query, fragment, or credentials")
+    @AssertTrue(message = "Enabled TWS integration requires IBKR_ACCOUNT_ID")
     public boolean isConnectionValid() {
-        if (!enabled) return true;
-        try {
-            var uri = java.net.URI.create(baseUrl);
-            return accountId.matches("[A-Za-z0-9_-]{1,40}") && "https".equals(uri.getScheme())
-                    && uri.getHost() != null && uri.getUserInfo() == null
-                    && uri.getQuery() == null && uri.getFragment() == null;
-        } catch (RuntimeException ex) { return false; }
+        return !enabled || accountId.matches("[A-Za-z0-9_-]{1,40}");
     }
 }

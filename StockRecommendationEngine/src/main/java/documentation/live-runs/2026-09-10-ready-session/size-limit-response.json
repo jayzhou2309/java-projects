@@ -1,0 +1,30 @@
+{
+  "runId": "de68174e-29df-4646-a5a6-3f811d772e84",
+  "ticker": "AAPL",
+  "status": "TOOL_RESULT_LIMIT",
+  "assessment": "INSUFFICIENT_EVIDENCE",
+  "reasoning": "",
+  "sources": [],
+  "quotes": [],
+  "limitations": [
+    "QUANT_MODULE_NOT_IMPLEMENTED: trading targets, sizing and calibrated confidence are unavailable",
+    "TOOL_RESULT_LIMIT"
+  ],
+  "toolTrace": [
+    {
+      "tool": "RAG:searchFilings",
+      "outcome": "OK",
+      "elapsedMs": 758
+    },
+    {
+      "tool": "RAG:searchFilings",
+      "outcome": "OK",
+      "elapsedMs": 259
+    }
+  ],
+  "modelCalls": 3,
+  "observedTokens": 9115,
+  "takeProfit": null,
+  "stopLoss": null,
+  "confidence": null
+}

@@ -64,18 +64,20 @@ integration:
 broker:
   ibkr:
     enabled: ${IBKR_ENABLED:false}
-    base-url: ${IBKR_BASE_URL:https://localhost:5000/v1/api}
+    host: ${IBKR_HOST:127.0.0.1}
+    port: ${IBKR_PORT:7497}
+    client-id: ${IBKR_CLIENT_ID:71}
     account-id: ${IBKR_ACCOUNT_ID:}
-    certificate: ${IBKR_CERTIFICATE:}
-    timeout-ms: 5000
-    request-interval-ms: 500
-    max-position-pages: 20
-    snapshot-attempts: 3
+    timeout-ms: 10000
+    quote-wait-ms: 5000
+    # 1 realtime, 2 frozen, 3 delayed, 4 delayed-frozen; TWS may return realtime if entitled.
+    market-data-type: ${IBKR_MARKET_DATA_TYPE:4}
+    max-positions: 1000
 
 recommendation:
   enabled: ${RECOMMENDATION_ENABLED:false}
   model: ${RECOMMENDATION_MODEL:}
-  max-model-calls: 6
+  max-model-calls: 10
   max-tool-calls: 10
   deadline-ms: 60000
   max-output-tokens: 1200

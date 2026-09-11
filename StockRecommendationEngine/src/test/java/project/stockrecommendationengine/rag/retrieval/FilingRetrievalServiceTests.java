@@ -91,6 +91,35 @@ class FilingRetrievalServiceTests {
         assertThatThrownBy(() -> service.retrieve(request())).hasMessageContaining("altered evidence");
     }
 
+    @Test
+    void removesRedundantPassagesButPreservesDifferentPeriodsAndSections() {
+        String shared = "Shared risk disclosure. ".repeat(30);
+        var first = passage(1L, 1L, "ITEM_1A", shared);
+        var duplicate = passage(2L, 1L, "ITEM_1A", shared);
+        var overlap = passage(3L, 1L, "ITEM_1A", shared + " Additional detail.");
+        var otherPeriod = passage(4L, 2L, "ITEM_1A", shared);
+        var otherSection = passage(5L, 1L, "ITEM_7", shared);
+        var distinct = passage(6L, 1L, "ITEM_1A", "Different supporting evidence.");
+        when(repository.findSimilarChunks(any(), any(), anyInt()))
+                .thenReturn(List.of(first, duplicate, overlap, otherPeriod, otherSection, distinct));
+        assertThat(service.retrieve(request()).results()).containsExactly(first, otherPeriod, otherSection, distinct);
+    }
+
+    @Test
+    void preservesNormalChunkOverlap() {
+        String overlap = "x".repeat(500);
+        var first = passage(1L, 1L, "ITEM_1A", "a".repeat(3000) + overlap);
+        var next = passage(2L, 1L, "ITEM_1A", overlap + "b".repeat(3000));
+        when(repository.findSimilarChunks(any(), any(), anyInt())).thenReturn(List.of(first, next));
+        assertThat(service.retrieve(request()).results()).containsExactly(first, next);
+    }
+
+    private RetrievedFilingChunk passage(Long id, Long filing, String section, String text) {
+        return new RetrievedFilingChunk(id, filing, "AAPL", "0000320193", "accession" + filing, "10-K",
+                LocalDate.parse("2025-10-31"), null, section, "Section", id.intValue(), text,
+                "https://example.invalid/filing/" + filing, 0.9);
+    }
+
     private RetrievalRequest request() {
         return new RetrievalRequest("AAPL", "risks", null, null, null, null, null, null);
     }

@@ -1,0 +1,5 @@
+{
+  "ticker": "AAPL",
+  "question": "Assess the main business risks and legal proceedings in the latest stored filings, and obtain the current IBKR quote. Use both research specialists and clearly state evidence limitations.",
+  "includePortfolio": false
+}

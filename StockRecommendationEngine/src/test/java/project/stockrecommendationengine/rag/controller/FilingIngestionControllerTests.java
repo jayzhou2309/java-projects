@@ -26,6 +26,19 @@ class FilingIngestionControllerTests {
                 .setControllerAdvice(new IngestionExceptionHandler()).build();
     }
 
+    @Test
+    void rebuildReturnsOutcomeAndPropagatesConflictAndMissingFiling() throws Exception {
+        when(ingestion.rebuild(3L)).thenReturn(java.util.Map.of("outcome", "SUCCEEDED"));
+        mvc.perform(post("/api/rag/filings/3/rebuild")).andExpect(status().isOk());
+        verify(ingestion).rebuild(3L);
+        when(ingestion.rebuild(3L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.CONFLICT, "Filing is already being processed"));
+        mvc.perform(post("/api/rag/filings/3/rebuild")).andExpect(status().isConflict());
+        when(ingestion.rebuild(99L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND, "Filing not found"));
+        mvc.perform(post("/api/rag/filings/99/rebuild")).andExpect(status().isNotFound());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "{}",

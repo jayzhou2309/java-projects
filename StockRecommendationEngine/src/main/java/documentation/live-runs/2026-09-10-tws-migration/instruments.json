@@ -1,0 +1,34 @@
+[
+  {
+    "conid": 265598,
+    "symbol": "AAPL",
+    "name": "APPLE INC",
+    "exchange": "NASDAQ",
+    "currency": "USD",
+    "securityType": "STK"
+  },
+  {
+    "conid": 38708077,
+    "symbol": "AAPL",
+    "name": "APPLE INC",
+    "exchange": "MEXI",
+    "currency": "MXN",
+    "securityType": "STK"
+  },
+  {
+    "conid": 273982664,
+    "symbol": "AAPL",
+    "name": "APPLE INC",
+    "exchange": "EBS",
+    "currency": "CHF",
+    "securityType": "STK"
+  },
+  {
+    "conid": 532640894,
+    "symbol": "AAPL",
+    "name": "APPLE INC-CDR",
+    "exchange": "TSE",
+    "currency": "CAD",
+    "securityType": "STK"
+  }
+]

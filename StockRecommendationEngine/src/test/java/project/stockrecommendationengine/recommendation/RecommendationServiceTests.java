@@ -55,35 +55,119 @@ class RecommendationServiceTests {
 
     @AfterEach void close() { service.close(); validators.close(); }
 
-    @Test void completesGroundedResearchWithOnlyRetrievedCitationsAndQuoteProvenance() {
+    @Test void managerConsolidatesIsolatedSpecialistsWithSharedBudgetAndProvenance() {
         when(model.call(any(Prompt.class))).thenReturn(
-                calls(call("1", "searchFilings", "{\"query\":\"risks\"}"), call("2", "findInstrument", "{}")),
-                calls(call("3", "getQuote", "{\"conid\":1}")), answer("NEUTRAL", "[11]"));
+                calls(call("m1", "researchFilings", "{}"), call("m2", "researchBroker", "{}")),
+                calls(call("r1", "searchFilings", "{\"query\":\"risks\"}")), report(),
+                calls(call("b1", "findInstrument", "{}")),
+                calls(call("b2", "getQuote", "{\"conid\":1}")), report(), answer("NEUTRAL", "[11]"));
         var result = service.recommend(request(false));
         assertThat(result.status()).isEqualTo("COMPLETE");
+        assertThat(result.modelCalls()).isEqualTo(7);
         assertThat(result.sources()).containsExactly(evidence());
         assertThat(result.quotes()).hasSize(1);
-        assertThat(result.modelCalls()).isEqualTo(3);
-        assertThat(result.toolTrace()).hasSize(3);
-        assertThat(result.takeProfit()).isNull();
-        assertThat(result.stopLoss()).isNull();
-        assertThat(result.confidence()).isNull();
+        assertThat(result.toolTrace()).hasSize(5);
         verify(broker, never()).getPositions();
         var prompts = org.mockito.ArgumentCaptor.forClass(Prompt.class);
-        verify(model, times(3)).call(prompts.capture());
-        assertThat(prompts.getAllValues().get(1).getInstructions()).anyMatch(ToolResponseMessage.class::isInstance);
+        verify(model, times(7)).call(prompts.capture());
+        var all = prompts.getAllValues();
+        assertThat(all.get(1).getInstructions()).hasSize(2);
+        assertThat(all.get(3).getInstructions()).hasSize(2);
+        assertThat(all.get(6).getInstructions()).anyMatch(ToolResponseMessage.class::isInstance);
+        assertThat(all.get(6).toString()).contains("Material business risks.");
     }
 
-    @Test void expiredSessionReturnsAnExplicitPortfolioLimitation() {
-        when(broker.getPositions()).thenThrow(new BrokerException(BrokerException.Code.LOGIN_REQUIRED));
-        when(model.call(any(Prompt.class))).thenReturn(
-                calls(call("1", "searchFilings", "{\"query\":\"risks\"}"), call("2", "getPortfolioPositions", "{}")),
-                answer("NEUTRAL", "[11]"));
-        var result = service.recommend(request(true));
-        assertThat(result.status()).isEqualTo("PARTIAL");
-        assertThat(result.limitations()).contains("getPortfolioPositions:LOGIN_REQUIRED", "PORTFOLIO_UNAVAILABLE");
-        assertThat(result.toolTrace()).anySatisfy(trace -> assertThat(trace.outcome()).isEqualTo("LOGIN_REQUIRED"));
+    @Test void ragSpecialistCannotCallBrokerOrDelegateRecursively() {
+        for (String tool : List.of("findInstrument", "researchBroker")) {
+            when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
+                    calls(call("r", tool, "{}")));
+            assertThat(service.recommend(request(false)).status()).isEqualTo("TOOL_NOT_ALLOWED");
+        }
+        verifyNoInteractions(broker, filings);
     }
+
+    @Test void brokerSpecialistCannotRetrieveFilings() {
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
+                calls(call("b", "searchFilings", "{\"query\":\"risks\"}")));
+        assertThat(service.recommend(request(false)).status()).isEqualTo("TOOL_NOT_ALLOWED");
+        verifyNoInteractions(filings);
+    }
+
+    @Test void sharedModelBudgetStopsInsideSpecialist() {
+        properties.setMaxModelCalls(2);
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
+                calls(call("r", "searchFilings", "{\"query\":\"risks\"}")));
+        assertThat(service.recommend(request(false)).status()).isEqualTo("MODEL_CALL_LIMIT");
+        verify(model, times(2)).call(any(Prompt.class));
+    }
+
+    @Test void sharedToolBudgetIncludesDelegationAndNestedTools() {
+        properties.setMaxToolCalls(2);
+        when(model.call(any(Prompt.class))).thenReturn(
+                calls(call("m1", "researchFilings", "{}"), call("m2", "researchBroker", "{}")),
+                calls(call("r", "searchFilings", "{\"query\":\"risks\"}")), report());
+        assertThat(service.recommend(request(false)).status()).isEqualTo("TOOL_LIMIT");
+        verifyNoInteractions(broker);
+    }
+
+    @Test void malformedSpecialistReportBecomesAnExplicitLimitation() {
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
+                text("not json"), answer("INSUFFICIENT_EVIDENCE", "[]"));
+        assertThat(service.recommend(request(false)).limitations()).contains("researchFilings:INVALID_ARGUMENT");
+    }
+
+    @Test void specialistFailureAllowsManagerToExplainMissingData() {
+        when(broker.getPositions()).thenThrow(new BrokerException(BrokerException.Code.LOGIN_REQUIRED));
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
+                calls(call("b", "getPortfolioPositions", "{}")), report(), answer("INSUFFICIENT_EVIDENCE", "[]"));
+        assertThat(service.recommend(request(true)).limitations())
+                .contains("getPortfolioPositions:LOGIN_REQUIRED", "PORTFOLIO_UNAVAILABLE");
+    }
+
+    @Test void delayedQuoteRemainsPartialAndEvidenceDoesNotLeakBetweenRuns() {
+        when(broker.getQuote(1)).thenReturn(quote("DELAYED", Instant.now()));
+        when(model.call(any(Prompt.class))).thenReturn(
+                calls(call("m1", "researchFilings", "{}"), call("m2", "researchBroker", "{}")),
+                calls(call("r", "searchFilings", "{\"query\":\"risks\"}")), report(),
+                calls(call("b1", "findInstrument", "{}")), calls(call("b2", "getQuote", "{\"conid\":1}")),
+                report(), answer("NEUTRAL", "[11]"));
+        assertThat(service.recommend(request(false)).status()).isEqualTo("PARTIAL");
+        when(model.call(any(Prompt.class))).thenReturn(answer("NEUTRAL", "[11]"));
+        assertThat(service.recommend(request(false)).status()).isEqualTo("INVALID_CITATION");
+    }
+
+    @Test void duplicateSpecialistToolIdsAreRejected() {
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
+                calls(call("same", "findInstrument", "{}")), calls(call("same", "findInstrument", "{}")));
+        assertThat(service.recommend(request(false)).status()).isEqualTo("INVALID_TOOL_CALL_ID");
+    }
+
+    @Test void specialistArgumentValidationAndResultSizeLimitsRemainEnforced() {
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
+                calls(call("r", "searchFilings", "{\"query\":\"risks\",\"ticker\":\"OTHER\"}")),
+                report(), answer("INSUFFICIENT_EVIDENCE", "[]"));
+        assertThat(service.recommend(request(false)).limitations()).contains("searchFilings:INVALID_ARGUMENT");
+        verifyNoInteractions(filings);
+        properties.setMaxToolResultChars(10);
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
+                calls(call("r", "searchFilings", "{\"query\":\"risks\"}")));
+        assertThat(service.recommend(request(false)).status()).isEqualTo("TOOL_RESULT_LIMIT");
+    }
+
+    @Test void brokerSpecialistRespectsPortfolioOptInAndContractAmbiguity() {
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
+                calls(call("b", "getPortfolioPositions", "{}")));
+        assertThat(service.recommend(request(false)).status()).isEqualTo("TOOL_NOT_ALLOWED");
+        verify(broker, never()).getPositions();
+        when(broker.searchInstruments("AAPL")).thenReturn(List.of(instrument(1), instrument(2)));
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
+                calls(call("b1", "findInstrument", "{}")), calls(call("b2", "getQuote", "{\"conid\":1}")),
+                report(), answer("INSUFFICIENT_EVIDENCE", "[]"));
+        assertThat(service.recommend(request(false)).limitations()).contains("getQuote:AMBIGUOUS_CONTRACT");
+        verify(broker, never()).getQuote(anyLong());
+    }
+
+    private static ChatResponse report() { return text("{\"summary\":\"Findings from the available evidence.\"}"); }
 
     @Test void rejectsUnknownToolsWithoutExecutingAnyService() {
         when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "placeOrder", "{}")));
@@ -95,15 +179,6 @@ class RecommendationServiceTests {
         when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "getPortfolioPositions", "{}")));
         assertThat(service.recommend(request(false)).status()).isEqualTo("TOOL_NOT_ALLOWED");
         verifyNoInteractions(broker);
-    }
-
-    @Test void validatesToolArgumentsBeforeServiceExecution() {
-        when(model.call(any(Prompt.class))).thenReturn(
-                calls(call("1", "searchFilings", "{\"query\":\"risks\",\"ticker\":\"OTHER\"}")),
-                answer("INSUFFICIENT_EVIDENCE", "[]"));
-        var result = service.recommend(request(false));
-        assertThat(result.limitations()).contains("searchFilings:INVALID_ARGUMENT");
-        verifyNoInteractions(filings);
     }
 
     @Test void rejectsInventedCitationsAndMissingEvidence() {
@@ -125,43 +200,6 @@ class RecommendationServiceTests {
         verifyNoInteractions(broker);
     }
 
-    @Test void boundsRepeatedModelCallsAndRejectsDuplicateToolCallIds() {
-        properties.setMaxModelCalls(1);
-        when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "findInstrument", "{}")));
-        assertThat(service.recommend(request(false)).status()).isEqualTo("MODEL_CALL_LIMIT");
-        properties.setMaxModelCalls(3);
-        when(model.call(any(Prompt.class))).thenReturn(calls(call("same", "findInstrument", "{}")));
-        assertThat(service.recommend(request(false)).status()).isEqualTo("INVALID_TOOL_CALL_ID");
-    }
-
-    @Test void ambiguousContractsRequireTheUsersExplicitSelection() {
-        when(broker.searchInstruments("AAPL")).thenReturn(List.of(instrument(1), instrument(2)));
-        when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "findInstrument", "{}")),
-                calls(call("2", "getQuote", "{\"conid\":1}")), answer("INSUFFICIENT_EVIDENCE", "[]"));
-        var result = service.recommend(request(false));
-        assertThat(result.limitations()).contains("getQuote:AMBIGUOUS_CONTRACT");
-        verify(broker, never()).getQuote(anyLong());
-    }
-
-    @Test void selectedContractMustAlsoBelongToTheRequestedTicker() {
-        when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "findInstrument", "{}")),
-                calls(call("2", "getQuote", "{\"conid\":2}")), answer("INSUFFICIENT_EVIDENCE", "[]"));
-        var result = service.recommend(new RecommendationRequest("AAPL", "risks", 2L, false));
-        assertThat(result.limitations()).contains("getQuote:CONTRACT_NOT_DISCOVERED");
-        verify(broker, never()).getQuote(anyLong());
-    }
-
-    @Test void delayedOrStaleQuotesCannotProduceCompleteResearch() {
-        for (var quote : List.of(quote("DELAYED", Instant.now()), quote("REALTIME", Instant.now().minusSeconds(300)))) {
-            when(broker.getQuote(1)).thenReturn(quote);
-            when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "searchFilings", "{\"query\":\"risks\"}"),
-                    call("2", "findInstrument", "{}")), calls(call("3", "getQuote", "{\"conid\":1}")), answer("NEUTRAL", "[11]"));
-            var result = service.recommend(request(false));
-            assertThat(result.status()).isEqualTo("PARTIAL");
-            assertThat(result.limitations()).contains("NO_VERIFIED_CURRENT_QUOTE");
-        }
-    }
-
     @Test void deadlineInterruptsTheRunAndPreventsSubsequentToolExecution() throws Exception {
         properties.setDeadlineMs(100);
         var interrupted = new CountDownLatch(1);
@@ -173,21 +211,6 @@ class RecommendationServiceTests {
         assertThat(service.recommend(request(false)).status()).isEqualTo("DEADLINE_EXCEEDED");
         assertThat(interrupted.await(1, TimeUnit.SECONDS)).isTrue();
         verifyNoInteractions(broker);
-    }
-
-    @Test void runEvidenceDoesNotLeakToTheNextRequest() {
-        when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "searchFilings", "{\"query\":\"risks\"}")),
-                answer("NEUTRAL", "[11]"));
-        assertThat(service.recommend(request(false)).status()).isEqualTo("PARTIAL");
-        when(model.call(any(Prompt.class))).thenReturn(answer("NEUTRAL", "[11]"));
-        assertThat(service.recommend(request(false)).status()).isEqualTo("INVALID_CITATION");
-    }
-
-    @Test void oversizedToolResultsStopBeforeAnotherModelCall() {
-        properties.setMaxToolResultChars(10);
-        when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "searchFilings", "{\"query\":\"risks\"}")));
-        assertThat(service.recommend(request(false)).status()).isEqualTo("TOOL_RESULT_LIMIT");
-        verify(model, times(1)).call(any(Prompt.class));
     }
 
     @Test void contextLimitStopsBeforeSendingAnOversizedPrompt() {

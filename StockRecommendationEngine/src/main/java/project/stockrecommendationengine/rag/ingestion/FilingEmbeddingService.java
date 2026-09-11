@@ -37,7 +37,10 @@ public class FilingEmbeddingService {
             log.info("Embedding chunk {}/{}: chunkIndex={}, section={}, characters={}",
                     i + 1, chunks.size(), chunk.chunkIndex(), chunk.sectionKey(), chunk.content().length());
             try {
-                float[] vector = embed(chunk.content());
+                String heading = java.util.stream.Stream.of(chunk.sectionKey(), chunk.sectionTitle())
+                        .filter(value -> value != null && !value.isBlank())
+                        .collect(java.util.stream.Collectors.joining(" — "));
+                float[] vector = embed(heading.isEmpty() ? chunk.content() : heading + "\n\n" + chunk.content());
                 embedded.add(new EmbeddedFilingChunk(chunk, vector));
                 log.info("Embedded chunk {}/{}: dimensions={}, elapsedMs={}",
                         i + 1, chunks.size(), vector.length, (System.nanoTime() - chunkStarted) / 1_000_000);

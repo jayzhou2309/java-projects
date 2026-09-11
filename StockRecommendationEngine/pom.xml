@@ -29,6 +29,7 @@
     <properties>
         <java.version>17</java.version>
         <spring-ai.version>2.0.1</spring-ai.version>
+        <tws-api.version>10.45.01</tws-api.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -42,6 +43,17 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
+        <!-- Install the official SDK with scripts/install-tws-sdk.sh before building. -->
+        <dependency>
+            <groupId>com.interactivebrokers</groupId>
+            <artifactId>tws-api</artifactId>
+            <version>${tws-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>4.29.5</version>
+        </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>

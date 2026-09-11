@@ -22,6 +22,8 @@ import java.util.Locale;
 @Slf4j
 public class FilingIngestionService {
 
+    public static final String PROCESSING_VERSION = "sections-v2-context-v2";
+    private final org.springframework.jdbc.core.JdbcTemplate jdbc;
     private final SECClient secClient;
     private final FilingHtmlParser filingHtmlParser;
     private final FilingChunker filingChunker;
@@ -46,14 +48,16 @@ public class FilingIngestionService {
             try {
                 // executeWithoutResult returns only after commit, so commit failures
                 // are caught here too. Earlier filings have their own committed transactions.
-                transaction.executeWithoutResult(status -> ingestFiling(metadata));
+                transaction.executeWithoutResult(status -> { lock(metadata.accessionNo()); ingestFiling(metadata, false); });
                 log.info("Filing transaction committed: ticker={}, accession={}, elapsedMs={}",
                         metadata.ticker(), metadata.accessionNo(), (System.nanoTime() - started) / 1_000_000);
             } catch (RuntimeException failure) {
+                if (failure instanceof org.springframework.web.server.ResponseStatusException) throw failure;
                 log.warn("Filing ingestion failed; recording failure: ticker={}, accession={}, elapsedMs={}",
                         metadata.ticker(), metadata.accessionNo(), (System.nanoTime() - started) / 1_000_000);
                 try {
                     transaction.executeWithoutResult(status -> {
+                        lock(metadata.accessionNo());
                         SECFiling filing = findOrCreate(metadata);
                         // Do not overwrite a successful concurrent ingestion.
                         if (!isComplete(filing)) {
@@ -70,6 +74,58 @@ public class FilingIngestionService {
                 }
                 throw failure;
             }
+        }
+    }
+
+    private void lock(String accession) {
+        Boolean acquired = jdbc.queryForObject(
+                "SELECT pg_try_advisory_xact_lock(hashtextextended(?, 0))", Boolean.class, accession);
+        if (!Boolean.TRUE.equals(acquired)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Filing is already being processed");
+        }
+    }
+
+    public java.util.Map<String, Object> rebuild(long filingId) {
+        TransactionTemplate tx = new TransactionTemplate(transactionManager);
+        tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        String runId = java.util.UUID.randomUUID().toString();
+        try {
+            return tx.execute(status -> {
+                var filing = filingRepository.findById(filingId).orElseThrow(() ->
+                        new org.springframework.web.server.ResponseStatusException(
+                                org.springframework.http.HttpStatus.NOT_FOUND, "Filing not found"));
+                lock(filing.getAccessionNo());
+                int previousCount = filing.getChunks().size();
+                String previousVersion = filing.getProcessingVersion();
+                var metadata = new SECFilingMetadata(filing.getTicker(), filing.getCik(), filing.getAccessionNo(),
+                        filing.getFilingType(), filing.getFilingDate(), filing.getReportDate(),
+                        filing.getPrimaryDocument(), filing.getSourceUrl());
+                ingestFiling(metadata, true);
+                int count = filing.getChunks().size();
+                jdbc.update("""
+                        INSERT INTO filing_rebuild_runs(run_id, filing_id, processing_version, outcome,
+                            previous_version, previous_chunks, resulting_chunks)
+                        VALUES (?, ?, ?, 'SUCCEEDED', ?, ?, ?)
+                        """, runId, filingId, PROCESSING_VERSION, previousVersion, previousCount, count);
+                log.info("Filing rebuild succeeded: runId={}, filingId={}, chunks={}, version={}",
+                        runId, filingId, count, PROCESSING_VERSION);
+                return java.util.Map.<String, Object>of("runId", runId, "filingId", filingId,
+                        "processingVersion", PROCESSING_VERSION, "chunks", count, "outcome", "SUCCEEDED");
+            });
+        } catch (org.springframework.web.server.ResponseStatusException rejected) {
+            throw rejected;
+        } catch (RuntimeException failure) {
+            try {
+                tx.executeWithoutResult(status -> jdbc.update("""
+                        INSERT INTO filing_rebuild_runs(run_id, filing_id, processing_version, outcome, error_code)
+                        VALUES (?, ?, ?, 'FAILED', ?)
+                        """, runId, filingId, PROCESSING_VERSION, failure.getClass().getSimpleName()));
+            } catch (RuntimeException auditFailure) {
+                failure.addSuppressed(auditFailure);
+            }
+            log.error("Filing rebuild failed: runId={}, filingId={}; previous content retained", runId, filingId);
+            throw failure;
         }
     }
 
@@ -91,10 +147,10 @@ public class FilingIngestionService {
                         .build());
     }
 
-    private void ingestFiling(SECFilingMetadata metadata) {
+    private void ingestFiling(SECFilingMetadata metadata, boolean force) {
         log.info("Checking stored filing: accession={}", metadata.accessionNo());
         SECFiling filing = findOrCreate(metadata);
-        if (isComplete(filing)) {
+        if (!force && isComplete(filing)) {
             log.info("Skipping already embedded filing: accession={}, chunks={}",
                     metadata.accessionNo(), filing.getChunks().size());
             return;
@@ -124,6 +180,7 @@ public class FilingIngestionService {
         filing.getChunks().clear();
         filingRepository.saveAndFlush(filing);
         filing.getChunks().addAll(toEntities(filing, embeddedChunks));
+        filing.setProcessingVersion(PROCESSING_VERSION);
         filing.setIngestionStatus("EMBEDDED");
         filing.setIngestionError(null);
         filingRepository.saveAndFlush(filing);

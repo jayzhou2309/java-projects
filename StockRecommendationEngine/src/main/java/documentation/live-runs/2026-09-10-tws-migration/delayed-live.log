@@ -1,0 +1,6 @@
+15:06:01.532 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=3 conid=265598 exchange=SMART requestedType=3
+15:06:06.540 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=3 availability=UNAVAILABLE hasPrice=false
+TWS_QUOTE availability=UNAVAILABLE hasPrice=false
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 5.646 s <<< FAILURE! -- in project.stockrecommendationengine.broker.ibkr.IbkrLiveTests
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0
+[INFO] BUILD FAILURE

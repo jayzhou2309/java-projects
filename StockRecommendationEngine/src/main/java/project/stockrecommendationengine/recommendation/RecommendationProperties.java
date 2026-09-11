@@ -17,7 +17,7 @@ public class RecommendationProperties {
     private String model = "";
     @AssertTrue(message = "Set RECOMMENDATION_MODEL to a tool-capable chat model before enabling recommendations")
     public boolean isModelConfigured() { return !enabled || (model != null && !model.isBlank()); }
-    @Min(1) @Max(20) private int maxModelCalls = 6;
+    @Min(1) @Max(20) private int maxModelCalls = 10;
     @Min(1) @Max(30) private int maxToolCalls = 10;
     @Min(100) @Max(180000) private int deadlineMs = 60000;
     @Min(128) @Max(4096) private int maxOutputTokens = 1200;

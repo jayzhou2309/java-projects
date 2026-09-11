@@ -58,6 +58,9 @@ public class SECFiling {
     @Column(name = "source_url", nullable = false, columnDefinition = "TEXT")
     private String sourceUrl;
 
+    @Column(name = "processing_version", length = 80)
+    private String processingVersion;
+
     @Column(name = "raw_content", columnDefinition = "TEXT")
     private String rawContent;
 

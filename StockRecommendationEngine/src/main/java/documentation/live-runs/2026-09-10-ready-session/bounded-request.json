@@ -1,0 +1,6 @@
+{
+  "ticker": "AAPL",
+  "conid": 265598,
+  "question": "Use both specialists to assess AAPL business risks and its IBKR quote. For this smoke test, ask the RAG specialist to make only one searchFilings call covering business risks and legal proceedings, then summarize those results. Ask the broker specialist to discover the selected NASDAQ contract and obtain its quote. State evidence limitations.",
+  "includePortfolio": false
+}

@@ -10,6 +10,30 @@ class FilingTextProcessingTests {
     private final FilingChunker chunker = new FilingChunker();
 
     @Test
+    void removesLinkedContentsTableButPreservesBodyTablesAndShortDisclosures() {
+        var sections = parser.parse("""
+                <table><tr><td><a href="#business">Item 1.</a></td><td>Business</td></tr>
+                <tr><td><a href="#risk">Item 1A.</a></td><td>Risk Factors</td></tr></table>
+                <div id="business">Item 1. Business</div><p>Actual business.</p>
+                <table><tr><td>Revenue</td><td>100</td></tr></table>
+                <div id="risk">Item 1A. Risk Factors</div><p>None.</p>
+                """);
+        assertThat(sections).containsExactly(
+                new FilingSection("ITEM_1", "Business", "Actual business.\nRevenue\n100"),
+                new FilingSection("ITEM_1A", "Risk Factors", "None."));
+    }
+
+    @Test
+    void embeddingsIncludeHeadingWithoutChangingCitationText() {
+        var model = org.mockito.Mockito.mock(org.springframework.ai.embedding.EmbeddingModel.class);
+        org.mockito.Mockito.when(model.embed(org.mockito.ArgumentMatchers.anyString())).thenReturn(new float[]{1});
+        var chunks = chunker.chunk(List.of(new FilingSection("ITEM_3", "Legal Proceedings", "None.")));
+        var result = new FilingEmbeddingService(model).embedChunks(chunks);
+        org.mockito.Mockito.verify(model).embed("ITEM_3 — Legal Proceedings\n\nNone.");
+        assertThat(result.get(0).chunkData().content()).isEqualTo("None.");
+    }
+
+    @Test
     void readsDivsAndInlineSpansWithoutDuplicatingNestedTableParagraphs() {
         var sections = parser.parse("""
                 <div><span>Item 1.</span> <span>Business</span></div>

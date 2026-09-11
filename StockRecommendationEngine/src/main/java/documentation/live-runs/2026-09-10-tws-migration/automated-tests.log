@@ -1,0 +1,39 @@
+[INFO] Tests run: 19, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.037 s -- in project.stockrecommendationengine.recommendation.RecommendationServiceTests
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.505 s -- in project.stockrecommendationengine.recommendation.IntegrationWiringTests
+[WARNING] Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0 s -- in project.stockrecommendationengine.broker.ibkr.IbkrLiveTests
+15:15:39.296 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.575 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.575 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 availability=REALTIME hasPrice=true
+15:15:39.578 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.578 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 availability=FROZEN hasPrice=true
+15:15:39.578 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.578 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 availability=DELAYED hasPrice=true
+15:15:39.580 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.580 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 availability=DELAYED_FROZEN hasPrice=true
+15:15:39.581 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.581 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS callback request=2 code=420
+15:15:39.844 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.866 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 availability=UNAVAILABLE hasPrice=true
+15:15:39.871 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.897 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 availability=DELAYED_FROZEN hasPrice=false
+15:15:39.907 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.931 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 availability=DELAYED hasPrice=true
+15:15:39.932 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=4 conid=265598 exchange=SMART requestedType=4
+15:15:39.957 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=4 availability=UNAVAILABLE hasPrice=false
+15:15:39.966 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:39.966 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS callback request=2 code=354
+15:15:39.966 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 availability=NOT_SUBSCRIBED hasPrice=false
+15:15:39.968 [Thread-1] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:40.229 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 conid=265598 exchange=SMART requestedType=4
+15:15:40.252 [main] INFO project.stockrecommendationengine.broker.ibkr.TwsClient -- TWS quote request=2 availability=DELAYED hasPrice=false
+[INFO] Tests run: 26, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.968 s -- in project.stockrecommendationengine.broker.ibkr.IbkrBrokerAdapterTests
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.143 s -- in project.stockrecommendationengine.access.IntegrationAccessTests
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.051 s -- in project.stockrecommendationengine.StockRecommendationEngineApplicationTests
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.067 s -- in project.stockrecommendationengine.rag.ingestion.FilingTextProcessingTests
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.837 s -- in project.stockrecommendationengine.rag.ingestion.FilingIngestionServiceTests
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.086 s -- in project.stockrecommendationengine.rag.controller.FilingRetrievalControllerTests
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.122 s -- in project.stockrecommendationengine.rag.controller.FilingIngestionControllerTests
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.062 s -- in project.stockrecommendationengine.rag.retrieval.FilingRetrievalRepositoryTests
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.053 s -- in project.stockrecommendationengine.rag.retrieval.FilingRetrievalServiceTests
+[INFO] Tests run: 106, Failures: 0, Errors: 0, Skipped: 1
+[INFO] BUILD SUCCESS

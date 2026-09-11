@@ -22,6 +22,7 @@ final class RecommendationTools {
     final Map<Long, Instrument> instruments = new LinkedHashMap<>();
     final Map<Long, Quote> quotes = new LinkedHashMap<>();
     boolean portfolioRetrieved;
+    Object portfolio;
 
     RecommendationTools(RecommendationRequest request, FilingRetrievalService filings, BrokerReadService broker) {
         this.request = request;
@@ -61,9 +62,10 @@ final class RecommendationTools {
                         return quote;
                     });
             if (request.includePortfolio()) {
-                add(tools, "getPortfolioPositions", "Read all positions in the configured authorized account. Market values may be cached; do not sum different currencies.",
+                add(tools, "getPortfolioPositions", "Read all positions in the configured authorized account. TWS position reads provide quantities; market price and value can be unavailable. Do not sum different currencies.",
                         "", List.of(), args -> {
                             var portfolio = broker.getPositions();
+                            this.portfolio = portfolio;
                             portfolioRetrieved = true;
                             return portfolio;
                         });

@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class FilingIngestionServiceTests {
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
     @Autowired FilingIngestionService service;
     @Autowired SECFilingRepository repository;
     @Autowired PlatformTransactionManager transactionManager;
@@ -65,6 +66,62 @@ class FilingIngestionServiceTests {
                 assertThat(filing.getIngestionError()).isNull();
             }
         });
+    }
+
+    @Test
+    void explicitRebuildReplacesChunksAndRecordsVersionWhileNormalIngestSkips() {
+        var metadata = metadata();
+        when(sec.getRecentFilings("TEST", List.of("10-K"), 1)).thenReturn(List.of(metadata));
+        service.ingest("TEST", List.of("10-K"), 1);
+        long id = repository.findByAccessionNo(metadata.accessionNo()).orElseThrow().getId();
+        when(sec.fetchFilingHTML(metadata.sourceUrl())).thenReturn("<p>Item 1. Business</p><p>New content.</p>");
+        service.ingest("TEST", List.of("10-K"), 1);
+        verify(sec, times(1)).fetchFilingHTML(metadata.sourceUrl());
+        assertThat(service.rebuild(id)).containsEntry("outcome", "SUCCEEDED");
+        transaction.executeWithoutResult(tx -> {
+            var filing = repository.findById(id).orElseThrow();
+            assertThat(filing.getChunks()).hasSize(1);
+            assertThat(filing.getChunks().get(0).getContent()).isEqualTo("New content.");
+            assertThat(filing.getProcessingVersion()).isEqualTo(FilingIngestionService.PROCESSING_VERSION);
+        });
+        assertThat(jdbc.queryForObject("SELECT outcome FROM filing_rebuild_runs WHERE filing_id=?", String.class, id))
+                .isEqualTo("SUCCEEDED");
+    }
+
+    @Test
+    void rebuildDatabaseFailurePreservesOriginalChunksAndRecordsFailure() {
+        var metadata = metadata();
+        when(sec.getRecentFilings("TEST", List.of("10-K"), 1)).thenReturn(List.of(metadata));
+        service.ingest("TEST", List.of("10-K"), 1);
+        long id = repository.findByAccessionNo(metadata.accessionNo()).orElseThrow().getId();
+        Long originalChunk = jdbc.queryForObject("SELECT id FROM sec_filing_chunks WHERE filing_id=?", Long.class, id);
+        when(embeddings.embedChunks(anyList())).thenAnswer(invocation -> {
+            List<FilingChunkData> chunks = invocation.getArgument(0);
+            return chunks.stream().map(chunk -> new EmbeddedFilingChunk(chunk, new float[3])).toList();
+        });
+        assertThatThrownBy(() -> service.rebuild(id)).isInstanceOf(RuntimeException.class);
+        assertFiling(metadata, "EMBEDDED", 1);
+        assertThat(jdbc.queryForObject("SELECT id FROM sec_filing_chunks WHERE filing_id=?", Long.class, id))
+                .isEqualTo(originalChunk);
+        assertThat(jdbc.queryForObject("SELECT outcome FROM filing_rebuild_runs WHERE filing_id=?", String.class, id))
+                .isEqualTo("FAILED");
+    }
+
+    @Test
+    void concurrentRebuildIsRejectedBeforeExternalCallsAndLockReleases() {
+        var metadata = metadata();
+        when(sec.getRecentFilings("TEST", List.of("10-K"), 1)).thenReturn(List.of(metadata));
+        service.ingest("TEST", List.of("10-K"), 1);
+        long id = repository.findByAccessionNo(metadata.accessionNo()).orElseThrow().getId();
+        clearInvocations(sec);
+        transaction.executeWithoutResult(tx -> {
+            jdbc.queryForObject("SELECT pg_try_advisory_xact_lock(hashtextextended(?, 0))", Boolean.class, metadata.accessionNo());
+            assertThatThrownBy(() -> service.rebuild(id))
+                    .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                    .hasMessageContaining("409");
+            verifyNoInteractions(sec);
+        });
+        assertThat(service.rebuild(id)).containsEntry("outcome", "SUCCEEDED");
     }
 
     @Test

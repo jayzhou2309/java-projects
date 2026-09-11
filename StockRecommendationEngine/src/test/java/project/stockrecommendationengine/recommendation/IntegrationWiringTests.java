@@ -18,7 +18,7 @@ class IntegrationWiringTests {
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration.class, ValidationAutoConfiguration.class))
             .withUserConfiguration(IntegrationAccessConfiguration.class, RecommendationService.class,
-                    IbkrConfiguration.class, IbkrBrokerAdapter.class, IbkrSessionManager.class,
+                    IbkrConfiguration.class, IbkrBrokerAdapter.class,
                     RecommendationController.class, BrokerController.class)
             .withBean(IntegrationAccessProperties.class).withBean(IbkrProperties.class).withBean(RecommendationProperties.class)
             .withBean(FilingRetrievalService.class, () -> mock(FilingRetrievalService.class));
@@ -26,7 +26,7 @@ class IntegrationWiringTests {
     @Test void defaultConfigurationDoesNotCreateBrokerOrRecommendationConnections() {
         runner.run(context -> {
             assertThat(context).hasNotFailed().doesNotHaveBean(BrokerReadService.class)
-                    .doesNotHaveBean(RecommendationService.class).doesNotHaveBean(IbkrApiClient.class);
+                    .doesNotHaveBean(RecommendationService.class).doesNotHaveBean(TwsClient.class);
         });
     }
 

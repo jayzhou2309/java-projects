@@ -1,0 +1,18 @@
+Requested DELAYED market data (type 3) for AAPL
+IBKR message code: 2104
+IBKR message code: 2104
+IBKR message code: 2104
+IBKR message code: 2104
+IBKR message code: 2104
+IBKR message code: 2104
+IBKR message code: 2106
+IBKR message code: 2106
+IBKR message code: 2158
+Traceback (most recent call last):
+  File "/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/src/test/python/ibkr_delayed_live_test.py", line 99, in <module>
+    main()
+    ~~~~^^
+  File "/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/src/test/python/ibkr_delayed_live_test.py", line 87, in main
+    raise RuntimeError(f'No confirmed delayed quote: returned type={app.data_type}, '
+                       f'delayed price ticks={sorted(app.prices)}, codes={sorted(app.codes)}')
+RuntimeError: No confirmed delayed quote: returned type=None, delayed price ticks=[], codes=[2104, 2106, 2158]

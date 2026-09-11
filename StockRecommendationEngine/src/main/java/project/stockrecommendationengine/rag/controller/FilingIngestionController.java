@@ -18,6 +18,12 @@ import project.stockrecommendationengine.rag.ingestion.FilingIngestionService;
 public class FilingIngestionController {
     private final FilingIngestionService filingIngestionService;
 
+    @PostMapping("/filings/{filingId}/rebuild")
+    public java.util.Map<String, Object> rebuild(
+            @org.springframework.web.bind.annotation.PathVariable long filingId) {
+        return filingIngestionService.rebuild(filingId);
+    }
+
     @PostMapping("/ingest")
     public ResponseEntity<Void> ingest (
             @Valid @RequestBody IngestionRequest request

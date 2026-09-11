@@ -103,7 +103,7 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
     public Quote quote(long conid) {
         if (conid <= 0 || conid > Integer.MAX_VALUE) throw new BrokerException(INVALID_ARGUMENT);
         return execute(() -> {
-            Contract contract = resolveContract(conid);
+            Contract contract = marketDataContract(resolveContract(conid));
             int id = ids.getAndIncrement();
             var request = new Prices(conid);
             pending.put(id, request);
@@ -155,6 +155,23 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
                 if (!request.result.isDone() || request.result.isCompletedExceptionally()) transport.cancelHistory(id);
             }
         });
+    }
+
+    /**
+     * Delayed market data is not delivered for SMART-routed requests on this account type, while requests on the
+     * listing's primary exchange are answered within a second (verified 2026-09-11 during regular hours).
+     */
+    private static Contract marketDataContract(Contract resolved) {
+        String primary = resolved.primaryExch();
+        if (primary == null || primary.isBlank()) return resolved;
+        var contract = new Contract();
+        contract.conid(resolved.conid());
+        contract.symbol(resolved.symbol());
+        contract.secType(resolved.secType());
+        contract.currency(resolved.currency());
+        contract.primaryExch(primary);
+        contract.exchange(primary);
+        return contract;
     }
 
     private Contract resolveContract(long conid) {

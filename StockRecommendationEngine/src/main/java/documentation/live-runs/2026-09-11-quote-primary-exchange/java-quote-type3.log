@@ -1,0 +1,5 @@
+TWS quote request=2 conid=265598 exchange=NASDAQ requestedType=3
+TWS callback request=2 code=10167
+TWS quote request=2 availability=DELAYED rawType=3 hasPrice=true hasLast=true hasBid=true hasAsk=true hasClose=true updatedAt=2026-09-11T13:21:39Z notSubscribed=false
+TWS_QUOTE availability=DELAYED hasPrice=true
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.703 s -- in project.stockrecommendationengine.broker.ibkr.IbkrLiveTests

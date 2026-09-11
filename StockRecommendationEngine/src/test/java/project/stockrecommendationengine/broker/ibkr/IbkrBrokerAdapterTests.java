@@ -112,6 +112,14 @@ class IbkrBrokerAdapterTests {
         assertThat(transport.requestedDataType).isEqualTo(4);
         assertThat(transport.quotesCancelled).isEqualTo(1);
     }
+    @Test void quotesAreRequestedOnThePrimaryExchangeNotSmart() {
+        transport.quoteAction = id -> transport.callback.marketDataType(id, 3);
+        broker.getQuote(265598);
+        assertThat(transport.quoteContract.exchange()).isEqualTo("NASDAQ");
+        assertThat(transport.quoteContract.primaryExch()).isEqualTo("NASDAQ");
+        assertThat(transport.quoteContract.conid()).isEqualTo(265598);
+        assertThat(transport.quoteContract.symbol()).isEqualTo("AAPL");
+    }
     @Test void closedMarketDelayedCloseCountsAsAPrice() {
         // Outside regular hours TWS sends delayed bid/ask as -1, delayed last as 0, and the real price in tick 75.
         transport.quoteAction = id -> {
@@ -314,6 +322,7 @@ class IbkrBrokerAdapterTests {
         boolean connected, sendHandshake = true, sendHeartbeat = true;
         int connects, timeRequests, positionRequests, positionsCancelled, quotesCancelled, quoteId, requestedDataType;
         int detailConid, historyDays, historyCancelled;
+        Contract quoteContract;
         String positionsAccount, searchSymbol;
         IntConsumer quoteAction = id -> {}, positionAction = id -> {}, searchAction = id -> {}, historyAction = id -> {};
         @Override public void connect(EWrapper callback, IbkrProperties properties) {
@@ -332,7 +341,7 @@ class IbkrBrokerAdapterTests {
         }
         @Override public void positions(int id, String account) { positionRequests++; positionsAccount = account; positionAction.accept(id); }
         @Override public void cancelPositions(int id) { positionsCancelled++; }
-        @Override public void quote(int id, Contract contract, int dataType) { quoteId = id; requestedDataType = dataType; quoteAction.accept(id); }
+        @Override public void quote(int id, Contract contract, int dataType) { quoteId = id; quoteContract = contract; requestedDataType = dataType; quoteAction.accept(id); }
         @Override public void cancelQuote(int id) { quotesCancelled++; }
         @Override public void history(int id, Contract contract, int days) { historyDays = days; historyAction.accept(id); }
         @Override public void cancelHistory(int id) { historyCancelled++; }

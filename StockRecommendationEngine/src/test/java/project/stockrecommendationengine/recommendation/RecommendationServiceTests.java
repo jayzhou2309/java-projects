@@ -25,6 +25,7 @@ import project.stockrecommendationengine.broker.BrokerException;
 import project.stockrecommendationengine.broker.BrokerData.*;
 import project.stockrecommendationengine.quant.QuantAnalysis;
 import project.stockrecommendationengine.quant.QuantAnalysisService;
+import project.stockrecommendationengine.quant.QuantProperties;
 import project.stockrecommendationengine.rag.dto.RetrievalResponse;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 import project.stockrecommendationengine.rag.ingestion.FilingIngestionService;
@@ -43,6 +44,7 @@ class RecommendationServiceTests {
     private SECFilingRepository filingRepository;
     private BrokerReadService broker;
     private QuantAnalysisService quant;
+    private RecommendationRepository store;
     private final StaticListableBeanFactory beans = new StaticListableBeanFactory();
     private RecommendationService service;
     private RecommendationProperties properties;
@@ -55,6 +57,7 @@ class RecommendationServiceTests {
         filingRepository = mock(SECFilingRepository.class);
         broker = mock(BrokerReadService.class);
         quant = mock(QuantAnalysisService.class);
+        store = mock(RecommendationRepository.class);
         properties = new RecommendationProperties();
         properties.setModel("scripted-test-model");
         // Sequentially scripted scenarios need a deterministic call order; concurrency scenarios opt back in.
@@ -64,6 +67,7 @@ class RecommendationServiceTests {
         beans.addBean("model", model);
         beans.addBean("broker", broker);
         beans.addBean("quant", quant);
+        beans.addBean("quantProperties", new QuantProperties());
         service = service();
         when(quant.analyze(1)).thenReturn(analysis(List.of()));
         when(filings.retrieve(any())).thenReturn(new RetrievalResponse("AAPL", "risks", "FILTERED_VECTOR", true,
@@ -77,7 +81,64 @@ class RecommendationServiceTests {
     private RecommendationService service() {
         return new RecommendationService(beans.getBeanProvider(ChatModel.class), filings, ingestion, filingRepository,
                 beans.getBeanProvider(BrokerReadService.class), beans.getBeanProvider(QuantAnalysisService.class),
-                properties, validators.getValidator());
+                beans.getBeanProvider(QuantProperties.class), store, properties, validators.getValidator());
+    }
+
+    @Test void everyRunIsRecordedWithVersionTagsIncludingStoppedRuns() {
+        scriptByRole(fullRunScript("BULLISH"));
+        var result = service.recommend(request(false));
+        var records = org.mockito.ArgumentCaptor.forClass(RecommendationRecord.class);
+        verify(store).save(records.capture());
+        var record = records.getValue();
+        assertThat(record.runId()).isEqualTo(result.runId());
+        assertThat(record.ticker()).isEqualTo("AAPL");
+        assertThat(record.conid()).isEqualTo(1L);
+        assertThat(record.status()).isEqualTo("COMPLETE");
+        assertThat(record.assessment()).isEqualTo("BULLISH");
+        assertThat(record.takeProfit()).isEqualByComparingTo("104.00");
+        assertThat(record.confidence()).isEqualByComparingTo("0.90");
+        assertThat(record.lastClose()).isEqualByComparingTo("100");
+        assertThat(record.quoteAvailability()).isEqualTo("REALTIME");
+        assertThat(record.citedChunkIds()).containsExactly(11L);
+        assertThat(record.promptVersion()).isEqualTo(RecommendationService.PROMPT_VERSION);
+        assertThat(record.model()).isEqualTo("scripted-test-model");
+        assertThat(record.quantVersion()).isEqualTo(new QuantProperties().version());
+        assertThat(record.processingVersion()).isEqualTo(project.stockrecommendationengine.rag.ingestion.FilingIngestionService.PROCESSING_VERSION);
+        assertThat(record.responseJson()).contains("\"runId\":\"" + result.runId() + "\"").contains("\"takeProfit\":104.00");
+        assertThat(record.requestedAt()).isBeforeOrEqualTo(record.completedAt());
+        assertThat(result.limitations()).doesNotContain("AUDIT_NOT_PERSISTED");
+
+        clearInvocations(store);
+        when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "placeOrder", "{}")));
+        var stopped = service.recommend(request(false));
+        verify(store).save(records.capture());
+        assertThat(records.getValue().status()).isEqualTo("TOOL_NOT_ALLOWED");
+        assertThat(records.getValue().runId()).isEqualTo(stopped.runId());
+        assertThat(records.getValue().limitations()).contains("TOOL_NOT_ALLOWED");
+    }
+
+    @Test void deadlineStoppedRunsAreRecordedToo() throws Exception {
+        properties.setDeadlineMs(100);
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            try { new CountDownLatch(1).await(5, TimeUnit.SECONDS); }
+            catch (InterruptedException ex) { Thread.currentThread().interrupt(); }
+            return calls(call("1", "findInstrument", "{}"));
+        });
+        var result = service.recommend(request(false));
+        assertThat(result.status()).isEqualTo("DEADLINE_EXCEEDED");
+        var records = org.mockito.ArgumentCaptor.forClass(RecommendationRecord.class);
+        verify(store).save(records.capture());
+        assertThat(records.getValue().status()).isEqualTo("DEADLINE_EXCEEDED");
+        assertThat(records.getValue().conid()).isNull();
+    }
+
+    @Test void auditWriteFailureIsDisclosedNotHidden() {
+        doThrow(new org.springframework.dao.DataAccessResourceFailureException("db down")).when(store).save(any());
+        scriptByRole(fullRunScript("NEUTRAL"));
+        var result = service.recommend(request(false));
+        assertThat(result.status()).isEqualTo("COMPLETE");
+        assertThat(result.limitations()).contains("AUDIT_NOT_PERSISTED");
+        assertThat(result.sources()).containsExactly(evidence());
     }
 
     /** Scripts responses per conversation role so specialists may run in any order or concurrently. */
@@ -356,7 +417,7 @@ class RecommendationServiceTests {
         withoutQuant.addBean("broker", broker);
         service = new RecommendationService(withoutQuant.getBeanProvider(ChatModel.class), filings, ingestion, filingRepository,
                 withoutQuant.getBeanProvider(BrokerReadService.class), withoutQuant.getBeanProvider(QuantAnalysisService.class),
-                properties, validators.getValidator());
+                withoutQuant.getBeanProvider(QuantProperties.class), store, properties, validators.getValidator());
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
                 calls(call("b1", "findInstrument", "{}")), calls(call("b2", "analyzePriceHistory", "{\"conid\":1}")));
         var result = service.recommend(request(false));
@@ -554,7 +615,7 @@ class RecommendationServiceTests {
     }
     private static Instrument instrument(long id) { return new Instrument(id, "AAPL", "Apple", "NASDAQ", "USD", "STK"); }
     private static Quote quote(String availability, Instant updated) {
-        return new Quote(1, new BigDecimal("100"), null, null, updated, Instant.now(), availability, "RpB");
+        return new Quote(1, new BigDecimal("100"), null, null, null, updated, Instant.now(), availability, "RpB");
     }
     private static QuantAnalysis analysis(List<String> limitations) {
         boolean stale = limitations.contains("STALE_BARS");

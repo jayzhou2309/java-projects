@@ -9,6 +9,7 @@
     * Runs without an MCP server. A future MCP client can provide selected callbacks at the same tool boundary.
     * Take-profit and stop-loss levels come from the deterministic quant layer when enabled; confidence is an uncalibrated input-coverage composite.
     * No trade execution, position sizing, or outcome-calibrated confidence is implemented.
+    * Every run is written to the recommendations table with version tags, so outcomes can later be measured and attributed; see Recommendation Audit Store below.
     * This is the first research consumer of RAG, not completion of every recommendation requirement in the PRD.
 
 * What the Harness Does
@@ -26,6 +27,7 @@
             * Allocate a run ID and submit work to a bounded executor.
             * Wait at most deadline-ms, then cancel and interrupt the worker.
             * Return HTTP 429 when both worker slots are occupied; there is no pending-work queue.
+            * Persist the outcome through persist(...) after the worker returns, including DEADLINE_EXCEEDED and FAILED results; a failed write adds AUDIT_NOT_PERSISTED to the response instead of failing the request.
         * run(...)
             * Create fresh RecommendationTools, message history, evidence state, and trace.
             * When the manager returns several delegations in one response, submit them to the specialist pool and wait with the run deadline; a limit violation in either specialist stops the run and cancels the other.
@@ -126,6 +128,7 @@
     * confidence: input-coverage composite in [0,1] (50% cited-passage similarity, 25% quote verification, 25% price-history availability); null for INSUFFICIENT_EVIDENCE; not calibrated.
     * priceAnalysis: the run's QuantAnalysis with provenance and limitations, or null.
     * HTTP 200 returns a structured run result, including unsuccessful research statuses; callers must inspect status.
+    * AUDIT_NOT_PERSISTED in limitations means the run completed but its audit row could not be written; inspect the application log.
     * Invalid requests return HTTP 400; missing/wrong access tokens return HTTP 401; capacity exhaustion returns HTTP 429.
 
 | Status | Meaning |
@@ -179,6 +182,31 @@ curl -X POST http://localhost:8080/api/recommendations \
     "includePortfolio": false
   }'
 ```
+
+* Recommendation Audit Store
+    * Purpose
+        * Postgres is the PRD's system of record; before this table, runs existed only in the HTTP response and the log.
+        * Stored runs are the raw material for outcome measurement, confidence calibration, and the agent's own track record.
+    * RecommendationRepository
+        * save(RecommendationRecord record): insert one row; rows are never updated by the loop.
+        * findByRunId(String runId): one stored run.
+        * findByTicker(String ticker, int limit): newest runs for a ticker.
+    * RecommendationRecord fields
+        * runId, ticker, conid (from the price analysis or first quote), requestedAt, completedAt, question.
+        * status, assessment, takeProfit, stopLoss, confidence, lastClose, barsAsOf (the newest bar the levels were computed from), quoteAvailability.
+        * citedChunkIds, limitations, modelCalls, observedTokens.
+        * promptVersion (RecommendationService.PROMPT_VERSION; bump on any prompt change), model, quantVersion (QuantProperties.version(), the ATR/level parameter set), processingVersion (filing processing version).
+        * responseJson: the complete RecommendationResponse as JSONB.
+    * Endpoints (same access token as POST)
+        * GET /api/recommendations/{runId}: one stored run; 404 when unknown, 400 for a malformed ID.
+        * GET /api/recommendations?ticker=AAPL&limit=20: newest stored runs for a ticker.
+    * Schema
+        * Migration V5 creates recommendations with a primary key on run_id, a confidence check in [0,1], and indexes on (ticker, requested_at) and requested_at.
+    * Point-in-time discipline
+        * barsAsOf, quoteAvailability, and citedChunkIds record what the run actually saw; later evaluation must only use bars and filings dated after requestedAt.
+        * Stopped and failed runs are stored with their status so the record is complete rather than success-only.
+    * Not yet implemented
+        * Outcome measurement, calibration, and a look-back tool for the agent; those consume this table.
 
 * Portfolio and Contract Selection
     * Set includePortfolio=true when you want the model to receive holdings from the configured account.
@@ -313,3 +341,9 @@ Qualitative Research + Sources + Quotes + Levels + Confidence + Limitations + Tr
     * Live MSFT run `a2a74d5f-b959-4e15-a1c8-eb9bd0fa2d88` with a ticker-only request: HTTP 200 in 13.8 seconds, PARTIAL / NEUTRAL, five sources across the stored 10-K and 10-Q (Items 1A, 1C, 2), five model calls, 10,224 tokens, confidence 0.51. Prefetch selected NASDAQ conid 272093 (USD), attempted the quote (UNAVAILABLE, no market-data callback at 03:00 ET), and computed the analysis from 120 fresh TWS bars: last close 492.44, ATR 10.9794, trend ABOVE_LONG_SMA, long levels 514.40 / 481.46, short levels 470.48 / 503.42. The trace interleaves RAG and BROKER entries, showing both specialists ran concurrently. The manager's reasoning cited the trend above the 50-day SMA. Levels are null because the assessment was NEUTRAL.
     * Saved [response](live-runs/2026-09-11-multiagent-autoingest/response-policy.json) and [run log](live-runs/2026-09-11-multiagent-autoingest/run-policy.log). Full suite: 148 tests, 143 passed, 5 opt-in live tests skipped, no failures.
     * Remaining gap: the quote path still returns no callback outside regular hours on this TWS session, so runs stay PARTIAL and confidence lacks its quote term until a quote is verified during market hours (21:30–04:00 SGT).
+
+* Recommendation audit store — 2026-09-11
+    * Added migration V5, RecommendationRecord, RecommendationRepository, persistence at the end of recommend(...) for every outcome, and the two read endpoints. Version tags are PROMPT_VERSION `manager-specialists-v3-prefetch`, the configured model, QuantProperties.version(), and the filing processing version.
+    * Quote records gain a close field mapped from TWS ticks 9/75, so a closed-market delayed quote with the closing price counts as having a price; COMPLETE still requires a realtime quote with a recent timestamp. See [IBKR.md](IBKR.md).
+    * Scripted tests verify the record contents and version tags for a completed run, a limit-stopped run, and a deadline-stopped run, and that a failed write is disclosed as AUDIT_NOT_PERSISTED. PostgreSQL tests verify round-trip storage, ordering, uniqueness, and the confidence bound. Full suite: 155 tests, 150 passed, 5 opt-in live tests skipped.
+    * Live verification — 2026-09-11, 21:15 SGT, broker and quant disabled because TWS was closed: NVDA run `953ce096-ac2c-46dc-a31e-ab88584fb89c` returned HTTP 200 in 13.1 seconds, PARTIAL / NEUTRAL, five stored-filing sources, four model calls, 9,969 tokens. GET by run ID returned the row with cited chunk IDs 757, 765, 766, 767, 773, prompt version `manager-specialists-v3-prefetch`, model gpt-4.1, null quant version, processing version `sections-v2-context-v2`, and a 22 KB response JSON; GET by ticker listed it; a missing token returned 401 and an unknown run 404. Saved [request](live-runs/2026-09-11-audit-store/request.json), [response](live-runs/2026-09-11-audit-store/response.json), [stored record](live-runs/2026-09-11-audit-store/record.json), [ticker listing](live-runs/2026-09-11-audit-store/by-ticker.json), and [run log](live-runs/2026-09-11-audit-store/run.log). Runs made before migration V5, including the user's NVDA run at 07:08 UTC, are not in the table.

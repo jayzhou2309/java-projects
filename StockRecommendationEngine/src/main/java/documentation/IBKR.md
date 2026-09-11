@@ -68,7 +68,7 @@ TWS mode 1 is realtime, 2 frozen, 3 delayed, and 4 delayed-frozen. The default 4
 
 Availability comes from callback type 1/2/3/4 as REALTIME/FROZEN/DELAYED/DELAYED_FROZEN. Explicit subscription errors yield NOT_SUBSCRIBED. Without a type callback, availability remains UNAVAILABLE even if a price arrived. `rawAvailability` now contains the numeric TWS callback type as a string, rather than REST codes such as DB.
 
-Missing, nonpositive, nonfinite, and sentinel prices remain null. A type callback can identify delayed data even with no price. `updatedAt` is populated only from last-trade timestamp ticks 45/88; receipt time is separately recorded as `observedAt` and is not substituted for quote freshness. Timestamps may be missing, especially for frozen quotes. A delayed, frozen, untimestamped, or empty quote cannot make a recommendation COMPLETE.
+Closing-price ticks 9 and 75 populate `close`; outside regular hours TWS sends delayed bid/ask as −1 and delayed last as 0, so the delayed close is usually the only price and makes `hasPrice()` true. Missing, nonpositive, nonfinite, and sentinel prices remain null. A type callback can identify delayed data even with no price. `updatedAt` is populated only from last-trade timestamp ticks 45/88; receipt time is separately recorded as `observedAt` and is not substituted for quote freshness. Timestamps may be missing, especially for frozen quotes. A delayed, frozen, untimestamped, or empty quote cannot make a recommendation COMPLETE.
 
 ### Daily bars
 
@@ -175,3 +175,7 @@ data farm status messages, not quote data.
 - A mode 4 request was answered with type 3; the reported type is what the application exposes, as documented above.
 - Historical daily bars (`reqHistoricalData`, TRADES, regular hours) were delivered without any subscription: 120 AAPL bars in 0.6 seconds, preceded by warning code 2188. See [Quant.md](Quant.md) for the consumer.
 - Evidence: [delayed mapping quote](live-runs/2026-09-10-delayed-mapping/quote.json) from earlier attempts, [TWS history run](live-runs/2026-09-11-quant/tws-history-live.log), and the probe scripts in the session scratchpad (not retained in the repository).
+
+## Closed-market close mapping — 2026-09-11
+
+`Quote` gains `close`, mapped from TWS ticks 9 (close) and 75 (delayed close). The 14:08 SGT delayed-data observation showed the delayed close as the only positive price outside regular hours; with this mapping the same callbacks yield `availability=DELAYED`, `hasPrice=true`, `close=326.57`, and null last/bid/ask. A simulated-callback test covers it. Live verification during regular hours (21:30–04:00 SGT) remains pending; a closed-market quote still cannot make a recommendation COMPLETE.

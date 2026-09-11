@@ -119,9 +119,9 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
                     if (request.result.isCompletedExceptionally()) await(request.result);
                     Quote quote = request.snapshot();
                     log.info("TWS quote request={} availability={} rawType={} hasPrice={} "
-                                    + "hasLast={} hasBid={} hasAsk={} updatedAt={} notSubscribed={}",
+                                    + "hasLast={} hasBid={} hasAsk={} hasClose={} updatedAt={} notSubscribed={}",
                             id, quote.availability(), quote.rawAvailability(), quote.hasPrice(),
-                            quote.last() != null, quote.bid() != null, quote.ask() != null,
+                            quote.last() != null, quote.bid() != null, quote.ask() != null, quote.close() != null,
                             quote.updatedAt(), request.notSubscribed);
                     return quote;
                 }
@@ -309,6 +309,7 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
                 case 1, 66 -> request.bid = price;
                 case 2, 67 -> request.ask = price;
                 case 4, 68 -> request.last = price;
+                case 9, 75 -> request.close = price;
                 default -> { return; }
             }
             request.notifyAll();
@@ -391,7 +392,7 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
     }
     private static final class Prices extends Pending<Void> {
         final long conid;
-        BigDecimal last, bid, ask;
+        BigDecimal last, bid, ask, close;
         Instant updatedAt;
         int type;
         boolean notSubscribed;
@@ -405,7 +406,7 @@ public final class TwsClient extends DefaultEWrapper implements AutoCloseable {
                 case 4 -> "DELAYED_FROZEN";
                 default -> "UNAVAILABLE";
             };
-            return new Quote(conid, last, bid, ask, updatedAt, Instant.now(), availability,
+            return new Quote(conid, last, bid, ask, close, updatedAt, Instant.now(), availability,
                     type == 0 ? null : Integer.toString(type));
         }
     }

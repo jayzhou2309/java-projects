@@ -28,7 +28,8 @@ class IntegrationWiringTests {
                     () -> mock(project.stockrecommendationengine.rag.ingestion.FilingIngestionService.class))
             .withBean(project.stockrecommendationengine.rag.repository.SECFilingRepository.class,
                     () -> mock(project.stockrecommendationengine.rag.repository.SECFilingRepository.class))
-            .withBean(PriceBarRepository.class, () -> mock(PriceBarRepository.class));
+            .withBean(PriceBarRepository.class, () -> mock(PriceBarRepository.class))
+            .withBean(RecommendationRepository.class, () -> mock(RecommendationRepository.class));
 
     @Test void defaultConfigurationDoesNotCreateBrokerOrRecommendationConnections() {
         runner.run(context -> {

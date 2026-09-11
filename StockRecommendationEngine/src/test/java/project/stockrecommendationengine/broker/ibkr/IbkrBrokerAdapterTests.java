@@ -112,6 +112,23 @@ class IbkrBrokerAdapterTests {
         assertThat(transport.requestedDataType).isEqualTo(4);
         assertThat(transport.quotesCancelled).isEqualTo(1);
     }
+    @Test void closedMarketDelayedCloseCountsAsAPrice() {
+        // Outside regular hours TWS sends delayed bid/ask as -1, delayed last as 0, and the real price in tick 75.
+        transport.quoteAction = id -> {
+            transport.callback.marketDataType(id, 3);
+            transport.callback.tickPrice(id, 66, -1, new TickAttrib());
+            transport.callback.tickPrice(id, 67, -1, new TickAttrib());
+            transport.callback.tickPrice(id, 68, 0, new TickAttrib());
+            transport.callback.tickPrice(id, 75, 326.57, new TickAttrib());
+        };
+        var quote = broker.getQuote(265598);
+        assertThat(quote.availability()).isEqualTo("DELAYED");
+        assertThat(quote.hasPrice()).isTrue();
+        assertThat(quote.close()).isEqualByComparingTo("326.57");
+        assertThat(quote.last()).isNull();
+        assertThat(quote.bid()).isNull();
+        assertThat(quote.updatedAt()).isNull();
+    }
     @Test void typeWithoutPricesIsStillDelayedFrozen() {
         transport.quoteAction = id -> transport.callback.marketDataType(id, 4);
         var quote = broker.getQuote(265598);

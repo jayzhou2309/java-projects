@@ -29,6 +29,12 @@ public class QuantProperties {
     @DecimalMin("0.1") @DecimalMax("10.0") private double takeProfitAtrMultiple = 2.0;
     @DecimalMin("0.1") @DecimalMax("10.0") private double stopLossAtrMultiple = 1.0;
 
+    /** Identifies the parameter set behind stored levels so outcomes can be attributed to it. */
+    public String version() {
+        return "atr" + atrPeriod + "-tp" + takeProfitAtrMultiple + "-sl" + stopLossAtrMultiple + "-vol" + volatilityPeriod
+                + "-sma" + shortSmaPeriod + "/" + longSmaPeriod + "-hist" + historyDays;
+    }
+
     @AssertTrue(message = "quant.min-bars must exceed every indicator period so each statistic is computable")
     public boolean isMinBarsSufficient() {
         return minBars > Math.max(Math.max(atrPeriod, volatilityPeriod), Math.max(shortSmaPeriod, longSmaPeriod));

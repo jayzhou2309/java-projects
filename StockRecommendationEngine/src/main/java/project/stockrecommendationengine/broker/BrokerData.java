@@ -21,10 +21,11 @@ public final class BrokerData {
                            BigDecimal quantity, BigDecimal marketPrice, BigDecimal marketValue) { }
     // observedAt is retrieval time, not a claim that IBKR's cached positions were updated then.
     public record Portfolio(Instant observedAt, List<Position> positions) { }
-    public record Quote(long conid, BigDecimal last, BigDecimal bid, BigDecimal ask,
+    /** close is the provider's closing price (TWS ticks 9/75); outside regular hours it is often the only price. */
+    public record Quote(long conid, BigDecimal last, BigDecimal bid, BigDecimal ask, BigDecimal close,
                         Instant updatedAt, Instant observedAt, String availability,
                         String rawAvailability) {
-        public boolean hasPrice() { return last != null || bid != null || ask != null; }
+        public boolean hasPrice() { return last != null || bid != null || ask != null || close != null; }
     }
     /** One regular-trading-hours daily bar. Volume is null when the provider reports it as unavailable. */
     public record DailyBar(LocalDate date, BigDecimal open, BigDecimal high, BigDecimal low,

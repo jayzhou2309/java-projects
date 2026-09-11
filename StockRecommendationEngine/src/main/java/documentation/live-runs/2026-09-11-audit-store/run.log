@@ -1,0 +1,3 @@
+[ommendation-run] Recommendation run=953ce096-ac2c-46dc-a31e-ab88584fb89c tool=RAG:searchFilings outcome=OK elapsedMs=3522
+[ommendation-run] Recommendation run=953ce096-ac2c-46dc-a31e-ab88584fb89c tool=MANAGER:researchFilings outcome=OK elapsedMs=7077
+[ommendation-run] Recommendation run=953ce096-ac2c-46dc-a31e-ab88584fb89c status=PARTIAL modelCalls=4 observedTokens=9969 levels=false confidence=0.25

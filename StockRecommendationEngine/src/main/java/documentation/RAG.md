@@ -145,6 +145,16 @@
         * serializeEmbedding(float[] queryEmbedding)
             * Require 1536 finite dimensions and a nonzero vector.
             * Serialize the vector as a bound SQL parameter.
+        * findKeywordChunks(String query, float[] queryEmbedding, FilingRetrievalFilter retrievalFilter, int candidateCount)
+            * Full-text search over the same eligibility CTE as findSimilarChunks (ticker, EMBEDDED, type, date, latest-per-type, section, usable embedding), matching `content_tsv @@ to_tsquery('english', :terms)`.
+            * Sort by ts_rank_cd descending, then cosine similarity descending, then chunk ID; every row still carries the cosine similarity to the query embedding as similarityScore.
+            * Empty terms (stopword-only or punctuation-only query) return an empty list without a query.
+        * keywordTerms(String query) (package-private)
+            * Distinct case-folded tokens of length 2+ (letters and digits; commas and periods kept between digits so `64,377` and `40.4` stay whole), PostgreSQL english stopwords removed, each quoted for tsquery and joined with ` | `; never concatenated into SQL.
+            * PostgreSQL parses the quoted figure `'64,377'` into the phrase `'64' <-> '377'`, the same split the stored vector holds, so the figure matches only where it appears as one number.
+    * Keyword index (migration V9, `V9__chunk_keyword_index.sql`)
+        * `sec_filing_chunks.content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED`, populated for every existing row on migration and kept in step with content by PostgreSQL.
+        * GIN index `idx_sec_filing_chunks_content_tsv` on that column; the keyword CTE is NOT MATERIALIZED so the planner can use it.
     * Similarity score
         * similarityScore = 1 - cosine distance.
         * Higher scores indicate greater vector similarity, not recommendation confidence.

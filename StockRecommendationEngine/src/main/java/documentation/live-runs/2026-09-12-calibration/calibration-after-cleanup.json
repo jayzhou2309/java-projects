@@ -1,0 +1,61 @@
+{
+  "id" : 7,
+  "computedAt" : "2026-09-12T04:36:50.314705Z",
+  "horizonDays" : 20,
+  "status" : "INSUFFICIENT_SAMPLE",
+  "samples" : 0,
+  "minSamples" : 30,
+  "priorWeight" : 10,
+  "baseRate" : null,
+  "expectedCalibrationError" : null,
+  "brierScore" : null,
+  "bins" : [ {
+    "lower" : 0.000000,
+    "upper" : 0.200000,
+    "samples" : 0,
+    "meanConfidence" : null,
+    "hitRate" : null,
+    "intervalLower" : null,
+    "intervalUpper" : null,
+    "calibrated" : null
+  }, {
+    "lower" : 0.200000,
+    "upper" : 0.400000,
+    "samples" : 0,
+    "meanConfidence" : null,
+    "hitRate" : null,
+    "intervalLower" : null,
+    "intervalUpper" : null,
+    "calibrated" : null
+  }, {
+    "lower" : 0.400000,
+    "upper" : 0.600000,
+    "samples" : 0,
+    "meanConfidence" : null,
+    "hitRate" : null,
+    "intervalLower" : null,
+    "intervalUpper" : null,
+    "calibrated" : null
+  }, {
+    "lower" : 0.600000,
+    "upper" : 0.800000,
+    "samples" : 0,
+    "meanConfidence" : null,
+    "hitRate" : null,
+    "intervalLower" : null,
+    "intervalUpper" : null,
+    "calibrated" : null
+  }, {
+    "lower" : 0.800000,
+    "upper" : 1.000000,
+    "samples" : 0,
+    "meanConfidence" : null,
+    "hitRate" : null,
+    "intervalLower" : null,
+    "intervalUpper" : null,
+    "calibrated" : null
+  } ],
+  "assessments" : { },
+  "promptVersions" : { },
+  "caveat" : "Calibration maps the input-coverage confidence to the realized direction hit rate of prior runs with similar confidence, shrunk toward the overall hit rate by priorWeight pseudo-samples. It is in-sample, pooled across assessments and versions, and only as informative as the sample counts shown."
+}

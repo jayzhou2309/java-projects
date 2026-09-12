@@ -5,7 +5,7 @@
     * Consumes the [TWS broker integration](IBKR.md) for history and feeds the [agent harness](Agent_Harness.md) through one tool.
     * Disabled by default; requires the broker integration when enabled.
     * No model call is involved in any number this layer produces.
-    * Confidence in recommendation responses is an input-coverage composite, not a calibrated probability.
+    * Confidence in recommendation responses is an input-coverage composite, not a probability; a separate calibratedConfidence is attached to directional runs once stored outcomes support a calibration snapshot ([Outcomes.md](Outcomes.md)).
     * Position sizing, backtesting, ensemble agreement, and outcome calibration are not implemented.
     * This is the first deterministic numeric module required by the PRD, not completion of PRD phase 4.
 
@@ -114,7 +114,7 @@
     * Analysis limitations are copied into response limitations with the analyzePriceHistory: prefix.
     * NO_PRICE_HISTORY is added when the module is enabled but no analysis was produced during the run.
     * QUANT_DISABLED replaces the former QUANT_MODULE_NOT_IMPLEMENTED when the module is off.
-    * POSITION_SIZING_NOT_IMPLEMENTED and CONFIDENCE_UNCALIBRATED are always present.
+    * POSITION_SIZING_NOT_IMPLEMENTED is always present; CONFIDENCE_UNCALIBRATED until a calibration snapshot applies.
 
 * Confidence
     * Computed in RecommendationService from application state only; null for INSUFFICIENT_EVIDENCE.

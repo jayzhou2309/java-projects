@@ -1,0 +1,18 @@
+# Follow-Ups
+
+Open items that need a person, a market session, or accumulated data before they can be closed. Each feature change
+should add its follow-ups here and strike them out (with the date and evidence) when done. Status: OPEN, BLOCKED (on
+what), or DONE (date).
+
+| # | Item | Why it matters | What unblocks it | Status |
+|---|---|---|---|---|
+| 1 | Run broker-enabled recommendations during US regular hours (21:30–04:00 SGT) with directional questions, on several tickers, for several weeks | Every stored run so far is NEUTRAL or brokerless, so there are no scored directional outcomes; calibration needs at least 30 of them at 20 trading days (outcomes.calibration.min-samples) and the track record has no hit rates | TWS logged in and reachable; a recurring request schedule | OPEN |
+| 2 | Verify the outcome benchmark contract (default conid 756733, expected SPY on ARCA) against TWS discovery and store SPY bars | Excess returns are null until benchmark bars exist; a wrong conid would score every run against the wrong index | GET /api/broker/instruments?symbol=SPY with TWS up; set OUTCOMES_BENCHMARK_CONID if it differs | OPEN |
+| 3 | End-to-end pipeline test on real data: recommendation with broker on → nightly outcome evaluation → calibration snapshot READY → calibrated confidence APPLIED on the next run for that ticker | The pipeline is verified only with scripted tests and a clearly labelled synthetic dataset that was deleted afterwards ([Outcomes.md](Outcomes.md)); real numbers have never flowed through it | Item 1, then roughly a month of trading days | BLOCKED on item 1 |
+| 4 | Segment calibration by assessment (BULLISH vs BEARISH) and by prompt/quant version once each segment has enough samples | One pooled curve hides a systematically worse direction or a regression after a prompt change; the snapshot records per-segment counts so the moment can be seen | Segment counts above min-samples in GET /api/outcomes/calibration | BLOCKED on data |
+| 5 | Out-of-sample check of the calibration (time split or leave-one-out) and a calibrated-vs-raw Brier comparison | The stored ECE and Brier are in-sample; applying a curve fitted on the same runs it is judged by is optimistic | About 100 scored directional runs | BLOCKED on data |
+| 6 | Run the critic on a second model or provider | The critic shares the manager's model, so a blind spot common to both is never caught | A second tool-capable provider key and a `recommendation.critic-model` property | OPEN |
+| 7 | Calibrate critic verdicts against outcomes: do runs the critic sent back do better after revision? | The critique history is stored per run for exactly this; nothing reads it yet | Item 1 | BLOCKED on item 1 |
+| 8 | Versioned retrieval evaluation set (filing questions with expected passages) before further prompt or retrieval changes | The harness doc lists it as a prerequisite; prompt changes so far were judged by single live runs | An afternoon of question writing against the stored AAPL/MSFT/NVDA filings | OPEN |
+| 9 | Push and merge the `critic-synthesis` and `confidence-calibration` branches (stacked; merge critic first) | Both phases are committed locally only | `git push -u origin <branch> && gh pr create --fill`, in that order | OPEN |
+| 10 | Direction-seeking prompt policy: risk questions reliably produce NEUTRAL, which is never scored for direction | If most runs stay NEUTRAL, items 1, 3, 4, 5 and 7 starve regardless of broker uptime | Decide whether the manager should always state a direction when levels exist, or whether NEUTRAL runs should be scored against a flat-return band | OPEN |

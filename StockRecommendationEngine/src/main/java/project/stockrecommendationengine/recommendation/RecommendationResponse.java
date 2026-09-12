@@ -14,7 +14,8 @@ public record RecommendationResponse(String runId, String ticker, String status,
         String reasoning, List<RetrievedFilingChunk> sources, List<Quote> quotes,
         List<String> limitations, List<ToolTrace> toolTrace, int modelCalls, int observedTokens,
         BigDecimal takeProfit, BigDecimal stopLoss, BigDecimal confidence, QuantAnalysis priceAnalysis,
-        DataFreshness dataFreshness, TrackRecord trackRecord, Critique critique) {
+        DataFreshness dataFreshness, TrackRecord trackRecord, Critique critique, BigDecimal calibratedConfidence,
+        Calibration calibration) {
     public record ToolTrace(String tool, String outcome, long elapsedMs) { }
     /**
      * The critic's final word on the answer returned: verdict ACCEPT, REVISE (issues stand; see CRITIC_UNRESOLVED),
@@ -25,6 +26,13 @@ public record RecommendationResponse(String runId, String ticker, String status,
     public record Critique(String verdict, List<String> issues, List<Review> reviews, boolean revised, List<String> unsupportedNumerals) { }
     /** One critic review: the draft assessment it judged and what it returned. */
     public record Review(String assessment, String verdict, List<String> issues) { }
+    /**
+     * How confidence was calibrated: status APPLIED (calibratedConfidence set from the bin below), INSUFFICIENT_SAMPLE,
+     * NO_CALIBRATION, NOT_DIRECTIONAL (NEUTRAL has no direction to score), or UNAVAILABLE; the snapshot id, its sample
+     * count and base rate, and the raw-confidence bin used with its own count and hit rate. Null without a confidence.
+     */
+    public record Calibration(String status, Long calibrationId, Instant computedAt, Integer horizonDays, Integer samples,
+            BigDecimal baseRate, Integer priorWeight, BigDecimal binLower, BigDecimal binUpper, Integer binSamples, BigDecimal binHitRate) { }
     /** What the run actually saw: filing dates per type, the bar date behind the levels, and the quote timestamp. */
     public record DataFreshness(Map<String, LocalDate> latestFilingDates, Instant filingsVerifiedAt,
             boolean filingsMayBeStale, LocalDate barsAsOf, Instant quoteUpdatedAt, String quoteAvailability) { }

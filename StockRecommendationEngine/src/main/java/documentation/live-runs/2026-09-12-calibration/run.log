@@ -1,0 +1,19 @@
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=3b612b0a-49b8-494a-8749-36618e17eff1 tool=MANAGER:reviewTrackRecord outcome=OK elapsedMs=16
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=3b612b0a-49b8-494a-8749-36618e17eff1 tool=RAG:ensureFilings outcome=FRESH elapsedMs=61
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=3b612b0a-49b8-494a-8749-36618e17eff1 tool=RAG:searchFilings outcome=OK elapsedMs=2461
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=3b612b0a-49b8-494a-8749-36618e17eff1 tool=MANAGER:researchFilings outcome=OK elapsedMs=5358
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=3b612b0a-49b8-494a-8749-36618e17eff1 tool=CRITIC:review outcome=REVISE elapsedMs=1566
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=3b612b0a-49b8-494a-8749-36618e17eff1 tool=MANAGER:revise outcome=OK elapsedMs=2146
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=3b612b0a-49b8-494a-8749-36618e17eff1 tool=CRITIC:review outcome=REVISE elapsedMs=1791
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=3b612b0a-49b8-494a-8749-36618e17eff1 tool=MANAGER:calibrateConfidence outcome=NO_CALIBRATION elapsedMs=4
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=3b612b0a-49b8-494a-8749-36618e17eff1 status=PARTIAL modelCalls=7 observedTokens=28583 levels=false confidence=0.28 calibrated=null critic=REVISE
+[nio-8081-exec-3] p.s.o.ConfidenceCalibrationService       : Confidence calibration: id=5 horizon=20 status=INSUFFICIENT_SAMPLE samples=0 baseRate=null ece=null brier=null
+[nio-8081-exec-9] p.s.o.ConfidenceCalibrationService       : Confidence calibration: id=6 horizon=20 status=READY samples=40 baseRate=0.550000 ece=0.068750 brier=0.229687
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=20753998-0d12-4ca7-9908-42229adcb127 tool=MANAGER:reviewTrackRecord outcome=OK elapsedMs=6
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=20753998-0d12-4ca7-9908-42229adcb127 tool=RAG:ensureFilings outcome=FRESH elapsedMs=14
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=20753998-0d12-4ca7-9908-42229adcb127 tool=RAG:searchFilings outcome=OK elapsedMs=397
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=20753998-0d12-4ca7-9908-42229adcb127 tool=MANAGER:researchFilings outcome=OK elapsedMs=3196
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=20753998-0d12-4ca7-9908-42229adcb127 tool=CRITIC:review outcome=ACCEPT elapsedMs=799
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=20753998-0d12-4ca7-9908-42229adcb127 tool=MANAGER:calibrateConfidence outcome=APPLIED elapsedMs=4
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=20753998-0d12-4ca7-9908-42229adcb127 status=PARTIAL modelCalls=5 observedTokens=17628 levels=false confidence=0.29 calibrated=0.425000 critic=ACCEPT
+[nio-8081-exec-5] p.s.o.ConfidenceCalibrationService       : Confidence calibration: id=7 horizon=20 status=INSUFFICIENT_SAMPLE samples=0 baseRate=null ece=null brier=null

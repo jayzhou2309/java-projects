@@ -124,12 +124,12 @@ Implementation is phased; work may be delegated to sub-agents under skill files,
 | 1 | Infrastructure (build, DB/extensions, core entities, security, migration/upgrade tests) | Implemented, locally validated; remote CI pending |
 | 2 | Market data ingestion | Partial: TWS delayed quotes and stored daily bars ([IBKR.md](documentation/IBKR.md)); no Kafka/TimescaleDB |
 | 3 | SEC RAG pipeline | Implemented: ingestion, filtered vector retrieval, rebuild workflow ([RAG.md](documentation/RAG.md)) |
-| 4 | ML baseline / confidence scoring | Partial: deterministic ATR levels and an uncalibrated input-coverage confidence ([Quant.md](documentation/Quant.md)); no backtest or ensemble terms |
+| 4 | ML baseline / confidence scoring | Partial: deterministic ATR levels, an input-coverage confidence ([Quant.md](documentation/Quant.md)), and histogram calibration of that confidence against realized 20-day direction hits, applied once 30 directional runs are scored ([Outcomes.md](documentation/Outcomes.md)); no scored directional runs exist yet, no backtest or ensemble terms |
 | 5 | Specialist agents | Partial: RAG and broker specialists under a manager ([Agent_Harness.md](documentation/Agent_Harness.md)) |
 | 6 | Orchestration | Partial: bounded explicit tool loop, no MCP or multi-user |
 | 7 | Critic and synthesis | Partial: a tool-less critic reviews the manager's answer against the run's own evidence and sends it back for one bounded revision; a deterministic numeral check feeds the critic ([Agent_Harness.md](documentation/Agent_Harness.md)); no ensemble of models or calibration of the critic's verdicts |
 | 8 | Memory | Partial: the manager is shown the ticker's prior stored runs and realized outcomes ([Agent_Harness.md](documentation/Agent_Harness.md)); no cross-request conversational memory |
-| 9 | Evaluation platform | Partial: stored runs scored at 5/20/60-day horizons with benchmark and level touches ([Outcomes.md](documentation/Outcomes.md)); no calibration or retrieval evaluation set yet |
+| 9 | Evaluation platform | Partial: stored runs scored at 5/20/60-day horizons with benchmark and level touches, nightly calibration snapshots with ECE and Brier ([Outcomes.md](documentation/Outcomes.md)); no retrieval evaluation set; open items in [Follow_Ups.md](documentation/Follow_Ups.md) |
 | — | Trade staging, Guard Pipeline, UTA, execution (v2 scope) | Planned — sequence after core phases above |
 
 ## 9. Open Questions

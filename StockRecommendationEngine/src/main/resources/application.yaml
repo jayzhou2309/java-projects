@@ -114,6 +114,11 @@ outcomes:
   history-days: 250
   refresh-hours: 12
   max-runs-per-evaluation: 500
+  # Confidence calibration from scored directional runs at the reference horizon (20 days), snapshotted after each pass.
+  calibration:
+    bins: 5
+    min-samples: 30
+    prior-weight: 10
 
 recommendation:
   enabled: ${RECOMMENDATION_ENABLED:false}

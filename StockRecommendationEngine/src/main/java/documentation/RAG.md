@@ -326,6 +326,14 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * The full 47-test suite passed against a disposable PostgreSQL/pgvector database.
     * Correctness tests do not establish real-world retrieval relevance or reranker quality.
 
+* Retrieval Evaluation Set
+    * `src/main/resources/evaluation/retrieval-set-v1.json` is a fixed, versioned set of 30 analyst-style questions (10 each for AAPL, MSFT, NVDA) with known-good passages, written against the latest stored 10-K, 10-Q, and 8-K per ticker as of 2026-09-12.
+    * Format: `version`, `createdOn`, and `questions`; each question has `id`, `ticker`, `kind` (FIGURE for an exact number stated in the filing, NARRATIVE for a risk, segment change, or policy), `question`, `expected` (one or more passages, any one satisfies), and optional `notes`.
+    * An expected passage is `accessionNo`, `sectionKey`, and `phrase`: a verbatim 12 to 200 character excerpt of a chunk stored for that filing and section, using the same characters as the chunk (curly quotes, non-breaking spaces). Chunk IDs change on rebuild, so they are never referenced.
+    * `RetrievalEvaluationSetLoader` (`rag.evaluation`) reads the resource and rejects duplicate ids, empty expectation lists, blank or out-of-range phrases, malformed tickers or accession numbers, and phrases shared by two questions, naming the question id.
+    * `RetrievalEvaluationSetTests` (database-backed, read-only) proves every expectation is a substring of a stored chunk, case-insensitive with whitespace collapsed. Section keys follow the parser: NVIDIA's Item 8 is a one-line cross-reference, so its financial statement notes sit under ITEM_15; the AAPL 8-K Item 2.02 is stored as ITEM_2 and the MSFT 8-K Item 7.01 as ITEM_7_01.
+    * Nothing in the set reaches a model prompt; evaluation runs and metrics are a separate step.
+
 * Filing Freshness
     * Purpose
         * Keep stored filings current without re-downloading anything already embedded.

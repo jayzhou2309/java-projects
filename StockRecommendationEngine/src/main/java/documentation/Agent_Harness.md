@@ -207,8 +207,8 @@ curl -X POST http://localhost:8080/api/recommendations \
     * Point-in-time discipline
         * barsAsOf, quoteAvailability, and citedChunkIds record what the run actually saw; later evaluation must only use bars and filings dated after requestedAt.
         * Stopped and failed runs are stored with their status so the record is complete rather than success-only.
-    * Not yet implemented
-        * Outcome measurement, calibration, and a look-back tool for the agent; those consume this table.
+    * Consumers
+        * [Outcomes.md](Outcomes.md) scores stored runs at fixed horizons; calibration and a look-back tool for the agent are still to come.
 
 * Portfolio and Contract Selection
     * Set includePortfolio=true when you want the model to receive holdings from the configured account.

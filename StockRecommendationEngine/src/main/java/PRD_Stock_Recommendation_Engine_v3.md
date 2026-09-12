@@ -129,7 +129,7 @@ Implementation is phased; work may be delegated to sub-agents under skill files,
 | 6 | Orchestration | Partial: bounded explicit tool loop, no MCP or multi-user |
 | 7 | Critic and synthesis | Planned |
 | 8 | Memory | Planned |
-| 9 | Evaluation platform | Planned |
+| 9 | Evaluation platform | Partial: stored runs scored at 5/20/60-day horizons with benchmark and level touches ([Outcomes.md](documentation/Outcomes.md)); no calibration or retrieval evaluation set yet |
 | — | Trade staging, Guard Pipeline, UTA, execution (v2 scope) | Planned — sequence after core phases above |
 
 ## 9. Open Questions

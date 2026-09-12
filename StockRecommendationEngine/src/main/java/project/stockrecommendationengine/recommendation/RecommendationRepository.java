@@ -39,6 +39,20 @@ public class RecommendationRepository {
         return jdbc.query("SELECT * FROM recommendations WHERE ticker = ? ORDER BY requested_at DESC LIMIT ?", MAPPER, ticker, limit);
     }
 
+    /**
+     * Scorable runs (a contract, a bar date, an entry price, and a directional or neutral assessment) that still lack
+     * an outcome for at least one of {@code horizonCount} horizons, oldest first.
+     */
+    public List<RecommendationRecord> findPendingEvaluation(int horizonCount, int limit) {
+        return jdbc.query("""
+                SELECT r.* FROM recommendations r
+                WHERE r.conid IS NOT NULL AND r.bars_as_of IS NOT NULL AND r.last_close IS NOT NULL
+                  AND r.assessment IN ('BULLISH', 'BEARISH', 'NEUTRAL')
+                  AND (SELECT count(*) FROM recommendation_outcomes o WHERE o.run_id = r.run_id) < ?
+                ORDER BY r.requested_at LIMIT ?
+                """, MAPPER, horizonCount, limit);
+    }
+
     private static final RowMapper<RecommendationRecord> MAPPER = (rs, i) -> {
         var chunkIds = rs.getArray("cited_chunk_ids");
         var limitations = rs.getArray("limitations");

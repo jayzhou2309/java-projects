@@ -10,6 +10,7 @@ import project.stockrecommendationengine.access.*;
 import project.stockrecommendationengine.broker.BrokerReadService;
 import project.stockrecommendationengine.broker.api.BrokerController;
 import project.stockrecommendationengine.broker.ibkr.*;
+import project.stockrecommendationengine.outcome.*;
 import project.stockrecommendationengine.quant.*;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
 import static org.assertj.core.api.Assertions.*;
@@ -20,9 +21,11 @@ class IntegrationWiringTests {
             .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration.class, ValidationAutoConfiguration.class))
             .withUserConfiguration(IntegrationAccessConfiguration.class, RecommendationService.class,
                     IbkrConfiguration.class, IbkrBrokerAdapter.class, QuantAnalysisService.class, QuantController.class,
+                    OutcomeEvaluationService.class, OutcomeScheduler.class, OutcomeController.class,
                     RecommendationController.class, BrokerController.class)
             .withBean(IntegrationAccessProperties.class).withBean(IbkrProperties.class).withBean(RecommendationProperties.class)
-            .withBean(QuantProperties.class)
+            .withBean(QuantProperties.class).withBean(OutcomeProperties.class)
+            .withBean(OutcomeRepository.class, () -> mock(OutcomeRepository.class))
             .withBean(FilingRetrievalService.class, () -> mock(FilingRetrievalService.class))
             .withBean(project.stockrecommendationengine.rag.freshness.FilingFreshnessService.class,
                     () -> mock(project.stockrecommendationengine.rag.freshness.FilingFreshnessService.class))
@@ -33,7 +36,8 @@ class IntegrationWiringTests {
         runner.run(context -> {
             assertThat(context).hasNotFailed().doesNotHaveBean(BrokerReadService.class)
                     .doesNotHaveBean(RecommendationService.class).doesNotHaveBean(TwsClient.class)
-                    .doesNotHaveBean(QuantAnalysisService.class).doesNotHaveBean(QuantController.class);
+                    .doesNotHaveBean(QuantAnalysisService.class).doesNotHaveBean(QuantController.class)
+                    .doesNotHaveBean(OutcomeEvaluationService.class).doesNotHaveBean(OutcomeScheduler.class);
         });
     }
 
@@ -48,6 +52,13 @@ class IntegrationWiringTests {
                             .hasSingleBean(QuantAnalysisService.class).hasSingleBean(QuantController.class);
                     verifyNoInteractions(context.getBean(ChatModel.class), context.getBean(PriceBarRepository.class));
                 });
+    }
+
+    @Test void outcomesWireWithOrWithoutTheBrokerButRequireTheToken() {
+        runner.withPropertyValues("outcomes.enabled=true", "integration.access.token=test-token-with-at-least-32-characters")
+                .run(context -> assertThat(context).hasNotFailed().hasSingleBean(OutcomeEvaluationService.class)
+                        .hasSingleBean(OutcomeScheduler.class).hasSingleBean(OutcomeController.class).doesNotHaveBean(BrokerReadService.class));
+        runner.withPropertyValues("outcomes.enabled=true").run(context -> assertThat(context).hasFailed());
     }
 
     @Test void enabledQuantFailsClearlyWithoutTheBroker() {

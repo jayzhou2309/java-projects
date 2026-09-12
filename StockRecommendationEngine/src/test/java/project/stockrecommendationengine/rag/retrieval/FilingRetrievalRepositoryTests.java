@@ -176,6 +176,86 @@ class FilingRetrievalRepositoryTests {
         assertThat(retrievalRepository.findKeywordChunks("64,377", vector(1, 0), maliciousFilter, 5)).isEmpty();
     }
 
+    // Fusion tuning Milestone 1 (RAG-12), C3: the figure leg.
+
+    @Test
+    void figureSearchReturnsOnlyChunksHoldingEveryFigureRankedByCoverDensityWithCosineSimilarity() {
+        Long adjacentChunk = insertChunk(ticker, "10-K", "2025-10-31", "EMBEDDED", "ITEM_7", vector(0.6f, 0.8f),
+                "Revenue 215,938 up 65% from 130,497 in the prior year");
+        Long distantChunk = insertChunk(ticker, "10-K", "2025-10-31", "EMBEDDED", "ITEM_7", vector(1, 0),
+                "Revenue 215,938 rose. " + "Other words about the business here. ".repeat(20) + "Operating margin 65% in fiscal 2026");
+        insertChunk(ticker, "10-K", "2025-10-31", "EMBEDDED", "ITEM_7", vector(1, 0), "Revenue 215,938 in fiscal 2026");
+        insertChunk(ticker, "10-K", "2025-10-31", "EMBEDDED", "ITEM_7", vector(1, 0), "Operating margin 65% in fiscal 2026");
+        insertChunk(ticker, "10-K", "2025-10-31", "EMBEDDED", "ITEM_7", vector(1, 0),
+                "Revenue 215 rose while 938 units shipped, up 65%");
+
+        float[] queryEmbedding = vector(1, 0);
+        String query = "fiscal revenue 215,938 up 65%";
+        var results = retrievalRepository.findFigureChunks(query, queryEmbedding, filter(false), 20);
+        // Both figures required; ts_rank_cd (cover density) puts the adjacent pair first despite its lower similarity.
+        assertThat(results).extracting(result -> result.chunkId()).containsExactly(adjacentChunk, distantChunk);
+        assertThat(results.get(0).similarityScore()).isCloseTo(cosine(queryEmbedding, vector(0.6f, 0.8f)), within(0.000001));
+        assertThat(results.get(1).similarityScore()).isCloseTo(cosine(queryEmbedding, vector(1, 0)), within(0.000001));
+        assertThat(results.get(0).content()).contains("215,938").contains("65%");
+        assertThat(results.get(0).ticker()).isEqualTo(ticker);
+        assertThat(results.get(0).sectionKey()).isEqualTo("ITEM_7");
+        assertThat(retrievalRepository.findFigureChunks(query, queryEmbedding, filter(false), 1))
+                .extracting(result -> result.chunkId()).containsExactly(adjacentChunk);
+        // The OR keyword leg for the same query reaches the single-figure and split-digit chunks as well.
+        assertThat(retrievalRepository.findKeywordChunks(query, queryEmbedding, filter(false), 20)).hasSize(5);
+    }
+
+    @Test
+    void figureSearchReturnsNothingWhenAFigureIsAbsentOrNoFigureRemains() {
+        insertChunk(ticker, "10-K", "2025-10-31", "EMBEDDED", "ITEM_7", vector(1, 0),
+                "Revenue 215,938 up 65% from 130,497 in fiscal 2025");
+        assertThat(retrievalRepository.findFigureChunks("revenue 215,938 up 66%", vector(1, 0), filter(false), 20)).isEmpty();
+        assertThat(retrievalRepository.findFigureChunks("999,111 and 42", vector(1, 0), filter(false), 20)).isEmpty();
+        assertThat(retrievalRepository.findFigureChunks("risks in fiscal 2025", vector(1, 0), filter(false), 20)).isEmpty();
+        assertThat(retrievalRepository.findFigureChunks("no numbers here", vector(1, 0), filter(false), 20)).isEmpty();
+        assertThat(retrievalRepository.findFigureChunks("215,938", vector(1, 0), filter(false), 20)).hasSize(1);
+        assertThatThrownBy(() -> retrievalRepository.findFigureChunks("215,938 65", new float[1536], filter(false), 5))
+                .hasMessageContaining("zero vector");
+    }
+
+    @Test
+    void figureSearchAppliesTheSameEligibilityAsTheOtherPaths() {
+        String content = "Revenue 215,938 up 65%";
+        Long olderAnnualChunk = insertChunk(ticker, "10-K", "2024-10-31", "EMBEDDED", "ITEM_7", vector(1, 0), content);
+        Long latestAnnualChunk = insertChunk(ticker, "10-K", "2025-10-31", "EMBEDDED", "ITEM_7", vector(0.8f, 0.6f), content);
+        Long latestQuarterlyChunk = insertChunk(ticker, "10-Q", "2026-02-01", "EMBEDDED", "ITEM_7", vector(0.6f, 0.8f), content);
+        insertChunk(ticker, "10-K", "2025-10-30", "EMBEDDED", "ITEM_1A", vector(1, 0), content);
+        insertChunk(ticker, "10-K", "2025-11-15", "FAILED", "ITEM_7", vector(1, 0), content);
+        insertChunk(ticker + "X", "10-K", "2025-10-31", "EMBEDDED", "ITEM_7", vector(1, 0), content);
+        insertChunk(ticker, "10-K", "2025-10-29", "EMBEDDED", "ITEM_7", null, content);
+        insertChunk(ticker, "10-K", "2025-10-28", "EMBEDDED", "ITEM_7", new float[1536], content);
+
+        String query = "215,938 up 65%";
+        var sectionFilter = new FilingRetrievalFilter(ticker, List.of(), null, null, List.of("ITEM_7"), false);
+        assertThat(retrievalRepository.findFigureChunks(query, vector(1, 0), sectionFilter, 20))
+                .extracting(result -> result.chunkId())
+                .containsExactly(olderAnnualChunk, latestAnnualChunk, latestQuarterlyChunk);
+        assertThat(retrievalRepository.findKeywordChunks(query, vector(1, 0), sectionFilter, 20))
+                .extracting(result -> result.chunkId())
+                .containsExactly(olderAnnualChunk, latestAnnualChunk, latestQuarterlyChunk);
+        assertThat(retrievalRepository.findSimilarChunks(vector(1, 0), sectionFilter, 20))
+                .extracting(result -> result.chunkId())
+                .containsExactly(olderAnnualChunk, latestAnnualChunk, latestQuarterlyChunk);
+
+        assertThat(retrievalRepository.findFigureChunks(query, vector(1, 0), filter(true), 20))
+                .extracting(result -> result.chunkId()).containsExactly(latestAnnualChunk, latestQuarterlyChunk);
+        assertThat(retrievalRepository.findSimilarChunks(vector(1, 0), filter(true), 20))
+                .extracting(result -> result.chunkId()).containsExactly(latestAnnualChunk, latestQuarterlyChunk);
+
+        var typeAndDateFilter = new FilingRetrievalFilter(ticker, List.of("10-Q"), LocalDate.parse("2026-02-01"),
+                LocalDate.parse("2026-02-01"), List.of(), false);
+        assertThat(retrievalRepository.findFigureChunks(query, vector(1, 0), typeAndDateFilter, 20))
+                .extracting(result -> result.chunkId()).containsExactly(latestQuarterlyChunk);
+
+        var maliciousFilter = new FilingRetrievalFilter("' OR true --", List.of(), null, null, List.of(), false);
+        assertThat(retrievalRepository.findFigureChunks(query, vector(1, 0), maliciousFilter, 5)).isEmpty();
+    }
+
     @Test
     void keywordIndexExistsAndGeneratedColumnIsPopulatedForEveryRow() {
         insertChunk(ticker, "10-K", "2025-10-31", "EMBEDDED", "ITEM_7", vector(1, 0), "Greater China 64,377");

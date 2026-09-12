@@ -11,6 +11,7 @@ import project.stockrecommendationengine.rag.repository.FilingRetrievalRepositor
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -49,12 +50,15 @@ public class FilingRetrievalService {
     /**
      * Embeds the query, retrieves the vector candidates and, when hybrid retrieval resolves on (the request's
      * {@code hybrid} field when present, else {@code rag.retrieval.hybrid-enabled}) and the query yields at least
-     * one keyword term, the full-text candidates as well; fuses the two rankings by reciprocal rank fusion, then
-     * diversifies and cuts to topK. The strategy is {@code HYBRID_RRF} (or {@code HYBRID_RRF_RERANKED}) whenever
-     * the keyword search ran and returned without error, an empty keyword result included: fusion ran over the
-     * same input the caller asked for. It is {@code FILTERED_VECTOR} when hybrid is off, when the query has no
-     * keyword terms (stopwords and punctuation only), or when the keyword search failed; a keyword failure is
-     * logged at WARN with the exception class and never fails the retrieval.
+     * one keyword term, the full-text candidates as well; when {@code rag.retrieval.rrf-figure-weight} is above 0
+     * and the query holds a figure (see {@code figureTerms}), the figure candidates too; fuses the rankings by
+     * weighted reciprocal rank fusion, then diversifies and cuts to topK. The strategy is {@code HYBRID_RRF} (or
+     * {@code HYBRID_RRF_RERANKED}) whenever the keyword search ran and returned without error, an empty keyword
+     * result included and whether or not the figure leg ran: fusion ran over the same input the caller asked for.
+     * It is {@code FILTERED_VECTOR} when hybrid is off, when the query has no keyword terms (stopwords and
+     * punctuation only), or when the keyword search failed; a keyword failure is logged at WARN with the exception
+     * class and never fails the retrieval. A figure-leg failure is logged the same way and fusion proceeds over the
+     * vector and keyword legs.
      */
     public RetrievalResponse retrieve(RetrievalRequest request) {
         long retrievalStarted = System.nanoTime();
@@ -95,10 +99,21 @@ public class FilingRetrievalService {
                         normalizedTicker, normalizedQuery, queryEmbedding, retrievalFilter);
                 if (keywordCandidates != null) {
                     int rrfK = retrievalProperties.getRrfK();
-                    candidates = fuse(vectorCandidates, keywordCandidates, rrfK);
+                    List<FusionLeg> legs = new ArrayList<>(List.of(
+                            new FusionLeg(vectorCandidates, retrievalProperties.getRrfVectorWeight()),
+                            new FusionLeg(keywordCandidates, retrievalProperties.getRrfKeywordWeight())));
+                    List<RetrievedFilingChunk> figureCandidates = searchFigures(
+                            normalizedTicker, normalizedQuery, queryEmbedding, retrievalFilter);
+                    if (figureCandidates != null) {
+                        legs.add(new FusionLeg(figureCandidates, retrievalProperties.getRrfFigureWeight()));
+                    }
+                    candidates = fuse(legs, rrfK);
                     keywordContributed = true;
-                    log.info("Reciprocal rank fusion completed: ticker={}, vectorCandidates={}, keywordCandidates={}, fused={}, k={}",
-                            normalizedTicker, vectorCandidates.size(), keywordCandidates.size(), candidates.size(), rrfK);
+                    log.info("Reciprocal rank fusion completed: ticker={}, vectorCandidates={}, keywordCandidates={}, figureCandidates={}, fused={}, k={}, weights={}/{}/{}",
+                            normalizedTicker, vectorCandidates.size(), keywordCandidates.size(),
+                            figureCandidates == null ? "off" : figureCandidates.size(), candidates.size(), rrfK,
+                            retrievalProperties.getRrfVectorWeight(), retrievalProperties.getRrfKeywordWeight(),
+                            retrievalProperties.getRrfFigureWeight());
                 }
             }
 
@@ -160,21 +175,68 @@ public class FilingRetrievalService {
     }
 
     /**
-     * Reciprocal rank fusion of the two rankings: each chunk scores the sum over the lists containing it of
-     * {@code 1 / (k + rank)}, rank being its 1-based position in that list; the fused list is ordered by that
-     * score descending, then vector similarity descending, then chunk id ascending. A chunk found by only one
-     * list is kept with the cosine similarity that list computed (both paths compute the same value), and a
-     * chunk found by both keeps the vector list's instance. Package-private for tests.
+     * The figure candidates for the query, or {@code null} when the figure leg did not run: the figure weight is 0
+     * (the leg is off, the default), the query holds no figure (no numeric token, or years only; the repository is
+     * not called), or the search threw (logged at WARN with the exception class only; fusion then proceeds over
+     * the vector and keyword legs). Called only once the keyword leg has succeeded: a non-empty figure string
+     * implies a non-empty keyword string, so the figure leg never runs on its own.
      */
+    private List<RetrievedFilingChunk> searchFigures(
+            String normalizedTicker,
+            String normalizedQuery,
+            float[] queryEmbedding,
+            FilingRetrievalFilter retrievalFilter
+    ) {
+        if (retrievalProperties.getRrfFigureWeight() <= 0) {
+            return null;
+        }
+        if (FilingRetrievalRepository.figureTerms(normalizedQuery).isEmpty()) {
+            log.info("Skipping figure search: ticker={}, reason=noFigureTerms", normalizedTicker);
+            return null;
+        }
+        long figureStarted = System.nanoTime();
+        int figureCandidateCount = retrievalProperties.getKeywordCandidateCount();
+        log.info("Searching filing chunks by figure: ticker={}, candidateLimit={}", normalizedTicker, figureCandidateCount);
+        try {
+            List<RetrievedFilingChunk> figureCandidates = retrievalRepository.findFigureChunks(
+                    normalizedQuery, queryEmbedding, retrievalFilter, figureCandidateCount);
+            log.info("Figure search completed: ticker={}, candidates={}, elapsedMs={}",
+                    normalizedTicker, figureCandidates.size(), elapsedMillis(figureStarted));
+            return figureCandidates;
+        } catch (RuntimeException figureFailure) {
+            log.warn("Figure search failed, fusing vector and keyword candidates only: ticker={}, error={}, elapsedMs={}",
+                    normalizedTicker, figureFailure.getClass().getSimpleName(), elapsedMillis(figureStarted));
+            return null;
+        }
+    }
+
+    /** One ranking entering reciprocal rank fusion with its weight: a chunk at rank r in it scores weight / (k + r). */
+    record FusionLeg(List<RetrievedFilingChunk> ranking, double weight) {}
+
+    /** Unweighted fusion of the vector and keyword rankings: {@link #fuse(List, int)} with both weights 1.0. */
     static List<RetrievedFilingChunk> fuse(
             List<RetrievedFilingChunk> vectorCandidates,
             List<RetrievedFilingChunk> keywordCandidates,
             int k
     ) {
+        return fuse(List.of(new FusionLeg(vectorCandidates, 1.0), new FusionLeg(keywordCandidates, 1.0)), k);
+    }
+
+    /**
+     * Weighted reciprocal rank fusion of the legs: each chunk scores the sum over the legs containing it of
+     * {@code weight / (k + rank)}, rank being its 1-based position in that leg; the fused list is ordered by that
+     * score descending, then vector similarity descending, then chunk id ascending. A chunk found by only one
+     * leg is kept with the cosine similarity that leg computed (every path computes the same value), and a chunk
+     * found by several keeps the instance from the first leg listing it (the vector leg comes first). With every
+     * weight 1.0 the result equals the unweighted fusion exactly. Package-private for tests.
+     */
+    static List<RetrievedFilingChunk> fuse(List<FusionLeg> legs, int k) {
         Map<Long, RetrievedFilingChunk> chunksById = new LinkedHashMap<>();
-        for (RetrievedFilingChunk candidate : vectorCandidates) chunksById.putIfAbsent(candidate.chunkId(), candidate);
-        for (RetrievedFilingChunk candidate : keywordCandidates) chunksById.putIfAbsent(candidate.chunkId(), candidate);
-        Map<Long, BigDecimal> fusedScores = reciprocalRankScores(List.of(vectorCandidates, keywordCandidates), k);
+        for (FusionLeg leg : legs) {
+            for (RetrievedFilingChunk candidate : leg.ranking()) chunksById.putIfAbsent(candidate.chunkId(), candidate);
+        }
+        Map<Long, BigDecimal> fusedScores = reciprocalRankScores(
+                legs.stream().map(FusionLeg::ranking).toList(), legs.stream().map(FusionLeg::weight).toList(), k);
         List<RetrievedFilingChunk> fused = new ArrayList<>(chunksById.values());
         fused.sort(Comparator
                 .comparing((RetrievedFilingChunk chunk) -> fusedScores.get(chunk.chunkId()), Comparator.reverseOrder())
@@ -183,22 +245,37 @@ public class FilingRetrievalService {
         return List.copyOf(fused);
     }
 
-    /**
-     * The reciprocal rank fusion score per chunk id over the given rankings, as exact decimals at a fixed scale
-     * so that chunks holding the same ranks tie exactly. A chunk repeated within one ranking counts once, at its
-     * first position, and does not shift the ranks of the chunks after it.
-     */
+    /** The unweighted scores: {@link #reciprocalRankScores(List, List, int)} with every weight 1.0. */
     static Map<Long, BigDecimal> reciprocalRankScores(List<List<RetrievedFilingChunk>> rankings, int k) {
+        return reciprocalRankScores(rankings, Collections.nCopies(rankings.size(), 1.0), k);
+    }
+
+    /**
+     * The weighted reciprocal rank fusion score per chunk id over the given rankings, one weight per ranking:
+     * each term is {@code weight / (k + rank)} as one division at a fixed scale, so chunks holding the same
+     * ranks under the same weights tie exactly, and a weight of 1.0 yields the unweighted term digit for digit.
+     * A chunk repeated within one ranking counts once, at its first position, and does not shift the ranks of
+     * the chunks after it.
+     */
+    static Map<Long, BigDecimal> reciprocalRankScores(
+            List<List<RetrievedFilingChunk>> rankings,
+            List<Double> weights,
+            int k
+    ) {
+        if (weights.size() != rankings.size()) {
+            throw new IllegalArgumentException("Reciprocal rank fusion needs one weight per ranking");
+        }
         Map<Long, BigDecimal> fusedScores = new LinkedHashMap<>();
-        for (List<RetrievedFilingChunk> ranking : rankings) {
+        for (int index = 0; index < rankings.size(); index++) {
+            BigDecimal weight = BigDecimal.valueOf(weights.get(index));
             Set<Long> seenInRanking = new HashSet<>();
             int rank = 0;
-            for (RetrievedFilingChunk candidate : ranking) {
+            for (RetrievedFilingChunk candidate : rankings.get(index)) {
                 if (!seenInRanking.add(candidate.chunkId())) continue;
                 rank++;
-                BigDecimal reciprocalRank = BigDecimal.ONE.divide(
+                BigDecimal weightedReciprocalRank = weight.divide(
                         BigDecimal.valueOf((long) k + rank), FUSION_SCALE, RoundingMode.HALF_EVEN);
-                fusedScores.merge(candidate.chunkId(), reciprocalRank, BigDecimal::add);
+                fusedScores.merge(candidate.chunkId(), weightedReciprocalRank, BigDecimal::add);
             }
         }
         return fusedScores;

@@ -1,5 +1,7 @@
 package project.stockrecommendationengine.rag.retrieval;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
@@ -37,4 +39,19 @@ public class FilingRetrievalProperties {
     /** The k in reciprocal rank fusion's 1 / (k + rank). */
     @Min(1) @Max(1000)
     private int rrfK = 60;
+
+    /** Weight of the vector ranking in reciprocal rank fusion: a chunk at rank r in it scores weight / (k + r). */
+    @DecimalMin("0.0") @DecimalMax("10.0")
+    private double rrfVectorWeight = 1.0;
+
+    /** Weight of the keyword ranking in reciprocal rank fusion. */
+    @DecimalMin("0.0") @DecimalMax("10.0")
+    private double rrfKeywordWeight = 1.0;
+
+    /**
+     * Weight of the figure ranking (chunks containing every numeric token of the query; {@code figureTerms}); 0 leaves
+     * that leg off. Off by default until it is measured against the evaluation set (Follow_Ups RAG-12).
+     */
+    @DecimalMin("0.0") @DecimalMax("10.0")
+    private double rrfFigureWeight = 0.0;
 }

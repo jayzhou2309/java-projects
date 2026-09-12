@@ -79,6 +79,12 @@ rag:
     keyword-candidate-count: 40
     # The k in reciprocal rank fusion's 1 / (k + rank); 1 to 1000.
     rrf-k: 60
+    # Weight of the vector ranking in reciprocal rank fusion (a chunk at rank r scores weight / (k + r)); 0 to 10.
+    rrf-vector-weight: 1.0
+    # Weight of the keyword ranking in reciprocal rank fusion; 0 to 10.
+    rrf-keyword-weight: 1.0
+    # Weight of the figure ranking (chunks holding every number in the query); 0 to 10, 0 leaves the leg off until measured (RAG-12).
+    rrf-figure-weight: 0.0
   # Chunks retrieved per question when the bundled evaluation set is run (POST /api/rag/evaluate); 5 to 20.
   evaluation:
     window: 10

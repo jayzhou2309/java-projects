@@ -146,6 +146,9 @@ public class RetrievalEvaluationService {
         out.put("hybridEnabled", retrievalProperties.isHybridEnabled());
         out.put("keywordCandidateCount", retrievalProperties.getKeywordCandidateCount());
         out.put("rrfK", retrievalProperties.getRrfK());
+        out.put("rrfVectorWeight", retrievalProperties.getRrfVectorWeight());
+        out.put("rrfKeywordWeight", retrievalProperties.getRrfKeywordWeight());
+        out.put("rrfFigureWeight", retrievalProperties.getRrfFigureWeight());
         out.put("hybrid", hybrid);
         return out;
     }

@@ -120,10 +120,14 @@
             * Resolve topK and latest-filings policy.
             * Embed the query using FilingEmbeddingService.embed(query).
             * Retrieve the closest eligible chunks from FilingRetrievalRepository.
-            * Keep vector order when reranking is disabled.
+            * Resolve hybrid retrieval: the request's `hybrid` field when present, else `rag.retrieval.hybrid-enabled`. When on and `keywordTerms(query)` is non-empty, also call findKeywordChunks (keyword-candidate-count rows) and fuse the two rankings by reciprocal rank fusion: fused score = sum over the lists containing the chunk of 1 / (rrf-k + rank), rank 1-based per list; order by fused score descending, then similarityScore descending, then chunk id; `candidatesRetrieved` is the fused set size.
+            * A stopword-only query skips the keyword search (repository not called); a keyword-search exception is logged at WARN with its class name and the vector candidates are used alone; neither fails the retrieval.
+            * Keep vector order when reranking is disabled; diversify and cut to topK after fusion exactly as without it.
             * Invoke FilingReranker when enabled and a provider adapter is configured.
-            * Return selected passages with unchanged citation metadata and cosine scores.
-            * Log query-embedding, vector-search, selection, completion, and failure steps.
+            * Return selected passages with unchanged citation metadata and cosine scores; a chunk found only by the keyword path carries the cosine similarity the keyword query computed.
+            * Log query-embedding, vector-search, keyword-search (candidates, elapsed ms), fusion (fused size), selection, completion, and failure steps.
+        * fuse(List vectorCandidates, List keywordCandidates, int k) and reciprocalRankScores(List rankings, int k) (package-private, static)
+            * Reciprocal rank fusion with the scores kept as exact decimals (scale 18) so equal rank multisets tie exactly; a chunk in both lists keeps the vector list's instance.
         * normalizeValues(List<String> values)
             * Trim, uppercase, and deduplicate optional filter values.
         * validateRerankedEvidence(List candidates, List selectedEvidence, int requestedResultCount)
@@ -149,12 +153,12 @@
             * Full-text search over the same eligibility CTE as findSimilarChunks (ticker, EMBEDDED, type, date, latest-per-type, section, usable embedding), matching `content_tsv @@ to_tsquery('english', :terms)`.
             * Sort by ts_rank_cd descending, then cosine similarity descending, then chunk ID; every row still carries the cosine similarity to the query embedding as similarityScore.
             * Empty terms (stopword-only or punctuation-only query) return an empty list without a query.
-        * keywordTerms(String query) (package-private)
+        * keywordTerms(String query) (public static)
             * Distinct case-folded tokens of length 2+ (letters and digits; commas and periods kept between digits so `64,377` and `40.4` stay whole), PostgreSQL english stopwords removed, each quoted for tsquery and joined with ` | `; never concatenated into SQL.
             * PostgreSQL parses the quoted figure `'64,377'` into the phrase `'64' <-> '377'`, the same split the stored vector holds, so the figure matches only where it appears as one number.
     * Keyword index (migration V9, `V9__chunk_keyword_index.sql`)
         * `sec_filing_chunks.content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED`, populated for every existing row on migration and kept in step with content by PostgreSQL.
-        * GIN index `idx_sec_filing_chunks_content_tsv` on that column; the keyword CTE is NOT MATERIALIZED so the planner can use it.
+        * GIN index `idx_sec_filing_chunks_content_tsv` on that column; the keyword CTE is NOT MATERIALIZED so the planner can use it, and only that variant of the shared CTE projects `content_tsv` (the materialized vector CTE never reads it).
     * Similarity score
         * similarityScore = 1 - cosine distance.
         * Higher scores indicate greater vector similarity, not recommendation confidence.
@@ -167,9 +171,14 @@
         * candidate-count: 40.
         * latest-filings-only: true.
         * reranking-enabled: false.
+        * hybrid-enabled: false (keyword plus vector fusion; off until measured, a request's `hybrid` field overrides per call).
+        * keyword-candidate-count: 40 (keyword rows fetched per query when the hybrid path runs).
+        * rrf-k: 60 (the k in reciprocal rank fusion's 1 / (k + rank)).
     * Validation
         * default-top-k must be between 1 and 20.
         * candidate-count must be between 20 and 200.
+        * keyword-candidate-count must be between 20 and 200.
+        * rrf-k must be between 1 and 1000.
 * FilingReranker
     * Purpose
         * Define the extension point for a future model-based reranker.
@@ -193,6 +202,7 @@
         * sectionKeys: nonempty list when supplied; for example ["ITEM_1A"].
         * topK: final result count, between 1 and 20; default 5.
         * latestFilingsOnly: explicit override for latest-per-type selection.
+        * hybrid: true forces keyword plus vector fusion for this call, false forces vector only; absent follows `rag.retrieval.hybrid-enabled`.
     * Default filing scope
         * Without dates, use the latest stored EMBEDDED filing per type by default.
         * With either date bound, search all eligible filings in that range by default.
@@ -229,7 +239,7 @@
     * Fields
         * ticker: normalized company ticker.
         * query: trimmed query.
-        * retrievalStrategy: FILTERED_VECTOR or FILTERED_VECTOR_RERANKED.
+        * retrievalStrategy: FILTERED_VECTOR or FILTERED_VECTOR_RERANKED; HYBRID_RRF or HYBRID_RRF_RERANKED when the keyword search ran and returned (an empty keyword result included), FILTERED_VECTOR when hybrid is off, the query has no keyword terms, or the keyword search failed.
         * latestFilingsOnly: resolved filing-selection policy.
         * topK: requested/default final result limit.
         * candidatesRetrieved: candidate count before final selection.
@@ -361,7 +371,8 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
         * A retrieval exception for one question is recorded as a miss with the error string; the other questions still count, so one embedding failure never voids a run.
     * Endpoints (integration token required, `Authorization: Bearer <INTEGRATION_ACCESS_TOKEN>`)
         * `POST /api/rag/evaluate` runs every question through retrieval and stores a snapshot in `retrieval_evaluations` (migration V8); `GET /api/rag/evaluate` returns the newest snapshot (404 before the first); `GET /api/rag/evaluate/{id}` returns one by id.
-        * A snapshot carries `hitAt1`, `hitAt3`, `hitAt5`, `mrr`, `tickerHitAt5`, `window`, `retrievalStrategy`, the run `properties` (window, latestFilingsOnly, setCreatedOn, candidateCount, rerankingEnabled), per-question `results` (rank and matched chunk id, null on a miss), and `misses` with the top three returned chunks (chunk id, accession, section, similarity) or the retrieval error.
+        * `POST /api/rag/evaluate?hybrid=true|false` passes that value as the `hybrid` field of every retrieval request (forcing keyword plus vector fusion on or off for the whole run without a restart) and records it as `properties.hybrid`; without the parameter every request carries null (each follows `rag.retrieval.hybrid-enabled`) and `properties.hybrid` is null.
+        * A snapshot carries `hitAt1`, `hitAt3`, `hitAt5`, `mrr`, `tickerHitAt5`, `window`, `retrievalStrategy`, the run `properties` (window, latestFilingsOnly, setCreatedOn, candidateCount, rerankingEnabled, hybridEnabled, keywordCandidateCount, rrfK, hybrid), per-question `results` (rank and matched chunk id, null on a miss), and `misses` with the top three returned chunks (chunk id, accession, section, similarity) or the retrieval error.
     * Regression floor
         * `RetrievalEvaluationLiveTests` (opt-in, `@EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")`) runs the real evaluation against the local store and asserts hit@5 at or above `rag.evaluation.min-hit-at-5` (default 0.50: baseline 0.6 minus 0.1, rounded down to a multiple of 0.05). It prints the metrics, per-ticker hit@5, and every miss with its top chunks, and it runs inside a rolled-back transaction so no snapshot is stored (the id sequence still advances).
         * Run: `set -a && source .env && set +a && ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true`; override the floor with `-Drag.evaluation.min-hit-at-5=<fraction>`. Without the system property the test is skipped, so `./mvnw -q verify` never embeds anything.

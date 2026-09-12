@@ -71,6 +71,12 @@ rag:
     latest-filings-only: true
     # Requires a FilingReranker adapter before enabling.
     reranking-enabled: false
+    # Fuse full-text keyword candidates with the vector candidates (reciprocal rank fusion); off until measured, a request's "hybrid" field overrides per call.
+    hybrid-enabled: false
+    # Keyword candidates fetched per query when the hybrid path runs; 20 to 200.
+    keyword-candidate-count: 40
+    # The k in reciprocal rank fusion's 1 / (k + rank); 1 to 1000.
+    rrf-k: 60
   # Chunks retrieved per question when the bundled evaluation set is run (POST /api/rag/evaluate); 5 to 20.
   evaluation:
     window: 10

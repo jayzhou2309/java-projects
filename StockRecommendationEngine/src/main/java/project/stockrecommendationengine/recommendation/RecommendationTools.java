@@ -71,7 +71,7 @@ final class RecommendationTools {
                     var query = args.path("query");
                     if (!query.isString() || query.asText().isBlank() || query.asText().length() > 4000) invalid();
                     var result = filings.retrieve(new RetrievalRequest(request.ticker(), query.asText(),
-                            null, null, null, null, searchTopK, true));
+                            null, null, null, null, searchTopK, true, null));
                     for (var item : result.results()) {
                         evidence.put(item.chunkId(), item);
                         if (looksLikeInstructions(item.content())) instructionLikeEvidence.add(item.chunkId());

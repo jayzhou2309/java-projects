@@ -127,9 +127,10 @@ public class FilingRetrievalRepository {
      * case-folded tokens of length 2 or more (letters and digits, with commas and periods kept between
      * digits), in order of first appearance, minus PostgreSQL's english stopwords, each wrapped in single
      * quotes (embedded quotes doubled) and joined with {@code " | "}. Returns an empty string when nothing
-     * remains, which callers treat as "no keyword search".
+     * remains, which callers treat as "no keyword search". Public so the retrieval service can decide whether
+     * the keyword path has anything to search for before calling {@link #findKeywordChunks}.
      */
-    static String keywordTerms(String query) {
+    public static String keywordTerms(String query) {
         if (query == null || query.isBlank()) {
             return "";
         }
@@ -151,7 +152,9 @@ public class FilingRetrievalRepository {
     /**
      * The shared eligibility pool: filings of the ticker with EMBEDDED status, the optional type and
      * inclusive date filters, the latest-filing-per-type policy, the optional section filter, and only chunks
-     * with a usable embedding. Both retrieval paths draw from this CTE so their candidate sets agree.
+     * with a usable embedding. Both retrieval paths draw from this CTE so their candidate sets agree. The
+     * generated {@code content_tsv} column is projected only for the keyword path ({@code materialized}
+     * false): the vector path never reads it and materialising it would copy about 2 KB per eligible chunk.
      */
     private String eligibleChunksCte(FilingRetrievalFilter retrievalFilter,
                                      MapSqlParameterSource queryParameters, boolean materialized) {
@@ -191,8 +194,7 @@ public class FilingRetrievalRepository {
                            filing.ticker, filing.cik, filing.accession_no, filing.filing_type,
                            filing.filing_date, filing.report_date, filing.source_url,
                            filing_chunk.section_key, filing_chunk.section_title,
-                           filing_chunk.chunk_index, filing_chunk.content, filing_chunk.embedding,
-                           filing_chunk.content_tsv
+                           filing_chunk.chunk_index, filing_chunk.content, filing_chunk.embedding%s
                     FROM eligible_filings filing
                     JOIN public.sec_filing_chunks filing_chunk ON filing_chunk.filing_id = filing.id
                     WHERE (:latestFilingsOnly = FALSE OR filing.filing_rank = 1)
@@ -200,7 +202,8 @@ public class FilingRetrievalRepository {
                       AND vector_norm(filing_chunk.embedding) > 0
                       %s
                 )
-                """.formatted(filingConditions, materialized ? "MATERIALIZED" : "NOT MATERIALIZED", sectionCondition);
+                """.formatted(filingConditions, materialized ? "MATERIALIZED" : "NOT MATERIALIZED",
+                        materialized ? "" : ", filing_chunk.content_tsv", sectionCondition);
     }
 
     private String serializeEmbedding(float[] queryEmbedding) {

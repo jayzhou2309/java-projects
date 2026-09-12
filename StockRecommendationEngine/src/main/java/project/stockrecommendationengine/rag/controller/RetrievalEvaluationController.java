@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation;
@@ -20,9 +21,13 @@ public class RetrievalEvaluationController {
     private final RetrievalEvaluationService service;
     private final RetrievalEvaluationRepository repository;
 
-    /** Run the bundled set through retrieval now and store the snapshot. */
+    /**
+     * Run the bundled set through retrieval now and store the snapshot. The optional {@code hybrid} parameter forces
+     * the keyword plus vector path on or off for every question; absent, each request follows
+     * {@code rag.retrieval.hybrid-enabled}.
+     */
     @PostMapping
-    public RetrievalEvaluation evaluate() { return service.evaluate(); }
+    public RetrievalEvaluation evaluate(@RequestParam(required = false) Boolean hybrid) { return service.evaluate(hybrid); }
 
     /** The newest stored snapshot; 404 until one has been run. */
     @GetMapping

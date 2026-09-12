@@ -17,7 +17,8 @@ public record RetrievalRequest(
         LocalDate filingDateTo,
         @Size(min = 1, max = 20) List<@NotBlank @Size(max = 64) String> sectionKeys,
         @Min(1) @Max(20) Integer topK,
-        Boolean latestFilingsOnly
+        Boolean latestFilingsOnly,
+        Boolean hybrid
 ) {
     @AssertTrue(message = "filingDateFrom must be on or before filingDateTo")
     public boolean isFilingDateRangeValid() {

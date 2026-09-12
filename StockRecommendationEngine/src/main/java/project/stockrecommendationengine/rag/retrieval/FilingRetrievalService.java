@@ -8,15 +8,24 @@ import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 import project.stockrecommendationengine.rag.ingestion.FilingEmbeddingService;
 import project.stockrecommendationengine.rag.repository.FilingRetrievalRepository;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 @Service
 @Slf4j
 public class FilingRetrievalService {
+    /** Decimal places kept for a reciprocal rank term; equal rank multisets sum to identical values at this scale. */
+    private static final int FUSION_SCALE = 18;
+
     private final FilingEmbeddingService embeddingService;
     private final FilingRetrievalRepository retrievalRepository;
     private final FilingRetrievalProperties retrievalProperties;
@@ -37,6 +46,16 @@ public class FilingRetrievalService {
         }
     }
 
+    /**
+     * Embeds the query, retrieves the vector candidates and, when hybrid retrieval resolves on (the request's
+     * {@code hybrid} field when present, else {@code rag.retrieval.hybrid-enabled}) and the query yields at least
+     * one keyword term, the full-text candidates as well; fuses the two rankings by reciprocal rank fusion, then
+     * diversifies and cuts to topK. The strategy is {@code HYBRID_RRF} (or {@code HYBRID_RRF_RERANKED}) whenever
+     * the keyword search ran and returned without error, an empty keyword result included: fusion ran over the
+     * same input the caller asked for. It is {@code FILTERED_VECTOR} when hybrid is off, when the query has no
+     * keyword terms (stopwords and punctuation only), or when the keyword search failed; a keyword failure is
+     * logged at WARN with the exception class and never fails the retrieval.
+     */
     public RetrievalResponse retrieve(RetrievalRequest request) {
         long retrievalStarted = System.nanoTime();
         String normalizedTicker = request.ticker().trim().toUpperCase(Locale.ROOT);
@@ -46,13 +65,14 @@ public class FilingRetrievalService {
                 ? request.latestFilingsOnly()
                 : request.filingDateFrom() == null && request.filingDateTo() == null
                     && retrievalProperties.isLatestFilingsOnly();
+        boolean hybridRequested = request.hybrid() != null ? request.hybrid() : retrievalProperties.isHybridEnabled();
         FilingRetrievalFilter retrievalFilter = new FilingRetrievalFilter(
                 normalizedTicker, normalizeValues(request.filingTypes()),
                 request.filingDateFrom(), request.filingDateTo(), normalizeValues(request.sectionKeys()),
                 latestFilingsOnly);
 
-        log.info("Retrieving filing evidence: ticker={}, topK={}, latestFilingsOnly={}, filingTypes={}, dateFrom={}, dateTo={}, sections={}",
-                normalizedTicker, requestedResultCount, latestFilingsOnly, retrievalFilter.filingTypes(),
+        log.info("Retrieving filing evidence: ticker={}, topK={}, latestFilingsOnly={}, hybrid={}, filingTypes={}, dateFrom={}, dateTo={}, sections={}",
+                normalizedTicker, requestedResultCount, latestFilingsOnly, hybridRequested, retrievalFilter.filingTypes(),
                 retrievalFilter.filingDateFrom(), retrievalFilter.filingDateTo(), retrievalFilter.sectionKeys());
         try {
             long embeddingStarted = System.nanoTime();
@@ -63,23 +83,38 @@ public class FilingRetrievalService {
             long searchStarted = System.nanoTime();
             log.info("Searching eligible filing chunks: ticker={}, candidateLimit={}",
                     normalizedTicker, retrievalProperties.getCandidateCount());
-            List<RetrievedFilingChunk> candidates = retrievalRepository.findSimilarChunks(
+            List<RetrievedFilingChunk> vectorCandidates = retrievalRepository.findSimilarChunks(
                     queryEmbedding, retrievalFilter, retrievalProperties.getCandidateCount());
             log.info("Vector search completed: ticker={}, candidates={}, elapsedMs={}",
-                    normalizedTicker, candidates.size(), elapsedMillis(searchStarted));
+                    normalizedTicker, vectorCandidates.size(), elapsedMillis(searchStarted));
+
+            List<RetrievedFilingChunk> candidates = vectorCandidates;
+            boolean keywordContributed = false;
+            if (hybridRequested) {
+                List<RetrievedFilingChunk> keywordCandidates = searchKeywords(
+                        normalizedTicker, normalizedQuery, queryEmbedding, retrievalFilter);
+                if (keywordCandidates != null) {
+                    int rrfK = retrievalProperties.getRrfK();
+                    candidates = fuse(vectorCandidates, keywordCandidates, rrfK);
+                    keywordContributed = true;
+                    log.info("Reciprocal rank fusion completed: ticker={}, vectorCandidates={}, keywordCandidates={}, fused={}, k={}",
+                            normalizedTicker, vectorCandidates.size(), keywordCandidates.size(), candidates.size(), rrfK);
+                }
+            }
 
             List<RetrievedFilingChunk> diverseCandidates = diversify(candidates);
             List<RetrievedFilingChunk> selectedEvidence;
-            String retrievalStrategy = "FILTERED_VECTOR";
+            String retrievalStrategy = keywordContributed ? "HYBRID_RRF" : "FILTERED_VECTOR";
             if (retrievalProperties.isRerankingEnabled() && !candidates.isEmpty()) {
                 log.info("Reranking filing candidates: ticker={}, candidates={}", normalizedTicker, candidates.size());
                 selectedEvidence = filingReranker.orElseThrow().rerank(
                         normalizedQuery, List.copyOf(diverseCandidates), requestedResultCount);
                 validateRerankedEvidence(diverseCandidates, selectedEvidence, requestedResultCount);
-                retrievalStrategy = "FILTERED_VECTOR_RERANKED";
+                retrievalStrategy = retrievalStrategy + "_RERANKED";
             } else {
-                log.info("Selecting evidence by vector similarity: ticker={}, rerankingEnabled={}",
-                        normalizedTicker, retrievalProperties.isRerankingEnabled());
+                log.info("Selecting evidence by {} order: ticker={}, rerankingEnabled={}",
+                        keywordContributed ? "fused" : "vector similarity", normalizedTicker,
+                        retrievalProperties.isRerankingEnabled());
                 selectedEvidence = diverseCandidates.stream().limit(requestedResultCount).toList();
             }
             log.info("Retrieval completed: ticker={}, results={}, strategy={}, elapsedMs={}",
@@ -91,6 +126,82 @@ public class FilingRetrievalService {
                     normalizedTicker, elapsedMillis(retrievalStarted), retrievalFailure);
             throw retrievalFailure;
         }
+    }
+
+    /**
+     * The keyword candidates for the query, or {@code null} when the keyword path did not run: no keyword term
+     * remains after tokenising (the repository is not called) or the search threw (logged at WARN with the
+     * exception class only, so a failing index never fails the retrieval).
+     */
+    private List<RetrievedFilingChunk> searchKeywords(
+            String normalizedTicker,
+            String normalizedQuery,
+            float[] queryEmbedding,
+            FilingRetrievalFilter retrievalFilter
+    ) {
+        if (FilingRetrievalRepository.keywordTerms(normalizedQuery).isEmpty()) {
+            log.info("Skipping keyword search: ticker={}, reason=noKeywordTerms", normalizedTicker);
+            return null;
+        }
+        long keywordStarted = System.nanoTime();
+        int keywordCandidateCount = retrievalProperties.getKeywordCandidateCount();
+        log.info("Searching filing chunks by keyword: ticker={}, candidateLimit={}", normalizedTicker, keywordCandidateCount);
+        try {
+            List<RetrievedFilingChunk> keywordCandidates = retrievalRepository.findKeywordChunks(
+                    normalizedQuery, queryEmbedding, retrievalFilter, keywordCandidateCount);
+            log.info("Keyword search completed: ticker={}, candidates={}, elapsedMs={}",
+                    normalizedTicker, keywordCandidates.size(), elapsedMillis(keywordStarted));
+            return keywordCandidates;
+        } catch (RuntimeException keywordFailure) {
+            log.warn("Keyword search failed, falling back to vector candidates only: ticker={}, error={}, elapsedMs={}",
+                    normalizedTicker, keywordFailure.getClass().getSimpleName(), elapsedMillis(keywordStarted));
+            return null;
+        }
+    }
+
+    /**
+     * Reciprocal rank fusion of the two rankings: each chunk scores the sum over the lists containing it of
+     * {@code 1 / (k + rank)}, rank being its 1-based position in that list; the fused list is ordered by that
+     * score descending, then vector similarity descending, then chunk id ascending. A chunk found by only one
+     * list is kept with the cosine similarity that list computed (both paths compute the same value), and a
+     * chunk found by both keeps the vector list's instance. Package-private for tests.
+     */
+    static List<RetrievedFilingChunk> fuse(
+            List<RetrievedFilingChunk> vectorCandidates,
+            List<RetrievedFilingChunk> keywordCandidates,
+            int k
+    ) {
+        Map<Long, RetrievedFilingChunk> chunksById = new LinkedHashMap<>();
+        for (RetrievedFilingChunk candidate : vectorCandidates) chunksById.putIfAbsent(candidate.chunkId(), candidate);
+        for (RetrievedFilingChunk candidate : keywordCandidates) chunksById.putIfAbsent(candidate.chunkId(), candidate);
+        Map<Long, BigDecimal> fusedScores = reciprocalRankScores(List.of(vectorCandidates, keywordCandidates), k);
+        List<RetrievedFilingChunk> fused = new ArrayList<>(chunksById.values());
+        fused.sort(Comparator
+                .comparing((RetrievedFilingChunk chunk) -> fusedScores.get(chunk.chunkId()), Comparator.reverseOrder())
+                .thenComparing(RetrievedFilingChunk::similarityScore, Comparator.reverseOrder())
+                .thenComparing(RetrievedFilingChunk::chunkId));
+        return List.copyOf(fused);
+    }
+
+    /**
+     * The reciprocal rank fusion score per chunk id over the given rankings, as exact decimals at a fixed scale
+     * so that chunks holding the same ranks tie exactly. A chunk repeated within one ranking counts once, at its
+     * first position.
+     */
+    static Map<Long, BigDecimal> reciprocalRankScores(List<List<RetrievedFilingChunk>> rankings, int k) {
+        Map<Long, BigDecimal> fusedScores = new LinkedHashMap<>();
+        for (List<RetrievedFilingChunk> ranking : rankings) {
+            Set<Long> seenInRanking = new HashSet<>();
+            int rank = 0;
+            for (RetrievedFilingChunk candidate : ranking) {
+                rank++;
+                if (!seenInRanking.add(candidate.chunkId())) continue;
+                BigDecimal reciprocalRank = BigDecimal.ONE.divide(
+                        BigDecimal.valueOf((long) k + rank), FUSION_SCALE, RoundingMode.HALF_EVEN);
+                fusedScores.merge(candidate.chunkId(), reciprocalRank, BigDecimal::add);
+            }
+        }
+        return fusedScores;
     }
 
     private List<RetrievedFilingChunk> diversify(List<RetrievedFilingChunk> candidates) {

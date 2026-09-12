@@ -106,3 +106,19 @@ Correctness contract:
 Both validators must pass before the next milestone; findings go to a fresh Worker; at most two remediation
 rounds per milestone, then escalate. Validators never see the Worker's report or each other's output. Scrutiny
 and UT run one after the other (shared Maven target directory).
+
+## Amendment 1 (2026-09-13, after Milestone 1 Scrutiny FAIL)
+
+- The "Why" premise for nvda-07 was wrong. Scrutiny checked every NVDA chunk: the statement that manufacturing
+  and final assembly are concentrated in Taiwan, China, Hong Kong, Korea, and Israel exists only in 10-K ITEM_1A
+  chunk 770. The 10-K and 10-Q passages naming Taiwan and South Korea answer only part of the question. nvda-07
+  is therefore a genuine retrieval miss, not expectation narrowness, and stays at its single v1 expectation.
+- Milestone 1 C3 is amended: only nvda-01 and nvda-03 must carry at least two expectations. Adding a second
+  phrase from chunk 770 to reach a count is rejected, because it satisfies the number without adding a genuine
+  answer.
+- The design constraint is applied as written: an alternative counts only if the passage answers the question
+  completely on its own, including every part of a multi-part question. msft-07's 10-K ITEM_1 alternative
+  (chunk 460) states the goals without the "why harder" part and is removed; its 10-Q ITEM_1A alternative stays.
+- New questions msft-11, msft-12, msft-14, and nvda-13 repeat the first half of their phrase nearly word for
+  word. That is not a copy, but it inflates keyword overlap and so flatters exactly the ranks this set exists to
+  measure. They are reworded to keep every figure token while using the analyst's own words.

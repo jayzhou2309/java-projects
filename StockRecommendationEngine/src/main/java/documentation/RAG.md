@@ -481,7 +481,7 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
         * Finding before the rule: none of the set's 30 questions carries a figure (they name years such as "fiscal 2026", which `figureTerms` treats as a year alone), so the figure leg was skipped for all 30 questions in every run (`Skipping figure search: reason=noFigureTerms`, 30 per run log) and `rrf-figure-weight` cannot move any set metric: snapshots 48, 49, and 50 are identical, and so are 51 and 53. The keyword weight and k are the only levers the set can see; the figure leg is judged on the NVDA figure query below.
     * Grid (set v1, 30 questions, window 10, candidateCount 40, keywordCandidateCount 40, reranking off, latest filings only; references 35 and 34 from the RAG-2 comparison above)
 
-| Configuration (k / vector / keyword / figure) | Snapshot | hit@1 | hit@3 | hit@5 | MRR | Per-ticker hit@5 (AAPL / MSFT / NVDA) | FIGURE questions in the top 5 (of 15) | Misses (no hit in the window) |
+| Configuration (k / vector / keyword / figure) | Snapshot | hit@1 | hit@3 | hit@5 | MRR | Per-ticker hit@5 (AAPL / MSFT / NVDA) | FIGURE questions in the top 5 (of 16) | Misses (no hit in the window) |
 |---|---|---|---|---|---|---|---|---|
 | reference: vector only | 35 | 0.300000 | 0.533333 | 0.600000 | 0.435833 | 0.9 / 0.6 / 0.3 | 8: aapl-01, aapl-02, aapl-06, aapl-07, msft-02, msft-04, msft-10, nvda-08 | 9 |
 | reference: 60 / 1.0 / 1.0 / off (RAG-2 hybrid) | 34 | 0.300000 | 0.533333 | 0.633333 | 0.436667 | 0.9 / 0.7 / 0.3 | 7: as 35 without msft-04 | 7 |

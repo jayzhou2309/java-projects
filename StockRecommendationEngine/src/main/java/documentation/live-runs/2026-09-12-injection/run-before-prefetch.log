@@ -1,0 +1,5 @@
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=b006e10d-a78a-4948-9a16-a7d57bbdf947 tool=MANAGER:reviewTrackRecord outcome=OK elapsedMs=13
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=b006e10d-a78a-4948-9a16-a7d57bbdf947 tool=RAG:ensureFilings outcome=FRESH elapsedMs=61
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=b006e10d-a78a-4948-9a16-a7d57bbdf947 tool=MANAGER:researchFilings outcome=OK elapsedMs=1292
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=b006e10d-a78a-4948-9a16-a7d57bbdf947 tool=CRITIC:review outcome=ACCEPT elapsedMs=779
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=b006e10d-a78a-4948-9a16-a7d57bbdf947 status=INSUFFICIENT_EVIDENCE modelCalls=4 observedTokens=3170 levels=false confidence=null calibrated=null critic=ACCEPT

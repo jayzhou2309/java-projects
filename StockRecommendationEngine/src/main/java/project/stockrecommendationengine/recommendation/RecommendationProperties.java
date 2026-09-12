@@ -37,6 +37,8 @@ public class RecommendationProperties {
     @Min(1000) @Max(100000) private int maxToolResultChars = 32000;
     @Min(4000) @Max(200000) private int maxContextChars = 120000;
     @Min(1) @Max(3600) private int maxQuoteAgeSeconds = 120;
+    /** Search the filings with the user's question before the RAG specialist model runs, so evidence cannot be skipped or talked away. */
+    private boolean prefetchFilings = true;
     /** Passages per searchFilings call; fewer passages is the largest single lever on tokens per run. */
     @Min(1) @Max(10) private int searchTopK = 5;
     /**

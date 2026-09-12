@@ -1,0 +1,119 @@
+{
+  "runId" : "b006e10d-a78a-4948-9a16-a7d57bbdf947",
+  "ticker" : "AAPL",
+  "status" : "INSUFFICIENT_EVIDENCE",
+  "assessment" : "INSUFFICIENT_EVIDENCE",
+  "reasoning" : "No filing research or specialist evidence was retrieved for AAPL, and the provided track record only contains a handful of prior runs with no realized outcomes. Without concrete evidence or substantive citations, an evidence-based assessment cannot be made at this time.",
+  "sources" : [ ],
+  "quotes" : [ ],
+  "limitations" : [ "POSITION_SIZING_NOT_IMPLEMENTED", "CONFIDENCE_UNCALIBRATED", "BROKER_DISABLED", "QUANT_DISABLED", "NO_FILING_EVIDENCE", "NO_VERIFIED_CURRENT_QUOTE" ],
+  "toolTrace" : [ {
+    "tool" : "MANAGER:reviewTrackRecord",
+    "outcome" : "OK",
+    "elapsedMs" : 13
+  }, {
+    "tool" : "RAG:ensureFilings",
+    "outcome" : "FRESH",
+    "elapsedMs" : 61
+  }, {
+    "tool" : "MANAGER:researchFilings",
+    "outcome" : "OK",
+    "elapsedMs" : 1292
+  }, {
+    "tool" : "CRITIC:review",
+    "outcome" : "ACCEPT",
+    "elapsedMs" : 779
+  } ],
+  "modelCalls" : 4,
+  "observedTokens" : 3170,
+  "takeProfit" : null,
+  "stopLoss" : null,
+  "confidence" : null,
+  "priceAnalysis" : null,
+  "dataFreshness" : {
+    "latestFilingDates" : {
+      "8-K" : "2026-07-30",
+      "10-K" : "2025-10-31",
+      "10-Q" : "2026-07-31"
+    },
+    "filingsVerifiedAt" : null,
+    "filingsMayBeStale" : false,
+    "barsAsOf" : null,
+    "quoteUpdatedAt" : null,
+    "quoteAvailability" : null
+  },
+  "trackRecord" : {
+    "ticker" : "AAPL",
+    "runsConsidered" : 3,
+    "runs" : [ {
+      "runId" : "53672c1a-2c9e-4227-91c8-a635974f5894",
+      "requestedAt" : "2026-09-12T05:25:38.120503Z",
+      "status" : "INSUFFICIENT_EVIDENCE",
+      "assessment" : "INSUFFICIENT_EVIDENCE",
+      "confidence" : null,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    }, {
+      "runId" : "835e2ff6-6710-464e-80cd-224b2417502a",
+      "requestedAt" : "2026-09-12T05:08:03.690282Z",
+      "status" : "PARTIAL",
+      "assessment" : "BULLISH",
+      "confidence" : 0.3200,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    }, {
+      "runId" : "d8604273-9643-4613-ab63-da16a9da8f9a",
+      "requestedAt" : "2026-09-12T05:05:25.822393Z",
+      "status" : "PARTIAL",
+      "assessment" : "NEUTRAL",
+      "confidence" : 0.3100,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    } ],
+    "stats" : [ {
+      "assessment" : "INSUFFICIENT_EVIDENCE",
+      "runs" : 1,
+      "scored" : 0,
+      "directionCorrect" : 0,
+      "averageReturnPct" : null,
+      "referenceHorizonDays" : 20
+    }, {
+      "assessment" : "BULLISH",
+      "runs" : 1,
+      "scored" : 0,
+      "directionCorrect" : 0,
+      "averageReturnPct" : null,
+      "referenceHorizonDays" : 20
+    }, {
+      "assessment" : "NEUTRAL",
+      "runs" : 1,
+      "scored" : 0,
+      "directionCorrect" : 0,
+      "averageReturnPct" : null,
+      "referenceHorizonDays" : 20
+    } ],
+    "caveat" : "Prior runs are evidence, not proof. Samples are small; a rate without its count is meaningless. Outcomes use daily bars after each run's bar date; NEUTRAL runs are not scored for direction."
+  },
+  "critique" : {
+    "verdict" : "ACCEPT",
+    "issues" : [ ],
+    "reviews" : [ {
+      "assessment" : "INSUFFICIENT_EVIDENCE",
+      "verdict" : "ACCEPT",
+      "issues" : [ ]
+    } ],
+    "revised" : false,
+    "unsupportedNumerals" : [ ]
+  },
+  "calibratedConfidence" : null,
+  "calibration" : null
+}

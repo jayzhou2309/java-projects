@@ -99,9 +99,11 @@ class RetrievalEvaluationSetLoaderTests {
         assertThat(FilingRetrievalRepository.figureTerms("What was revenue in fiscal 2026?")).isEmpty();
 
         Map<String, RetrievalEvaluationQuestion> byId = v2.questions().stream().collect(Collectors.toMap(RetrievalEvaluationQuestion::id, Function.identity()));
-        for (String id : List.of("nvda-01", "nvda-03", "nvda-07")) {
+        for (String id : List.of("nvda-01", "nvda-03")) {
             assertThat(byId.get(id).expected()).as("alternative expectations for " + id).hasSizeGreaterThanOrEqualTo(2);
         }
+        // Plan Amendment 1: only 10-K Item 1A states the manufacturing and final-assembly concentration, so nvda-07 has no alternative.
+        assertThat(byId.get("nvda-07").expected()).as("nvda-07 keeps its single v1 expectation").hasSize(1);
         for (var original : v1.questions()) {
             var carried = byId.get(original.id());
             assertThat(carried).as("v1 question " + original.id() + " in v2").isNotNull();
@@ -116,6 +118,43 @@ class RetrievalEvaluationSetLoaderTests {
             assertThat(FilingRetrievalRepository.figureTerms(added.question())).as("figure terms of new question " + added.id()).isNotEmpty();
             assertThat(added.expected()).as(added.id()).noneMatch(p -> normalise(p.phrase()).equals(normalise(added.question())));
         }
+    }
+
+    @Test void rewordedFigureQuestionsDoNotEchoTheirPhraseButKeepTheirFigures() {
+        Map<String, RetrievalEvaluationQuestion> byId = loader.load().questions().stream()
+                .collect(Collectors.toMap(RetrievalEvaluationQuestion::id, Function.identity()));
+        for (String id : List.of("msft-11", "msft-12", "msft-14", "nvda-13")) {
+            var question = byId.get(id);
+            assertThat(question).as(id).isNotNull();
+            assertThat(FilingRetrievalRepository.figureTerms(question.question())).as("figure terms of " + id).isNotEmpty();
+            for (var passage : question.expected()) {
+                assertThat(longestSharedWordRun(question.question(), passage.phrase()))
+                        .as(id + " shares a run of words with its phrase: " + passage.phrase()).isLessThan(5);
+            }
+        }
+        assertThat(longestSharedWordRun("The Quick, brown fox jumps over", "a quick brown FOX jumps!")).isEqualTo(4);
+    }
+
+    /** Length of the longest run of consecutive words common to both texts, case-insensitive with punctuation ignored. */
+    private static int longestSharedWordRun(String first, String second) {
+        String[] a = words(first);
+        String[] b = words(second);
+        int longest = 0;
+        int[][] runs = new int[a.length + 1][b.length + 1];
+        for (int i = 1; i <= a.length; i++) {
+            for (int j = 1; j <= b.length; j++) {
+                if (a[i - 1].equals(b[j - 1])) {
+                    runs[i][j] = runs[i - 1][j - 1] + 1;
+                    longest = Math.max(longest, runs[i][j]);
+                }
+            }
+        }
+        return longest;
+    }
+
+    private static String[] words(String text) {
+        String stripped = text.toLowerCase(java.util.Locale.ROOT).replaceAll("[^\\p{L}\\p{N}\\s]", "").trim();
+        return stripped.isEmpty() ? new String[0] : stripped.split("\\s+");
     }
 
     private static String normalise(String text) {

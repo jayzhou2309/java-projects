@@ -212,10 +212,9 @@
       "question": "What sustainability goals has Microsoft committed to by 2030 and why are they harder to meet?",
       "expected": [
         { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_1A", "phrase": "in 2020 we announced goals to become carbon negative, water positive, and zero waste by 2030" },
-        { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_1", "phrase": "In 2020, we announced goals to become a carbon negative, water positive, and zero waste company by 2030" },
         { "accessionNo": "0001193125-26-191507", "sectionKey": "ITEM_1A", "phrase": "AI development and deployment has and may continue to raise energy use and emissions, making it harder to meet these goals" }
       ],
-      "notes": "v2 alternatives: the 10-K Item 1 sustainability paragraph (the rank-1 chunk in baseline snapshot 13) states the same 2030 goals, and the latest 10-Q Item 1A restates the goals and why AI makes them harder to meet."
+      "notes": "v2 alternative: the latest 10-Q Item 1A restates the 2030 goals and why AI energy use makes them harder to meet. The 10-K Item 1 sustainability paragraph (the rank-1 chunk in baseline snapshot 13) is not an alternative: it states the goals but not why they are harder to meet, so it answers only part of the question (plan Amendment 1)."
     },
     {
       "id": "msft-08",
@@ -252,7 +251,7 @@
       "id": "msft-11",
       "ticker": "MSFT",
       "kind": "FIGURE",
-      "question": "Microsoft's Server products and cloud services revenue rose $31.0 billion, or 31%, in its latest fiscal year. What drove that growth?",
+      "question": "Microsoft's cloud services and server products line gained $31.0 billion, a 31% increase, in its most recent fiscal year; which offerings accounted for it?",
       "expected": [
         { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_7", "phrase": "Server products and cloud services revenue increased $31.0 billion or 31% driven by Azure and other cloud services" }
       ],
@@ -262,7 +261,7 @@
       "id": "msft-12",
       "ticker": "MSFT",
       "kind": "FIGURE",
-      "question": "Microsoft's XBOX hardware revenue fell 29% in its latest fiscal year. What caused the decline?",
+      "question": "Why did XBOX hardware sales at Microsoft come in 29% lower in its most recent fiscal year?",
       "expected": [
         { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_7", "phrase": "XBOX hardware revenue decreased 29% driven by lower volume of consoles sold" }
       ],
@@ -282,7 +281,7 @@
       "id": "msft-14",
       "ticker": "MSFT",
       "kind": "FIGURE",
-      "question": "Azure and other cloud services revenue grew 40% in Microsoft's fiscal third quarter. What drove that growth?",
+      "question": "What was behind the 40% increase in sales of Azure and Microsoft's other cloud offerings in its fiscal third quarter?",
       "expected": [
         { "accessionNo": "0001193125-26-191507", "sectionKey": "ITEM_2", "phrase": "Azure and other cloud services revenue grew 40% driven by demand for services across the platform" }
       ],
@@ -355,11 +354,9 @@
       "kind": "NARRATIVE",
       "question": "In which regions are NVIDIA's component manufacturing and final assembly concentrated, and what geopolitical risk does that create?",
       "expected": [
-        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_1A", "phrase": "China, Hong Kong, Israel, Korea and Taiwan where the manufacture of our product components and final assembly of our products are concentrated" },
-        { "accessionNo": "0001045810-26-000075", "sectionKey": "ITEM_1A", "phrase": "our business depends on our ability to receive consistent and reliable supply from our overseas partners, especially in Taiwan and South Korea" },
-        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_1A", "phrase": "Any new restrictions that negatively impact our ability to receive supply of components, parts, or services from Taiwan and South Korea" }
+        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_1A", "phrase": "China, Hong Kong, Israel, Korea and Taiwan where the manufacture of our product components and final assembly of our products are concentrated" }
       ],
-      "notes": "v2 alternatives: Item 1A of the 10-K and of the latest 10-Q both state the dependence on supply from Taiwan and South Korea and the risk of new restrictions; narrower than the original passage (two regions, not five), but they answer where supply is concentrated and what geopolitical risk follows."
+      "notes": "Single expectation by design (plan Amendment 1): the concentration of component manufacturing and final assembly in China, Hong Kong, Israel, Korea and Taiwan is stated only in 10-K Item 1A. The 10-K and 10-Q Item 1A passages on supply from Taiwan and South Korea answer only part of the question, so they are not alternatives, and a miss on nvda-07 is a genuine retrieval miss."
     },
     {
       "id": "nvda-08",
@@ -416,7 +413,7 @@
       "id": "nvda-13",
       "ticker": "NVDA",
       "kind": "FIGURE",
-      "question": "NVIDIA's Edge Computing revenue was $7.2 billion in the second quarter of fiscal 2027. How did that compare with a year earlier and the prior quarter?",
+      "question": "How did the $7.2 billion NVIDIA booked from Edge Computing in the second quarter of fiscal 2027 compare with the same quarter last year and with the quarter before?",
       "expected": [
         { "accessionNo": "0001045810-26-000075", "sectionKey": "ITEM_2", "phrase": "Edge Computing revenue was $7.2 billion, up 27% from a year ago and up 13% sequentially" }
       ],

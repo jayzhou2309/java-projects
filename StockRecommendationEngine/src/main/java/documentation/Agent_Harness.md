@@ -3,7 +3,7 @@
 * Implementation Status
     * A bounded manager-and-specialist research workflow using Spring AI 2.0.1 ChatModel and ToolCallback.
     * The RAG and broker specialists run concurrently on a specialist thread pool when the manager delegates to both; budgets and the deadline are shared and thread-safe.
-    * A ticker with no embedded filings triggers ingestion of its latest 10-K and 10-Q from SEC EDGAR inside the RAG branch before retrieval.
+    * Before retrieval the RAG branch ingests a ticker with no embedded filings and refreshes one past its filing cadence from SEC EDGAR; every response reports the filing dates, bar date, and quote timestamp it used.
     * Uses the existing [filing retrieval pipeline](RAG.md), optional [direct IBKR integration](IBKR.md), and optional [quant layer](Quant.md).
     * Disabled by default.
     * Runs without an MCP server. A future MCP client can provide selected callbacks at the same tool boundary.
@@ -31,7 +31,7 @@
         * run(...)
             * Create fresh RecommendationTools, message history, evidence state, and trace.
             * When the manager returns several delegations in one response, submit them to the specialist pool and wait with the run deadline; a limit violation in either specialist stops the run and cancels the other.
-            * Before the RAG specialist starts, ensureFilings(...) checks for EMBEDDED filings of the ticker and ingests the latest filing per configured type when none exist; outcomes appear in the trace as RAG:ingestFilings.
+            * Before the RAG specialist starts, ensureFilings(...) calls FilingFreshnessService.ensure: a missing ticker is ingested, a stale one refreshed against the SEC index, a fresh one left alone. The outcome appears in the trace as RAG:ensureFilings (FRESH, VERIFIED, REFRESHED, INGESTED, or a failure code); failures and FILINGS_MAY_BE_STALE become limitations. See [RAG.md](RAG.md).
             * Before the broker specialist starts, prefetchBroker(...) runs findInstrument, and when the contract is unambiguous, getQuote and analyzePriceHistory through the same validated callbacks; the results are handed to the specialist model as an evidence message. The model cannot forget to fetch evidence; it may still call tools for what is missing.
             * Send the request through ChatModel.call(Prompt).
             * Advertise only the callbacks allowed for this run.
@@ -83,14 +83,14 @@
 | recommendation.max-tool-calls | 12 | Reject a tool batch that would exceed the remaining budget; the broker prefetch reserves up to three (raised from 10) |
 | recommendation.deadline-ms | 120000 | Caller timeout plus interruption and worker checks between operations; raised from 60000 to leave room for first-run ingestion (RECOMMENDATION_DEADLINE_MS) |
 | recommendation.parallel-specialists | true | Run manager delegations concurrently; false executes them in order |
-| recommendation.auto-ingest | true | Ingest missing filings before RAG research |
-| recommendation.auto-ingest-filing-types | 10-K,10-Q | One latest filing per listed type is ingested |
+| recommendation.auto-ingest | true | Ingest missing and refresh stale filings before RAG research; false only assesses and discloses |
+| rag.refresh.* | see RAG.md | Per-type limits, cadence, recheck window, and nightly schedule shared with the refresh job |
 | recommendation.preferred-currency | USD | Listing chosen among several when no request conid is supplied |
 | Specialist pool | 4 threads | Shared by concurrent runs; a saturated pool delays a specialist within the deadline |
 | recommendation.max-output-tokens | 1200 | Per-model-request output limit |
 | recommendation.max-observed-tokens | 16000 | Stop after reported cumulative usage exceeds the threshold |
-| recommendation.max-tool-result-chars | 24000 | Reject oversized serialized tool results |
-| recommendation.max-context-chars | 80000 | Check message text, tool arguments, and tool results before each model call |
+| recommendation.max-tool-result-chars | 32000 | Reject oversized serialized tool results; one five-passage search of 4000-character chunks with citations is about 25000 (raised from 24000) |
+| recommendation.max-context-chars | 120000 | Check message text, tool arguments, and tool results before each model call; fits two full searches (raised from 80000) |
 | recommendation.max-quote-age-seconds | 120 | Freshness requirement for COMPLETE status |
 | Worker slots | 2 | Fixed concurrent runs; reject overflow |
 | spring.ai.openai.chat.timeout | 20s | Bound an individual OpenAI request |
@@ -127,8 +127,10 @@
     * takeProfit and stopLoss: from priceAnalysis long levels for BULLISH, short levels for BEARISH; null for NEUTRAL, INSUFFICIENT_EVIDENCE, stale bars, or no analysis.
     * confidence: input-coverage composite in [0,1] (50% cited-passage similarity, 25% quote verification, 25% price-history availability); null for INSUFFICIENT_EVIDENCE; not calibrated.
     * priceAnalysis: the run's QuantAnalysis with provenance and limitations, or null.
+    * dataFreshness: latestFilingDates per type, filingsVerifiedAt, filingsMayBeStale, barsAsOf, quoteUpdatedAt, quoteAvailability; what this run actually saw.
     * HTTP 200 returns a structured run result, including unsuccessful research statuses; callers must inspect status.
     * AUDIT_NOT_PERSISTED in limitations means the run completed but its audit row could not be written; inspect the application log.
+    * FILINGS_MAY_BE_STALE means the newest stored quarterly filing is past cadence and the SEC index could not be compared in this run; ensureFilings:<code> names the cause.
     * Invalid requests return HTTP 400; missing/wrong access tokens return HTTP 401; capacity exhaustion returns HTTP 429.
 
 | Status | Meaning |
@@ -154,7 +156,7 @@
 
 * Enabling the Loop
     * Keep the existing database, OPENAI_API_KEY, and SEC_USER_AGENT configuration.
-    * Filings are ingested automatically for a ticker with nothing embedded (latest 10-K and 10-Q); pre-ingest through POST /api/rag/ingest for more filing types or faster first runs.
+    * Filings are ingested automatically for a ticker with nothing embedded and refreshed when past cadence (per rag.refresh.limits: newest 10-K, 10-Q, and three 8-Ks); pre-ingest through POST /api/rag/ingest for faster first runs.
     * Set a tool-capable chat model available to your provider account.
     * Configure the TWS socket adapter as described in [IBKR.md](IBKR.md) for quote and optional portfolio context.
     * Set QUANT_ENABLED=true for deterministic levels; see [Quant.md](Quant.md).
@@ -254,8 +256,8 @@ Bounded Worker + Fresh Run Context
 Manager ChatModel → researchFilings ∥ researchBroker (specialist pool)
     ↓                                   ↓
 RAG Specialist                      Broker Specialist
-  ensureFilings (SEC ingest if        findInstrument / getQuote /
-  nothing embedded) → searchFilings   analyzePriceHistory / positions
+  ensureFilings (SEC ingest or        findInstrument / getQuote /
+  refresh when stale) → searchFilings analyzePriceHistory / positions
     ↓                                   ↓
 Restricted Tools → Shared, Synchronized Budget and Deadline Checks
     ↓
@@ -348,3 +350,10 @@ Qualitative Research + Sources + Quotes + Levels + Confidence + Limitations + Tr
     * Scripted tests verify the record contents and version tags for a completed run, a limit-stopped run, and a deadline-stopped run, and that a failed write is disclosed as AUDIT_NOT_PERSISTED. PostgreSQL tests verify round-trip storage, ordering, uniqueness, and the confidence bound. Full suite: 155 tests, 150 passed, 5 opt-in live tests skipped.
     * Live verification — 2026-09-11, 21:15 SGT, broker and quant disabled because TWS was closed: NVDA run `953ce096-ac2c-46dc-a31e-ab88584fb89c` returned HTTP 200 in 13.1 seconds, PARTIAL / NEUTRAL, five stored-filing sources, four model calls, 9,969 tokens. GET by run ID returned the row with cited chunk IDs 757, 765, 766, 767, 773, prompt version `manager-specialists-v3-prefetch`, model gpt-4.1, null quant version, processing version `sections-v2-context-v2`, and a 22 KB response JSON; GET by ticker listed it; a missing token returned 401 and an unknown run 404. Saved [request](live-runs/2026-09-11-audit-store/request.json), [response](live-runs/2026-09-11-audit-store/response.json), [stored record](live-runs/2026-09-11-audit-store/record.json), [ticker listing](live-runs/2026-09-11-audit-store/by-ticker.json), and [run log](live-runs/2026-09-11-audit-store/run.log). Runs made before migration V5, including the user's NVDA run at 07:08 UTC, are not in the table.
     * Quote delivery root cause found the same evening: SMART-routed delayed requests are not answered on this account, primary-exchange requests are. TwsClient now requests on the primary exchange; live AAPL quotes arrive in under two seconds during regular hours. See [IBKR.md](IBKR.md).
+
+* Filing freshness and data-freshness disclosure — 2026-09-12
+    * The RAG branch now calls FilingFreshnessService.ensure before retrieval; the trace records RAG:ensureFilings with FRESH, VERIFIED, REFRESHED, INGESTED, their PARTIALLY variants, or a failure code. FILINGS_MAY_BE_STALE and ensureFilings:<code> are limitations. recommendation.auto-ingest-filing-types is removed in favour of rag.refresh.limits, so 8-K filings are kept current as well. See [RAG.md](RAG.md).
+    * RecommendationResponse gains dataFreshness so every run states the filing dates, bar date, and quote timestamp it used. The stored audit row already carries the full response, so freshness is recorded per run without a schema change.
+    * Live AAPL run `07d8891d-4d74-4926-bd68-aa236e9bb186` (broker and quant disabled, TWS closed): ensureFilings FRESH in 4 ms after an earlier index comparison, dataFreshness listing the 2026-07-31 10-Q, 2026-07-30 8-K, and 2025-10-31 10-K with filingsVerifiedAt set and filingsMayBeStale=false. Evidence: [response](live-runs/2026-09-12-filing-freshness/response.json).
+    * A MSFT run asking about the newly ingested 8-Ks stopped with TOOL_RESULT_LIMIT after two filing searches: a five-passage result of 4000-character 10-K chunks serializes to about 25,000 characters, just over the old 24,000 cap. Defaults raised to 32,000 result characters and 120,000 context characters so two full searches fit; the second attempt is recorded below.
+    * MSFT run `8e16d310-80ef-4584-a89d-8684038440d2` after the limit change: HTTP 200 in 8.4 seconds, PARTIAL / NEUTRAL, four model calls, 14,374 tokens, two searches. Sources: the 2026-09-02 8-K (ITEM_7_01), the 2026-07-29 10-K (ITEM_1C), and the 2026-04-29 10-Q (ITEM_2); the reasoning correctly summarized the 8-K's fiscal-2027 segment change. dataFreshness listed the 8-K dated 2026-09-02 with filingsVerifiedAt null, because verification times are in-memory and the application had been restarted; ensureFilings returned FRESH since the newest quarterly filing is within cadence. Evidence: [request](live-runs/2026-09-12-filing-freshness/request-msft.json), [response](live-runs/2026-09-12-filing-freshness/response-msft.json), [run log](live-runs/2026-09-12-filing-freshness/run.log).

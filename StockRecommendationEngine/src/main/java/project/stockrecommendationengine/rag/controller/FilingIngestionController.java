@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import project.stockrecommendationengine.rag.dto.IngestionRequest;
+import project.stockrecommendationengine.rag.freshness.FilingFreshness;
+import project.stockrecommendationengine.rag.freshness.FilingFreshnessService;
+import project.stockrecommendationengine.rag.freshness.FilingRefreshResult;
 import project.stockrecommendationengine.rag.ingestion.FilingIngestionService;
 
 @RestController
@@ -17,6 +20,19 @@ import project.stockrecommendationengine.rag.ingestion.FilingIngestionService;
 @RequestMapping("/api/rag")
 public class FilingIngestionController {
     private final FilingIngestionService filingIngestionService;
+    private final FilingFreshnessService filingFreshnessService;
+
+    /** Compare the SEC index with the store for one ticker and ingest what is new. */
+    @PostMapping("/refresh")
+    public FilingRefreshResult refresh(@org.springframework.web.bind.annotation.RequestParam String ticker) {
+        return filingFreshnessService.refresh(ticker);
+    }
+
+    /** What is stored for a ticker and whether it is past cadence without a recent verification. */
+    @org.springframework.web.bind.annotation.GetMapping("/freshness")
+    public FilingFreshness freshness(@org.springframework.web.bind.annotation.RequestParam String ticker) {
+        return filingFreshnessService.assess(ticker);
+    }
 
     @PostMapping("/filings/{filingId}/rebuild")
     public java.util.Map<String, Object> rebuild(

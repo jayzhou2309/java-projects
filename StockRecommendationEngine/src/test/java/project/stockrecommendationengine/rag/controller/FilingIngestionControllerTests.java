@@ -22,7 +22,7 @@ class FilingIngestionControllerTests {
     @BeforeEach
     void setUp() {
         ingestion = mock(FilingIngestionService.class);
-        mvc = MockMvcBuilders.standaloneSetup(new FilingIngestionController(ingestion))
+        mvc = MockMvcBuilders.standaloneSetup(new FilingIngestionController(ingestion, org.mockito.Mockito.mock(project.stockrecommendationengine.rag.freshness.FilingFreshnessService.class)))
                 .setControllerAdvice(new IngestionExceptionHandler()).build();
     }
 

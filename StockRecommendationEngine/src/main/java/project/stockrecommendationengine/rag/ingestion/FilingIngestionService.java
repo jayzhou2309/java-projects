@@ -41,7 +41,14 @@ public class FilingIngestionService {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
-        for (SECFilingMetadata metadata : filings) {
+        for (SECFilingMetadata metadata : filings) ingestOne(metadata);
+    }
+
+    /** Ingest one filing in its own transaction; a failure is recorded as FAILED and rethrown. */
+    public void ingestOne(SECFilingMetadata metadata) {
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        {
             long started = System.nanoTime();
             log.info("Processing filing: ticker={}, accession={}, type={}, date={}",
                     metadata.ticker(), metadata.accessionNo(), metadata.filingType(), metadata.filingDate());

@@ -24,10 +24,8 @@ class IntegrationWiringTests {
             .withBean(IntegrationAccessProperties.class).withBean(IbkrProperties.class).withBean(RecommendationProperties.class)
             .withBean(QuantProperties.class)
             .withBean(FilingRetrievalService.class, () -> mock(FilingRetrievalService.class))
-            .withBean(project.stockrecommendationengine.rag.ingestion.FilingIngestionService.class,
-                    () -> mock(project.stockrecommendationengine.rag.ingestion.FilingIngestionService.class))
-            .withBean(project.stockrecommendationengine.rag.repository.SECFilingRepository.class,
-                    () -> mock(project.stockrecommendationengine.rag.repository.SECFilingRepository.class))
+            .withBean(project.stockrecommendationengine.rag.freshness.FilingFreshnessService.class,
+                    () -> mock(project.stockrecommendationengine.rag.freshness.FilingFreshnessService.class))
             .withBean(PriceBarRepository.class, () -> mock(PriceBarRepository.class))
             .withBean(RecommendationRepository.class, () -> mock(RecommendationRepository.class));
 

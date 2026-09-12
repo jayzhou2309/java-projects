@@ -326,11 +326,55 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * The full 47-test suite passed against a disposable PostgreSQL/pgvector database.
     * Correctness tests do not establish real-world retrieval relevance or reranker quality.
 
+* Filing Freshness
+    * Purpose
+        * Keep stored filings current without re-downloading anything already embedded.
+        * Tell every consumer what is stored and whether it should be trusted as current.
+    * FilingRefreshProperties
+        * Configuration prefix: rag.refresh.
+
+| Property | Default | Meaning |
+|---|---|---|
+| rag.refresh.enabled | true | Nightly SEC index comparison for every stored ticker (RAG_REFRESH_ENABLED) |
+| rag.refresh.cron | 0 0 7 * * * | Schedule, after the SEC's daily filing cutoff |
+| rag.refresh.zone | Asia/Singapore | Time zone for the cron expression |
+| rag.refresh.quarterly-cadence-days | 100 | A newest 10-Q/10-K older than this is past cadence |
+| rag.refresh.recheck-hours | 24 | An index comparison within this window counts as verified |
+| rag.refresh.index-limit | 40 | Recent filings of any type read from the SEC index before per-type limits |
+| rag.refresh.limits | 10-K:1, 10-Q:1, 8-K:3 | Newest N filings kept current per type; YAML keys use bracket syntax |
+
+    * FilingFreshnessService
+        * assess(String ticker)
+            * Read the newest EMBEDDED filing date per configured type.
+            * cadenceExceeded when the newest 10-Q or 10-K is older than quarterly-cadence-days, or none is stored.
+            * mayBeStale when cadence is exceeded and no index comparison succeeded within recheck-hours.
+            * Verification times live in memory per application instance; a restart costs one extra comparison per ticker.
+        * refresh(String ticker)
+            * Read index-limit recent filings from the SEC submissions index in one call.
+            * Keep the newest limit entries per type; any not stored as EMBEDDED is new.
+            * Ingest each type with new entries through FilingIngestionService, which skips completed accessions and locks per accession.
+            * One type's failure does not stop the others and is reported in failedTypes; verification is recorded only on full success.
+        * ensure(String ticker)
+            * Nothing stored: refresh, reporting INGESTED, INGESTION_FAILED, or NO_FILINGS_AVAILABLE.
+            * Stored but mayBeStale: refresh, reporting REFRESHED (new filings), VERIFIED (nothing newer at SEC), or REFRESH_FAILED.
+            * Otherwise FRESH with no SEC call.
+            * Malformed tickers and tickers unknown to SEC raise UnknownTickerException.
+    * FilingRefreshScheduler
+        * Runs refresh(ticker) for every distinct stored ticker on the cron schedule; failures are isolated per ticker and summarized in the log.
+        * Created only when rag.refresh.enabled=true. Each run downloads and embeds only new filings, so the nightly cost is proportional to what changed.
+    * Endpoints (same local-only posture as ingestion)
+        * POST /api/rag/refresh?ticker=AAPL: one index comparison; returns checkedAt, indexFilings, newAccessions, ingestedTypes, failedTypes.
+        * GET /api/rag/freshness?ticker=AAPL: latest dates per type, newestQuarterly, cadenceExceeded, lastVerifiedAt, mayBeStale.
+    * Known limitations
+        * Cadence is a heuristic; a company that files late looks stale until the index is compared, which the recommendation loop does on demand.
+        * Every index comparison re-reads the SEC ticker map and submissions JSON through SECClient; there is no HTTP cache yet.
+        * Amended filings (10-K/A, 10-Q/A) are not tracked.
+
 * Recommendation Consumer
     * [Agent Harness](Agent_Harness.md) documents the opt-in qualitative research loop using FilingRetrievalService.
     * [Direct IBKR Integration](IBKR.md) documents broker reads, TWS socket configuration, and diagnostics.
     * Ingestion and retrieval remain usable when broker and recommendation features are disabled.
-    * Since 2026-09-11 the recommendation loop ingests the latest 10-K and 10-Q itself when a requested ticker has no EMBEDDED filings, using the same ingestion service and locks.
+    * Since 2026-09-11 the recommendation loop ingests a ticker with no EMBEDDED filings itself, and since 2026-09-12 it also refreshes a ticker past its filing cadence, through FilingFreshnessService.ensure.
 
 * Change log — 2026-09-10: chunk quality and retrieval redundancy
     * Read-only database audit found 6 filings and 189 chunks, with no duplicate accession numbers, filing source URLs, or per-filing chunk indexes. Repeated text included contents entries and legitimate short disclosures.
@@ -361,3 +405,12 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * Real retrieval smoke test passed for “What are the main business risks and legal proceedings?”: five results, distinct chunk IDs, nonempty passages, SEC source URLs, from filings 3 and 4. This checks retrieval operation and metadata, not a full evaluation of answer quality.
     * Legitimate short disclosures remain. Some page-footer strings also remain, including a footer-only ITEM_6 passage; broader footer cleanup is a remaining parser improvement.
     * Local execution artifacts: /tmp/stock-rebuild-results.json, /tmp/stock-rebuild-retrieval.json, /tmp/stock-rebuild-app.log. The application remains running on port 8080.
+
+* Change log — 2026-09-12: filing freshness
+    * Added the rag.freshness package: FilingRefreshProperties, FilingFreshness, FilingRefreshResult, FilingFreshnessService, and FilingRefreshScheduler, plus SECFilingRepository queries for the newest filing per type, stored-accession checks, and distinct tickers.
+    * The recommendation loop's RAG branch now calls ensure(ticker): a missing ticker is ingested, a stale one refreshed, a fresh one left alone. recommendation.auto-ingest-filing-types is removed; rag.refresh.limits governs both paths, so 8-K filings are now kept current too.
+    * RecommendationResponse gains dataFreshness (latest filing dates per type, filingsVerifiedAt, filingsMayBeStale, barsAsOf, quoteUpdatedAt, quoteAvailability) and the limitation FILINGS_MAY_BE_STALE.
+    * Refresh ingests each new filing on its own through the new FilingIngestionService.ingestOne, so one unparseable filing never blocks the others; results carry ingestedAccessions and failedAccessions. The index counts as compared even when a filing fails to parse; only a failed SEC call leaves a ticker unverified.
+    * Parser: headings typeset with Unicode spaces (thin space U+2009 after "Item", as in Donnelley 8-K HTML) were invisible to the item pattern because Java's \s does not match them; normalize now maps every space separator and zero-width character to a plain space. 8-K decimal items keep their sub-item in the key (ITEM_7_01, title "Regulation FD Disclosure") instead of ITEM_7 with a title beginning "01". Filings stored before this change keep their old keys until rebuilt.
+    * Tests: freshness assessment and cadence, per-type limits and new-accession detection, per-filing failure isolation, ensure outcomes, scheduler isolation, the parser cases above, and the harness path with scripted responses.
+    * Live verification — 2026-09-12, 09:45 SGT: AAPL index comparison in 1.0 second found nothing newer than the stored 2026-07-31 10-Q; freshness reported cadenceExceeded=false and lastVerifiedAt set. MSFT comparison found three 8-Ks (2026-06-05, 2026-07-29, 2026-09-02) absent from the store; the first attempt failed on the thin-space heading and left the 2026-09-02 filing FAILED, the retry after the parser fix ingested all three in 4.4 seconds with sections ITEM_5_02, ITEM_2_02/ITEM_9_01, and ITEM_7_01/ITEM_9_01. Evidence: [freshness before](live-runs/2026-09-12-filing-freshness/freshness-before.json), [AAPL refresh](live-runs/2026-09-12-filing-freshness/refresh-aapl.json), [MSFT first refresh](live-runs/2026-09-12-filing-freshness/refresh-msft.json), [MSFT retry](live-runs/2026-09-12-filing-freshness/refresh-msft-after-fix.json), [MSFT freshness](live-runs/2026-09-12-filing-freshness/freshness-msft.json), [run log](live-runs/2026-09-12-filing-freshness/run.log).

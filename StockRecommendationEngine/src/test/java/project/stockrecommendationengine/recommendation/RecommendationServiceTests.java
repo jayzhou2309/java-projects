@@ -28,9 +28,11 @@ import project.stockrecommendationengine.quant.QuantAnalysisService;
 import project.stockrecommendationengine.quant.QuantProperties;
 import project.stockrecommendationengine.rag.dto.RetrievalResponse;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
-import project.stockrecommendationengine.rag.ingestion.FilingIngestionService;
+import project.stockrecommendationengine.rag.freshness.FilingFreshness;
+import project.stockrecommendationengine.rag.freshness.FilingFreshnessService;
+import project.stockrecommendationengine.rag.freshness.FilingFreshnessService.EnsureOutcome;
+import project.stockrecommendationengine.rag.freshness.FilingRefreshResult;
 import project.stockrecommendationengine.rag.ingestion.UnknownTickerException;
-import project.stockrecommendationengine.rag.repository.SECFilingRepository;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -40,8 +42,7 @@ import static org.mockito.Mockito.*;
 class RecommendationServiceTests {
     private ChatModel model;
     private FilingRetrievalService filings;
-    private FilingIngestionService ingestion;
-    private SECFilingRepository filingRepository;
+    private FilingFreshnessService freshness;
     private BrokerReadService broker;
     private QuantAnalysisService quant;
     private RecommendationRepository store;
@@ -53,8 +54,7 @@ class RecommendationServiceTests {
     @BeforeEach void setup() {
         model = mock(ChatModel.class);
         filings = mock(FilingRetrievalService.class);
-        ingestion = mock(FilingIngestionService.class);
-        filingRepository = mock(SECFilingRepository.class);
+        freshness = mock(FilingFreshnessService.class);
         broker = mock(BrokerReadService.class);
         quant = mock(QuantAnalysisService.class);
         store = mock(RecommendationRepository.class);
@@ -62,7 +62,8 @@ class RecommendationServiceTests {
         properties.setModel("scripted-test-model");
         // Sequentially scripted scenarios need a deterministic call order; concurrency scenarios opt back in.
         properties.setParallelSpecialists(false);
-        when(filingRepository.existsByTickerAndIngestionStatus("AAPL", "EMBEDDED")).thenReturn(true);
+        when(freshness.ensure("AAPL")).thenReturn(new EnsureOutcome("FRESH", null, fresh(false)));
+        when(freshness.assess("AAPL")).thenReturn(fresh(false));
         validators = Validation.buildDefaultValidatorFactory();
         beans.addBean("model", model);
         beans.addBean("broker", broker);
@@ -79,9 +80,13 @@ class RecommendationServiceTests {
     @AfterEach void close() { service.close(); validators.close(); }
 
     private RecommendationService service() {
-        return new RecommendationService(beans.getBeanProvider(ChatModel.class), filings, ingestion, filingRepository,
+        return new RecommendationService(beans.getBeanProvider(ChatModel.class), filings, freshness,
                 beans.getBeanProvider(BrokerReadService.class), beans.getBeanProvider(QuantAnalysisService.class),
                 beans.getBeanProvider(QuantProperties.class), store, properties, validators.getValidator());
+    }
+    private static FilingFreshness fresh(boolean stale) {
+        return new FilingFreshness("AAPL", Map.of("10-K", LocalDate.of(2025, 10, 31), "10-Q", LocalDate.of(2026, 7, 31)),
+                LocalDate.of(2026, 7, 31), stale, stale ? null : Instant.parse("2026-09-12T00:00:00Z"), stale);
     }
 
     @Test void everyRunIsRecordedWithVersionTagsIncludingStoppedRuns() {
@@ -230,45 +235,51 @@ class RecommendationServiceTests {
         throw new IllegalStateException("not interrupted");
     }
 
-    @Test void missingFilingsAreIngestedBeforeRagResearch() {
-        when(filingRepository.existsByTickerAndIngestionStatus("AAPL", "EMBEDDED")).thenReturn(false);
+    @Test void filingsAreEnsuredBeforeRagResearchAndFreshnessIsReported() {
+        var refresh = new FilingRefreshResult("AAPL", Instant.now(), 5, List.of("acc-1"), List.of("acc-1"), List.of());
+        when(freshness.ensure("AAPL")).thenReturn(new EnsureOutcome("INGESTED", refresh, fresh(false)));
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
                 calls(call("r", "searchFilings", "{\"query\":\"risks\"}")), report(), answer("NEUTRAL", "[11]"));
         var result = service.recommend(request(false));
-        var order = inOrder(ingestion, filings);
-        order.verify(ingestion).ingest("AAPL", List.of("10-K"), 1);
-        order.verify(ingestion).ingest("AAPL", List.of("10-Q"), 1);
+        var order = inOrder(freshness, filings);
+        order.verify(freshness).ensure("AAPL");
         order.verify(filings).retrieve(any());
-        assertThat(result.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome()).contains("RAG:ingestFilings:OK");
-        assertThat(result.limitations()).noneMatch(item -> item.startsWith("ingestFilings"));
+        assertThat(result.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome()).contains("RAG:ensureFilings:INGESTED");
+        assertThat(result.limitations()).noneMatch(item -> item.startsWith("ensureFilings") || item.equals("FILINGS_MAY_BE_STALE"));
+        assertThat(result.dataFreshness().latestFilingDates()).containsEntry("10-Q", LocalDate.of(2026, 7, 31));
+        assertThat(result.dataFreshness().filingsMayBeStale()).isFalse();
+        assertThat(result.dataFreshness().quoteAvailability()).isNull();
     }
 
-    @Test void storedFilingsSkipIngestionAndTheSwitchDisablesIt() {
+    @Test void staleFilingsAreDisclosedAndTheSwitchDisablesRefresh() {
+        when(freshness.ensure("AAPL")).thenReturn(new EnsureOutcome("REFRESH_FAILED",
+                new FilingRefreshResult("AAPL", Instant.now(), 5, List.of("acc-2"), List.of(), List.of("acc-2")), fresh(true)));
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
                 calls(call("r", "searchFilings", "{\"query\":\"risks\"}")), report(), answer("NEUTRAL", "[11]"));
-        service.recommend(request(false));
-        verifyNoInteractions(ingestion);
+        var result = service.recommend(request(false));
+        assertThat(result.limitations()).contains("ensureFilings:REFRESH_FAILED", "FILINGS_MAY_BE_STALE");
+        assertThat(result.dataFreshness().filingsMayBeStale()).isTrue();
         properties.setAutoIngest(false);
-        when(filingRepository.existsByTickerAndIngestionStatus("AAPL", "EMBEDDED")).thenReturn(false);
+        when(freshness.assess("AAPL")).thenReturn(fresh(true));
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
                 calls(call("r", "searchFilings", "{\"query\":\"risks\"}")), report(), answer("NEUTRAL", "[11]"));
-        service.recommend(request(false));
-        verifyNoInteractions(ingestion);
-        verify(filingRepository, times(1)).existsByTickerAndIngestionStatus("AAPL", "EMBEDDED");
+        var disabled = service.recommend(request(false));
+        verify(freshness, times(1)).ensure("AAPL");
+        assertThat(disabled.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome()).contains("RAG:ensureFilings:AUTO_INGEST_DISABLED");
+        assertThat(disabled.limitations()).contains("FILINGS_MAY_BE_STALE");
     }
 
     @Test void ingestionFailuresBecomeLimitationsAndResearchContinues() {
-        when(filingRepository.existsByTickerAndIngestionStatus("AAPL", "EMBEDDED")).thenReturn(false);
-        doThrow(new UnknownTickerException("AAPL")).when(ingestion).ingest(eq("AAPL"), anyList(), eq(1));
+        doThrow(new UnknownTickerException("AAPL")).when(freshness).ensure("AAPL");
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
                 calls(call("r", "searchFilings", "{\"query\":\"risks\"}")), report(), answer("INSUFFICIENT_EVIDENCE", "[]"));
         var result = service.recommend(request(false));
-        assertThat(result.limitations()).contains("ingestFilings:TICKER_NOT_FOUND");
+        assertThat(result.limitations()).contains("ensureFilings:TICKER_NOT_FOUND");
         verify(filings).retrieve(any());
-        doThrow(new IllegalStateException("SEC unavailable")).when(ingestion).ingest(eq("AAPL"), anyList(), eq(1));
+        doThrow(new IllegalStateException("SEC unavailable")).when(freshness).ensure("AAPL");
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchFilings", "{}")),
                 calls(call("r", "searchFilings", "{\"query\":\"risks\"}")), report(), answer("INSUFFICIENT_EVIDENCE", "[]"));
-        assertThat(service.recommend(request(false)).limitations()).contains("ingestFilings:INGESTION_FAILED");
+        assertThat(service.recommend(request(false)).limitations()).contains("ensureFilings:INGESTION_FAILED");
     }
 
     @Test void deterministicLevelsAndConfidenceComeFromApplicationStateByDirection() {
@@ -415,7 +426,7 @@ class RecommendationServiceTests {
         var withoutQuant = new StaticListableBeanFactory();
         withoutQuant.addBean("model", model);
         withoutQuant.addBean("broker", broker);
-        service = new RecommendationService(withoutQuant.getBeanProvider(ChatModel.class), filings, ingestion, filingRepository,
+        service = new RecommendationService(withoutQuant.getBeanProvider(ChatModel.class), filings, freshness,
                 withoutQuant.getBeanProvider(BrokerReadService.class), withoutQuant.getBeanProvider(QuantAnalysisService.class),
                 withoutQuant.getBeanProvider(QuantProperties.class), store, properties, validators.getValidator());
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
@@ -437,8 +448,8 @@ class RecommendationServiceTests {
         assertThat(result.modelCalls()).isEqualTo(7);
         assertThat(result.sources()).containsExactly(evidence());
         assertThat(result.quotes()).hasSize(1);
-        assertThat(result.toolTrace()).extracting(t -> t.tool()).containsExactly("RAG:searchFilings", "MANAGER:researchFilings",
-                "BROKER:findInstrument", "BROKER:getQuote", "BROKER:analyzePriceHistory", // deterministic prefetch
+        assertThat(result.toolTrace()).extracting(t -> t.tool()).containsExactly("RAG:ensureFilings", "RAG:searchFilings",
+                "MANAGER:researchFilings", "BROKER:findInstrument", "BROKER:getQuote", "BROKER:analyzePriceHistory", // deterministic prefetch
                 "BROKER:findInstrument", "BROKER:getQuote", "MANAGER:researchBroker");
         verify(broker, never()).getPositions();
         var prompts = org.mockito.ArgumentCaptor.forClass(Prompt.class);

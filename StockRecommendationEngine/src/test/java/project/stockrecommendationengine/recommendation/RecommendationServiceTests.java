@@ -68,6 +68,8 @@ class RecommendationServiceTests {
         properties.setModel("scripted-test-model");
         // Sequentially scripted scenarios need a deterministic call order; concurrency scenarios opt back in.
         properties.setParallelSpecialists(false);
+        // Scripted scenarios end at the manager's answer; critic scenarios opt back in and script the critic too.
+        properties.setCriticRounds(0);
         when(freshness.ensure("AAPL")).thenReturn(new EnsureOutcome("FRESH", null, fresh(false)));
         when(freshness.assess("AAPL")).thenReturn(fresh(false));
         validators = Validation.buildDefaultValidatorFactory();
@@ -195,7 +197,7 @@ class RecommendationServiceTests {
         byRole.forEach((role, responses) -> queues.put(role, new java.util.concurrent.ConcurrentLinkedDeque<>(responses)));
         when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
             String system = invocation.<Prompt>getArgument(0).getInstructions().get(0).getText();
-            String role = system.contains("You are the manager") ? "MANAGER"
+            String role = system.contains("You are the manager") ? "MANAGER" : system.contains("You are the critic") ? "CRITIC"
                     : system.contains("RAG specialist") ? "RAG" : "BROKER";
             var next = queues.getOrDefault(role, new ArrayDeque<>()).pollFirst();
             if (next == null) throw new IllegalStateException("No scripted response for " + role);
@@ -208,6 +210,166 @@ class RecommendationServiceTests {
                 "RAG", List.of(calls(call("r1", "searchFilings", "{\"query\":\"risks\"}")), report()),
                 "BROKER", List.of(calls(call("b1", "findInstrument", "{}")),
                         calls(call("b2", "getQuote", "{\"conid\":1}"), call("b3", "analyzePriceHistory", "{\"conid\":1}")), report()));
+    }
+
+    @Test void criticReviewsTheDraftWithoutToolsAndTheVerdictIsEchoed() {
+        properties.setCriticRounds(2);
+        scriptByRole(withCritic(fullRunScript("BULLISH"), verdict("ACCEPT", "[\"Reasoning matches the cited passage.\"]")));
+        var result = service.recommend(request(false));
+        assertThat(result.status()).isEqualTo("COMPLETE");
+        assertThat(result.modelCalls()).isEqualTo(8);
+        assertThat(result.takeProfit()).isEqualByComparingTo("104.00");
+        assertThat(result.critique()).isEqualTo(new RecommendationResponse.Critique("ACCEPT",
+                List.of("Reasoning matches the cited passage."), List.of(review("BULLISH", "ACCEPT", "Reasoning matches the cited passage.")), false, List.of()));
+        assertThat(result.limitations()).doesNotContain("CRITIC_UNRESOLVED", "CRITIC_DISABLED").noneMatch(item -> item.startsWith("critic:"));
+        assertThat(result.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome()).contains("CRITIC:review:ACCEPT")
+                .noneMatch(item -> item.startsWith("MANAGER:revise"));
+        var prompts = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+        verify(model, times(8)).call(prompts.capture());
+        var critic = prompts.getAllValues().get(7);
+        assertThat(critic.getInstructions().get(0).getText()).contains("You are the critic");
+        assertThat(critic.getInstructions()).as("system, request, draft and evidence").hasSize(3);
+        assertThat(critic.toString()).contains("\"assessment\":\"BULLISH\"").contains("Material business risks.")
+                .contains("\"priceAnalysis\"").contains("104.00").contains("\"numeralsNotFoundInEvidence\":[]");
+        assertThat(((org.springframework.ai.model.tool.ToolCallingChatOptions) critic.getOptions()).getToolCallbacks()).isEmpty();
+        var records = org.mockito.ArgumentCaptor.forClass(RecommendationRecord.class);
+        verify(store).save(records.capture());
+        assertThat(records.getValue().responseJson()).contains("\"critique\":{\"verdict\":\"ACCEPT\"");
+        assertThat(records.getValue().promptVersion()).isEqualTo("manager-specialists-v4-critic");
+    }
+
+    @Test void criticIssuesTriggerOneRevisionOnTheManagerConversationWhichIsReviewedAgain() {
+        properties.setCriticRounds(2);
+        var script = new java.util.HashMap<>(fullRunScript("BULLISH"));
+        script.put("MANAGER", List.of(calls(call("m1", "researchFilings", "{}"), call("m2", "researchBroker", "{}")),
+                answer("BULLISH", "[11]"),
+                text("{\"assessment\":\"NEUTRAL\",\"reasoning\":\"The filing describes material business risks; the 20-day SMA of 99 sits above the 50-day SMA of 95.\",\"citedChunkIds\":[11]}")));
+        scriptByRole(withCritic(script, verdict("REVISE", "[\"The bullish call is not supported by the risk passage.\"]"), verdict("ACCEPT", "[]")));
+        var result = service.recommend(request(false));
+        assertThat(result.status()).isEqualTo("COMPLETE");
+        assertThat(result.assessment()).as("the revised answer is the one returned").isEqualTo("NEUTRAL");
+        assertThat(result.reasoning()).contains("20-day SMA of 99");
+        assertThat(result.takeProfit()).as("levels follow the revised assessment").isNull();
+        assertThat(result.modelCalls()).isEqualTo(10);
+        assertThat(result.critique()).as("history keeps the first critique and the assessment it judged").isEqualTo(new RecommendationResponse.Critique("ACCEPT", List.of(),
+                List.of(review("BULLISH", "REVISE", "The bullish call is not supported by the risk passage."), review("NEUTRAL", "ACCEPT")), true, List.of()));
+        assertThat(result.limitations()).doesNotContain("CRITIC_UNRESOLVED").noneMatch(item -> item.startsWith("revise:"));
+        assertThat(result.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome())
+                .containsSubsequence("CRITIC:review:REVISE", "MANAGER:revise:OK", "CRITIC:review:ACCEPT");
+        var prompts = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+        verify(model, times(10)).call(prompts.capture());
+        var revision = prompts.getAllValues().get(8);
+        assertThat(revision.getInstructions().get(0).getText()).contains("You are the manager");
+        assertThat(revision.getInstructions()).as("the manager continues its own history: draft and critique appended")
+                .anyMatch(message -> message instanceof AssistantMessage assistant && assistant.getText().contains("\"assessment\":\"BULLISH\""))
+                .last().satisfies(message -> assertThat(message.getText()).contains("The bullish call is not supported").contains("Revise your answer"));
+        var records = org.mockito.ArgumentCaptor.forClass(RecommendationRecord.class);
+        verify(store).save(records.capture());
+        assertThat(records.getValue().assessment()).isEqualTo("NEUTRAL");
+    }
+
+    @Test void unresolvedCritiqueIsDisclosedAndTheLastValidatedDraftStands() {
+        properties.setCriticRounds(1);
+        scriptByRole(withCritic(fullRunScript("BULLISH"), verdict("REVISE", "[\"Unsupported claim.\"]")));
+        var single = service.recommend(request(false));
+        assertThat(single.status()).isEqualTo("COMPLETE");
+        assertThat(single.assessment()).isEqualTo("BULLISH");
+        assertThat(single.modelCalls()).as("no revision when no review remains").isEqualTo(8);
+        assertThat(single.critique()).isEqualTo(new RecommendationResponse.Critique("REVISE", List.of("Unsupported claim."), List.of(review("BULLISH", "REVISE", "Unsupported claim.")), false, List.of()));
+        assertThat(single.limitations()).contains("CRITIC_UNRESOLVED");
+        assertThat(single.toolTrace()).extracting(t -> t.tool()).doesNotContain("MANAGER:revise");
+
+        properties.setCriticRounds(2);
+        var script = new java.util.HashMap<>(fullRunScript("BULLISH"));
+        script.put("MANAGER", List.of(calls(call("m1", "researchFilings", "{}"), call("m2", "researchBroker", "{}")),
+                answer("BULLISH", "[11]"), answer("BEARISH", "[11]")));
+        scriptByRole(withCritic(script, verdict("REVISE", "[\"First issue.\"]"), verdict("REVISE", "[\"Still unsupported.\"]")));
+        var twice = service.recommend(request(false));
+        assertThat(twice.assessment()).isEqualTo("BEARISH");
+        assertThat(twice.takeProfit()).isEqualByComparingTo("96.00");
+        assertThat(twice.critique()).isEqualTo(new RecommendationResponse.Critique("REVISE", List.of("Still unsupported."),
+                List.of(review("BULLISH", "REVISE", "First issue."), review("BEARISH", "REVISE", "Still unsupported.")), true, List.of()));
+        assertThat(twice.limitations()).contains("CRITIC_UNRESOLVED");
+    }
+
+    @Test void criticOrRevisionFailuresNeverStopAValidatedRun() {
+        properties.setCriticRounds(2);
+        // Malformed verdicts, a verdict with the wrong shape, and a tool call from the tool-less critic.
+        for (var bad : List.of(text("not json"), text("{\"verdict\":\"REVISE\",\"issues\":[]}"),
+                text("{\"verdict\":\"ACCEPT\"}"), text("{\"verdict\":\"MAYBE\",\"issues\":[]}"))) {
+            scriptByRole(withCritic(fullRunScript("BULLISH"), bad));
+            var result = service.recommend(request(false));
+            assertThat(result.status()).isEqualTo("COMPLETE");
+            assertThat(result.assessment()).isEqualTo("BULLISH");
+            assertThat(result.critique()).isEqualTo(new RecommendationResponse.Critique("UNAVAILABLE", List.of(), List.of(), false, List.of()));
+            assertThat(result.limitations()).contains("critic:INVALID_CRITIC_OUTPUT").doesNotContain("CRITIC_UNRESOLVED");
+        }
+        clearInvocations(filings);
+        scriptByRole(withCritic(fullRunScript("BULLISH"), calls(call("c", "searchFilings", "{\"query\":\"x\"}"))));
+        var toolCall = service.recommend(request(false));
+        assertThat(toolCall.status()).isEqualTo("COMPLETE");
+        assertThat(toolCall.limitations()).contains("critic:TOOL_NOT_ALLOWED");
+        verify(filings, times(1)).retrieve(any()); // the RAG specialist's search only; the critic's call never executed
+        // The shared model budget ends exactly at the critic: disclosed, not fatal.
+        properties.setMaxModelCalls(7);
+        scriptByRole(withCritic(fullRunScript("BULLISH"), verdict("ACCEPT", "[]")));
+        var exhausted = service.recommend(request(false));
+        assertThat(exhausted.status()).isEqualTo("COMPLETE");
+        assertThat(exhausted.modelCalls()).isEqualTo(7);
+        assertThat(exhausted.limitations()).contains("critic:MODEL_CALL_LIMIT");
+        assertThat(exhausted.critique().verdict()).isEqualTo("UNAVAILABLE");
+        // A revision that fails validation leaves the reviewed draft standing with both facts disclosed.
+        properties.setMaxModelCalls(14);
+        var script = new java.util.HashMap<>(fullRunScript("BULLISH"));
+        script.put("MANAGER", List.of(calls(call("m1", "researchFilings", "{}"), call("m2", "researchBroker", "{}")),
+                answer("BULLISH", "[11]"), answer("BEARISH", "[999]")));
+        scriptByRole(withCritic(script, verdict("REVISE", "[\"Issue.\"]"), verdict("ACCEPT", "[]")));
+        var rejected = service.recommend(request(false));
+        assertThat(rejected.status()).isEqualTo("COMPLETE");
+        assertThat(rejected.assessment()).isEqualTo("BULLISH");
+        assertThat(rejected.takeProfit()).isEqualByComparingTo("104.00");
+        assertThat(rejected.modelCalls()).isEqualTo(9);
+        assertThat(rejected.limitations()).contains("revise:INVALID_CITATION", "CRITIC_UNRESOLVED");
+        assertThat(rejected.critique()).isEqualTo(new RecommendationResponse.Critique("REVISE", List.of("Issue."), List.of(review("BULLISH", "REVISE", "Issue.")), false, List.of()));
+        assertThat(rejected.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome()).contains("MANAGER:revise:INVALID_CITATION");
+        // Disabled: no critic call, no critique, a limitation instead.
+        properties.setCriticRounds(0);
+        scriptByRole(fullRunScript("BULLISH"));
+        var disabled = service.recommend(request(false));
+        assertThat(disabled.modelCalls()).isEqualTo(7);
+        assertThat(disabled.critique()).isNull();
+        assertThat(disabled.limitations()).contains("CRITIC_DISABLED");
+    }
+
+    @Test void numeralsAbsentFromTheEvidenceAreFlaggedForTheCritic() {
+        String evidence = "{\"passages\":[\"Net sales of $391,035 million in fiscal 2025.\"],\"priceAnalysis\":{\"lastClose\":326.57,\"momentum\":0.0805,\"longSmaPeriod\":50},\"dataFreshness\":{\"10-K\":\"2025-10-31\"}}";
+        var flagged = RecommendationService.unsupportedNumerals(
+                "Per the 10-K (Item 1A) net sales were $391,035 million in fiscal 2025; the close of 326.57 is above the 50-day SMA, "
+                        + "momentum is 8.05%, and revenue grew 12% to 1,200.5 billion. See Part II, Item 7 and the 10-Q.", evidence);
+        assertThat(flagged).containsExactly("8.05", "12", "1200.5");
+        assertThat(RecommendationService.unsupportedNumerals("No numbers here.", evidence)).isEmpty();
+        // In a run, the flagged list reaches both the critic prompt and the response.
+        properties.setCriticRounds(1);
+        var script = new java.util.HashMap<>(fullRunScript("BULLISH"));
+        script.put("MANAGER", List.of(calls(call("m1", "researchFilings", "{}"), call("m2", "researchBroker", "{}")),
+                text("{\"assessment\":\"BULLISH\",\"reasoning\":\"Close 100 with ATR 2.0 and revenue of 98765 million.\",\"citedChunkIds\":[11]}")));
+        scriptByRole(withCritic(script, verdict("ACCEPT", "[]")));
+        var result = service.recommend(request(false));
+        assertThat(result.critique().unsupportedNumerals()).containsExactly("98765");
+        var prompts = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+        verify(model, times(8)).call(prompts.capture());
+        assertThat(prompts.getAllValues().get(7).toString()).contains("\"numeralsNotFoundInEvidence\":[\"98765\"]");
+    }
+    private static Map<String, List<ChatResponse>> withCritic(Map<String, List<ChatResponse>> script, ChatResponse... verdicts) {
+        var withCritic = new java.util.HashMap<>(script);
+        withCritic.put("CRITIC", List.of(verdicts));
+        return withCritic;
+    }
+    private static RecommendationResponse.Review review(String assessment, String verdict, String... issues) {
+        return new RecommendationResponse.Review(assessment, verdict, List.of(issues));
+    }
+    private static ChatResponse verdict(String verdict, String issues) {
+        return text("{\"verdict\":\"" + verdict + "\",\"issues\":" + issues + "}");
     }
 
     @Test void specialistsRunConcurrentlyWhenTheManagerDelegatesToBoth() throws Exception {
@@ -652,7 +814,7 @@ class RecommendationServiceTests {
     @Test void oversizedObservedUsageStopsBeforeExecutingModelRequestedTools() {
         var response = calls(call("1", "findInstrument", "{}"));
         var metadata = org.springframework.ai.chat.metadata.ChatResponseMetadata.builder()
-                .usage(new org.springframework.ai.chat.metadata.DefaultUsage(20000, 100)).build();
+                .usage(new org.springframework.ai.chat.metadata.DefaultUsage(40000, 100)).build();
         when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(response.getResults(), metadata));
         assertThat(service.recommend(request(false)).status()).isEqualTo("TOKEN_LIMIT");
         verifyNoInteractions(broker);

@@ -2,6 +2,10 @@ spring:
   application:
     name: StockRecommendationEngine
 
+  jackson:
+    serialization:
+      indent-output: true
+
   datasource:
     url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:rag_db}
     username: ${POSTGRES_USER:root}
@@ -114,7 +118,8 @@ outcomes:
 recommendation:
   enabled: ${RECOMMENDATION_ENABLED:false}
   model: ${RECOMMENDATION_MODEL:}
-  max-model-calls: 10
+  # A full run with both specialists, one critic review, one revision, and a re-review uses about eleven calls.
+  max-model-calls: 14
   max-tool-calls: 12
   deadline-ms: ${RECOMMENDATION_DEADLINE_MS:120000}
   # Manager delegations to both specialists run concurrently on a shared pool.
@@ -125,8 +130,12 @@ recommendation:
   preferred-currency: USD
   # Prior stored runs for the ticker (with outcomes when scored) shown to the manager; 0 disables. Requires outcomes.enabled.
   track-record-runs: 10
+  # Critic reviews of the manager's answer against the run's own evidence; the manager revises while another
+  # review remains, so the final verdict always describes the answer returned. 0 disables the critic.
+  critic-rounds: 2
   max-output-tokens: 1200
-  max-observed-tokens: 16000
+  # Cumulative reported usage across manager, specialists, critic, and revision; a full critic cycle re-reads the context.
+  max-observed-tokens: 40000
   max-tool-result-chars: 32000
   max-context-chars: 120000
   max-quote-age-seconds: 120

@@ -1,0 +1,8 @@
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=5ac8e3dd-82ce-420f-999d-6e909329ebaa tool=MANAGER:reviewTrackRecord outcome=OK elapsedMs=13
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=5ac8e3dd-82ce-420f-999d-6e909329ebaa tool=RAG:ensureFilings outcome=FRESH elapsedMs=62
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=5ac8e3dd-82ce-420f-999d-6e909329ebaa tool=RAG:searchFilings outcome=OK elapsedMs=969
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=5ac8e3dd-82ce-420f-999d-6e909329ebaa tool=MANAGER:researchFilings outcome=OK elapsedMs=3896
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=5ac8e3dd-82ce-420f-999d-6e909329ebaa tool=CRITIC:review outcome=REVISE elapsedMs=1596
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=5ac8e3dd-82ce-420f-999d-6e909329ebaa tool=MANAGER:revise outcome=OK elapsedMs=1717
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=5ac8e3dd-82ce-420f-999d-6e909329ebaa tool=CRITIC:review outcome=ACCEPT elapsedMs=777
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=5ac8e3dd-82ce-420f-999d-6e909329ebaa status=PARTIAL modelCalls=7 observedTokens=28120 levels=false confidence=0.29 critic=ACCEPT

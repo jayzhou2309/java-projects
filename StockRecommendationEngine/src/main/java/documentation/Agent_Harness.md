@@ -297,7 +297,7 @@ curl -X POST http://localhost:8080/api/recommendations \
 ```
 
 * Next Harness Milestones
-    * Before expanding prompts/models: evaluate a versioned set of real filing questions and expected supporting evidence.
+    * Before expanding prompts/models: run the versioned retrieval evaluation set (RAG.md, Retrieval Evaluation: 30 filing questions with expected passages, `POST /api/rag/evaluate`, baseline snapshot 13 with hit@5 0.6, floor test `RetrievalEvaluationLiveTests`) and compare against the baseline; answer-level citation checks are still open (Follow_Ups AGENT-10).
     * Before adding MCP: select a server, configure its client/authentication, and explicitly map approved tools into this allowlist.
     * Apply the same timeout, payload, argument, permission, and provenance checks to MCP callbacks.
     * Before multiple users: implement user identities, account bindings, per-user quotas, and retention policies.

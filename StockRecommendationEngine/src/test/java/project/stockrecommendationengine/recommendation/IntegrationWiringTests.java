@@ -12,6 +12,9 @@ import project.stockrecommendationengine.broker.api.BrokerController;
 import project.stockrecommendationengine.broker.ibkr.*;
 import project.stockrecommendationengine.outcome.*;
 import project.stockrecommendationengine.quant.*;
+import project.stockrecommendationengine.rag.controller.RetrievalEvaluationController;
+import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationRepository;
+import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationService;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -23,12 +26,14 @@ class IntegrationWiringTests {
                     IbkrConfiguration.class, IbkrBrokerAdapter.class, QuantAnalysisService.class, QuantController.class,
                     OutcomeEvaluationService.class, OutcomeScheduler.class, OutcomeController.class, TrackRecordService.class,
                     ConfidenceCalibrationService.class, RecommendationController.class, WatchlistScheduler.class,
-                    WatchlistController.class, BrokerController.class)
+                    WatchlistController.class, BrokerController.class, RetrievalEvaluationController.class)
             .withBean(IntegrationAccessProperties.class).withBean(IbkrProperties.class).withBean(RecommendationProperties.class)
             .withBean(QuantProperties.class).withBean(OutcomeProperties.class)
             .withBean(OutcomeRepository.class, () -> mock(OutcomeRepository.class))
             .withBean(CalibrationRepository.class, () -> mock(CalibrationRepository.class))
             .withBean(FilingRetrievalService.class, () -> mock(FilingRetrievalService.class))
+            .withBean(RetrievalEvaluationService.class, () -> mock(RetrievalEvaluationService.class))
+            .withBean(RetrievalEvaluationRepository.class, () -> mock(RetrievalEvaluationRepository.class))
             .withBean(project.stockrecommendationengine.rag.freshness.FilingFreshnessService.class,
                     () -> mock(project.stockrecommendationengine.rag.freshness.FilingFreshnessService.class))
             .withBean(PriceBarRepository.class, () -> mock(PriceBarRepository.class))
@@ -42,6 +47,13 @@ class IntegrationWiringTests {
                     .doesNotHaveBean(OutcomeEvaluationService.class).doesNotHaveBean(OutcomeScheduler.class)
                     .doesNotHaveBean(TrackRecordService.class).doesNotHaveBean(ConfidenceCalibrationService.class)
                     .doesNotHaveBean(WatchlistScheduler.class).doesNotHaveBean(WatchlistController.class);
+        });
+    }
+
+    @Test void retrievalEvaluationEndpointsWireByDefaultAndAreListedAsTokenGated() {
+        runner.run(context -> {
+            assertThat(context).hasNotFailed().hasSingleBean(RetrievalEvaluationController.class).hasSingleBean(IntegrationAccessConfiguration.class);
+            verifyNoInteractions(context.getBean(RetrievalEvaluationService.class), context.getBean(RetrievalEvaluationRepository.class));
         });
     }
 

@@ -326,6 +326,75 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * The full 47-test suite passed against a disposable PostgreSQL/pgvector database.
     * Correctness tests do not establish real-world retrieval relevance or reranker quality.
 
+* Retrieval Evaluation
+    * Purpose
+        * A fixed, versioned question set with known-good passages, measured the same way every time, so a retrieval or prompt change (reranking RAG-1, hybrid retrieval RAG-2, lean-profile passage tuning AGENT-9, prompt regression AGENT-8) is judged against a baseline instead of a single live run. Closes Follow_Ups AGENT-3.
+    * The set
+        * `src/main/resources/evaluation/retrieval-set-v1.json`: 30 analyst-style questions (10 each for AAPL, MSFT, NVDA) written against the latest stored 10-K, 10-Q, and 8-K per ticker as of 2026-09-12.
+        * Format: `version`, `createdOn`, and `questions`; each question has `id`, `ticker`, `kind` (FIGURE for an exact number stated in the filing, NARRATIVE for a risk, segment change, or policy), `question`, `expected` (one or more passages, any one satisfies), and optional `notes`.
+        * An expected passage is `accessionNo`, `sectionKey`, and `phrase`: a verbatim 12 to 200 character excerpt of a chunk stored for that filing and section, using the same characters as the chunk (curly quotes, non-breaking spaces). Chunk IDs change on rebuild, so they are never referenced.
+        * `RetrievalEvaluationSetLoader` (`rag.evaluation`) reads the resource and rejects duplicate ids, empty expectation lists, blank or out-of-range phrases, malformed tickers or accession numbers, and phrases shared by two questions, naming the question id.
+        * `RetrievalEvaluationSetTests` (database-backed, read-only) proves every expectation is a substring of a stored chunk, case-insensitive with whitespace collapsed. Section keys follow the parser: NVIDIA's Item 8 is a one-line cross-reference, so its financial statement notes sit under ITEM_15; the AAPL 8-K Item 2.02 is stored as ITEM_2 and the MSFT 8-K Item 7.01 as ITEM_7_01.
+        * Nothing in the set reaches a model prompt; an evaluation run embeds each question once (the only external call) and never calls a chat model.
+    * Adding a question
+        * Find the chunk that answers it: `SELECT c.id, c.section_key, c.content FROM sec_filing_chunks c JOIN sec_filings f ON f.id = c.filing_id WHERE f.accession_no = '<accession>' AND c.content ILIKE '%<distinctive words>%'`, then copy a 12 to 200 character excerpt exactly as stored (the loader does not fix quotes or spaces).
+        * Add the question with the next id for its ticker (`nvda-11`), the accession, the section key as stored, and the phrase; add a second expected passage when the same fact is stated in another section or chunk, so a correct retrieval of either counts.
+        * Keep the set invariants: 24 to 30 questions, at least 8 per ticker, at least 6 FIGURE questions, no phrase used twice, sections ITEM_1A, ITEM_7, ITEM_8, ITEM_1, and ITEM_7_01 all covered.
+        * Run `RetrievalEvaluationSetTests` (proves the phrase is stored) and then a live evaluation; when the set changes in a way that moves the metrics, bump `version`, record a new baseline below, and re-derive the floor. Stored snapshots carry `setVersion`, so old ones stay comparable among themselves.
+    * Metrics (`RetrievalEvaluationService`)
+        * Each question is retrieved once with its ticker, the question text as the query, `latestFilingsOnly` true, and `topK` = window; no section, filing type, or date filter, so the section filter never helps the evaluation.
+        * Rank: the 1-based position of the first returned chunk whose accession and section equal an expected passage's and whose content contains the phrase (case-insensitive, whitespace collapsed); null when no chunk in the window matches.
+        * hit@k: the fraction of questions with rank at most k; reported at k = 1, 3, 5.
+        * MRR: the mean over all questions of 1/rank, counting a null rank as 0; a question found at rank 10 contributes 0.1, so MRR rewards moving a passage up even when hit@5 does not change.
+        * Per-ticker hit@5: hit@5 over each ticker's questions, the first place to look when a change helps one filer and hurts another.
+        * Window: `rag.evaluation.window` (default 10, 5 to 20); a passage beyond it is a miss, so the window bounds MRR's tail and the cost of a run (one embedding per question regardless of window).
+        * A retrieval exception for one question is recorded as a miss with the error string; the other questions still count, so one embedding failure never voids a run.
+    * Endpoints (integration token required, `Authorization: Bearer <INTEGRATION_ACCESS_TOKEN>`)
+        * `POST /api/rag/evaluate` runs every question through retrieval and stores a snapshot in `retrieval_evaluations` (migration V8); `GET /api/rag/evaluate` returns the newest snapshot (404 before the first); `GET /api/rag/evaluate/{id}` returns one by id.
+        * A snapshot carries `hitAt1`, `hitAt3`, `hitAt5`, `mrr`, `tickerHitAt5`, `window`, `retrievalStrategy`, the run `properties` (window, latestFilingsOnly, setCreatedOn, candidateCount, rerankingEnabled), per-question `results` (rank and matched chunk id, null on a miss), and `misses` with the top three returned chunks (chunk id, accession, section, similarity) or the retrieval error.
+    * Regression floor
+        * `RetrievalEvaluationLiveTests` (opt-in, `@EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")`) runs the real evaluation against the local store and asserts hit@5 at or above `rag.evaluation.min-hit-at-5` (default 0.50: baseline 0.6 minus 0.1, rounded down to a multiple of 0.05). It prints the metrics, per-ticker hit@5, and every miss with its top chunks, and it runs inside a rolled-back transaction so no snapshot is stored (the id sequence still advances).
+        * Run: `set -a && source .env && set +a && ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true`; override the floor with `-Drag.evaluation.min-hit-at-5=<fraction>`. Without the system property the test is skipped, so `./mvnw -q verify` never embeds anything.
+        * Verified 2026-09-12: the default floor passes (exit 0, hit@5 0.600000); a floor of 1.01 fails with an assertion naming hit@5 0.600000 and the nine miss ids (exit 1). Evidence: `documentation/live-runs/2026-09-12-retrieval-eval/`.
+        * Raise the floor after a retrieval improvement lands and its new baseline is recorded here; never lower it to make a change pass.
+    * First baseline (set v1, snapshot id 13, `GET /api/rag/evaluate/13`)
+
+| Field | Value |
+|---|---|
+| Snapshot | id 13, evaluated 2026-09-12 09:49:07 UTC (ids 7 and 12 from the same day carry identical figures) |
+| Set / questions | v1 / 30 (10 AAPL, 10 MSFT, 10 NVDA) |
+| Retrieval | FILTERED_VECTOR, window 10, candidateCount 40, reranking off, latest filings only |
+| hit@1 | 0.300000 |
+| hit@3 | 0.533333 |
+| hit@5 | 0.600000 |
+| MRR | 0.435833 |
+| Per-ticker hit@5 | AAPL 0.900000, MSFT 0.600000, NVDA 0.300000 |
+| Floor derived | rag.evaluation.min-hit-at-5 = 0.50 |
+| Evidence | `documentation/live-runs/2026-09-12-retrieval-eval/baseline-snapshot-13.json` |
+
+    * Misses in the baseline (nine questions with no matching chunk in the window) and what they suggest
+
+| Question | Expected | Retrieval returned (top three) | What it suggests |
+|---|---|---|---|
+| msft-07 (NARRATIVE, 2030 sustainability goals) | 10-K ITEM_1A | 10-K ITEM_1 (chunk 460, similarity 0.53), ITEM_7, 10-Q ITEM_2 | The rank-1 Item 1 chunk states the same carbon negative, water positive, zero waste goals; the expectation is narrower than the filing. Add the Item 1 passage as a second expectation in set v2 (RAG-11) |
+| msft-08 (FIGURE, OpenAI commercial revenue) | 10-K ITEM_8 (investments note) | 10-K ITEM_7 (0.67), 10-Q ITEM_2 (0.67), ITEM_7 (0.65) | The MD&A partnership paragraphs outrank the related-party note among 45 Item 8 chunks; the exact term "OpenAI" plus "revenue" is a keyword case (RAG-2) |
+| nvda-01 (FIGURE, fiscal 2026 revenue and growth) | 10-K ITEM_7 fiscal-year summary row "Revenue $ 215,938 $ 130,497 Up 65%" | 10-K ITEM_7 (chunk 805, 0.70), ITEM_7, ITEM_15 | Rank 1 is the adjacent segment table with the same totals ("Total $ 215,938 $ 130,497 $ 85,441 65 %"); a second expectation on that chunk would count it (RAG-11). Table rows embed poorly (RAG-2) |
+| nvda-02 (FIGURE, Data Center growth) | 10-K ITEM_7 | 10-K ITEM_7 (0.68), ITEM_15 (0.67), ITEM_7 (0.66) | Right section, neighbouring chunks; a reranker over the 40 candidates (RAG-1) or a keyword boost on "Data Center" and "68%" (RAG-2) |
+| nvda-03 (FIGURE, share repurchases) | 10-K ITEM_7 | 10-K ITEM_5 (chunk 797, 0.69), ITEM_15, ITEM_5 | Item 5 states the identical sentence ("we repurchased 282 million shares ... $40.4 billion") and was rank 1; the expectation's section is too narrow (RAG-11) |
+| nvda-04 (FIGURE, employees and R&D headcount) | 10-K ITEM_1 | 10-K ITEM_7 (0.62), ITEM_15 (0.62), ITEM_7 (0.62) | Low, flat similarities; the headcount sentence sits in a 15-chunk Item 1 that the query does not pull ahead of MD&A. Keyword ("employees") would help (RAG-2) |
+| nvda-05 (NARRATIVE, fabless manufacturing) | 10-K ITEM_1 | 10-K ITEM_1 (chunks 742, 744, 743; 0.57 to 0.54) | Right section, the three chunks before the passage (749); Item 1's opening business overview outscores the manufacturing paragraph. A reranker (RAG-1) is the fix; the adjacent-chunk pattern also argues for RAG-5 |
+| nvda-07 (NARRATIVE, manufacturing concentration and geopolitics) | 10-K ITEM_1A | 10-Q ITEM_1A (0.59), 10-K ITEM_1A (0.59), 10-K ITEM_7 | Right sections in both filings, wrong chunks among 35 risk-factor chunks; the country list is in chunk 770. Reranking (RAG-1); the 10-Q may restate the risk, worth a second expectation (RAG-11) |
+| nvda-09 (FIGURE, Q2 fiscal 2027 Data Center revenue) | 10-Q ITEM_2 | 10-Q ITEM_1 (0.70), ITEM_2 (0.70), ITEM_2 (0.69) | Right filing, financial statements and neighbouring MD&A chunks outrank the sentence in chunk 879; "$89.0 billion" is a keyword case (RAG-2) |
+
+    * Reading the misses
+        * Seven of nine are NVDA questions (NVDA hit@5 0.3 against AAPL 0.9): NVDA's 10-K has the longest sections here (Item 1A 35 chunks, Item 15 33 chunks, Item 1 15 chunks), so semantic neighbours crowd the window. NVDA is the first concrete target for RAG-1 and RAG-2.
+        * NVDA's consolidated financial statements live under ITEM_15 (33 chunks), with ITEM_8 a one-chunk cross-reference; a consumer that filters on ITEM_8 for financial statements misses NVDA entirely (RAG-7). The evaluation itself applies no section filter, so this does not affect the baseline.
+        * Figure questions whose phrases are table rows ("Greater China 64,377 (4) % 66,952", "Revenue $ 215,938 $ 130,497 Up 65%") depend on the embedding of a number-dense row; the hits among them come from short sections. Hybrid keyword retrieval (RAG-2) is the direct remedy.
+        * Three misses (msft-07, nvda-01, nvda-03) are expectation narrowness rather than retrieval failure: retrieval returned the fact at rank 1 from another section or the adjacent chunk. Set v2 should carry alternative expectations for them (RAG-11); until then the baseline understates hit@5 by up to 0.1.
+        * Parser observations recorded while writing the set: 8-K section keys differ by filer (AAPL Item 2.02 as ITEM_2, colliding in name with 10-K/10-Q Item 2; MSFT as ITEM_7_01), and the MSFT 10-Q 0001193125-26-191507 carries ITEM_1 chunks titled ", 1A" and Part II items (Legal Proceedings, Unregistered Sales) under the Part I keys ITEM_1 and ITEM_2 (RAG-8, RAG-9). The whitespace normalisation (`\s+`) excludes U+00A0; no phrase contains one today (RAG-10).
+    * Evidence
+        * `documentation/live-runs/2026-09-12-retrieval-eval/`: `baseline-snapshot-13.json` (row_to_json of the stored snapshot), `live-test-pass.log` (default floor, exit 0), `live-test-floor-1.01.log` (raised floor, exit 1 with the assertion message), `run.log`.
+
 * Filing Freshness
     * Purpose
         * Keep stored filings current without re-downloading anything already embedded.

@@ -1,0 +1,290 @@
+{
+  "version": "v1",
+  "createdOn": "2026-09-12",
+  "questions": [
+    {
+      "id": "aapl-01",
+      "ticker": "AAPL",
+      "kind": "FIGURE",
+      "question": "What were Apple's Greater China net sales in fiscal 2025, and how did they compare with 2024?",
+      "expected": [
+        { "accessionNo": "0000320193-25-000079", "sectionKey": "ITEM_7", "phrase": "Greater China 64,377 (4) % 66,952 (8) % 72,559" }
+      ],
+      "notes": "Segment net sales table in the 10-K MD&A."
+    },
+    {
+      "id": "aapl-02",
+      "ticker": "AAPL",
+      "kind": "FIGURE",
+      "question": "What was Apple's effective tax rate for fiscal 2025 versus the prior year?",
+      "expected": [
+        { "accessionNo": "0000320193-25-000079", "sectionKey": "ITEM_7", "phrase": "Effective tax rate 15.6 % 24.1 % 14.7 %" }
+      ]
+    },
+    {
+      "id": "aapl-03",
+      "ticker": "AAPL",
+      "kind": "NARRATIVE",
+      "question": "Why did Apple's products gross margin percentage fall in fiscal 2025?",
+      "expected": [
+        { "accessionNo": "0000320193-25-000079", "sectionKey": "ITEM_7", "phrase": "Products gross margin percentage decreased during 2025 compared to 2024 primarily due to a different mix of products and tariff costs" }
+      ]
+    },
+    {
+      "id": "aapl-04",
+      "ticker": "AAPL",
+      "kind": "NARRATIVE",
+      "question": "What has Apple changed in the EU to comply with the Digital Markets Act?",
+      "expected": [
+        { "accessionNo": "0000320193-25-000079", "sectionKey": "ITEM_1A", "phrase": "in the EU as it seeks to comply with the Digital Markets Act" }
+      ],
+      "notes": "The 10-Q risk factor uses the abbreviation DMA instead, so the phrase is unique to the 10-K."
+    },
+    {
+      "id": "aapl-05",
+      "ticker": "AAPL",
+      "kind": "NARRATIVE",
+      "question": "How does Apple organise its reportable segments?",
+      "expected": [
+        { "accessionNo": "0000320193-25-000079", "sectionKey": "ITEM_1", "phrase": "reportable segments consist of the Americas, Europe, Greater China, Japan and Rest of Asia Pacific" }
+      ]
+    },
+    {
+      "id": "aapl-06",
+      "ticker": "AAPL",
+      "kind": "FIGURE",
+      "question": "How much total deferred revenue did Apple carry at the end of fiscal 2025?",
+      "expected": [
+        { "accessionNo": "0000320193-25-000079", "sectionKey": "ITEM_8", "phrase": "the Company had total deferred revenue of $13.7 billion and $12.8 billion, respectively" }
+      ],
+      "notes": "Revenue note in the financial statements."
+    },
+    {
+      "id": "aapl-07",
+      "ticker": "AAPL",
+      "kind": "FIGURE",
+      "question": "What one-time income tax charge did Apple record after the European Court of Justice upheld the State Aid Decision?",
+      "expected": [
+        { "accessionNo": "0000320193-25-000079", "sectionKey": "ITEM_8", "phrase": "recorded a one-time income tax charge of $10.2 billion, net, which represented $15.8 billion payable to Ireland" }
+      ],
+      "notes": "Income taxes note."
+    },
+    {
+      "id": "aapl-08",
+      "ticker": "AAPL",
+      "kind": "NARRATIVE",
+      "question": "Which quarter's results did Apple's most recent earnings press release cover?",
+      "expected": [
+        { "accessionNo": "0000320193-26-000018", "sectionKey": "ITEM_2", "phrase": "financial results for its third fiscal quarter ended June 27, 2026" }
+      ],
+      "notes": "8-K Item 2.02; the parser stores the section key as ITEM_2."
+    },
+    {
+      "id": "aapl-09",
+      "ticker": "AAPL",
+      "kind": "FIGURE",
+      "question": "How much of its own stock did Apple buy back in the third quarter of fiscal 2026?",
+      "expected": [
+        { "accessionNo": "0000320193-26-000020", "sectionKey": "ITEM_2", "phrase": "During the third quarter of 2026, the Company repurchased $25.8 billion of its common stock" }
+      ],
+      "notes": "10-Q MD&A capital return paragraph."
+    },
+    {
+      "id": "aapl-10",
+      "ticker": "AAPL",
+      "kind": "NARRATIVE",
+      "question": "What drove the increase in Apple's Greater China net sales in the third quarter of fiscal 2026?",
+      "expected": [
+        { "accessionNo": "0000320193-26-000020", "sectionKey": "ITEM_2", "phrase": "Greater China net sales increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 primarily due to higher net sales of iPhone" }
+      ]
+    },
+    {
+      "id": "msft-01",
+      "ticker": "MSFT",
+      "kind": "FIGURE",
+      "question": "How much did Microsoft Cloud revenue grow in fiscal 2026 and what did it reach?",
+      "expected": [
+        { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_7", "phrase": "Microsoft Cloud revenue increased 27% to $214.4 billion" }
+      ]
+    },
+    {
+      "id": "msft-02",
+      "ticker": "MSFT",
+      "kind": "FIGURE",
+      "question": "What was Microsoft's commercial remaining performance obligation at the end of fiscal 2026?",
+      "expected": [
+        { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_7", "phrase": "Commercial remaining performance obligation increased 84% to $678 billion" }
+      ]
+    },
+    {
+      "id": "msft-03",
+      "ticker": "MSFT",
+      "kind": "NARRATIVE",
+      "question": "Why did Microsoft Cloud's gross margin percentage decline in fiscal 2026?",
+      "expected": [
+        { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_7", "phrase": "Microsoft Cloud gross margin percentage decreased to 66% driven by continued investments in AI infrastructure and growing AI product usage" }
+      ]
+    },
+    {
+      "id": "msft-04",
+      "ticker": "MSFT",
+      "kind": "FIGURE",
+      "question": "How many people did Microsoft employ at the end of fiscal 2026, and how were they split between the U.S. and other countries?",
+      "expected": [
+        { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_1", "phrase": "we employed approximately 223,000 people on a full-time basis, 121,000 in the U.S. and 102,000 internationally" }
+      ]
+    },
+    {
+      "id": "msft-05",
+      "ticker": "MSFT",
+      "kind": "NARRATIVE",
+      "question": "What are Microsoft's three reportable segments in its fiscal 2026 annual report?",
+      "expected": [
+        { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_1", "phrase": "using three segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing" }
+      ]
+    },
+    {
+      "id": "msft-06",
+      "ticker": "MSFT",
+      "kind": "NARRATIVE",
+      "question": "How could power and energy constraints limit Microsoft's datacenter expansion?",
+      "expected": [
+        { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_1A", "phrase": "requirements imposed by utilities, regulators, or other market participants could restrict our ability to develop or expand datacenter capacity" }
+      ]
+    },
+    {
+      "id": "msft-07",
+      "ticker": "MSFT",
+      "kind": "NARRATIVE",
+      "question": "What sustainability goals has Microsoft committed to by 2030 and why are they harder to meet?",
+      "expected": [
+        { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_1A", "phrase": "in 2020 we announced goals to become carbon negative, water positive, and zero waste by 2030" }
+      ]
+    },
+    {
+      "id": "msft-08",
+      "ticker": "MSFT",
+      "kind": "FIGURE",
+      "question": "How much revenue did Microsoft record from its commercial arrangements with OpenAI in fiscal 2026?",
+      "expected": [
+        { "accessionNo": "0001193125-26-323660", "sectionKey": "ITEM_8", "phrase": "we recorded revenue from commercial arrangements with OpenAI, inclusive of revenue-sharing payments, of $24.1 billion" }
+      ],
+      "notes": "Related-party disclosure in the investments note."
+    },
+    {
+      "id": "msft-09",
+      "ticker": "MSFT",
+      "kind": "NARRATIVE",
+      "question": "What change to its reportable segments did Microsoft announce for fiscal 2027?",
+      "expected": [
+        { "accessionNo": "0001193125-26-380280", "sectionKey": "ITEM_7_01", "phrase": "two reportable segments: (1) Agents and Infra and (2) Devices and Consumer" }
+      ],
+      "notes": "8-K Item 7.01 Regulation FD disclosure."
+    },
+    {
+      "id": "msft-10",
+      "ticker": "MSFT",
+      "kind": "FIGURE",
+      "question": "What was Microsoft Cloud revenue in the third quarter of fiscal 2026?",
+      "expected": [
+        { "accessionNo": "0001193125-26-191507", "sectionKey": "ITEM_2", "phrase": "Microsoft Cloud revenue increased 29% to $54.5 billion" }
+      ],
+      "notes": "10-Q MD&A highlights."
+    },
+    {
+      "id": "nvda-01",
+      "ticker": "NVDA",
+      "kind": "FIGURE",
+      "question": "What was NVIDIA's total revenue for fiscal 2026 and how much did it grow?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_7", "phrase": "Revenue $ 215,938 $ 130,497 Up 65%" }
+      ],
+      "notes": "Fiscal year summary table in the MD&A."
+    },
+    {
+      "id": "nvda-02",
+      "ticker": "NVDA",
+      "kind": "FIGURE",
+      "question": "By what percentage did NVIDIA's Data Center revenue grow in fiscal 2026?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_7", "phrase": "Data Center revenue for fiscal year 2026 was up 68% from a year ago" }
+      ]
+    },
+    {
+      "id": "nvda-03",
+      "ticker": "NVDA",
+      "kind": "FIGURE",
+      "question": "How many shares did NVIDIA repurchase in fiscal 2026 and at what total cost?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_7", "phrase": "we repurchased 282 million shares of our common stock for $40.4 billion" }
+      ]
+    },
+    {
+      "id": "nvda-04",
+      "ticker": "NVDA",
+      "kind": "FIGURE",
+      "question": "How many employees did NVIDIA have at the end of fiscal 2026 and how many worked in research and development?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_1", "phrase": "we had approximately 42,000 employees in 38 countries; 31,000 were engaged in research and development" }
+      ]
+    },
+    {
+      "id": "nvda-05",
+      "ticker": "NVDA",
+      "kind": "NARRATIVE",
+      "question": "Does NVIDIA manufacture its own chips, or how is its manufacturing organised?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_1", "phrase": "We utilize a fabless and contracting manufacturing strategy, whereby we employ and partner with key suppliers for all phases of the manufacturing process" }
+      ]
+    },
+    {
+      "id": "nvda-06",
+      "ticker": "NVDA",
+      "kind": "NARRATIVE",
+      "question": "How do export controls on AI chips affect NVIDIA's supply chain and its ability to serve demand?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_1A", "phrase": "Export controls have and could in the future disrupt our supply chain and distribution channels, negatively impacting our ability to serve demand" }
+      ]
+    },
+    {
+      "id": "nvda-07",
+      "ticker": "NVDA",
+      "kind": "NARRATIVE",
+      "question": "In which regions are NVIDIA's component manufacturing and final assembly concentrated, and what geopolitical risk does that create?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_1A", "phrase": "China, Hong Kong, Israel, Korea and Taiwan where the manufacture of our product components and final assembly of our products are concentrated" }
+      ]
+    },
+    {
+      "id": "nvda-08",
+      "ticker": "NVDA",
+      "kind": "FIGURE",
+      "question": "How concentrated was NVIDIA's fiscal 2026 revenue among its largest direct customers?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000021", "sectionKey": "ITEM_15", "phrase": "sales to one direct customer represented 22% of total revenue and sales to another direct customer represented 14% of total revenue" }
+      ],
+      "notes": "NVIDIA's Item 8 is a one-line cross-reference; the parser stores the consolidated financial statements and notes under ITEM_15."
+    },
+    {
+      "id": "nvda-09",
+      "ticker": "NVDA",
+      "kind": "FIGURE",
+      "question": "What was NVIDIA's Data Center revenue in the second quarter of fiscal 2027?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000075", "sectionKey": "ITEM_2", "phrase": "Data Center revenue was $89.0 billion, up 117% from a year ago and up 18% sequentially" }
+      ],
+      "notes": "10-Q MD&A."
+    },
+    {
+      "id": "nvda-10",
+      "ticker": "NVDA",
+      "kind": "NARRATIVE",
+      "question": "Has NVIDIA been able to sell H200 products to customers in China under the new U.S. licenses?",
+      "expected": [
+        { "accessionNo": "0001045810-26-000075", "sectionKey": "ITEM_2", "phrase": "ship small amounts of H200 products to specific China-based customers, but such sales were restricted by the PRC government" },
+        { "accessionNo": "0001045810-26-000075", "sectionKey": "ITEM_1A", "phrase": "Beginning in February 2026, the USG granted licenses that would allow us to ship small amounts of H200 products to specific China-based customers" }
+      ],
+      "notes": "The 10-Q MD&A and its risk factors both describe the restricted H200 shipments; either passage answers the question."
+    }
+  ]
+}

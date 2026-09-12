@@ -1,0 +1,26 @@
+# set -a && source .env && set +a && ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true -Drag.evaluation.min-hit-at-5=1.01
+# exit 1 (2026-09-12 17:54 SGT); proves the floor assertion is live. No snapshot left behind (rolled back).
+2026-09-12T17:53:22.399+08:00  INFO 61992 --- [StockRecommendationEngine] [           main] p.s.r.e.RetrievalEvaluationService       : Evaluating retrieval: set=v1, questions=30, window=10
+2026-09-12T17:53:30.453+08:00  INFO 61992 --- [StockRecommendationEngine] [           main] p.s.r.e.RetrievalEvaluationService       : Retrieval evaluation stored: id=15, hitAt1=0.300000, hitAt3=0.533333, hitAt5=0.600000, mrr=0.435833, misses=9
+RETRIEVAL_EVAL set=v1 questions=30 window=10 strategy=FILTERED_VECTOR hitAt1=0.300000 hitAt3=0.533333 hitAt5=0.600000 mrr=0.435833 floor=1.01
+RETRIEVAL_EVAL tickerHitAt5={AAPL=0.900000, MSFT=0.600000, NVDA=0.300000}
+RETRIEVAL_EVAL misses=[msft-07, msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07, nvda-09]
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 10.63 s <<< FAILURE! -- in project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests
+[ERROR] project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests.hitAt5StaysAtOrAboveTheConfiguredFloor -- Time elapsed: 8.305 s <<< FAILURE!
+java.lang.AssertionError: 
+[hit@5 0.600000 is below the floor 1.01 (rag.evaluation.min-hit-at-5); misses [msft-07, msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07, nvda-09]] 
+Expecting actual:
+  0.600000
+to be greater than or equal to:
+  1.01
+
+	at project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests.hitAt5StaysAtOrAboveTheConfiguredFloor(RetrievalEvaluationLiveTests.java:43)
+
+[ERROR] Failures: 
+[ERROR]   RetrievalEvaluationLiveTests.hitAt5StaysAtOrAboveTheConfiguredFloor:43 [hit@5 0.600000 is below the floor 1.01 (rag.evaluation.min-hit-at-5); misses [msft-07, msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07, nvda-09]] 
+Expecting actual:
+  0.600000
+to be greater than or equal to:
+  1.01
+
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0

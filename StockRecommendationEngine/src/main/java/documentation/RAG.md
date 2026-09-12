@@ -332,7 +332,9 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * An expected passage is `accessionNo`, `sectionKey`, and `phrase`: a verbatim 12 to 200 character excerpt of a chunk stored for that filing and section, using the same characters as the chunk (curly quotes, non-breaking spaces). Chunk IDs change on rebuild, so they are never referenced.
     * `RetrievalEvaluationSetLoader` (`rag.evaluation`) reads the resource and rejects duplicate ids, empty expectation lists, blank or out-of-range phrases, malformed tickers or accession numbers, and phrases shared by two questions, naming the question id.
     * `RetrievalEvaluationSetTests` (database-backed, read-only) proves every expectation is a substring of a stored chunk, case-insensitive with whitespace collapsed. Section keys follow the parser: NVIDIA's Item 8 is a one-line cross-reference, so its financial statement notes sit under ITEM_15; the AAPL 8-K Item 2.02 is stored as ITEM_2 and the MSFT 8-K Item 7.01 as ITEM_7_01.
-    * Nothing in the set reaches a model prompt; evaluation runs and metrics are a separate step.
+    * Nothing in the set reaches a model prompt; an evaluation run embeds each question once (the only external call) and never calls a chat model.
+    * Endpoints (integration token required, `Authorization: Bearer <INTEGRATION_ACCESS_TOKEN>`): `POST /api/rag/evaluate` runs every question through retrieval (latest filings only, `rag.evaluation.window` chunks, default 10) and stores a snapshot in `retrieval_evaluations`; `GET /api/rag/evaluate` returns the newest snapshot (404 before the first); `GET /api/rag/evaluate/{id}` returns one by id.
+    * A snapshot carries `hitAt1`, `hitAt3`, `hitAt5`, `mrr`, `tickerHitAt5`, per-question `results` (1-based rank of the first chunk matching any expected passage, null on a miss), and `misses` with the top three returned chunks or the retrieval error.
 
 * Filing Freshness
     * Purpose

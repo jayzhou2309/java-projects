@@ -71,6 +71,9 @@ rag:
     latest-filings-only: true
     # Requires a FilingReranker adapter before enabling.
     reranking-enabled: false
+  # Chunks retrieved per question when the bundled evaluation set is run (POST /api/rag/evaluate); 5 to 20.
+  evaluation:
+    window: 10
 
 # Opt-in single-owner integration. The configured account never comes from model arguments.
 integration:

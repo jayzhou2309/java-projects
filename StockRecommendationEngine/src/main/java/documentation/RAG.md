@@ -283,6 +283,29 @@
   PostgreSQL + pgvector
 
 
+* Retrieval Methods (overview, as of 2026-09-12)
+    * What retrieval is for
+        * Given a ticker and a question, return the few stored filing passages most likely to hold the answer. The recommendation loop searches with the user's question before the RAG specialist model runs and again on the specialist's own queries; the passages returned become the evidence the manager reasons over and cites, and the critic checks the answer against them. Retrieval quality therefore bounds recommendation quality.
+    * The eligibility pool (one SQL CTE shared by every method)
+        * Only the requested ticker; only filings whose ingestion status is EMBEDDED; by default only the latest stored filing of each type (10-K, 10-Q, 8-K), unless a date range is given; optional filing-type and section filters. Every method below draws candidates from exactly this pool, so combining them never widens what is searched.
+    * Method 1: vector similarity (since 2026-09-09)
+        * The question is embedded once with `text-embedding-3-small` (1536 dimensions). Each chunk's stored embedding is compared by cosine distance in pgvector (`<=>`), exact search over the pool, `candidate-count` 40 nearest chunks. Strong on paraphrase and narrative questions ("why did margins fall"), weak on exact tokens: an embedding blurs "215,938" or "OpenAI" into their surroundings.
+    * Method 2: keyword search (since 2026-09-12, RAG-2)
+        * PostgreSQL full-text search over a stored generated column `content_tsv = to_tsvector('english', content)` with a GIN index (migration V9). The question is turned into an OR query of its distinct alphanumeric tokens (stopwords dropped; numbers keep their inner commas and periods, so "64,377" matches only the phrase '64' followed by '377'), bound as a parameter to `to_tsquery`, never concatenated. Ranked by `ts_rank_cd`, `keyword-candidate-count` 40. Finds exact terms and figures; scores common words as much as rare ones, which is why it is fused rather than used alone.
+    * Method 3: figure search (since 2026-09-12, RAG-12)
+        * Runs only when the question carries a number that is not a lone year: an AND query of the question's numeric tokens over the same column, so a chunk must contain every number. Rewards the single chunk that states the figure ("Revenue $ 215,938") over neighbours that share the surrounding words. Off for narrative questions by construction.
+    * Combining them: weighted reciprocal rank fusion
+        * Each method yields a ranked list. A chunk's fused score is the sum, over the lists containing it, of weight / (k + rank), with k = 60 and weights vector 1.0, keyword 0.5, figure 1.0 (chosen by measurement, see Fusion tuning). Rank-based fusion needs no calibration between cosine similarity and text-search rank; the weights and k are configuration. Ties break by vector similarity, then chunk id. Exact decimal arithmetic makes the order deterministic.
+        * Every returned chunk still reports its cosine similarity to the question, whichever method found it, so the recommendation loop's input-coverage confidence keeps its meaning. If the keyword method fails, retrieval degrades to vector-only and says so in `retrievalStrategy` (FILTERED_VECTOR instead of HYBRID_RRF); it never fails because of the keyword path.
+    * After fusion
+        * Diversify: near-duplicate chunks from the same filing and section (large text overlap) are dropped so the top-k is not five copies of one passage. Then the requested top-k (5 by default; 3 under the lean profile) is returned with citation metadata. A reranker hook (`FilingReranker`) can re-score the fused, diversified candidates with a model; none is installed (RAG-1).
+    * Per-request control
+        * `hybrid` on `POST /api/rag/retrieve` and `?hybrid=` on `POST /api/rag/evaluate` override the property default for one call, which is how the two strategies are compared without a restart.
+    * How it is measured
+        * The 30-question evaluation set (Retrieval Evaluation below) records hit@1/3/5 and MRR per stored snapshot. Vector-only: hit@5 0.600, MRR 0.436 (snapshot 35). Hybrid, equal weights: 0.633, 0.437 (snapshot 34). Hybrid with the tuned weights: 0.633, MRR 0.463, hit@1 0.333 (snapshot 51, the current default). The set contains no figure-bearing questions, so the figure method is evidenced only by live queries until set v2 (RAG-11). NVDA remains the weak ticker (hit@5 0.3) for structural reasons recorded in RAG-7 and RAG-1.
+    * What is deliberately not done
+        * No approximate vector index (exact search over a few hundred chunks per ticker is fast); no model reranker (RAG-1); no query rewriting or expansion; no cross-ticker search; passages are cut only at the model boundary (`recommendation.model-passage-chars`), never in the store.
+
 * Retrieval Pipeline
   User Query + Ticker + Optional Filters
   ↓

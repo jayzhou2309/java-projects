@@ -27,6 +27,13 @@ public class FilingRetrievalRepository {
     private static final Pattern KEYWORD_TOKEN = Pattern.compile(
             "[\\p{L}\\p{Nd}]+(?:(?<=\\p{Nd})[.,](?=\\p{Nd})\\p{Nd}+)*");
 
+    /** A {@link #KEYWORD_TOKEN} made only of digits and their inner separators: a figure such as 215,938 or 40.4, or a year. */
+    private static final Pattern NUMERIC_TOKEN = Pattern.compile("\\p{Nd}+(?:[.,]\\p{Nd}+)*");
+
+    /** A four-digit token in this inclusive range is a year, which matches most chunks and so never makes a figure query alone. */
+    private static final int FIRST_YEAR = 1900;
+    private static final int LAST_YEAR = 2100;
+
     /**
      * PostgreSQL's english text-search stopwords (tsearch_data/english.stop), so a query made only of them
      * yields an empty term string and the caller skips the keyword path instead of sending a tsquery that
@@ -99,7 +106,32 @@ public class FilingRetrievalRepository {
             FilingRetrievalFilter retrievalFilter,
             int candidateCount
     ) {
-        String terms = keywordTerms(query);
+        return findTextSearchChunks(keywordTerms(query), queryEmbedding, retrievalFilter, candidateCount);
+    }
+
+    /**
+     * The figure leg: full-text search over the same eligible pool for chunks matching the AND-join of the
+     * query's numeric tokens (see {@link #figureTerms}), ordered and scored exactly as {@link #findKeywordChunks}
+     * orders and scores its rows. A chunk must contain every figure to appear, so the leg singles out the
+     * passage holding a rare number that the OR-ranked keyword leg buries under common words. An empty term
+     * string (no figure, or years only) means no figure search: the method returns an empty list without
+     * touching the database.
+     */
+    public List<RetrievedFilingChunk> findFigureChunks(
+            String query,
+            float[] queryEmbedding,
+            FilingRetrievalFilter retrievalFilter,
+            int candidateCount
+    ) {
+        return findTextSearchChunks(figureTerms(query), queryEmbedding, retrievalFilter, candidateCount);
+    }
+
+    private List<RetrievedFilingChunk> findTextSearchChunks(
+            String terms,
+            float[] queryEmbedding,
+            FilingRetrievalFilter retrievalFilter,
+            int candidateCount
+    ) {
         String serializedEmbedding = serializeEmbedding(queryEmbedding);
         if (terms.isEmpty()) {
             return List.of();
@@ -144,9 +176,54 @@ public class FilingRetrievalRepository {
         }
         StringJoiner termJoiner = new StringJoiner(" | ");
         for (String token : tokens) {
-            termJoiner.add("'" + token.replace("'", "''") + "'");
+            termJoiner.add(quoteTerm(token));
         }
         return termJoiner.toString();
+    }
+
+    /**
+     * Builds the parameter value for the figure leg's {@code to_tsquery('english', :terms)}: the numeric tokens
+     * among those {@link #keywordTerms} keeps (digits with commas and periods kept between digits, length 2 or
+     * more, distinct, in order of first appearance; {@code 65%} yields {@code 65} and {@code $40.4} yields
+     * {@code 40.4}), quoted the same way and joined with {@code " & "}, so a chunk must contain every figure to
+     * match. A four-digit token from 1900 to 2100 is a year: years ride along when another figure is present but
+     * never make a figure query on their own, since a year matches most chunks. Returns an empty string when no
+     * figure remains, which callers treat as "no figure search".
+     */
+    public static String figureTerms(String query) {
+        if (query == null || query.isBlank()) {
+            return "";
+        }
+        Set<String> tokens = new LinkedHashSet<>();
+        boolean hasFigureBesidesYears = false;
+        Matcher matcher = KEYWORD_TOKEN.matcher(query.toLowerCase(Locale.ROOT));
+        while (matcher.find()) {
+            String token = matcher.group();
+            if (token.length() >= 2 && NUMERIC_TOKEN.matcher(token).matches()) {
+                tokens.add(token);
+                hasFigureBesidesYears |= !isYear(token);
+            }
+        }
+        if (!hasFigureBesidesYears) {
+            return "";
+        }
+        StringJoiner termJoiner = new StringJoiner(" & ");
+        for (String token : tokens) {
+            termJoiner.add(quoteTerm(token));
+        }
+        return termJoiner.toString();
+    }
+
+    private static boolean isYear(String token) {
+        if (token.length() != 4 || !token.chars().allMatch(Character::isDigit)) {
+            return false;
+        }
+        int value = Integer.parseInt(token);
+        return value >= FIRST_YEAR && value <= LAST_YEAR;
+    }
+
+    private static String quoteTerm(String token) {
+        return "'" + token.replace("'", "''") + "'";
     }
 
     /**

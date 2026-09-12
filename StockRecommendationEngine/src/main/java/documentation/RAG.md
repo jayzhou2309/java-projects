@@ -120,7 +120,7 @@
             * Resolve topK and latest-filings policy.
             * Embed the query using FilingEmbeddingService.embed(query).
             * Retrieve the closest eligible chunks from FilingRetrievalRepository.
-            * Resolve hybrid retrieval: the request's `hybrid` field when present, else `rag.retrieval.hybrid-enabled`. When on and `keywordTerms(query)` is non-empty, also call findKeywordChunks (keyword-candidate-count rows) and fuse the two rankings by reciprocal rank fusion: fused score = sum over the lists containing the chunk of 1 / (rrf-k + rank), rank 1-based per list; order by fused score descending, then similarityScore descending, then chunk id; `candidatesRetrieved` is the fused set size.
+            * Resolve hybrid retrieval: the request's `hybrid` field when present, else `rag.retrieval.hybrid-enabled`. When on and `keywordTerms(query)` is non-empty, also call findKeywordChunks (keyword-candidate-count rows) and fuse the rankings (a figure leg joins them for numeric queries, Hybrid Retrieval below) by weighted reciprocal rank fusion: fused score = sum over the legs containing the chunk of weight / (rrf-k + rank), rank 1-based per leg, weights `rrf-vector-weight` 1.0, `rrf-keyword-weight` 0.5, `rrf-figure-weight` 1.0 since the 2026-09-12 fusion tuning; order by fused score descending, then similarityScore descending, then chunk id; `candidatesRetrieved` is the fused set size.
             * A stopword-only query skips the keyword search (repository not called); a keyword-search exception is logged at WARN with its class name and the vector candidates are used alone; neither fails the retrieval.
             * Keep vector order when reranking is disabled; diversify and cut to topK after fusion exactly as without it.
             * Invoke FilingReranker when enabled and a provider adapter is configured.
@@ -174,11 +174,15 @@
         * hybrid-enabled: true (keyword plus vector fusion; on by default since 2026-09-12 after the comparison in Hybrid Retrieval below, a request's `hybrid` field overrides per call).
         * keyword-candidate-count: 40 (keyword rows fetched per query when the hybrid path runs).
         * rrf-k: 60 (the k in reciprocal rank fusion's 1 / (k + rank)).
+        * rrf-vector-weight: 1.0 (weight of the vector ranking in reciprocal rank fusion: a chunk at rank r in it scores weight / (k + r)).
+        * rrf-keyword-weight: 0.5 (weight of the keyword ranking; 0.5 since the 2026-09-12 fusion tuning, snapshot 51, Fusion tuning below).
+        * rrf-figure-weight: 1.0 (weight of the figure ranking, chunks holding every number in the query; 0 leaves that leg off; 1.0 since the 2026-09-12 fusion tuning, snapshot 51: the leg runs only for queries that carry a figure, which none of the evaluation set's questions do).
     * Validation
         * default-top-k must be between 1 and 20.
         * candidate-count must be between 20 and 200.
         * keyword-candidate-count must be between 20 and 200.
         * rrf-k must be between 1 and 1000.
+        * rrf-vector-weight, rrf-keyword-weight, and rrf-figure-weight must be between 0 and 10.
 * FilingReranker
     * Purpose
         * Define the extension point for a future model-based reranker.
@@ -251,7 +255,7 @@
     * Baseline limitations
         * Results are nearest passages, not a guarantee the query is answerable.
         * Overlapping chunks may still appear together; contextual deduplication is deferred.
-        * Model reranking and answer generation remain separate next steps; hybrid keyword retrieval is in place (Hybrid Retrieval below) and its fusion weights are the open tuning item (RAG-12).
+        * Model reranking and answer generation remain separate next steps; hybrid keyword retrieval is in place with tuned weights and a figure leg (Hybrid Retrieval and Fusion tuning below, RAG-12 done).
 
 * Ingestion Pipeline
   Ticker
@@ -279,6 +283,29 @@
   PostgreSQL + pgvector
 
 
+* Retrieval Methods (overview, as of 2026-09-12)
+    * What retrieval is for
+        * Given a ticker and a question, return the few stored filing passages most likely to hold the answer. The recommendation loop searches with the user's question before the RAG specialist model runs and again on the specialist's own queries; the passages returned become the evidence the manager reasons over and cites, and the critic checks the answer against them. Retrieval quality therefore bounds recommendation quality.
+    * The eligibility pool (one SQL CTE shared by every method)
+        * Only the requested ticker; only filings whose ingestion status is EMBEDDED; by default only the latest stored filing of each type (10-K, 10-Q, 8-K), unless a date range is given; optional filing-type and section filters. Every method below draws candidates from exactly this pool, so combining them never widens what is searched.
+    * Method 1: vector similarity (since 2026-09-09)
+        * The question is embedded once with `text-embedding-3-small` (1536 dimensions). Each chunk's stored embedding is compared by cosine distance in pgvector (`<=>`), exact search over the pool, `candidate-count` 40 nearest chunks. Strong on paraphrase and narrative questions ("why did margins fall"), weak on exact tokens: an embedding blurs "215,938" or "OpenAI" into their surroundings.
+    * Method 2: keyword search (since 2026-09-12, RAG-2)
+        * PostgreSQL full-text search over a stored generated column `content_tsv = to_tsvector('english', content)` with a GIN index (migration V9). The question is turned into an OR query of its distinct alphanumeric tokens (stopwords dropped; numbers keep their inner commas and periods, so "64,377" matches only the phrase '64' followed by '377'), bound as a parameter to `to_tsquery`, never concatenated. Ranked by `ts_rank_cd`, `keyword-candidate-count` 40. Finds exact terms and figures; scores common words as much as rare ones, which is why it is fused rather than used alone.
+    * Method 3: figure search (since 2026-09-12, RAG-12)
+        * Runs only when the question carries a number that is not a lone year: an AND query of the question's numeric tokens over the same column, so a chunk must contain every number. Rewards the single chunk that states the figure ("Revenue $ 215,938") over neighbours that share the surrounding words. Off for narrative questions by construction.
+    * Combining them: weighted reciprocal rank fusion
+        * Each method yields a ranked list. A chunk's fused score is the sum, over the lists containing it, of weight / (k + rank), with k = 60 and weights vector 1.0, keyword 0.5, figure 1.0 (chosen by measurement, see Fusion tuning). Rank-based fusion needs no calibration between cosine similarity and text-search rank; the weights and k are configuration. Ties break by vector similarity, then chunk id. Exact decimal arithmetic makes the order deterministic.
+        * Every returned chunk still reports its cosine similarity to the question, whichever method found it, so the recommendation loop's input-coverage confidence keeps its meaning. If the keyword method fails, retrieval degrades to vector-only and says so in `retrievalStrategy` (FILTERED_VECTOR instead of HYBRID_RRF); it never fails because of the keyword path.
+    * After fusion
+        * Diversify: near-duplicate chunks from the same filing and section (large text overlap) are dropped so the top-k is not five copies of one passage. Then the requested top-k (5 by default; 3 under the lean profile) is returned with citation metadata. A reranker hook (`FilingReranker`) can re-score the fused, diversified candidates with a model; none is installed (RAG-1).
+    * Per-request control
+        * `hybrid` on `POST /api/rag/retrieve` and `?hybrid=` on `POST /api/rag/evaluate` override the property default for one call, which is how the two strategies are compared without a restart.
+    * How it is measured
+        * The 30-question evaluation set (Retrieval Evaluation below) records hit@1/3/5 and MRR per stored snapshot. Vector-only: hit@5 0.600, MRR 0.436 (snapshot 35). Hybrid, equal weights: 0.633, 0.437 (snapshot 34). Hybrid with the tuned weights: 0.633, MRR 0.463, hit@1 0.333 (snapshot 51, the current default). The set contains no figure-bearing questions, so the figure method is evidenced only by live queries until set v2 (RAG-11). NVDA remains the weak ticker (hit@5 0.3) for structural reasons recorded in RAG-7 and RAG-1.
+    * What is deliberately not done
+        * No approximate vector index (exact search over a few hundred chunks per ticker is fast); no model reranker (RAG-1); no query rewriting or expansion; no cross-ticker search; passages are cut only at the model boundary (`recommendation.model-passage-chars`), never in the store.
+
 * Retrieval Pipeline
   User Query + Ticker + Optional Filters
   ↓
@@ -292,9 +319,9 @@
   ↓
   Filter Eligible Filings and Chunks (one CTE shared by both legs)
   ↓
-  Exact pgvector Cosine Similarity Search ∥ Full-text Keyword Search (content_tsv, GIN; hybrid-enabled, default true)
+  Exact pgvector Cosine Similarity Search ∥ Full-text Keyword Search (content_tsv, GIN; hybrid-enabled, default true) ∥ Figure Search (AND of the query's numbers; only when the query carries one)
   ↓
-  Reciprocal Rank Fusion (k = 60), then Diversify
+  Weighted Reciprocal Rank Fusion (k = 60; weights vector 1.0, keyword 0.5, figure 1.0), then Diversify
   ↓
   Top Candidate Filing Chunks
   ↓
@@ -337,7 +364,7 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
 
 * Retrieval Design Decisions
     * See [Retrieval Strategy Research](Retrieval_Strategy_Research.md) for source research and alternatives.
-    * Current baseline: filtered exact vector search fused with full-text keyword search by reciprocal rank (since 2026-09-12; Hybrid Retrieval below).
+    * Current baseline: filtered exact vector search fused with full-text keyword search by weighted reciprocal rank (since 2026-09-12; Hybrid Retrieval below), the keyword leg at 0.5 and a figure leg at 1.0 for queries that carry a number (Fusion tuning below).
     * Reranker provider/model and default filing policy were raised for user input.
     * In the absence of a different choice, use the recommended configurable defaults above.
 
@@ -423,7 +450,8 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
         * Keyword terms: `FilingRetrievalRepository.keywordTerms(query)` lowercases the query and keeps the distinct alphanumeric tokens of length 2 or more (commas and periods inside numbers kept, so `215,938` and `40.4` stay whole), drops a fixed english stopword list, quotes each token, and OR-joins them (`'fiscal' | '2026' | 'revenue' | '215,938'`); the string is a bound parameter of `to_tsquery('english', :terms)`, never concatenated into SQL. An empty term string (stopwords or punctuation only) means no keyword search.
         * Generated column: migration V9 adds `sec_filing_chunks.content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED` with the GIN index `idx_sec_filing_chunks_content_tsv`; PostgreSQL keeps it in step with `content`, so rebuilds need nothing extra.
         * Candidates: `findKeywordChunks` draws from the same eligibility CTE as the vector search (same ticker, EMBEDDED filings, latest-per-type policy, type, date, and section filters), matches `content_tsv @@ to_tsquery`, orders by `ts_rank_cd` then cosine similarity then chunk id, and returns `keyword-candidate-count` rows (default 40), each carrying the cosine similarity to the query embedding as `similarityScore`, so the score keeps one meaning whichever leg found the chunk.
-        * Fusion: reciprocal rank fusion with `rrf-k` (default 60): fused score = sum over the lists that contain the chunk of 1 / (k + rank), rank 1-based within each list, scores kept as exact decimals so equal rank pairs tie exactly; ties break by vector similarity descending, then chunk id ascending; a chunk repeated within one list counts once at its first position without shifting later ranks. The diversify step and the topK cut apply to the fused list exactly as they did to the vector list; a reranker, when one exists, receives the fused, diversified candidates (RAG-1).
+        * Fusion: weighted reciprocal rank fusion with `rrf-k` (default 60): fused score = sum over the legs that contain the chunk of weight_leg / (k + rank), rank 1-based within each leg, with `rrf-vector-weight` 1.0, `rrf-keyword-weight` 0.5, and `rrf-figure-weight` 1.0 by default since the 2026-09-12 fusion tuning (snapshot 51; the RAG-2 measurement used 1.0 / 1.0 with no figure leg), scores kept as exact decimals so equal rank pairs tie exactly; ties break by vector similarity descending, then chunk id ascending; a chunk repeated within one list counts once at its first position without shifting later ranks. The diversify step and the topK cut apply to the fused list exactly as they did to the vector list; a reranker, when one exists, receives the fused, diversified candidates (RAG-1).
+        * Figure leg (Follow_Ups RAG-12; plan `plans/2026-09-12-fusion-tuning.md`, Milestone 1): a third ranking for figure-like queries. `FilingRetrievalRepository.figureTerms(query)` keeps only the numeric tokens of `keywordTerms` (`65%` gives `65`, `$40.4` gives `40.4`) and AND-joins them (`'2026' & '215,938' & '65'`), so `findFigureChunks` returns, from the same eligibility pool and with the same `ts_rank_cd` order and cosine similarity per row, only the chunks that contain every figure; a four-digit token from 1900 to 2100 is a year and never makes a figure query alone (`risks in fiscal 2025` gives no figure leg), though it rides along beside another figure. The leg runs only when hybrid resolved on, `rrf-figure-weight` is above 0, and the figure string is non-empty; fusion is then weighted: fused score = sum over the legs containing the chunk of weight / (k + rank) with `rrf-vector-weight`, `rrf-keyword-weight`, and `rrf-figure-weight`, the same exact decimals and tie-breaks as before, and with equal weights and no figure leg (1.0, 1.0, 0.0) the fused order is exactly the RAG-2 two-leg order (snapshot 48 reproduces snapshot 34). A figure-leg exception is logged at WARN with the exception class and fusion proceeds over the vector and keyword legs; the strategy stays HYBRID_RRF whether or not the figure leg ran. The weights were chosen in Milestone 2 (Fusion tuning below).
         * Fallback: with hybrid off, an empty term string, or a keyword-path exception (logged at WARN with the exception class) the vector candidates are used alone and the strategy is FILTERED_VECTOR; retrieval never fails because of the keyword path. When the keyword search ran (an empty keyword result included) the strategy is HYBRID_RRF, or HYBRID_RRF_RERANKED with a reranker.
         * Override: `RetrievalRequest.hybrid` (true forces fusion, false forces vector only, absent follows `rag.retrieval.hybrid-enabled`) and `POST /api/rag/evaluate?hybrid=` for a whole evaluation run, so both strategies can be compared without a restart.
         * Token effect: none. The keyword leg is a PostgreSQL query; a hybrid retrieval still embeds the query exactly once, and no chat model is involved anywhere in retrieval or evaluation.
@@ -461,7 +489,7 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * Default decision
         * Rule (plan, Milestone 3): enable `rag.retrieval.hybrid-enabled` by default only if hit@5 improves and no ticker's hit@5 decreases between the vector-only and the hybrid snapshot; otherwise keep it off.
         * Numbers: hit@5 0.600000 (35) to 0.633333 (34) improves; per-ticker hit@5 AAPL 0.900000 to 0.900000, MSFT 0.600000 to 0.700000, NVDA 0.300000 to 0.300000, none lower. Both conditions hold, so `hybrid-enabled` is true by default since 2026-09-12 (application.yaml and `FilingRetrievalProperties` agree; `FilingRetrievalServiceTests` asserts the property default). hit@1, hit@3 unchanged; MRR 0.435833 to 0.436667.
-        * What the rule does not see: msft-04 and msft-01 moved out of, or further from, the top 5 (table above). The rule is ticker-level by design; the question-level regressions are recorded as RAG-12 (fusion tuning), and the next comparison should also require that no FIGURE question drops out of the top 5.
+        * What the rule does not see: msft-04 and msft-01 moved out of, or further from, the top 5 (table above). The rule is ticker-level by design; the question-level regressions were recorded as RAG-12 (fusion tuning), and the Fusion tuning rule below adds the requirement that no FIGURE question drops out of the top 5.
         * Effect on consumers: the RAG specialist's searchFilings tool and the filings prefetch in recommendation runs now retrieve hybrid by default (Agent_Harness.md); a cited passage found by the keyword leg can carry a lower vector similarity, so the raw input-coverage confidence may dip for the same question. Nothing in the harness code changed.
     * Floor decision
         * Rule: `rag.evaluation.min-hit-at-5` = the new hit@5 minus 0.1, rounded down to a multiple of 0.05, never lower than the current floor. 0.633333 minus 0.1 = 0.533333, rounded down to 0.50, equal to the current 0.50, so the floor stays at 0.50 (the value is unchanged; its derivation now cites snapshot 34).
@@ -471,6 +499,72 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
         * The OR-joined keyword leg also scores common query words as much as the rare figure. For the query "fiscal 2026 revenue 215,938 up 65%" the keyword leg alone (`ts_rank_cd` over the latest NVDA filings, checked with psql on 2026-09-12) ranks the chunk with the "Revenue $ 215,938 $ 130,497 Up 65%" row (802) sixth, behind five chunks that contain "revenue", "fiscal", and "2026" but not the figure; fusion cannot lift what neither leg ranks first. Weighting the keyword leg, a smaller k for digit-bearing queries, or AND-ing numeric tokens are the candidates (RAG-12), each to be judged by a fresh pair of snapshots.
     * Evidence
         * `documentation/live-runs/2026-09-12-hybrid-retrieval/`: `vector-snapshot-35.json` and `hybrid-snapshot-34.json` (row_to_json of the stored snapshots), `live-test-pass.log` (floor test with the final default, exit 0), `run.log` (the psql queries, the rank diff, the decision, the build).
+    * Fusion tuning (Follow_Ups RAG-12; plan `plans/2026-09-12-fusion-tuning.md`, Milestone 2; measured 2026-09-12)
+        * Method: seven configurations of (`rrf-k`, `rrf-keyword-weight`, `rrf-figure-weight`; `rrf-vector-weight` 1.0 throughout), each a fresh application start with the three properties overridden through environment variables and one `POST /api/rag/evaluate` (no `hybrid` parameter, so every request followed `hybrid-enabled` true; `properties.hybrid` null, `properties.hybridEnabled` true), 30 embeddings per run, no chat model. The first row reproduces snapshot 34 and proves the harness. Each snapshot's `properties` carry the k and the three weights it was run with (`GET /api/rag/evaluate/{id}`).
+        * Finding before the rule: none of the set's 30 questions carries a figure (they name years such as "fiscal 2026", which `figureTerms` treats as a year alone), so the figure leg was skipped for all 30 questions in every run (`Skipping figure search: reason=noFigureTerms`, 30 per run log) and `rrf-figure-weight` cannot move any set metric: snapshots 48, 49, and 50 are identical, and so are 51 and 53. The keyword weight and k are the only levers the set can see; the figure leg is judged on the NVDA figure query below.
+    * Grid (set v1, 30 questions, window 10, candidateCount 40, keywordCandidateCount 40, reranking off, latest filings only; references 35 and 34 from the RAG-2 comparison above)
+
+| Configuration (k / vector / keyword / figure) | Snapshot | hit@1 | hit@3 | hit@5 | MRR | Per-ticker hit@5 (AAPL / MSFT / NVDA) | FIGURE questions in the top 5 (of 16) | Misses (no hit in the window) |
+|---|---|---|---|---|---|---|---|---|
+| reference: vector only | 35 | 0.300000 | 0.533333 | 0.600000 | 0.435833 | 0.9 / 0.6 / 0.3 | 8: aapl-01, aapl-02, aapl-06, aapl-07, msft-02, msft-04, msft-10, nvda-08 | 9 |
+| reference: 60 / 1.0 / 1.0 / off (RAG-2 hybrid) | 34 | 0.300000 | 0.533333 | 0.633333 | 0.436667 | 0.9 / 0.7 / 0.3 | 7: as 35 without msft-04 | 7 |
+| 60 / 1.0 / 1.0 / 0.0 (current defaults, harness check) | 48 | 0.300000 | 0.533333 | 0.633333 | 0.436667 | 0.9 / 0.7 / 0.3 | 7 | 7: msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07 |
+| 60 / 1.0 / 1.0 / 1.0 | 49 | 0.300000 | 0.533333 | 0.633333 | 0.436667 | 0.9 / 0.7 / 0.3 | 7 | 7 (as 48) |
+| 60 / 1.0 / 1.0 / 2.0 | 50 | 0.300000 | 0.533333 | 0.633333 | 0.436667 | 0.9 / 0.7 / 0.3 | 7 | 7 (as 48) |
+| 60 / 1.0 / 0.5 / 1.0 | 51 | 0.333333 | 0.533333 | 0.633333 | 0.463373 | 0.9 / 0.7 / 0.3 | 8: aapl-01, aapl-02, aapl-06, aapl-07, msft-02, msft-04, msft-10, nvda-08 | 7: msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-07, nvda-09 |
+| 30 / 1.0 / 1.0 / 1.0 | 52 | 0.300000 | 0.533333 | 0.633333 | 0.434524 | 0.9 / 0.7 / 0.3 | 7 | 8: aapl-09, msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07 |
+| 60 / 1.0 / 0.5 / 2.0 | 53 | 0.333333 | 0.533333 | 0.633333 | 0.463373 | 0.9 / 0.7 / 0.3 | 8 (as 51) | 7 (as 51) |
+| 60 / 1.0 / 0.75 / 1.0 (added: 0.5 and 1.0 swap msft-04 and msft-07 across the top-5 line, so a middle value might keep both) | 54 | 0.300000 | 0.566667 | 0.600000 | 0.432910 | 0.9 / 0.6 / 0.3 | 7 | 7 (as 48) |
+
+    * Rule (supersedes the RAG-2 flip rule, which was ticker-level only): choose the highest hit@5 configuration such that, against both snapshot 35 and snapshot 34, (a) no ticker's hit@5 decreases, (b) no FIGURE question that was in the top 5 under either snapshot leaves the top 5 (the union is the eight questions listed for 35), and (c) hit@5 is at least 0.633333; ties on hit@5 break by MRR, then by the smaller change from the current defaults; if nothing qualifies the defaults stay.
+    * Rule applied row by row
+
+| Snapshot | (a) tickers vs 35 and 34 | (b) FIGURE top 5 kept | (c) hit@5 ≥ 0.633333 | Result |
+|---|---|---|---|---|
+| 48 (60 / 1.0 / 1.0 / 0.0) | holds | fails: msft-04 rank 8 (rank 1 under 35) | holds | out |
+| 49 (60 / 1.0 / 1.0 / 1.0) | holds | fails: msft-04 rank 8 | holds | out |
+| 50 (60 / 1.0 / 1.0 / 2.0) | holds | fails: msft-04 rank 8 | holds | out |
+| 51 (60 / 1.0 / 0.5 / 1.0) | holds: 0.9 / 0.7 / 0.3 against 0.9 / 0.6 / 0.3 and 0.9 / 0.7 / 0.3 | holds: aapl-01 1, aapl-02 3, aapl-06 4, aapl-07 1, msft-02 2, msft-04 4, msft-10 1, nvda-08 5 | holds: 0.633333 | qualifies |
+| 52 (30 / 1.0 / 1.0 / 1.0) | holds | fails: msft-04 rank 7 | holds | out |
+| 53 (60 / 1.0 / 0.5 / 2.0) | holds | holds (the same ranking as 51) | holds | qualifies; ties 51 on hit@5 and MRR, loses the tie-break (figure weight 2.0 is the larger change from 0.0) |
+| 54 (60 / 1.0 / 0.75 / 1.0) | fails: MSFT 0.6 against 0.7 under 34 | fails: msft-04 rank 7 | fails: 0.600000 | out |
+
+        * Chosen: snapshot 51, `rrf-k` 60, `rrf-vector-weight` 1.0, `rrf-keyword-weight` 0.5, `rrf-figure-weight` 1.0, now the defaults in application.yaml and `FilingRetrievalProperties` (`FilingRetrievalServiceTests.measuredDefaultsHalveTheKeywordLegAndRunTheFigureLegForNumericQueries` asserts them; the equal-leg fusion tests pin 1.0 / 1.0 / 0.0 explicitly). hit@5 is unchanged at 0.633333; hit@1 0.300000 to 0.333333 and MRR 0.436667 to 0.463373 against 34.
+        * Why the keyword weight, and why 0.5: with equal legs a keyword rank-1 neighbour that also sits in the vector top 40 outscores the vector rank-1 chunk (1/61 + 1/(60 + r) against 1/61 alone); at 0.5 the vector rank decides unless the keyword leg agrees strongly, which returns the vector-only order for the MSFT figure questions (msft-04, msft-10, msft-02, msft-01 all back at their snapshot 35 ranks) while keeping msft-05 and msft-06 in the top 5. 0.75 is worse than both ends (54: msft-04 rank 7 and msft-07 rank 6, MSFT 0.6); k 30 sharpens both legs equally and loses aapl-09 from the window (52).
+    * Per-question rank changes, winner 51 against 35 (vector only; the other 23 questions kept rank and matched chunk)
+
+| Question | Kind | Rank 35 | Rank 51 | Chunk 35 → 51 |
+|---|---|---|---|---|
+| msft-04 (employee count and U.S. split) | FIGURE | 1 | 4 | 467 → 466 (the expected sentence sits in both overlapping chunks) |
+| msft-10 (Q3 fiscal 2026 Microsoft Cloud revenue) | FIGURE | 2 | 1 | 637 |
+| msft-03 (Microsoft Cloud gross margin decline) | NARRATIVE | 3 | 2 | 517 |
+| msft-05 (three reportable segments) | NARRATIVE | 6 | 3 | 460 (into the top 5) |
+| msft-06 (power and energy constraints) | NARRATIVE | 2 | 1 | 489 |
+| msft-07 (2030 sustainability goals) | NARRATIVE | miss | 7 | 495 (into the window) |
+| nvda-05 (fabless manufacturing) | NARRATIVE | miss | 10 | 749 (into the window) |
+
+    * Per-question rank changes, winner 51 against 34 (current hybrid; the other 20 questions kept rank and matched chunk)
+
+| Question | Kind | Rank 34 | Rank 51 | Chunk 34 → 51 |
+|---|---|---|---|---|
+| msft-04 (employee count and U.S. split) | FIGURE | 8 | 4 | 466 (back into the top 5; MSFT stays 0.7 because msft-07 leaves as msft-04 enters) |
+| msft-10 (Q3 fiscal 2026 Microsoft Cloud revenue) | FIGURE | 5 | 1 | 637 |
+| msft-02 (commercial remaining performance obligation) | FIGURE | 3 | 2 | 514 |
+| msft-01 (Microsoft Cloud revenue growth) | FIGURE | 10 | 6 | 514 (closer, still outside the top 5) |
+| aapl-09 (Q3 fiscal 2026 buyback) | FIGURE | 10 | 8 | 280 |
+| aapl-06 (total deferred revenue) | FIGURE | 3 | 4 | 236 (still a hit@5) |
+| msft-05 (three reportable segments) | NARRATIVE | 2 | 3 | 460 |
+| msft-07 (2030 sustainability goals) | NARRATIVE | 4 | 7 | 495 (out of the top 5: the cost of the change; RAG-11's alternative Item 1 expectation would cover it) |
+| nvda-05 (fabless manufacturing) | NARRATIVE | miss | 10 | 749 |
+| nvda-09 (Q2 fiscal 2027 Data Center revenue) | FIGURE | 8 | miss | 879 → none in the window (was never a hit@5) |
+
+        * nvda-01 (fiscal 2026 revenue "215,938") is a miss under 35, 34, and 51 alike: the question text carries no figure, so the figure leg does not run for it, and the expected row chunk (802) is not in the window; the adjacent segment-table chunk 805 with the same totals is rank 3 under 51 (rank 1 under 35, outside the top 3 under 34), which is RAG-11's alternative expectation.
+        * The figure leg on the NVDA figure query, checked against the running application with the new defaults on 2026-09-12 (`POST /api/rag/retrieve` `{"ticker":"NVDA","query":"fiscal 2026 revenue 215,938 up 65%","topK":5}`, no `hybrid` field): HYBRID_RRF, 53 fused candidates, figure leg 2 candidates (the only two eligible chunks containing 215,938 and 65), top 5 chunks 802, 805, 807, 882, 880; the "Revenue $ 215,938 $ 130,497 Up 65%" chunk 802 is rank 1 (rank 3 under the RAG-2 defaults: 806, 880, 802, 807, 882). msft-04's question text (`{"ticker":"MSFT","query":"How many people did Microsoft employ at the end of fiscal 2026, and how were they split between the U.S. and other countries?","topK":5}`) returns chunk 466 at rank 4 (top 5: 514, 573, 518, 466, 643), as snapshot 51 records.
+    * Floor decision
+        * Rule unchanged: winner's hit@5 minus 0.1, rounded down to a multiple of 0.05, never lower than the current 0.50. 0.633333 minus 0.1 = 0.533333, rounded down to 0.50, not higher than the current 0.50, so `rag.evaluation.min-hit-at-5` stays 0.50 and its comment is unchanged.
+        * Verified 2026-09-12 with the final defaults: `./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true` exit 0 (`live-test-pass.log`), the run following the new properties (weights 1.0 / 0.5 / 1.0, HYBRID_RRF, hit@5 0.633333, MRR 0.463373); the transaction rolled back.
+    * Evidence
+        * `documentation/live-runs/2026-09-12-fusion-tuning/`: `snapshot-<id>-<configuration>.json` for 48 to 54 (row_to_json of the stored rows), `rule-table.txt` (the metrics, the rule per row, and the per-question ranks of 35, 34, and 48 to 54 side by side), `retrieve-nvda-figure-top5.json`, `retrieve-nvda-figure-top10.json`, `retrieve-msft-04-top5.json` (the checks above), `live-test-pass.log`, `run.log` (each start command's overrides, the snapshot ids, the decision, the builds). Snapshot ids 36 to 47 were consumed by rolled-back live-test transactions and are not stored.
 
 * Filing Freshness
     * Purpose
@@ -566,3 +660,8 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * Measured on set v1 against the same store: vector-only snapshot 35 hit@5 0.600000, MRR 0.435833, 9 misses; hybrid snapshot 34 hit@5 0.633333, MRR 0.436667, 7 misses; per-ticker hit@5 AAPL 0.9 to 0.9, MSFT 0.6 to 0.7, NVDA 0.3 to 0.3. msft-07 became a hit@5 and nvda-09 a hit within the window; msft-04 fell from rank 1 to 8. Under the plan's rule (hit@5 up, no ticker down) `rag.retrieval.hybrid-enabled` is now true by default; `rag.evaluation.min-hit-at-5` stays 0.50 (0.633333 minus 0.1 rounds down to 0.50). Keyword search costs no model tokens.
     * Fix in the same change: `reciprocalRankScores` increments the per-list rank only after the duplicate check, so a repeated id in one list no longer shifts the ranks after it (unreachable with database lists; unit-asserted).
     * Live verification — 2026-09-12, 22:24 SGT: `RetrievalEvaluationLiveTests` with the final default, exit 0, HYBRID_RRF, hit@5 0.633333. Evidence: [vector snapshot 35](live-runs/2026-09-12-hybrid-retrieval/vector-snapshot-35.json), [hybrid snapshot 34](live-runs/2026-09-12-hybrid-retrieval/hybrid-snapshot-34.json), [floor test](live-runs/2026-09-12-hybrid-retrieval/live-test-pass.log), [run log](live-runs/2026-09-12-hybrid-retrieval/run.log).
+
+* Change log — 2026-09-12: fusion tuning for figure-like queries (RAG-12)
+    * `FilingRetrievalRepository.figureTerms` and `findFigureChunks` add a third ranking for queries that carry a figure (AND of the numeric tokens, a year alone excluded); `FilingRetrievalService` fuses the legs by weighted reciprocal rank (`rrf-vector-weight`, `rrf-keyword-weight`, `rrf-figure-weight`, `rrf-k`), the snapshot `properties` record the three weights, and a figure-leg failure falls back to the two-leg fusion with a WARN.
+    * Measured on set v1 (Fusion tuning above): seven configurations, snapshots 48 to 54, against 35 and 34 under a rule that also protects every FIGURE question either reference had in the top 5. Winner snapshot 51 (k 60, weights 1.0 / 0.5 / 1.0): hit@5 0.633333 unchanged, hit@1 0.333333, MRR 0.463373, no ticker lower, msft-04 back from rank 8 to 4, msft-10 5 to 1; msft-07 4 to 7 and nvda-09 8 to miss are the costs. The set's questions carry no figures, so the figure weight moved nothing there; on the NVDA figure query the "215,938" chunk is rank 1 instead of 3. Defaults changed accordingly; `rag.evaluation.min-hit-at-5` stays 0.50.
+    * Live verification — 2026-09-12: `RetrievalEvaluationLiveTests` with the final defaults, exit 0, HYBRID_RRF, hit@5 0.633333. Evidence: [snapshot 51](live-runs/2026-09-12-fusion-tuning/snapshot-51-k60-kw0.5-fig1.0.json), [rule table](live-runs/2026-09-12-fusion-tuning/rule-table.txt), [floor test](live-runs/2026-09-12-fusion-tuning/live-test-pass.log), [run log](live-runs/2026-09-12-fusion-tuning/run.log).

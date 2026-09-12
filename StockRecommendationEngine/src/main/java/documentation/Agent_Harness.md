@@ -72,7 +72,7 @@
 
 | Tool | Arguments | Availability | Behavior |
 |---|---|---|---|
-| searchFilings | query | Always | Search the request ticker's latest stored filings; at most 5 passages per call. Since 2026-09-12 the search is hybrid by default (keyword plus vector candidates fused by reciprocal rank, `rag.retrieval.hybrid-enabled`), for the filings prefetch and the specialist's own calls alike; see RAG.md, Hybrid Retrieval |
+| searchFilings | query | Always | Search the request ticker's latest stored filings; at most 5 passages per call. Since 2026-09-12 the search is hybrid by default (keyword plus vector candidates fused by reciprocal rank, `rag.retrieval.hybrid-enabled`), for the filings prefetch and the specialist's own calls alike; see RAG.md, Hybrid Retrieval. Since the 2026-09-12 fusion tuning the keyword leg weighs 0.5 against the vector leg's 1.0 and a figure leg (chunks containing every number in the question, weight 1.0) is active for numeric questions, so a question quoting a figure such as 215,938 ranks the chunk holding it first (RAG.md, Fusion tuning) |
 | findInstrument | None | Broker enabled | Discover stock contracts for the request ticker |
 | getQuote | conid | Broker enabled | Discover implicitly if needed; the conid must be the request conid, the only listing, or the single preferred-currency listing |
 | getPortfolioPositions | None | Broker enabled and includePortfolio=true | Read the configured account's positions |

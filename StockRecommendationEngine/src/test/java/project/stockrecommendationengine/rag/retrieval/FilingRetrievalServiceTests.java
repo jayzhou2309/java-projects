@@ -33,6 +33,10 @@ class FilingRetrievalServiceTests {
         embeddings = mock(FilingEmbeddingService.class);
         repository = mock(FilingRetrievalRepository.class);
         properties = new FilingRetrievalProperties();
+        // The fusion arithmetic below assumes two equal legs and no figure leg (the RAG-2 configuration); the measured
+        // defaults (1.0 / 0.5 / 1.0 since the 2026-09-12 fusion tuning) are asserted in their own test.
+        properties.setRrfKeywordWeight(1.0);
+        properties.setRrfFigureWeight(0.0);
         service = new FilingRetrievalService(embeddings, repository, properties, Optional.empty());
         when(embeddings.embed(anyString())).thenReturn(new float[1536]);
         when(repository.findSimilarChunks(any(), any(), anyInt())).thenReturn(List.of(evidence(1L), evidence(2L)));
@@ -356,25 +360,45 @@ class FilingRetrievalServiceTests {
     }
 
     @Test
-    void defaultWeightsLeaveTheFigureLegOffAndReproduceTheUnweightedFusionExactly() {
-        assertThat(new FilingRetrievalProperties().getRrfVectorWeight()).isEqualTo(1.0);
-        assertThat(new FilingRetrievalProperties().getRrfKeywordWeight()).isEqualTo(1.0);
-        assertThat(new FilingRetrievalProperties().getRrfFigureWeight()).isEqualTo(0.0);
+    void measuredDefaultsHalveTheKeywordLegAndRunTheFigureLegForNumericQueries() {
+        // Fusion tuning Milestone 2 (RAG.md, Fusion tuning): snapshot 51's configuration is the default.
+        var defaults = new FilingRetrievalProperties();
+        assertThat(defaults.getRrfK()).isEqualTo(60);
+        assertThat(defaults.getRrfVectorWeight()).isEqualTo(1.0);
+        assertThat(defaults.getRrfKeywordWeight()).isEqualTo(0.5);
+        assertThat(defaults.getRrfFigureWeight()).isEqualTo(1.0);
+        assertThat(defaults.isHybridEnabled()).isTrue();
+        var defaultService = new FilingRetrievalService(embeddings, repository, defaults, Optional.empty());
         var a = evidence(1L, 0.90);
         var b = evidence(2L, 0.80);
         var c = evidence(3L, 0.95);
         var d = evidence(4L, 0.80);
         when(repository.findSimilarChunks(any(), any(), anyInt())).thenReturn(List.of(a, b, c));
         when(repository.findKeywordChunks(any(), any(), any(), anyInt())).thenReturn(List.of(c, d, a));
-        // Would reorder the result if it were consulted.
         when(repository.findFigureChunks(any(), any(), any(), anyInt())).thenReturn(List.of(b));
 
-        var response = service.retrieve(request("fiscal 2026 revenue 215,938 up 65%", 4, true));
-        assertThat(response.retrievalStrategy()).isEqualTo("HYBRID_RRF");
-        assertThat(response.results()).containsExactly(c, a, b, d);
-        verify(repository, never()).findFigureChunks(any(), any(), any(), anyInt());
+        // A figure in the query: three legs at 1.0 / 0.5 / 1.0. b = 1/62 + 1/61, a = 1/61 + 0.5/63, c = 1/63 + 0.5/61, d = 0.5/62.
+        var scores = FilingRetrievalService.reciprocalRankScores(
+                List.of(List.of(a, b, c), List.of(c, d, a), List.of(b)), List.of(1.0, 0.5, 1.0), 60);
+        assertThat(scores.get(2L)).isEqualTo(term(1.0, 62).add(term(1.0, 61))).isEqualTo(new BigDecimal("0.032522474881015336"));
+        assertThat(scores.get(1L)).isEqualTo(term(1.0, 61).add(term(0.5, 63))).isEqualTo(new BigDecimal("0.024329950559458757"));
+        assertThat(scores.get(3L)).isEqualTo(term(1.0, 63).add(term(0.5, 61))).isEqualTo(new BigDecimal("0.024069737184491283"));
+        assertThat(scores.get(4L)).isEqualTo(term(0.5, 62)).isEqualTo(new BigDecimal("0.008064516129032258"));
+        var withFigure = defaultService.retrieve(request("fiscal 2026 revenue 215,938 up 65%", 4, null));
+        assertThat(withFigure.retrievalStrategy()).isEqualTo("HYBRID_RRF");
+        assertThat(withFigure.results()).containsExactly(b, a, c, d);
+        verify(repository).findFigureChunks(eq("fiscal 2026 revenue 215,938 up 65%"), any(), any(), eq(40));
 
-        // Scale included: the weighted scores at 1.0 equal the unweighted scores, so the fused order cannot differ.
+        // A year-only question (the evaluation set's shape): no figure leg, and the halved keyword leg lets the vector
+        // rank decide a = 1/61 + 0.5/63 over c = 1/63 + 0.5/61 where equal legs tied them and c won on similarity.
+        clearInvocations(repository);
+        var yearOnly = defaultService.retrieve(request("What was revenue in fiscal 2026?", 4, null));
+        assertThat(yearOnly.retrievalStrategy()).isEqualTo("HYBRID_RRF");
+        assertThat(yearOnly.results()).containsExactly(a, c, b, d);
+        verify(repository, never()).findFigureChunks(any(), any(), any(), anyInt());
+        assertThat(service.retrieve(request("What was revenue in fiscal 2026?", 4, null)).results()).containsExactly(c, a, b, d);
+
+        // Scale included: the weighted scores at 1.0 equal the unweighted scores, so the equal-leg order cannot differ.
         var rankings = List.of(List.of(a, b, c), List.of(c, d, a));
         assertThat(FilingRetrievalService.reciprocalRankScores(rankings, List.of(1.0, 1.0), 60))
                 .isEqualTo(FilingRetrievalService.reciprocalRankScores(rankings, 60));

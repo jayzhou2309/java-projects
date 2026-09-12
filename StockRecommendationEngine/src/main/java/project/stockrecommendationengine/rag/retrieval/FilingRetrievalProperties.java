@@ -44,14 +44,19 @@ public class FilingRetrievalProperties {
     @DecimalMin("0.0") @DecimalMax("10.0")
     private double rrfVectorWeight = 1.0;
 
-    /** Weight of the keyword ranking in reciprocal rank fusion. */
+    /**
+     * Weight of the keyword ranking in reciprocal rank fusion. 0.5 since the 2026-09-12 fusion tuning (RAG.md, Fusion
+     * tuning: snapshot 51 against 34 and 35 keeps hit@5 0.633333 with no ticker lower, lifts MRR 0.436667 to 0.463373, and
+     * returns every FIGURE question that either reference had in the top 5, msft-04 included, to the top 5).
+     */
     @DecimalMin("0.0") @DecimalMax("10.0")
-    private double rrfKeywordWeight = 1.0;
+    private double rrfKeywordWeight = 0.5;
 
     /**
      * Weight of the figure ranking (chunks containing every numeric token of the query; {@code figureTerms}); 0 leaves
-     * that leg off. Off by default until it is measured against the evaluation set (Follow_Ups RAG-12).
+     * that leg off. 1.0 since the 2026-09-12 fusion tuning (snapshot 51): the leg runs only for queries that carry a
+     * figure, which none of the evaluation set's questions do, so it is active for numeric questions at no measured cost.
      */
     @DecimalMin("0.0") @DecimalMax("10.0")
-    private double rrfFigureWeight = 0.0;
+    private double rrfFigureWeight = 1.0;
 }

@@ -81,10 +81,12 @@ rag:
     rrf-k: 60
     # Weight of the vector ranking in reciprocal rank fusion (a chunk at rank r scores weight / (k + r)); 0 to 10.
     rrf-vector-weight: 1.0
-    # Weight of the keyword ranking in reciprocal rank fusion; 0 to 10.
-    rrf-keyword-weight: 1.0
-    # Weight of the figure ranking (chunks holding every number in the query); 0 to 10, 0 leaves the leg off until measured (RAG-12).
-    rrf-figure-weight: 0.0
+    # Weight of the keyword ranking in reciprocal rank fusion; 0 to 10. 0.5 since the 2026-09-12 fusion tuning (RAG.md, Fusion
+    # tuning: snapshot 51 keeps hit@5 0.633333, lifts MRR 0.436667 to 0.463373, and brings msft-04 back into the top 5).
+    rrf-keyword-weight: 0.5
+    # Weight of the figure ranking (chunks holding every number in the query); 0 to 10, 0 leaves the leg off. 1.0 since 2026-09-12:
+    # the leg runs only for queries that carry a figure (none of the evaluation set's questions do), fusion-tuning snapshot 51.
+    rrf-figure-weight: 1.0
   # Chunks retrieved per question when the bundled evaluation set is run (POST /api/rag/evaluate); 5 to 20.
   evaluation:
     window: 10

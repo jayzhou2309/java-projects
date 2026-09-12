@@ -1,0 +1,73 @@
+Fusion tuning for figure-like queries: grid, rule, decision (Follow_Ups RAG-12, Milestone 2 of plans/2026-09-12-fusion-tuning.md), 2026-09-12
+Branch fusion-tuning from ea1f8dd (Milestone 1: figure leg and weighted RRF, defaults 1.0 / 1.0 / 0.0, k 60).
+
+References (RAG-2 comparison, same store, set v1, 30 questions, window 10):
+  id 35  FILTERED_VECTOR  hit@1 0.300000 hit@3 0.533333 hit@5 0.600000 MRR 0.435833  AAPL 0.9 MSFT 0.6 NVDA 0.3  FIGURE in top 5: 8
+  id 34  HYBRID_RRF       hit@1 0.300000 hit@3 0.533333 hit@5 0.633333 MRR 0.436667  AAPL 0.9 MSFT 0.7 NVDA 0.3  FIGURE in top 5: 7 (msft-04 at 8)
+  Read with: docker exec -i trading-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "select row_to_json(r) from retrieval_evaluations r where id=34"  (and 35)
+
+Harness (one application start per configuration, one POST, stop, port free; never exporting the application enable flags):
+  set -a && source .env && set +a && export INTEGRATION_ACCESS_TOKEN=<32+ chars> SERVER_PORT=8081 RAG_RETRIEVAL_RRF_K=<k> RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=<kw> RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=<fig> && nohup ./mvnw -q -o spring-boot:run &
+  wait for "Started StockRecommendationEngineApplication"
+  curl -X POST -H "Authorization: Bearer $INTEGRATION_ACCESS_TOKEN" http://localhost:8081/api/rag/evaluate     (no hybrid parameter: properties.hybrid null, hybridEnabled true)
+  psql: select row_to_json(r) from retrieval_evaluations r where id=<id>  -> snapshot-<id>-<configuration>.json
+  pkill -f spring-boot:run; pkill -f StockRecommendationEngineApplication; lsof -nP -iTCP:8081 -sTCP:LISTEN (empty)
+  RAG_RETRIEVAL_RRF_VECTOR_WEIGHT was never overridden (1.0 throughout). Each response's properties were checked for the intended k and weights before the next start.
+
+Runs (30 embeddings each, no chat model; 7 runs = 210 embeddings):
+  1. RAG_RETRIEVAL_RRF_K=60 RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=1.0  RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=0.0  -> id 48  hit@1 0.300000 hit@3 0.533333 hit@5 0.633333 MRR 0.436667  0.9/0.7/0.3  misses msft-08 nvda-01 nvda-02 nvda-03 nvda-04 nvda-05 nvda-07   (reproduces 34 question by question: harness proven)
+  2. RAG_RETRIEVAL_RRF_K=60 RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=1.0  RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=1.0  -> id 49  identical to 48
+  3. RAG_RETRIEVAL_RRF_K=60 RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=1.0  RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=2.0  -> id 50  identical to 48
+  4. RAG_RETRIEVAL_RRF_K=60 RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=0.5  RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=1.0  -> id 51  hit@1 0.333333 hit@3 0.533333 hit@5 0.633333 MRR 0.463373  0.9/0.7/0.3  misses msft-08 nvda-01 nvda-02 nvda-03 nvda-04 nvda-07 nvda-09
+  5. RAG_RETRIEVAL_RRF_K=30 RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=1.0  RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=1.0  -> id 52  hit@1 0.300000 hit@3 0.533333 hit@5 0.633333 MRR 0.434524  0.9/0.7/0.3  misses aapl-09 msft-08 nvda-01 nvda-02 nvda-03 nvda-04 nvda-05 nvda-07
+  6. RAG_RETRIEVAL_RRF_K=60 RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=0.5  RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=2.0  -> id 53  identical to 51
+  7. RAG_RETRIEVAL_RRF_K=60 RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=0.75 RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=1.0  -> id 54  hit@1 0.300000 hit@3 0.566667 hit@5 0.600000 MRR 0.432910  0.9/0.6/0.3  misses as 48
+     (added because 0.5 and 1.0 swap msft-04 and msft-07 across the top-5 line; a middle value might have kept both. It kept neither: msft-04 7, msft-07 6.)
+  Stored ids afterwards: 7,12,13,30,31,34,35,48,49,50,51,52,53,54 (36 to 47 were consumed by rolled-back live-test transactions; 55 below likewise).
+  psql check of the claimed configurations:
+    select id, hit_at_5, mrr, properties->>'rrfK', properties->>'rrfVectorWeight', properties->>'rrfKeywordWeight', properties->>'rrfFigureWeight', properties->>'hybrid', properties->>'hybridEnabled', retrieval_strategy from retrieval_evaluations where id between 48 and 54 order by id
+    48|0.633333|0.436667|60|1.0|1.0|0.0||true|HYBRID_RRF
+    49|0.633333|0.436667|60|1.0|1.0|1.0||true|HYBRID_RRF
+    50|0.633333|0.436667|60|1.0|1.0|2.0||true|HYBRID_RRF
+    51|0.633333|0.463373|60|1.0|0.5|1.0||true|HYBRID_RRF
+    52|0.633333|0.434524|30|1.0|1.0|1.0||true|HYBRID_RRF
+    53|0.633333|0.463373|60|1.0|0.5|2.0||true|HYBRID_RRF
+    54|0.600000|0.432910|60|1.0|0.75|1.0||true|HYBRID_RRF
+
+Finding: the figure leg never ran on the set. Every run's application log has 30 x "Skipping figure search: reason=noFigureTerms" and 0 x "Figure search completed":
+the 30 questions carry years only ("fiscal 2026"), which figureTerms treats as no figure. So rrf-figure-weight cannot move any set metric (48 = 49 = 50, 51 = 53);
+the keyword weight and k are the levers the set sees. The figure leg is judged on the NVDA figure query (below).
+
+Rule (plan, Milestone 2; supersedes the RAG-2 ticker-only flip rule): highest hit@5 such that against BOTH 35 and 34: no ticker's hit@5 lower; no FIGURE question
+that was in the top 5 under either (aapl-01, aapl-02, aapl-06, aapl-07, msft-02, msft-04, msft-10, nvda-08) leaves the top 5; hit@5 >= 0.633333. Ties: MRR, then smaller change.
+  48 out: msft-04 rank 8 (rank 1 under 35).     49 out: same.     50 out: same.
+  51 qualifies: tickers 0.9/0.7/0.3 >= both; the eight FIGURE questions at 1, 3, 4, 1, 2, 4, 1, 5; hit@5 0.633333.
+  52 out: msft-04 rank 7.
+  53 qualifies; same ranking as 51; loses the tie-break (figure weight 2.0 is the larger change from the current 0.0).
+  54 out: hit@5 0.600000 < 0.633333; MSFT 0.6 < 0.7 (vs 34); msft-04 rank 7.
+  => Winner id 51: rrf-k 60, rrf-vector-weight 1.0, rrf-keyword-weight 0.5, rrf-figure-weight 1.0.
+  Full table with the per-question ranks of 35, 34, and 48 to 54 side by side: rule-table.txt (python over the snapshot JSONs).
+
+Winner 51 against 35: msft-03 3->2, msft-04 1->4 (467->466), msft-05 6->3, msft-06 2->1, msft-07 miss->7, msft-10 2->1, nvda-05 miss->10; 23 unchanged.
+Winner 51 against 34: aapl-06 3->4, aapl-09 10->8, msft-01 10->6, msft-02 3->2, msft-04 8->4, msft-05 2->3, msft-07 4->7, msft-10 5->1, nvda-05 miss->10, nvda-09 8->miss; 20 unchanged.
+nvda-01 is a miss under 35, 34, and 51 (its question text has no figure; chunk 805 with the same totals is rank 3 under 51).
+
+Defaults changed: application.yaml rrf-keyword-weight 0.5, rrf-figure-weight 1.0; FilingRetrievalProperties the same; FilingRetrievalServiceTests pins 1.0 / 1.0 / 0.0
+in setUp for the equal-leg arithmetic tests and asserts the measured defaults in measuredDefaultsHalveTheKeywordLegAndRunTheFigureLegForNumericQueries;
+RetrievalEvaluationServiceTests expects the new property values in the snapshot properties.
+Floor: 0.633333 - 0.1 = 0.533333, rounded down to a multiple of 0.05 = 0.50, not higher than the current 0.50 => rag.evaluation.min-hit-at-5 stays 0.50 (comment unchanged).
+
+Checks against the running application with the final defaults (no RAG_RETRIEVAL_* overrides; SERVER_PORT=8081; one embedding per call):
+  POST /api/rag/retrieve {"ticker":"NVDA","query":"fiscal 2026 revenue 215,938 up 65%","topK":5}   -> HYBRID_RRF, candidatesRetrieved 53, top 5: 802, 805, 807, 882, 880
+    log: Figure search completed: ticker=NVDA, candidates=2 ... Reciprocal rank fusion completed: figureCandidates=2, fused=53, k=60, weights=1.0/0.5/1.0
+    chunk 802 ("Revenue $ 215,938 $ 130,497 Up 65%") is rank 1; under the RAG-2 defaults (b24b582 / snapshot 34 code) the order was 806, 880, 802, 807, 882 (rank 3).
+    topK 10: 802, 805, 807, 882, 880, 879, 806, 883, 884, 852  (retrieve-nvda-figure-top5.json, retrieve-nvda-figure-top10.json)
+  POST /api/rag/retrieve {"ticker":"MSFT","query":"<msft-04 question text>","topK":5}  -> HYBRID_RRF, top 5: 514, 573, 518, 466, 643; expected chunk 466 at rank 4 (retrieve-msft-04-top5.json)
+  GET /api/rag/evaluate/51 -> hitAt5 0.633333, mrr 0.463373, properties rrfK 60, weights 1.0 / 0.5 / 1.0, hybrid null, hybridEnabled true
+
+Builds (fresh shell, no RAG_RETRIEVAL_* or enable flags exported):
+  set -a && source .env && set +a && ./mvnw -q -o test -Dtest=FilingRetrievalServiceTests,RetrievalEvaluationServiceTests  -> exit 0 (23 + 6 tests, 0 failures)
+  set -a && source .env && set +a && ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true  -> exit 0 (live-test-pass.log):
+      "Evaluating retrieval: set=v1, questions=30, window=10, hybrid=null" (the run followed the properties; each retrieval resolved hybrid=true); weights=1.0/0.5/1.0 on every fusion line; "Retrieval evaluation stored: id=55, hitAt1=0.333333, hitAt3=0.533333, hitAt5=0.633333, mrr=0.463373, misses=7";
+      the transaction rolled back (id 55 is not in retrieval_evaluations).
+  set -a && source .env && set +a && ./mvnw -q -o verify  -> exit 0 (251 tests, 0 failures, 0 errors, 6 skipped: IbkrLiveTests x4, IbkrQuantLiveTests, RetrievalEvaluationLiveTests)

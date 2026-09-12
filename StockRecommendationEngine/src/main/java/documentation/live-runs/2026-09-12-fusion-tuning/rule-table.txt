@@ -1,0 +1,70 @@
+REFERENCE
+35 FILTERED_VECTOR 0.3 0.533333 0.6 0.435833 {'AAPL': 0.9, 'MSFT': 0.6, 'NVDA': 0.3} FIGURE top5: ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-04', 'msft-10', 'nvda-08'] 8
+34 HYBRID_RRF 0.3 0.533333 0.633333 0.436667 {'AAPL': 0.9, 'MSFT': 0.7, 'NVDA': 0.3} FIGURE top5: ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-10', 'nvda-08'] 7
+FIGURE questions that must stay in top 5 (union of 35 and 34): ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-04', 'msft-10', 'nvda-08']
+
+GRID
+id 48 k=60 w=1.0/1.0/0.0 hybrid=None hybridEnabled=True strategy=HYBRID_RRF hit@1=0.3 hit@3=0.533333 hit@5=0.633333 mrr=0.436667 tickers={'AAPL': 0.9, 'MSFT': 0.7, 'NVDA': 0.3} figTop5=7 ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-10', 'nvda-08']
+   misses: ['msft-08', 'nvda-01', 'nvda-02', 'nvda-03', 'nvda-04', 'nvda-05', 'nvda-07']
+   FAILS: ['FIGURE msft-04 rank 8 left top 5 (was 1 under 35)']
+id 49 k=60 w=1.0/1.0/1.0 hybrid=None hybridEnabled=True strategy=HYBRID_RRF hit@1=0.3 hit@3=0.533333 hit@5=0.633333 mrr=0.436667 tickers={'AAPL': 0.9, 'MSFT': 0.7, 'NVDA': 0.3} figTop5=7 ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-10', 'nvda-08']
+   misses: ['msft-08', 'nvda-01', 'nvda-02', 'nvda-03', 'nvda-04', 'nvda-05', 'nvda-07']
+   FAILS: ['FIGURE msft-04 rank 8 left top 5 (was 1 under 35)']
+id 50 k=60 w=1.0/1.0/2.0 hybrid=None hybridEnabled=True strategy=HYBRID_RRF hit@1=0.3 hit@3=0.533333 hit@5=0.633333 mrr=0.436667 tickers={'AAPL': 0.9, 'MSFT': 0.7, 'NVDA': 0.3} figTop5=7 ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-10', 'nvda-08']
+   misses: ['msft-08', 'nvda-01', 'nvda-02', 'nvda-03', 'nvda-04', 'nvda-05', 'nvda-07']
+   FAILS: ['FIGURE msft-04 rank 8 left top 5 (was 1 under 35)']
+id 51 k=60 w=1.0/0.5/1.0 hybrid=None hybridEnabled=True strategy=HYBRID_RRF hit@1=0.333333 hit@3=0.533333 hit@5=0.633333 mrr=0.463373 tickers={'AAPL': 0.9, 'MSFT': 0.7, 'NVDA': 0.3} figTop5=8 ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-04', 'msft-10', 'nvda-08']
+   misses: ['msft-08', 'nvda-01', 'nvda-02', 'nvda-03', 'nvda-04', 'nvda-07', 'nvda-09']
+   QUALIFIES 
+id 52 k=30 w=1.0/1.0/1.0 hybrid=None hybridEnabled=True strategy=HYBRID_RRF hit@1=0.3 hit@3=0.533333 hit@5=0.633333 mrr=0.434524 tickers={'AAPL': 0.9, 'MSFT': 0.7, 'NVDA': 0.3} figTop5=7 ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-10', 'nvda-08']
+   misses: ['aapl-09', 'msft-08', 'nvda-01', 'nvda-02', 'nvda-03', 'nvda-04', 'nvda-05', 'nvda-07']
+   FAILS: ['FIGURE msft-04 rank 7 left top 5 (was 1 under 35)']
+id 53 k=60 w=1.0/0.5/2.0 hybrid=None hybridEnabled=True strategy=HYBRID_RRF hit@1=0.333333 hit@3=0.533333 hit@5=0.633333 mrr=0.463373 tickers={'AAPL': 0.9, 'MSFT': 0.7, 'NVDA': 0.3} figTop5=8 ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-04', 'msft-10', 'nvda-08']
+   misses: ['msft-08', 'nvda-01', 'nvda-02', 'nvda-03', 'nvda-04', 'nvda-07', 'nvda-09']
+   QUALIFIES 
+id 54 k=60 w=1.0/0.75/1.0 hybrid=None hybridEnabled=True strategy=HYBRID_RRF hit@1=0.3 hit@3=0.566667 hit@5=0.6 mrr=0.43291 tickers={'AAPL': 0.9, 'MSFT': 0.6, 'NVDA': 0.3} figTop5=7 ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'msft-02', 'msft-10', 'nvda-08']
+   misses: ['msft-08', 'nvda-01', 'nvda-02', 'nvda-03', 'nvda-04', 'nvda-05', 'nvda-07']
+   FAILS: ['FIGURE msft-04 rank 7 left top 5 (was 1 under 35)', 'ticker MSFT 0.6 < 0.7 (vs 34)', 'hit@5 0.6 < 0.633333']
+
+SELECTION: qualifying rows sorted by hit@5 desc, mrr desc, change asc
+   51 k 60 kw 0.5 fig 1.0 hit@5 0.633333 mrr 0.463373 change 1.5
+   53 k 60 kw 0.5 fig 2.0 hit@5 0.633333 mrr 0.463373 change 2.5
+runner-ups (non-qualifying) in the same order:
+   48 k 60 kw 1.0 fig 0.0 hit@5 0.633333 mrr 0.436667 fails ['FIGURE msft-04 rank 8 left top 5 (was 1 under 35)']
+   49 k 60 kw 1.0 fig 1.0 hit@5 0.633333 mrr 0.436667 fails ['FIGURE msft-04 rank 8 left top 5 (was 1 under 35)']
+   50 k 60 kw 1.0 fig 2.0 hit@5 0.633333 mrr 0.436667 fails ['FIGURE msft-04 rank 8 left top 5 (was 1 under 35)']
+   52 k 30 kw 1.0 fig 1.0 hit@5 0.633333 mrr 0.434524 fails ['FIGURE msft-04 rank 7 left top 5 (was 1 under 35)']
+   54 k 60 kw 0.75 fig 1.0 hit@5 0.6 mrr 0.43291 fails ['FIGURE msft-04 rank 7 left top 5 (was 1 under 35)', 'ticker MSFT 0.6 < 0.7 (vs 34)', 'hit@5 0.6 < 0.633333']
+
+PER-QUESTION RANKS (35 | 34 | grid ids...)
+question kind | 35 | 34 | 48 | 49 | 50 | 51 | 52 | 53 | 54
+aapl-01 FIGURE | 1(225) | 1(225) | 1(225) | 1(225) | 1(225) | 1(225) | 1(225) | 1(225) | 1(225)
+aapl-02 FIGURE | 3(226) | 3(226) | 3(226) | 3(226) | 3(226) | 3(226) | 3(226) | 3(226) | 3(226)
+aapl-03 NARRATIVE | 2(226) | 2(226) | 2(226) | 2(226) | 2(226) | 2(226) | 2(226) | 2(226) | 2(226)
+aapl-04 NARRATIVE | 1(210) | 1(210) | 1(210) | 1(210) | 1(210) | 1(210) | 1(210) | 1(210) | 1(210)
+aapl-05 NARRATIVE | 1(190) | 1(190) | 1(190) | 1(190) | 1(190) | 1(190) | 1(190) | 1(190) | 1(190)
+aapl-06 FIGURE | 4(236) | 3(236) | 3(236) | 3(236) | 3(236) | 4(236) | 3(236) | 4(236) | 3(236)
+aapl-07 FIGURE | 1(240) | 1(240) | 1(240) | 1(240) | 1(240) | 1(240) | 1(240) | 1(240) | 1(240)
+aapl-08 NARRATIVE | 1(297) | 1(297) | 1(297) | 1(297) | 1(297) | 1(297) | 1(297) | 1(297) | 1(297)
+aapl-09 FIGURE | 8(280) | 10(280) | 10(280) | 10(280) | 10(280) | 8(280) | miss(-) | 8(280) | 10(280)
+aapl-10 NARRATIVE | 1(277) | 1(277) | 1(277) | 1(277) | 1(277) | 1(277) | 1(277) | 1(277) | 1(277)
+msft-01 FIGURE | 6(514) | 10(514) | 10(514) | 10(514) | 10(514) | 6(514) | 10(514) | 6(514) | 9(514)
+msft-02 FIGURE | 2(514) | 3(514) | 3(514) | 3(514) | 3(514) | 2(514) | 3(514) | 2(514) | 3(514)
+msft-03 NARRATIVE | 3(517) | 2(517) | 2(517) | 2(517) | 2(517) | 2(517) | 2(517) | 2(517) | 2(517)
+msft-04 FIGURE | 1(467) | 8(466) | 8(466) | 8(466) | 8(466) | 4(466) | 7(466) | 4(466) | 7(466)
+msft-05 NARRATIVE | 6(460) | 2(460) | 2(460) | 2(460) | 2(460) | 3(460) | 2(460) | 3(460) | 3(460)
+msft-06 NARRATIVE | 2(489) | 1(489) | 1(489) | 1(489) | 1(489) | 1(489) | 1(489) | 1(489) | 1(489)
+msft-07 NARRATIVE | miss(-) | 4(495) | 4(495) | 4(495) | 4(495) | 7(495) | 5(495) | 7(495) | 6(495)
+msft-08 FIGURE | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-)
+msft-09 NARRATIVE | 1(1064) | 1(1064) | 1(1064) | 1(1064) | 1(1064) | 1(1064) | 1(1064) | 1(1064) | 1(1064)
+msft-10 FIGURE | 2(637) | 5(637) | 5(637) | 5(637) | 5(637) | 1(637) | 4(637) | 1(637) | 3(637)
+nvda-01 FIGURE | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-)
+nvda-02 FIGURE | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-)
+nvda-03 FIGURE | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-)
+nvda-04 FIGURE | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-)
+nvda-05 NARRATIVE | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | 10(749) | miss(-) | 10(749) | miss(-)
+nvda-06 NARRATIVE | 2(779) | 2(779) | 2(779) | 2(779) | 2(779) | 2(779) | 2(779) | 2(779) | 2(779)
+nvda-07 NARRATIVE | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-) | miss(-)
+nvda-08 FIGURE | 5(852) | 5(852) | 5(852) | 5(852) | 5(852) | 5(852) | 5(852) | 5(852) | 5(852)
+nvda-09 FIGURE | miss(-) | 8(879) | 8(879) | 8(879) | 8(879) | miss(-) | 7(879) | miss(-) | 10(879)
+nvda-10 NARRATIVE | 1(895) | 1(895) | 1(895) | 1(895) | 1(895) | 1(895) | 1(895) | 1(895) | 1(895)

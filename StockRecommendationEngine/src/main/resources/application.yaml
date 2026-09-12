@@ -123,6 +123,8 @@ recommendation:
   auto-ingest: true
   # Several listings without a request conid: the single listing in this currency is used and disclosed.
   preferred-currency: USD
+  # Prior stored runs for the ticker (with outcomes when scored) shown to the manager; 0 disables. Requires outcomes.enabled.
+  track-record-runs: 10
   max-output-tokens: 1200
   max-observed-tokens: 16000
   max-tool-result-chars: 32000

@@ -4,7 +4,7 @@
     * Deterministic scoring of every stored recommendation against stored daily bars at fixed horizons.
     * Consumes the [recommendation audit store](Agent_Harness.md) and the [price bars](Quant.md) the quant layer keeps; refreshes bars through the [broker](IBKR.md) when available.
     * Disabled by default; enabling requires the integration access token like the other integrations.
-    * No model is involved. Calibration of confidence and a look-back tool for the agent are the next consumers of this table and are not implemented.
+    * No model is involved in scoring. TrackRecordService (below) is the first consumer: the recommendation loop shows the manager the ticker's prior runs and outcomes. Calibration of confidence is not implemented.
     * Every stored run so far is NEUTRAL, so direction and level statistics have no data yet; the pipeline is verified, the numbers are not.
 
 * Why This Exists
@@ -59,6 +59,13 @@
 * OutcomeScheduler
     * Runs evaluateAll() on the cron schedule; created only when outcomes.enabled=true.
 
+* TrackRecordService
+    * trackRecord(String ticker, int limit)
+        * Newest limit stored runs for the ticker (any status) with their stored outcomes per horizon.
+        * Per assessment: runs, scored (having the reference horizon, 20 days when configured), directionCorrect count, averageReturnPct.
+        * Carries a fixed caveat so the consumer sees the sample-size warning with the numbers.
+    * Consumer: the recommendation loop's look-back, documented in [Agent_Harness.md](Agent_Harness.md).
+
 * Endpoints (integration access token required)
     * POST /api/outcomes/evaluate: run a pass now; returns the EvaluationRun.
     * POST /api/outcomes/evaluate/{runId}: evaluate one run now.
@@ -76,7 +83,7 @@ OutcomeCalculator: exit close at horizon, return, benchmark/excess, first touch,
     ↓
 recommendation_outcomes (run_id, horizon_days) → GET /api/outcomes/{runId}, /summary
     ↓
-(next) confidence calibration and the agent's look-back tool
+TrackRecordService → manager evidence in the next run for the ticker; (next) confidence calibration
 ```
 
 * Enabling

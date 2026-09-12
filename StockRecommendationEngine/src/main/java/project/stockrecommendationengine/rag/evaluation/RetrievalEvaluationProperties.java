@@ -3,6 +3,7 @@ package project.stockrecommendationengine.rag.evaluation;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import lombok.Getter;
@@ -17,6 +18,14 @@ import org.springframework.validation.annotation.Validated;
 @Getter
 @Setter
 public class RetrievalEvaluationProperties {
+    /**
+     * Classpath resource of the evaluation set that {@link RetrievalEvaluationSetLoader#load()} reads and every run
+     * evaluates; recorded in each snapshot's {@code properties.set}. Set v1 stays bundled for comparison runs, but
+     * metrics are only comparable between snapshots of the same set.
+     */
+    @NotBlank
+    private String set = RetrievalEvaluationSetLoader.DEFAULT_RESOURCE;
+
     /** Chunks retrieved per question; a question whose passage sits beyond this window counts as a miss. */
     @Min(5) @Max(20)
     private int window = 10;

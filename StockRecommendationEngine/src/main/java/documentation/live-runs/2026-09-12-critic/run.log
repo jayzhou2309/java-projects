@@ -1,0 +1,6 @@
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=12d034ec-46e0-47a8-ba33-3a275e042d1c tool=MANAGER:reviewTrackRecord outcome=OK elapsedMs=13
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=12d034ec-46e0-47a8-ba33-3a275e042d1c tool=RAG:ensureFilings outcome=FRESH elapsedMs=70
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=12d034ec-46e0-47a8-ba33-3a275e042d1c tool=RAG:searchFilings outcome=OK elapsedMs=2472
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=12d034ec-46e0-47a8-ba33-3a275e042d1c tool=MANAGER:researchFilings outcome=OK elapsedMs=5656
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=12d034ec-46e0-47a8-ba33-3a275e042d1c tool=CRITIC:review outcome=ACCEPT elapsedMs=1550
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=12d034ec-46e0-47a8-ba33-3a275e042d1c status=PARTIAL modelCalls=5 observedTokens=14010 levels=false confidence=0.33 critic=ACCEPT

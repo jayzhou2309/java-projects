@@ -1,0 +1,167 @@
+{
+  "runId" : "12d034ec-46e0-47a8-ba33-3a275e042d1c",
+  "ticker" : "AAPL",
+  "status" : "PARTIAL",
+  "assessment" : "NEUTRAL",
+  "reasoning" : "Apple's latest filings (2025 10-K and Q3 2026 10-Q) present a risk outlook that is qualitatively elevated in several dimensions (regulatory, operational, legal, and market) but lack specific quantitative figures with which to measure risk magnitude. The risk disclosures highlight: 1) Heightened credit risk, especially internationally, with vendor receivables concentrated primarily in Asia (as of September 27, 2025); 2) Legal and regulatory risks are substantial and ongoing, particularly in antitrust and privacy, with exposure to significant investigations and litigation; 3) Data privacy and security risks are increasing with complex technologies such as AI, risk of inadvertent data disclosures, and potential for 'significant fees or fines' for non-compliance with evolving regulations; 4) Notable stock price volatility, with the potential for 'material adverse impact' if expectations are missed; and 5) Tax risks from global rule changes and possible effective rate increases. However, the filings do not enumerate or quantify risk metrics (such as specific loss probabilities or exposure levels). They repeatedly warn that materialization of these risks could have a 'material adverse impact' but provide no new numerical estimates. Therefore, the risk outlook remains qualitatively high but indeterminate in size, resulting in a NEUTRAL risk assessment based strictly on disclosed, not quantified, risks.",
+  "sources" : [ {
+    "chunkId" : 215,
+    "filingId" : 3,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-25-000079",
+    "filingType" : "10-K",
+    "filingDate" : "2025-10-31",
+    "reportDate" : "2025-09-27",
+    "sectionKey" : "ITEM_1A",
+    "sectionTitle" : "Risk Factors",
+    "chunkIndex" : 25,
+    "content" : "ective tax rates were to increase, or if the ultimate determination of the Company’s taxes owed is for an amount in excess of amounts previously accrued, the Company’s business, results of operations, financial condition and stock price could be materially adversely affected.\nApple Inc. | 2025 Form 10-K | 16\nGeneral Risks\nThe price of the Company’s stock is subject to volatility.\nThe Company’s stock has experienced substantial price volatility in the past and may continue to do so in the future. Additionally, the Company, the technology industry and the stock market as a whole have, from time to time, experienced extreme stock price and volume fluctuations that have affected stock prices in ways that may have been unrelated to these companies’ operating performance. Price volatility may cause the average price at which the Company repurchases its stock in a given period to exceed the stock’s price at a given point in time. The Company believes the price of its stock should reflect expectations of future growth and profitability. The Company also believes the price of its stock should reflect expectations that its cash dividend will continue at current levels or grow, and that its current share repurchase program will be fully consummated. Future dividends are subject to declaration by the Company’s Board of Directors (“Board”), and the Company’s share repurchase program does not obligate it to acquire any specific number of shares. If the Company fails to meet expectations related to future growth, profitability, dividends, share repurchases or other market expectations, the price of the Company’s stock may decline significantly, which could have a material adverse impact on investor confidence and employee retention.",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+    "similarityScore" : 0.6790673367811306
+  }, {
+    "chunkId" : 214,
+    "filingId" : 3,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-25-000079",
+    "filingType" : "10-K",
+    "filingDate" : "2025-10-31",
+    "reportDate" : "2025-09-27",
+    "sectionKey" : "ITEM_1A",
+    "sectionTitle" : "Risk Factors",
+    "chunkIndex" : 24,
+    "content" : "ignificant losses and could have a material adverse impact on the Company’s results of operations, financial condition and stock price.\nThe Company is exposed to credit risk on its trade accounts receivable, vendor non-trade receivables and prepayments related to long-term supply agreements, and this risk is heightened during periods when economic conditions worsen.\nThe Company distributes its products and certain of its services through third-party cellular network carriers and other resellers. The Company also sells its products and services directly to small and mid-sized businesses and education, enterprise and government customers. A substantial majority of the Company’s outstanding trade receivables are not covered by collateral, third-party bank support or financing arrangements, or credit insurance, and a significant portion of the Company’s trade receivables can be concentrated within cellular network carriers or other resellers. The Company’s exposure to credit and collectibility risk on its trade receivables is higher in certain international markets. The Company also has unsecured vendor non-trade receivables resulting from purchases of components by outsourcing partners and other vendors that manufacture subassemblies or assemble final products for the Company. In addition, the Company has made prepayments associated with long-term supply agreements to secure supply of inventory components. As of September 27, 2025, the Company’s vendor non-trade receivables were concentrated among a few individual vendors located primarily in Asia. If the Company is unable to monitor and limit exposure to credit risk on its trade and vendor non-trade receivables, as well as long-term prepayments, the Company’s results of operations, financial condition and stock price could be materially adversely affected.\nThe Company is subject to changes in tax rates, the adoption of new U.S. or international tax legislation and exposure to additional tax liabilities.\nThe Company is subject to taxes in the U.S. and numerous foreign jurisdictions, including Ireland and Singapore, where a number of the Company’s subsidiaries are organized. Due to economic and political conditions, tax laws and tax rates for income taxes and other non-income taxes in various jurisdictions may be subject to significant change. For example, the Organisation for Economic Co-operation and Development continues to advance proposals for modernizing international tax rules, including the introduction of global minimum tax standards. The Company’s effective tax rates are affected by changes in the mix of earnings in countries with differing statutory tax rates, changes in the valuation of deferred tax assets and liabilities, the introduction of new taxes, and changes in tax laws or their interpretation. The application of tax laws may be uncertain, require significant judgment and be subject to differing interpretations.\nThe Company is also subject to the examination of its tax returns and other tax matters by the U.S. Internal Revenue Service and other tax authorities and governmental bodies. The Company regularly assesses the likelihood of an adverse outcome resulting from these examinations to determine the adequacy of its provision for taxes. The outcome of such examinations is inherently uncertain. If the Company’s effective tax rates were to increase, or if the ultimate determination of the Company’s taxes owed is for an amount in excess of amounts previously accrued, the Company’s business, results of operations, financial condition and stock price could be materially adversely affected.\nApple Inc. | 2025 Form 10-K | 16\nGeneral Risks\nThe price of the Company’s stock is subject to volatility.\nThe Company’s stock has experienced substantial price volatility in the past and may continue to do so in the future.",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+    "similarityScore" : 0.6670099168359752
+  }, {
+    "chunkId" : 206,
+    "filingId" : 3,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-25-000079",
+    "filingType" : "10-K",
+    "filingDate" : "2025-10-31",
+    "reportDate" : "2025-09-27",
+    "sectionKey" : "ITEM_1A",
+    "sectionTitle" : "Risk Factors",
+    "chunkIndex" : 16,
+    "content" : "s across various industries, the Company is at a relatively greater risk of being targeted because of its high profile and the value of the confidential information it creates, owns, manages, stores and processes.\nApple Inc. | 2025 Form 10-K | 11\nAs with all companies, the security the Company has implemented may not be sufficient for all eventualities and are vulnerable to hacking, ransomware attacks, employee error, malfeasance, system error, faulty password management or other irregularities. For example, third parties can fraudulently induce the Company’s or its suppliers’ and other third parties’ employees or customers into disclosing usernames, passwords or other sensitive information, which can, in turn, be used for unauthorized access to the Company’s or such suppliers’ or third parties’ systems and services. To help protect customers and the Company, the Company deploys and makes available technologies like multifactor authentication, monitors its services and systems for unusual activity and may freeze accounts under suspicious circumstances, which, among other things, can result in the delay or loss of customer orders or impede customer access to the Company’s products and services.\nWhile the Company maintains insurance coverage that is intended to address certain aspects of data security risks, such insurance coverage may be insufficient to cover all losses or all types of claims that may arise.\nInvestment in new business strategies, commercial relationships and acquisitions could disrupt the Company’s ongoing business, present risks not originally contemplated, and materially adversely affect the Company’s business, reputation, results of operations and financial condition.\nThe Company has invested, and in the future may invest, in new business strategies, commercial relationships and acquisitions. Such endeavors may involve significant risks and uncertainties, including distraction of management from current operations, greater-than-expected liabilities and expenses, economic, political, legal and regulatory challenges associated with operating in new businesses, regions or countries, inadequate return on capital, potential impairment of tangible and intangible assets, and significant write-offs. Some transactions, including investments and acquisitions, are exposed to additional risks, including failing to obtain required regulatory approvals on a timely basis or at all, a counterparty’s failure to perform or deliver as anticipated, or the imposition of onerous conditions that could delay or prevent the Company from completing a transaction or otherwise limit the Company’s ability to fully realize the anticipated benefits of a transaction. New business strategies and ventures are inherently risky and may not be successful. The Company’s business strategies and investments may not be successful, which could materially adversely affect the Company’s business, reputation, results of operations, financial condition and stock price.\nLegal and Regulatory Compliance Risks\nThe Company’s business, results of operations and financial condition could be adversely impacted by unfavorable results of legal proceedings or government investigations.\nThe Company is subject to various claims, legal proceedings and government investigations that have arisen in the ordinary course of business and have not yet been fully resolved, and new matters may arise in the future. In addition, the Company enters into agreements that include indemnification provisions that can subject the Company to costs and damages in the event of a claim against an indemnified third party.",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+    "similarityScore" : 0.6623484205148495
+  }, {
+    "chunkId" : 291,
+    "filingId" : 4,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-26-000020",
+    "filingType" : "10-Q",
+    "filingDate" : "2026-07-31",
+    "reportDate" : "2026-06-27",
+    "sectionKey" : "ITEM_1A",
+    "sectionTitle" : "Risk Factors",
+    "chunkIndex" : 25,
+    "content" : "tion provided on its website, press statements and other privacy notices provided to customers. Any failure or perceived failure by the Company to comply with these public statements or with federal, state or international privacy or data protection laws and regulations could result in inquiries, proceedings and penalties from governmental entities or others. Such a failure or perceived failure could also result in reputational impacts, ongoing audit requirements and significant legal liability. The risks of inadvertent disclosure of personal data can increase with the introduction of new and complex technologies, such as artificial intelligence features, further exacerbating such risks.\nIn addition to the risks generally relating to the collection, use, retention, protection and transfer of personal data, the Company is also subject to specific obligations relating to the collection and processing of data associated with minors, as well as information considered sensitive under applicable laws, such as health, biometric, financial and payment card data. Health, biometric, financial and payment card data are subject to additional privacy, security and breach notification requirements, and the Company is subject to audit by governmental authorities regarding the Company’s compliance with these obligations. If the Company fails to adequately comply with these rules and requirements, the Company can be subject to litigation or government investigations, can be liable for associated investigatory expenses, and can incur significant fees or fines.\nThe Company is also subject to new and changing laws, regulations and other legal obligations regarding online safety, including enhanced protections for minors and mandatory age verification requirements. These obligations can increase regulatory risks by requiring complex compliance measures and significant modifications to the Company’s products, services and operations, and may lead to operational disruptions, heightened privacy and data security risks, and increased costs, all of which can have a material adverse impact on the Company’s business, results of operations, financial condition and stock price. Failure to comply with such changing laws, regulations and other legal obligations can also result in significant penalties and fines, and legal liability.\nApple Inc. | Q3 2026 Form 10-Q | 23",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/aapl-20260627.htm",
+    "similarityScore" : 0.6616313910053102
+  }, {
+    "chunkId" : 209,
+    "filingId" : 3,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-25-000079",
+    "filingType" : "10-K",
+    "filingDate" : "2025-10-31",
+    "reportDate" : "2025-09-27",
+    "sectionKey" : "ITEM_1A",
+    "sectionTitle" : "Risk Factors",
+    "chunkIndex" : 19,
+    "content" : "chine learning and artificial intelligence features, and must navigate new legal, regulatory and ethical considerations relating to such technologies.\nRegulatory changes and other actions that materially adversely affect the Company’s business may be announced with little or no advance notice and the Company may not be able to effectively mitigate all adverse impacts from such measures. For example, the Company is subject to changing regulations relating to the export and import of its products. The Company’s programs, policies and procedures may not be effective in preventing a violation or a claim of a violation. As a result, the Company’s products could be banned, delayed or prohibited from importation, which could materially adversely affect the Company’s business, reputation, results of operations, financial condition and stock price.\nVaried stakeholder expectations about social and other issues expose the Company to potential liabilities, increased costs, reputational harm, and other adverse effects on the Company’s business.\nVarious stakeholders, including governments, regulators, investors, employees, customers and others, have differing expectations about a wide range of social and other issues related to the Company’s business. The Company makes statements about its values, including the environmental and societal impact of its business, through various reports, information provided on the Company’s website, and in press statements and other communications. The Company also pursues environmental and other goals and initiatives that involve risks and uncertainties, require investments, and depend in part on third-party performance or data that is outside the Company’s control, and the Company may not be able to fully achieve all of its goals and initiatives. Efforts by the Company to advance its business and values, or achieve its goals and further its initiatives, or to align with stakeholders’ expectations, or comply with evolving, varied and at times conflicting federal, state and international laws, executive orders, regulations and standards, or any failure or perceived failure to do so, can result in adverse reactions by consumers and other stakeholders, including the commencement of legal and regulatory proceedings against the Company, and can materially adversely affect the Company’s business, reputation, results of operations, financial condition and stock price.\nApple Inc. | 2025 Form 10-K | 13\nThe technology industry, including, in some instances, the Company, is subject to intense media, political and regulatory scrutiny, which exposes the Company to increasing regulation, government investigations, legal actions and penalties.\nFrom time to time, the Company has made changes to its business, including actions taken in response to litigation, competition, market conditions and legal and regulatory requirements. The Company expects to make further business changes in the future. For example, in the U.S., the Company has implemented changes to how developers communicate with consumers within apps on the U.S. storefront of the iOS and iPadOS App Store regarding alternative purchasing mechanisms and is currently subject to a court order preventing it from imposing any commission or fee on certain purchases that consumers make.\nGlobally, several jurisdictions have adopted, or may in the future adopt, competition-related laws and regulations imposing wide-ranging obligations on technology companies and significant limitations on businesses, including the Company.",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+    "similarityScore" : 0.6546002587914037
+  } ],
+  "quotes" : [ ],
+  "limitations" : [ "POSITION_SIZING_NOT_IMPLEMENTED", "CONFIDENCE_UNCALIBRATED", "BROKER_DISABLED", "QUANT_DISABLED", "NO_VERIFIED_CURRENT_QUOTE" ],
+  "toolTrace" : [ {
+    "tool" : "MANAGER:reviewTrackRecord",
+    "outcome" : "OK",
+    "elapsedMs" : 13
+  }, {
+    "tool" : "RAG:ensureFilings",
+    "outcome" : "FRESH",
+    "elapsedMs" : 70
+  }, {
+    "tool" : "RAG:searchFilings",
+    "outcome" : "OK",
+    "elapsedMs" : 2472
+  }, {
+    "tool" : "MANAGER:researchFilings",
+    "outcome" : "OK",
+    "elapsedMs" : 5656
+  }, {
+    "tool" : "CRITIC:review",
+    "outcome" : "ACCEPT",
+    "elapsedMs" : 1550
+  } ],
+  "modelCalls" : 5,
+  "observedTokens" : 14010,
+  "takeProfit" : null,
+  "stopLoss" : null,
+  "confidence" : 0.33,
+  "priceAnalysis" : null,
+  "dataFreshness" : {
+    "latestFilingDates" : {
+      "8-K" : "2026-07-30",
+      "10-Q" : "2026-07-31",
+      "10-K" : "2025-10-31"
+    },
+    "filingsVerifiedAt" : null,
+    "filingsMayBeStale" : false,
+    "barsAsOf" : null,
+    "quoteUpdatedAt" : null,
+    "quoteAvailability" : null
+  },
+  "trackRecord" : {
+    "ticker" : "AAPL",
+    "runsConsidered" : 2,
+    "runs" : [ {
+      "runId" : "ca3f38fb-1e71-4465-9451-ce59b07d6eeb",
+      "requestedAt" : "2026-09-12T02:08:41.529755Z",
+      "status" : "PARTIAL",
+      "assessment" : "NEUTRAL",
+      "confidence" : 0.2400,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    }, {
+      "runId" : "07d8891d-4d74-4926-bd68-aa236e9bb186",
+      "requestedAt" : "2026-09-12T01:45:36.421514Z",
+      "status" : "PARTIAL",
+      "assessment" : "NEUTRAL",
+      "confidence" : 0.2400,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    } ],
+    "stats" : [ {
+      "assessment" : "NEUTRAL",
+      "runs" : 2,
+      "scored" : 0,
+      "directionCorrect" : 0,
+      "averageReturnPct" : null,
+      "referenceHorizonDays" : 20
+    } ],
+    "caveat" : "Prior runs are evidence, not proof. Samples are small; a rate without its count is meaningless. Outcomes use daily bars after each run's bar date; NEUTRAL runs are not scored for direction."
+  },
+  "critique" : {
+    "verdict" : "ACCEPT",
+    "issues" : [ ],
+    "reviews" : 1,
+    "revised" : false,
+    "unsupportedNumerals" : [ ]
+  }
+}

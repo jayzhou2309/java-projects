@@ -8,6 +8,7 @@
     * Disabled by default.
     * Runs without an MCP server. A future MCP client can provide selected callbacks at the same tool boundary.
     * Take-profit and stop-loss levels come from the deterministic quant layer when enabled; confidence is an uncalibrated input-coverage composite.
+    * A critic on a separate, tool-less conversation reviews the manager's answer against the run's own evidence; on REVISE the manager revises once on its own conversation and the revision is reviewed again. The critic discloses, it never stops a validated run.
     * No trade execution, position sizing, or outcome-calibrated confidence is implemented.
     * Every run is written to the recommendations table with version tags, so outcomes can later be measured and attributed; see Recommendation Audit Store below.
     * This is the first research consumer of RAG, not completion of every recommendation requirement in the PRD.
@@ -44,8 +45,16 @@
             * Validate the assessment and nonempty explanation.
             * Reject citations that were not retrieved during this run.
             * Require at least one citation for a directional/neutral assessment.
+            * review(...): critic and synthesis, bounded by recommendation.critic-rounds (below).
             * Return citation metadata and quotes from application state, never model-supplied URLs or prices.
             * Select take-profit/stop-loss from the run's QuantAnalysis by assessment direction and compute confidence; see [Quant.md](Quant.md).
+    * Critic and Synthesis
+        * After the manager's answer passes structural and citation validation, the critic reviews it on a fresh conversation with no tools. It receives the draft, the cited passages in full, the count of retrieved but uncited passages, quotes, price analysis, track record, data freshness, limitations, and numeralsNotFoundInEvidence: the numerals in the reasoning that the application could not find in that evidence (form names and single digits ignored, commas dropped; rounding produces false positives, so the list is a hint, not a verdict).
+        * The critic returns exactly {"verdict":"ACCEPT|REVISE","issues":[...]}; REVISE needs at least one issue, at most ten, each at most 1000 characters. Anything else is INVALID_CRITIC_OUTPUT.
+        * On REVISE, while another review remains, the critique is appended to the manager's own conversation as an advisory user message and the manager answers again with its usual tools; the revision passes the same parseDraft validation and is then reviewed again. The manager revises only while another review remains, so the final verdict always describes the answer returned.
+        * A critic failure (invalid output, a tool call from the tool-less critic, or a shared budget reached at the critic) becomes critic:<code> and the draft stands with verdict UNAVAILABLE. A failed revision (rejected citation, budget, invalid output) becomes revise:<code> and the previously validated draft stands. Only DEADLINE_EXCEEDED still stops the run.
+        * A final REVISE adds CRITIC_UNRESOLVED; critic-rounds 0 adds CRITIC_DISABLED and makes no critic call.
+        * Traced as CRITIC:review (ACCEPT, REVISE, or the failure code) and MANAGER:revise (OK or the failure code); every critic and revision call counts against the shared model-call, token, context, and deadline budgets.
     * Why an Explicit Loop
         * Spring AI also provides ChatClient's ToolCallingAdvisor loop.
         * This implementation calls ChatModel directly and owns execution, making the limits and validation easy to test.
@@ -80,7 +89,7 @@
 
 | Property | Default | Enforcement |
 |---|---|---|
-| recommendation.max-model-calls | 10 | Stop after the allowed model responses |
+| recommendation.max-model-calls | 14 | Stop after the allowed model responses; raised from 10 for the critic (a full run with both specialists, a review, a revision, and a re-review uses about eleven) |
 | recommendation.max-tool-calls | 12 | Reject a tool batch that would exceed the remaining budget; the broker prefetch reserves up to three (raised from 10) |
 | recommendation.deadline-ms | 120000 | Caller timeout plus interruption and worker checks between operations; raised from 60000 to leave room for first-run ingestion (RECOMMENDATION_DEADLINE_MS) |
 | recommendation.parallel-specialists | true | Run manager delegations concurrently; false executes them in order |
@@ -88,9 +97,10 @@
 | rag.refresh.* | see RAG.md | Per-type limits, cadence, recheck window, and nightly schedule shared with the refresh job |
 | recommendation.preferred-currency | USD | Listing chosen among several when no request conid is supplied |
 | recommendation.track-record-runs | 10 | Prior stored runs shown to the manager with outcomes; 0 disables the look-back |
+| recommendation.critic-rounds | 2 | Maximum critic reviews of the manager's answer; the manager revises only while another review remains; 0 disables the critic |
 | Specialist pool | 4 threads | Shared by concurrent runs; a saturated pool delays a specialist within the deadline |
 | recommendation.max-output-tokens | 1200 | Per-model-request output limit |
-| recommendation.max-observed-tokens | 16000 | Stop after reported cumulative usage exceeds the threshold |
+| recommendation.max-observed-tokens | 40000 | Stop after reported cumulative usage exceeds the threshold; raised from 16000 because the critic and a revision each re-read the run's context |
 | recommendation.max-tool-result-chars | 32000 | Reject oversized serialized tool results; one five-passage search of 4000-character chunks with citations is about 25000 (raised from 24000) |
 | recommendation.max-context-chars | 120000 | Check message text, tool arguments, and tool results before each model call; fits two full searches (raised from 80000) |
 | recommendation.max-quote-age-seconds | 120 | Freshness requirement for COMPLETE status |
@@ -131,9 +141,11 @@
     * priceAnalysis: the run's QuantAnalysis with provenance and limitations, or null.
     * dataFreshness: latestFilingDates per type, filingsVerifiedAt, filingsMayBeStale, barsAsOf, quoteUpdatedAt, quoteAvailability; what this run actually saw.
     * trackRecord: the prior runs and per-assessment statistics the manager was shown, or null when none exist or the look-back is disabled.
+    * critique: the critic's final word on the answer returned: verdict ACCEPT, REVISE, or UNAVAILABLE; issues from the last valid review; reviews, every review in order with the draft assessment it judged, its verdict, and its issues, so a rejected first draft stays on record; revised (the manager changed its answer after a critique); unsupportedNumerals (numerals in the reasoning not found in the run's evidence). Null when the critic is disabled or the run stopped before an answer.
     * HTTP 200 returns a structured run result, including unsuccessful research statuses; callers must inspect status.
     * AUDIT_NOT_PERSISTED in limitations means the run completed but its audit row could not be written; inspect the application log.
     * FILINGS_MAY_BE_STALE means the newest stored quarterly filing is past cadence and the SEC index could not be compared in this run; ensureFilings:<code> names the cause.
+    * CRITIC_UNRESOLVED means the critic's last review of the returned answer was REVISE; read critique.issues. critic:<code> and revise:<code> mean the critic or the revision failed and the draft stands; CRITIC_DISABLED means critic-rounds is 0.
     * Invalid requests return HTTP 400; missing/wrong access tokens return HTTP 401; capacity exhaustion returns HTTP 429.
 
 | Status | Meaning |
@@ -153,8 +165,8 @@
     * COMPLETE describes the research inputs and validation path, not investment accuracy or execution readiness.
     * Realtime availability alone is insufficient: the quote needs a usable price and recent updatedAt.
     * Delayed, frozen, missing-timestamp, stale, or materially future-dated quotes cannot satisfy completeness.
-    * Structural checks prove citation provenance, not that every sentence is entailed by a passage.
-    * Numeric claims in free text are not mathematically verified by this baseline.
+    * Structural checks prove citation provenance. Entailment of each sentence by its passage is a model judgment made by the critic, disclosed in critique, not a proof.
+    * Numerals in free text are checked for presence in the run's evidence, not mathematically verified; the critic sees the misses as suspects.
     * POSITION_SIZING_NOT_IMPLEMENTED and CONFIDENCE_UNCALIBRATED remain present even on COMPLETE research; QUANT_DISABLED or NO_PRICE_HISTORY appears when no analysis was attached.
 
 * Enabling the Loop
@@ -223,6 +235,7 @@ curl -X POST http://localhost:8080/api/recommendations \
     * Scenarios cover successful research, expired sessions, unknown tools, portfolio opt-in, invalid arguments, fake citations,
       missing evidence, numeric output fields, ambiguous contracts, stale/delayed quotes, iteration limits, oversized results,
       context and usage limits, deadline interruption, and evidence isolation between requests.
+    * Critic scenarios: a tool-less review that accepts, a review that sends the manager back once on its own conversation and accepts the revision, unresolved critiques after the last review, invalid verdicts and critic tool calls and budget exhaustion that leave the draft standing, a rejected revision, the disabled switch, and the deterministic numeral check. Scripted scenarios that end at the manager's answer run with critic-rounds 0.
     * Tests assert outcomes and enforced boundaries; they do not require the production model to choose one exact call sequence.
     * IntegrationWiringTests verify disabled defaults and enabled dependency wiring without external requests.
     * No live model calls are made by these tests. Their results do not measure model reasoning quality or investment returns.
@@ -268,11 +281,15 @@ Restricted Tools → Shared, Synchronized Budget and Deadline Checks
     ↓
 ToolResponseMessage ← FilingRetrievalService, FilingIngestionService, BrokerReadService, or QuantAnalysisService
     ↓
-Final JSON → Citation / Evidence / Quote Freshness Validation
+Final JSON → Citation / Evidence Validation
+    ↓
+Critic (no tools) reviews draft against cited passages, quotes, analysis, track record
+    ↓ REVISE while a review remains → Manager revises on its own conversation → reviewed again
+Quote Freshness Validation
     ↓
 Levels by Assessment + Input-Coverage Confidence (application state, see Quant.md)
     ↓
-Qualitative Research + Sources + Quotes + Levels + Confidence + Limitations + Trace
+Qualitative Research + Sources + Quotes + Levels + Confidence + Critique + Limitations + Trace
 ```
 
 
@@ -368,3 +385,11 @@ Qualitative Research + Sources + Quotes + Levels + Confidence + Limitations + Tr
     * The harness calls it deterministically before the manager's first model call and passes the result as an evidence message, the same way the broker prefetch works; the manager prompt says to weigh outcomes only with sample sizes and never to let prior assessments anchor the current one. The record is echoed in RecommendationResponse.trackRecord and therefore stored in the audit row.
     * The model never queries the store itself; there is no tool for it. This keeps the look-back read-only, bounded, and outside the tool budget.
     * Live AAPL run `ca3f38fb-1e71-4465-9451-ce59b07d6eeb` (outcomes enabled, broker off): MANAGER:reviewTrackRecord OK in 9 ms, one prior run (`07d8891d`, NEUTRAL, PARTIAL, no outcomes yet) shown to the manager and echoed in trackRecord with stats NEUTRAL runs=1 scored=0; HTTP 200 in 7.7 seconds, PARTIAL / NEUTRAL, four model calls, 10,281 tokens. Scripted tests cover evidence delivery to the manager, the disclosed failure path, the empty case, and the disabled switch. Full suite: 175 tests, 170 passed, 5 opt-in live tests skipped. Evidence: [request](live-runs/2026-09-12-track-record/request.json), [response](live-runs/2026-09-12-track-record/response.json), [run log](live-runs/2026-09-12-track-record/run.log).
+
+* Critic and synthesis — 2026-09-12
+    * After the manager's answer passes structural and citation validation, review(...) runs the critic on a fresh, tool-less conversation with the draft, the cited passages in full, the count of uncited retrieved passages, quotes, price analysis, track record, data freshness, limitations, and numeralsNotFoundInEvidence, a deterministic scan of the reasoning's numerals against the run's own evidence. The critic returns {"verdict","issues"}; on REVISE, while another review remains, the critique is appended to the manager's own conversation as an advisory message and the manager answers again with its usual tools; the revision passes the same validation and is reviewed again. recommendation.critic-rounds (default 2) bounds the reviews; 0 disables. Critic and revision failures become critic:<code> and revise:<code> and never stop a validated run; a final REVISE adds CRITIC_UNRESOLVED.
+    * RecommendationResponse gains critique: final verdict, its issues, every review with the draft assessment it judged, revised, and unsupportedNumerals; the audit row stores it inside the response JSON without a schema change. PROMPT_VERSION is now manager-specialists-v4-critic. Defaults raised: max-model-calls 10 to 14 and max-observed-tokens 16000 to 40000, because the critic and a revision each re-read the run's context.
+    * Live AAPL run `12d034ec-46e0-47a8-ba33-3a275e042d1c` (broker and quant off, outcomes on, gpt-4.1), a risk question: CRITIC:review ACCEPT in 1.55 seconds; HTTP 200 in 12.3 seconds, PARTIAL / NEUTRAL, five model calls, 14,010 tokens, five Item 1A sources, unsupportedNumerals empty. Evidence: [request](live-runs/2026-09-12-critic/request.json), [response](live-runs/2026-09-12-critic/response.json), [run log](live-runs/2026-09-12-critic/run.log).
+    * Live AAPL run `5ac8e3dd-82ce-420f-999d-6e909329ebaa`, a directional question asking for the filings' revenue and margin figures: the first draft (BULLISH) rounded net sales and gross margin to $109.4 billion and $54.8 billion; the numeral check flagged 109.4 and 54.8 as absent from the evidence (the 10-Q states $109,417 million and $54,770 million) and the critic returned REVISE, asking for the exact figures and for management's margin caution to be addressed. The manager revised on its own conversation, quoting the exact figures with the rounding made explicit and adding the volatility caveat; the second review returned ACCEPT. HTTP 200 in 12.0 seconds, PARTIAL / BULLISH, seven model calls, 28,120 tokens (over the old 16,000 default), two 10-Q Item 2 sources; GET by run ID returned the stored row with both reviews. An earlier run of the same request (`37ff03da`, before review history was recorded) took the same REVISE, revise, ACCEPT path in 10.6 seconds with 29,669 tokens. The two entries left in unsupportedNumerals are the explicit rounded values in the final reasoning: the documented false positive, shown rather than hidden. Evidence: [request](live-runs/2026-09-12-critic/request-directional.json), [response](live-runs/2026-09-12-critic/response-directional.json), [run log](live-runs/2026-09-12-critic/run-directional.log), [stored record](live-runs/2026-09-12-critic/record-directional.json).
+    * Verification: RecommendationServiceTests gain critic scenarios (a tool-less review that accepts, revise then accept on the manager's own history, unresolved after the last review, invalid verdicts, a critic tool call, budget exhaustion at the critic, a rejected revision, the disabled switch, the numeral check). Full suite: 180 tests, 175 passed, 5 opt-in live tests skipped, no failures.
+    * Not done: the critic shares the manager's model, so a blind spot common to both is not caught; there is no second-model ensemble, no calibration of critic verdicts against outcomes, and the critic's own judgment of entailment is not verified by the application.

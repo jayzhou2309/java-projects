@@ -23,7 +23,7 @@ public class TrackRecordService {
     /** The newest {@code limit} stored runs for the ticker with any stored outcomes, plus per-assessment statistics. */
     public TrackRecord trackRecord(String ticker, int limit) {
         String normalized = ticker.trim().toUpperCase(Locale.ROOT);
-        int reference = properties.getHorizons().contains(20) ? 20 : properties.getHorizons().get(0);
+        int reference = properties.referenceHorizon();
         var runs = new ArrayList<TrackRecord.PriorRun>();
         var byAssessment = new LinkedHashMap<String, List<TrackRecord.PriorRun>>();
         for (RecommendationRecord rec : recommendations.findByTicker(normalized, limit)) {

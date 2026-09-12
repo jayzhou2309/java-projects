@@ -1,5 +1,6 @@
 package project.stockrecommendationengine.outcome;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.util.List;
 import lombok.Getter;
@@ -28,4 +29,19 @@ public class OutcomeProperties {
     @Min(1) @Max(168) private int refreshHours = 12;
     /** Recommendations considered per evaluation run, oldest first. */
     @Min(1) @Max(5000) private int maxRunsPerEvaluation = 500;
+    @Valid private Calibration calibration = new Calibration();
+
+    /** The horizon that track-record statistics and confidence calibration use: 20 trading days when configured, else the first. */
+    public int referenceHorizon() { return horizons.contains(20) ? 20 : horizons.get(0); }
+
+    @Getter
+    @Setter
+    public static class Calibration {
+        /** Equal-width raw-confidence bins over [0,1]. */
+        @Min(2) @Max(20) private int bins = 5;
+        /** Scored directional runs required before a snapshot is READY and applied. */
+        @Min(1) @Max(10000) private int minSamples = 30;
+        /** Pseudo-samples at the overall hit rate mixed into every bin; 0 uses raw bin hit rates. */
+        @Min(0) @Max(1000) private int priorWeight = 10;
+    }
 }

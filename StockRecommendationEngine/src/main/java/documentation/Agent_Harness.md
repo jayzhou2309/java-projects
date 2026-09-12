@@ -9,7 +9,8 @@
     * Runs without an MCP server. A future MCP client can provide selected callbacks at the same tool boundary.
     * Take-profit and stop-loss levels come from the deterministic quant layer when enabled; confidence is an uncalibrated input-coverage composite.
     * A critic on a separate, tool-less conversation reviews the manager's answer against the run's own evidence; on REVISE the manager revises once on its own conversation and the revision is reviewed again. The critic discloses, it never stops a validated run.
-    * No trade execution, position sizing, or outcome-calibrated confidence is implemented.
+    * A directional run's raw confidence is mapped through the newest READY calibration snapshot from stored outcomes ([Outcomes.md](Outcomes.md)); until enough directional runs are scored, responses say so and carry no calibrated figure.
+    * No trade execution or position sizing is implemented.
     * Every run is written to the recommendations table with version tags, so outcomes can later be measured and attributed; see Recommendation Audit Store below.
     * This is the first research consumer of RAG, not completion of every recommendation requirement in the PRD.
 
@@ -48,6 +49,7 @@
             * review(...): critic and synthesis, bounded by recommendation.critic-rounds (below).
             * Return citation metadata and quotes from application state, never model-supplied URLs or prices.
             * Select take-profit/stop-loss from the run's QuantAnalysis by assessment direction and compute confidence; see [Quant.md](Quant.md).
+            * calibrate(...): for BULLISH and BEARISH, map the raw confidence through ConfidenceCalibrationService.apply; traced as MANAGER:calibrateConfidence with APPLIED, INSUFFICIENT_SAMPLE, NO_CALIBRATION, or UNAVAILABLE; NEUTRAL is NOT_DIRECTIONAL without a lookup. See [Outcomes.md](Outcomes.md).
     * Critic and Synthesis
         * After the manager's answer passes structural and citation validation, the critic reviews it on a fresh conversation with no tools. It receives the draft, the cited passages in full, the count of retrieved but uncited passages, quotes, price analysis, track record, data freshness, limitations, and numeralsNotFoundInEvidence: the numerals in the reasoning that the application could not find in that evidence (form names and single digits ignored, commas dropped; rounding produces false positives, so the list is a hint, not a verdict).
         * The critic returns exactly {"verdict":"ACCEPT|REVISE","issues":[...]}; REVISE needs at least one issue, at most ten, each at most 1000 characters. Anything else is INVALID_CRITIC_OUTPUT.
@@ -137,7 +139,9 @@
     * toolTrace: tool name, sanitized outcome, and elapsed milliseconds.
     * modelCalls and observedTokens: usage counters when available.
     * takeProfit and stopLoss: from priceAnalysis long levels for BULLISH, short levels for BEARISH; null for NEUTRAL, INSUFFICIENT_EVIDENCE, stale bars, or no analysis.
-    * confidence: input-coverage composite in [0,1] (50% cited-passage similarity, 25% quote verification, 25% price-history availability); null for INSUFFICIENT_EVIDENCE; not calibrated.
+    * confidence: input-coverage composite in [0,1] (50% cited-passage similarity, 25% quote verification, 25% price-history availability); null for INSUFFICIENT_EVIDENCE; never itself calibrated, so it remains the predictor that later snapshots calibrate.
+    * calibratedConfidence: the realized direction hit rate of prior runs with similar raw confidence, shrunk toward the overall hit rate, from the newest READY calibration snapshot; null unless calibration.status is APPLIED.
+    * calibration: status APPLIED, INSUFFICIENT_SAMPLE, NO_CALIBRATION, NOT_DIRECTIONAL, or UNAVAILABLE; the snapshot id, computedAt, horizonDays, samples, baseRate, priorWeight; and the raw-confidence bin used with its binSamples and binHitRate. Null when the run has no confidence.
     * priceAnalysis: the run's QuantAnalysis with provenance and limitations, or null.
     * dataFreshness: latestFilingDates per type, filingsVerifiedAt, filingsMayBeStale, barsAsOf, quoteUpdatedAt, quoteAvailability; what this run actually saw.
     * trackRecord: the prior runs and per-assessment statistics the manager was shown, or null when none exist or the look-back is disabled.
@@ -146,6 +150,7 @@
     * AUDIT_NOT_PERSISTED in limitations means the run completed but its audit row could not be written; inspect the application log.
     * FILINGS_MAY_BE_STALE means the newest stored quarterly filing is past cadence and the SEC index could not be compared in this run; ensureFilings:<code> names the cause.
     * CRITIC_UNRESOLVED means the critic's last review of the returned answer was REVISE; read critique.issues. critic:<code> and revise:<code> mean the critic or the revision failed and the draft stands; CRITIC_DISABLED means critic-rounds is 0.
+    * CONFIDENCE_UNCALIBRATED is present whenever calibratedConfidence is null; calibration.status says why.
     * Invalid requests return HTTP 400; missing/wrong access tokens return HTTP 401; capacity exhaustion returns HTTP 429.
 
 | Status | Meaning |
@@ -167,7 +172,7 @@
     * Delayed, frozen, missing-timestamp, stale, or materially future-dated quotes cannot satisfy completeness.
     * Structural checks prove citation provenance. Entailment of each sentence by its passage is a model judgment made by the critic, disclosed in critique, not a proof.
     * Numerals in free text are checked for presence in the run's evidence, not mathematically verified; the critic sees the misses as suspects.
-    * POSITION_SIZING_NOT_IMPLEMENTED and CONFIDENCE_UNCALIBRATED remain present even on COMPLETE research; QUANT_DISABLED or NO_PRICE_HISTORY appears when no analysis was attached.
+    * POSITION_SIZING_NOT_IMPLEMENTED remains present even on COMPLETE research, and CONFIDENCE_UNCALIBRATED until a READY calibration snapshot applies to a directional run; QUANT_DISABLED or NO_PRICE_HISTORY appears when no analysis was attached.
 
 * Enabling the Loop
     * Keep the existing database, OPENAI_API_KEY, and SEC_USER_AGENT configuration.
@@ -288,8 +293,10 @@ Critic (no tools) reviews draft against cited passages, quotes, analysis, track 
 Quote Freshness Validation
     ↓
 Levels by Assessment + Input-Coverage Confidence (application state, see Quant.md)
+    ↓ BULLISH / BEARISH
+Calibrated Confidence from the newest READY snapshot of stored outcomes (see Outcomes.md)
     ↓
-Qualitative Research + Sources + Quotes + Levels + Confidence + Critique + Limitations + Trace
+Qualitative Research + Sources + Quotes + Levels + Confidence (+ Calibrated) + Critique + Limitations + Trace
 ```
 
 
@@ -393,3 +400,9 @@ Qualitative Research + Sources + Quotes + Levels + Confidence + Critique + Limit
     * Live AAPL run `5ac8e3dd-82ce-420f-999d-6e909329ebaa`, a directional question asking for the filings' revenue and margin figures: the first draft (BULLISH) rounded net sales and gross margin to $109.4 billion and $54.8 billion; the numeral check flagged 109.4 and 54.8 as absent from the evidence (the 10-Q states $109,417 million and $54,770 million) and the critic returned REVISE, asking for the exact figures and for management's margin caution to be addressed. The manager revised on its own conversation, quoting the exact figures with the rounding made explicit and adding the volatility caveat; the second review returned ACCEPT. HTTP 200 in 12.0 seconds, PARTIAL / BULLISH, seven model calls, 28,120 tokens (over the old 16,000 default), two 10-Q Item 2 sources; GET by run ID returned the stored row with both reviews. An earlier run of the same request (`37ff03da`, before review history was recorded) took the same REVISE, revise, ACCEPT path in 10.6 seconds with 29,669 tokens. The two entries left in unsupportedNumerals are the explicit rounded values in the final reasoning: the documented false positive, shown rather than hidden. Evidence: [request](live-runs/2026-09-12-critic/request-directional.json), [response](live-runs/2026-09-12-critic/response-directional.json), [run log](live-runs/2026-09-12-critic/run-directional.log), [stored record](live-runs/2026-09-12-critic/record-directional.json).
     * Verification: RecommendationServiceTests gain critic scenarios (a tool-less review that accepts, revise then accept on the manager's own history, unresolved after the last review, invalid verdicts, a critic tool call, budget exhaustion at the critic, a rejected revision, the disabled switch, the numeral check). Full suite: 180 tests, 175 passed, 5 opt-in live tests skipped, no failures.
     * Not done: the critic shares the manager's model, so a blind spot common to both is not caught; there is no second-model ensemble, no calibration of critic verdicts against outcomes, and the critic's own judgment of entailment is not verified by the application.
+    * Live CRITIC_UNRESOLVED example, same day: AAPL run `3b612b0a-49b8-494a-8749-36618e17eff1` (directional question) drew REVISE on both reviews; the answer was returned with CRITIC_UNRESOLVED and both critiques in critique.reviews ([response](live-runs/2026-09-12-calibration/response-no-calibration.json)).
+
+* Confidence calibration — 2026-09-12
+    * finish(...) now maps the raw confidence of a BULLISH or BEARISH answer through ConfidenceCalibrationService.apply (outcomes enabled): the newest READY snapshot's bin gives calibratedConfidence, and calibration records the snapshot id, its sample count and base rate, and the bin's count and hit rate. NEUTRAL is NOT_DIRECTIONAL without a lookup; no snapshot is NO_CALIBRATION; a snapshot below min-samples is INSUFFICIENT_SAMPLE; a store failure is UNAVAILABLE. Only an actual lookup is traced (MANAGER:calibrateConfidence). CONFIDENCE_UNCALIBRATED is removed only when a value was applied.
+    * The raw confidence is unchanged in the response and the audit row, so every later snapshot calibrates the same predictor; the calibrated value and snapshot id live in the stored response JSON. Definitions, properties, endpoints, and the live verification (including the synthetic dataset used to exercise APPLIED and its deletion) are in [Outcomes.md](Outcomes.md); open items are in [Follow_Ups.md](Follow_Ups.md).
+    * Scripted tests: calibrated value and provenance for a directional run with the raw figure stored, INSUFFICIENT_SAMPLE disclosure, NEUTRAL without a lookup, a failing store, and no record without a confidence. Full suite: 188 tests, 183 passed, 5 opt-in live tests skipped.

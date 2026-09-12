@@ -1,0 +1,196 @@
+{
+  "runId" : "3b612b0a-49b8-494a-8749-36618e17eff1",
+  "ticker" : "AAPL",
+  "status" : "PARTIAL",
+  "assessment" : "BULLISH",
+  "reasoning" : "Apple's latest 10-Q filing for the quarter ended June 27, 2026, reports revenue of $109,417 million and net income of $29,789 million. This represents a 16% year-over-year increase in revenue, and net income is up from $23,434 million in the prior year quarter. Product gross margin increased from 34.5% to 40.1%, and total gross margin rose from 46.5% to 50.1%. These precise figures from the filing indicate robust top-line growth and margin expansion. While potential margin volatility from macroeconomic and supply chain risks is mentioned, the current results support a bullish outlook for the next quarter.",
+  "sources" : [ {
+    "chunkId" : 266,
+    "filingId" : 4,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-26-000020",
+    "filingType" : "10-Q",
+    "filingDate" : "2026-07-31",
+    "reportDate" : "2026-06-27",
+    "sectionKey" : "ITEM_1",
+    "sectionTitle" : "Financial Statements",
+    "chunkIndex" : 0,
+    "content" : "Apple Inc.\nCONDENSED CONSOLIDATED STATEMENTS OF OPERATIONS (Unaudited)\n(In millions, except number of shares, which are reflected in thousands, and per-share amounts)\nThree Months Ended\nNine Months Ended\nJune 27,\n2026\nJune 28,\n2025\nJune 27,\n2026\nJune 28,\n2025\nNet sales:\nProducts\n$\n78,678\n$\n66,613\n$\n272,629\n$\n233,287\nServices\n30,739\n27,423\n91,728\n80,408\nTotal net sales\n109,417\n94,036\n364,357\n313,695\nCost of sales:\nProducts\n47,153\n43,620\n163,810\n147,097\nServices\n7,494\n6,698\n21,765\n19,738\nTotal cost of sales\n54,647\n50,318\n185,575\n166,835\nGross margin\n54,770\n43,718\n178,782\n146,860\nOperating expenses:\nResearch and development\n11,729\n8,866\n34,035\n25,684\nSelling, general and administrative\n7,346\n6,650\n22,315\n20,553\nTotal operating expenses\n19,075\n15,516\n56,350\n46,237\nOperating income\n35,695\n28,202\n122,432\n100,623\nOther income/(expense), net\n572\n(171)\n670\n(698)\nIncome before provision for income taxes\n36,267\n28,031\n123,102\n99,925\nProvision for income taxes\n6,478\n4,597\n21,638\n15,381\nNet income\n$\n29,789\n$\n23,434\n$\n101,464\n$\n84,544\nEarnings per share:\nBasic\n$\n2.03\n$\n1.57\n$\n6.91\n$\n5.64\nDiluted\n$\n2.02\n$\n1.57\n$\n6.88\n$\n5.62\nShares used in computing earnings per share:\nBasic\n14,656,110\n14,902,886\n14,692,515\n14,992,898\nDiluted\n14,714,676\n14,948,179\n14,750,302\n15,051,726\nSee accompanying Notes to Condensed Consolidated Financial Statements.\nApple Inc. | Q3 2026 Form 10-Q | 1\nApple Inc.\nCONDENSED CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME (Unaudited)\n(In millions)\nThree Months Ended\nNine Months Ended\nJune 27,\n2026\nJune 28,\n2025\nJune 27,\n2026\nJune 28,\n2025\nNet income\n$\n29,789\n$\n23,434\n$\n101,464\n$\n84,544\nOther comprehensive income/(loss):\nChange in foreign currency translation, net of tax\n(24)\n449\n(116)\n(86)\nChange in unrealized gains/losses on derivative instruments, net of tax:\nChange in fair value of derivative instruments\n356\n(523)\n729\n810\nAdjustment for net (gains)/losses realized and included in net income\n67\n(571)\n348\n(415)\nTotal change in unrealized gains/losses on derivative instruments\n423\n(1,094)\n1,077\n395\nChange in unrealized gains/losses on marketable debt securities, net of tax:\nChange in fair value of marketable debt securities\n441\n640\n57\n90\nAdjustment for net (gains)/losses realized and included in net income\n27\n(1)\n45\n404\nTotal change in unrealized gains/losses on marketable debt securities\n468\n639\n102\n494\nTotal other comprehensive income/(loss)\n867\n(6)\n1,063\n803\nTotal comprehensive income\n$\n30,656\n$\n23,428\n$\n102,527\n$\n85,347\nSee accompanying Notes to Condensed Consolidated Financial Statements.\nApple Inc.",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/aapl-20260627.htm",
+    "similarityScore" : 0.5513763848430132
+  }, {
+    "chunkId" : 278,
+    "filingId" : 4,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-26-000020",
+    "filingType" : "10-Q",
+    "filingDate" : "2026-07-31",
+    "reportDate" : "2026-06-27",
+    "sectionKey" : "ITEM_2",
+    "sectionTitle" : "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+    "chunkIndex" : 12,
+    "content" : "the same periods in 2025 due to higher net sales of iPhone. The weakness in the yen relative to the U.S. dollar had an unfavorable year-over-year impact on Japan net sales during the third quarter and first nine months of 2026.\nRest of Asia Pacific\nRest of Asia Pacific net sales increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 primarily due to higher net sales of iPhone, Services and Mac. The strength in foreign currencies relative to the U.S. dollar had a net favorable year-over-year impact on Rest of Asia Pacific net sales during the third quarter of 2026.\nProducts and Services Performance\nThe following table shows net sales by category for the three- and nine-month periods ended June 27, 2026 and June 28, 2025 (dollars in millions):\nThree Months Ended\nNine Months Ended\nJune 27,\n2026\nJune 28,\n2025\nChange\nJune 27,\n2026\nJune 28,\n2025\nChange\niPhone\n$\n54,252\n$\n44,582\n22%\n$\n196,515\n$\n160,561\n22%\nMac\n10,352\n8,046\n29%\n27,137\n24,982\n9%\niPad\n6,191\n6,581\n(6)\n%\n21,700\n21,071\n3%\nWearables, Home and Accessories\n7,883\n7,404\n6%\n27,277\n26,673\n2%\nServices\n30,739\n27,423\n12%\n91,728\n80,408\n14%\nTotal net sales\n$\n109,417\n$\n94,036\n16%\n$\n364,357\n$\n313,695\n16%\niPhone\niPhone net sales increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 primarily due to higher net sales of Pro models.\nMac\nMac net sales increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 due to higher net sales of laptops.\niPad\niPad net sales decreased during the third quarter of 2026 compared to the third quarter of 2025 primarily due to lower net sales of iPad mini® and iPad Air®. Year-over-year iPad net sales increased during the first nine months of 2026 primarily due to higher net sales of iPad, partially offset by lower net sales of iPad mini.\nWearables, Home and Accessories\nWearables, Home and Accessories net sales increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 due to higher net sales of Accessories and Wearables.\nServices\nServices net sales increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 primarily due to higher net sales from advertising and cloud services.\nApple Inc. | Q3 2026 Form 10-Q | 15\nGross Margin\nProducts and Services gross margin and gross margin percentage for the three- and nine-month periods ended June 27, 2026 and June 28, 2025, were as follows (dollars in millions):\nThree Months Ended\nNine Months Ended\nJune 27,\n2026\nJune 28,\n2025\nJune 27,\n2026\nJune 28,\n2025\nGross margin:\nProducts\n$\n31,525\n$\n22,993\n$\n108,819\n$\n86,190\nServices\n23,245\n20,725\n69,963\n60,670\nTotal gross margin\n$\n54,770\n$\n43,718\n$\n178,782\n$\n146,860\nGross margin percentage:\nProducts\n40.1\n%\n34.5\n%\n39.9\n%\n36.9\n%\nServices\n75.6\n%\n75.6\n%\n76.3\n%\n75.5\n%\nTotal gross margin percentage\n50.1\n%\n46.5\n%\n49.1\n%\n46.8\n%\nProducts Gross Margin\nProducts gross margin and gross margin percentage increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 primarily due to a different mix of products and tariff refunds, partially offset by higher costs, including memory.\nServices Gross Margin\nServices gross margin increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 primarily due to higher Services net sales and a different mix of services, partially offset by higher costs.\nServices gross margin percentage was flat during the third quarter of 2026 compared to the third quarter of 2025.",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/aapl-20260627.htm",
+    "similarityScore" : 0.5672796052947555
+  } ],
+  "quotes" : [ ],
+  "limitations" : [ "POSITION_SIZING_NOT_IMPLEMENTED", "CONFIDENCE_UNCALIBRATED", "BROKER_DISABLED", "QUANT_DISABLED", "CRITIC_UNRESOLVED", "NO_VERIFIED_CURRENT_QUOTE" ],
+  "toolTrace" : [ {
+    "tool" : "MANAGER:reviewTrackRecord",
+    "outcome" : "OK",
+    "elapsedMs" : 16
+  }, {
+    "tool" : "RAG:ensureFilings",
+    "outcome" : "FRESH",
+    "elapsedMs" : 61
+  }, {
+    "tool" : "RAG:searchFilings",
+    "outcome" : "OK",
+    "elapsedMs" : 2461
+  }, {
+    "tool" : "MANAGER:researchFilings",
+    "outcome" : "OK",
+    "elapsedMs" : 5358
+  }, {
+    "tool" : "CRITIC:review",
+    "outcome" : "REVISE",
+    "elapsedMs" : 1566
+  }, {
+    "tool" : "MANAGER:revise",
+    "outcome" : "OK",
+    "elapsedMs" : 2146
+  }, {
+    "tool" : "CRITIC:review",
+    "outcome" : "REVISE",
+    "elapsedMs" : 1791
+  }, {
+    "tool" : "MANAGER:calibrateConfidence",
+    "outcome" : "NO_CALIBRATION",
+    "elapsedMs" : 4
+  } ],
+  "modelCalls" : 7,
+  "observedTokens" : 28583,
+  "takeProfit" : null,
+  "stopLoss" : null,
+  "confidence" : 0.28,
+  "priceAnalysis" : null,
+  "dataFreshness" : {
+    "latestFilingDates" : {
+      "10-Q" : "2026-07-31",
+      "10-K" : "2025-10-31",
+      "8-K" : "2026-07-30"
+    },
+    "filingsVerifiedAt" : null,
+    "filingsMayBeStale" : false,
+    "barsAsOf" : null,
+    "quoteUpdatedAt" : null,
+    "quoteAvailability" : null
+  },
+  "trackRecord" : {
+    "ticker" : "AAPL",
+    "runsConsidered" : 5,
+    "runs" : [ {
+      "runId" : "5ac8e3dd-82ce-420f-999d-6e909329ebaa",
+      "requestedAt" : "2026-09-12T04:02:32.620178Z",
+      "status" : "PARTIAL",
+      "assessment" : "BULLISH",
+      "confidence" : 0.2900,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    }, {
+      "runId" : "37ff03da-e8c4-497d-ae0d-7dd79a5f5639",
+      "requestedAt" : "2026-09-12T04:00:30.359234Z",
+      "status" : "PARTIAL",
+      "assessment" : "BULLISH",
+      "confidence" : 0.3000,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    }, {
+      "runId" : "12d034ec-46e0-47a8-ba33-3a275e042d1c",
+      "requestedAt" : "2026-09-12T03:59:49.382516Z",
+      "status" : "PARTIAL",
+      "assessment" : "NEUTRAL",
+      "confidence" : 0.3300,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    }, {
+      "runId" : "ca3f38fb-1e71-4465-9451-ce59b07d6eeb",
+      "requestedAt" : "2026-09-12T02:08:41.529755Z",
+      "status" : "PARTIAL",
+      "assessment" : "NEUTRAL",
+      "confidence" : 0.2400,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    }, {
+      "runId" : "07d8891d-4d74-4926-bd68-aa236e9bb186",
+      "requestedAt" : "2026-09-12T01:45:36.421514Z",
+      "status" : "PARTIAL",
+      "assessment" : "NEUTRAL",
+      "confidence" : 0.2400,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    } ],
+    "stats" : [ {
+      "assessment" : "BULLISH",
+      "runs" : 2,
+      "scored" : 0,
+      "directionCorrect" : 0,
+      "averageReturnPct" : null,
+      "referenceHorizonDays" : 20
+    }, {
+      "assessment" : "NEUTRAL",
+      "runs" : 3,
+      "scored" : 0,
+      "directionCorrect" : 0,
+      "averageReturnPct" : null,
+      "referenceHorizonDays" : 20
+    } ],
+    "caveat" : "Prior runs are evidence, not proof. Samples are small; a rate without its count is meaningless. Outcomes use daily bars after each run's bar date; NEUTRAL runs are not scored for direction."
+  },
+  "critique" : {
+    "verdict" : "REVISE",
+    "issues" : [ "The draft claims total gross margin rose from 46.5% to 50.1% and product gross margin increased from 34.5% to 40.1%. While these figures are found in the cited evidence, the draft misstates the change in total gross margin: The filing reports total gross margin percentage for the third quarter as 50.1% (2026) versus 46.5% (2025) but for ‘product gross margin’ the correct comparison is 40.1% (2026) to 34.5% (2025), as shown. However, the phrase 'total gross margin rose from 46.5% to 50.1%' is somewhat ambiguous; the draft should clarify it is referring to total gross margin percentage for the quarter and explicitly note each underlying figure’s context. Additionally, the draft mentions 'potential margin volatility from macroeconomic and supply chain risks is mentioned,' but this risk warning is not directly supported with a quote or passage from the supplied evidence, and so should be either substantiated or omitted." ],
+    "reviews" : [ {
+      "assessment" : "BULLISH",
+      "verdict" : "REVISE",
+      "issues" : [ "The draft states that revenue rose 16% year-over-year to $109.4B and net income was $29.8B, up from $23.4B, but the correct figures from the filings are revenue of $109,417M ($109.417B) and net income of $29,789M ($29.789B); also, while a 16% revenue growth is supported, the draft should not quote rounded figures ('$109.4B', '$29.8B', '$23.4B') without explicitly matching them to the numbers in the filings." ]
+    }, {
+      "assessment" : "BULLISH",
+      "verdict" : "REVISE",
+      "issues" : [ "The draft claims total gross margin rose from 46.5% to 50.1% and product gross margin increased from 34.5% to 40.1%. While these figures are found in the cited evidence, the draft misstates the change in total gross margin: The filing reports total gross margin percentage for the third quarter as 50.1% (2026) versus 46.5% (2025) but for ‘product gross margin’ the correct comparison is 40.1% (2026) to 34.5% (2025), as shown. However, the phrase 'total gross margin rose from 46.5% to 50.1%' is somewhat ambiguous; the draft should clarify it is referring to total gross margin percentage for the quarter and explicitly note each underlying figure’s context. Additionally, the draft mentions 'potential margin volatility from macroeconomic and supply chain risks is mentioned,' but this risk warning is not directly supported with a quote or passage from the supplied evidence, and so should be either substantiated or omitted." ]
+    } ],
+    "revised" : true,
+    "unsupportedNumerals" : [ ]
+  },
+  "calibratedConfidence" : null,
+  "calibration" : {
+    "status" : "NO_CALIBRATION",
+    "calibrationId" : null,
+    "computedAt" : null,
+    "horizonDays" : null,
+    "samples" : null,
+    "baseRate" : null,
+    "priorWeight" : null,
+    "binLower" : null,
+    "binUpper" : null,
+    "binSamples" : null,
+    "binHitRate" : null
+  }
+}

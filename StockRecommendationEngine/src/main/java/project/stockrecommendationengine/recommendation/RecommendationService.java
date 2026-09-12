@@ -23,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 import project.stockrecommendationengine.broker.BrokerException;
 import project.stockrecommendationengine.broker.BrokerData.Quote;
 import project.stockrecommendationengine.broker.BrokerReadService;
+import project.stockrecommendationengine.outcome.ConfidenceCalibrationService;
 import project.stockrecommendationengine.outcome.TrackRecord;
 import project.stockrecommendationengine.outcome.TrackRecordService;
 import project.stockrecommendationengine.quant.QuantAnalysis;
@@ -77,6 +78,7 @@ public class RecommendationService {
     private final QuantProperties quantProperties;
     private final RecommendationRepository store;
     private final TrackRecordService trackRecords;
+    private final ConfidenceCalibrationService calibrations;
     private final RecommendationProperties properties;
     private final Validator validator;
     private final JsonMapper json = JsonMapper.builder().build();
@@ -97,7 +99,8 @@ public class RecommendationService {
             FilingFreshnessService freshness,
             ObjectProvider<BrokerReadService> brokers, ObjectProvider<QuantAnalysisService> quants,
             ObjectProvider<QuantProperties> quantProperties, RecommendationRepository store,
-            ObjectProvider<TrackRecordService> trackRecords, RecommendationProperties properties, Validator validator) {
+            ObjectProvider<TrackRecordService> trackRecords, ObjectProvider<ConfidenceCalibrationService> calibrations,
+            RecommendationProperties properties, Validator validator) {
         this.model = models.getIfAvailable();
         if (model == null) throw new IllegalStateException("Enable a Spring AI chat model before enabling recommendations");
         this.filings = filings;
@@ -107,6 +110,7 @@ public class RecommendationService {
         this.quantProperties = quantProperties.getIfAvailable();
         this.store = store;
         this.trackRecords = trackRecords.getIfAvailable();
+        this.calibrations = calibrations.getIfAvailable();
         this.properties = properties;
         this.validator = validator;
     }
@@ -166,7 +170,7 @@ public class RecommendationService {
                     response.reasoning(), response.sources(), response.quotes(), List.copyOf(limitations), response.toolTrace(),
                     response.modelCalls(), response.observedTokens(), response.takeProfit(), response.stopLoss(),
                     response.confidence(), response.priceAnalysis(), response.dataFreshness(), response.trackRecord(),
-                    response.critique());
+                    response.critique(), response.calibratedConfidence(), response.calibration());
         }
     }
 
@@ -230,7 +234,7 @@ public class RecommendationService {
             return new RecommendationResponse(runId, request.ticker(), ex.getMessage(), "INSUFFICIENT_EVIDENCE", "",
                     List.of(), List.copyOf(tools.quotes.values()), state.limitations(), state.trace(),
                     state.modelCalls(), state.observedTokens(), null, null, null, tools.priceAnalysis,
-                    dataFreshness(state.filingFreshness, tools), state.trackRecord, null);
+                    dataFreshness(state.filingFreshness, tools), state.trackRecord, null, null, null);
         }
     }
 
@@ -546,15 +550,52 @@ public class RecommendationService {
         }
         BigDecimal confidence = assessment.equals("INSUFFICIENT_EVIDENCE") ? null
                 : confidence(cited, tools, currentQuote);
-        log.info("Recommendation run={} status={} modelCalls={} observedTokens={} levels={} confidence={} critic={}",
-                runId, status, state.modelCalls(), state.observedTokens(), levels != null, confidence,
+        Calibrated calibrated = confidence == null ? new Calibrated(null, null) : calibrate(assessment, confidence, state);
+        if (calibrated.value() != null) limitations.remove("CONFIDENCE_UNCALIBRATED");
+        log.info("Recommendation run={} status={} modelCalls={} observedTokens={} levels={} confidence={} calibrated={} critic={}",
+                runId, status, state.modelCalls(), state.observedTokens(), levels != null, confidence, calibrated.value(),
                 reviewed.critique() == null ? "DISABLED" : reviewed.critique().verdict());
         return new RecommendationResponse(runId, request.ticker(), status, assessment, draft.reasoning(),
                 cited.stream().map(tools.evidence::get).toList(), List.copyOf(tools.quotes.values()),
                 List.copyOf(limitations), state.trace(), state.modelCalls(), state.observedTokens(),
                 levels == null ? null : levels.takeProfit(), levels == null ? null : levels.stopLoss(),
                 confidence, tools.priceAnalysis, dataFreshness(state.filingFreshness, tools), state.trackRecord,
-                reviewed.critique());
+                reviewed.critique(), calibrated.value(), calibrated.provenance());
+    }
+
+    private record Calibrated(BigDecimal value, RecommendationResponse.Calibration provenance) { }
+
+    /**
+     * Deterministic post-processing: the raw input-coverage confidence of a directional assessment is mapped through
+     * the newest READY calibration snapshot. The raw figure stays in confidence and in the audit row; only a lookup
+     * that actually happens is traced, and its failure is disclosed, never fatal.
+     */
+    private Calibrated calibrate(String assessment, BigDecimal confidence, RunState state) {
+        if (!assessment.equals("BULLISH") && !assessment.equals("BEARISH")) return new Calibrated(null, provenance("NOT_DIRECTIONAL", null));
+        if (calibrations == null) return new Calibrated(null, provenance("UNAVAILABLE", null));
+        checkDeadline(state.deadline);
+        long started = System.nanoTime();
+        Calibrated result;
+        try {
+            var applied = calibrations.apply(confidence);
+            result = new Calibrated(applied.calibratedConfidence(), provenance(applied.status(), applied));
+        } catch (RuntimeException ex) {
+            result = new Calibrated(null, provenance("UNAVAILABLE", null));
+        }
+        long elapsed = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+        state.trace.add(new ToolTrace("MANAGER:calibrateConfidence", result.provenance().status(), elapsed));
+        log.info("Recommendation run={} tool=MANAGER:calibrateConfidence outcome={} elapsedMs={}", state.runId, result.provenance().status(), elapsed);
+        return result;
+    }
+    private static RecommendationResponse.Calibration provenance(String status, ConfidenceCalibrationService.Applied applied) {
+        var calibration = applied == null ? null : applied.calibration();
+        var bin = applied == null ? null : applied.bin();
+        return new RecommendationResponse.Calibration(status,
+                calibration == null ? null : calibration.id(), calibration == null ? null : calibration.computedAt(),
+                calibration == null ? null : calibration.horizonDays(), calibration == null ? null : calibration.samples(),
+                calibration == null ? null : calibration.baseRate(), calibration == null ? null : calibration.priorWeight(),
+                bin == null ? null : bin.lower(), bin == null ? null : bin.upper(), bin == null ? null : bin.samples(),
+                bin == null ? null : bin.hitRate());
     }
 
     /**
@@ -727,7 +768,7 @@ public class RecommendationService {
     }
     private static RecommendationResponse stopped(String runId, String ticker, String code) {
         return new RecommendationResponse(runId, ticker, code, "INSUFFICIENT_EVIDENCE", "", List.of(), List.of(),
-                List.of(code), List.of(), 0, 0, null, null, null, null, null, null, null);
+                List.of(code), List.of(), 0, 0, null, null, null, null, null, null, null, null, null);
     }
     @PreDestroy public void close() { workers.shutdownNow(); specialists.shutdownNow(); }
 }

@@ -1,0 +1,66 @@
+{
+  "id" : 6,
+  "computedAt" : "2026-09-12T04:36:43.827424Z",
+  "horizonDays" : 20,
+  "status" : "READY",
+  "samples" : 40,
+  "minSamples" : 30,
+  "priorWeight" : 10,
+  "baseRate" : 0.550000,
+  "expectedCalibrationError" : 0.068750,
+  "brierScore" : 0.229687,
+  "bins" : [ {
+    "lower" : 0.000000,
+    "upper" : 0.200000,
+    "samples" : 0,
+    "meanConfidence" : null,
+    "hitRate" : null,
+    "intervalLower" : null,
+    "intervalUpper" : null,
+    "calibrated" : 0.550000
+  }, {
+    "lower" : 0.200000,
+    "upper" : 0.400000,
+    "samples" : 10,
+    "meanConfidence" : 0.300000,
+    "hitRate" : 0.300000,
+    "intervalLower" : 0.107791,
+    "intervalUpper" : 0.603222,
+    "calibrated" : 0.425000
+  }, {
+    "lower" : 0.400000,
+    "upper" : 0.600000,
+    "samples" : 15,
+    "meanConfidence" : 0.550000,
+    "hitRate" : 0.533333,
+    "intervalLower" : 0.301170,
+    "intervalUpper" : 0.751905,
+    "calibrated" : 0.540000
+  }, {
+    "lower" : 0.600000,
+    "upper" : 0.800000,
+    "samples" : 0,
+    "meanConfidence" : null,
+    "hitRate" : null,
+    "intervalLower" : null,
+    "intervalUpper" : null,
+    "calibrated" : 0.550000
+  }, {
+    "lower" : 0.800000,
+    "upper" : 1.000000,
+    "samples" : 15,
+    "meanConfidence" : 0.900000,
+    "hitRate" : 0.733333,
+    "intervalLower" : 0.480496,
+    "intervalUpper" : 0.891025,
+    "calibrated" : 0.660000
+  } ],
+  "assessments" : {
+    "BULLISH" : 19,
+    "BEARISH" : 21
+  },
+  "promptVersions" : {
+    "synthetic-calibration-check" : 40
+  },
+  "caveat" : "Calibration maps the input-coverage confidence to the realized direction hit rate of prior runs with similar confidence, shrunk toward the overall hit rate by priorWeight pseudo-samples. It is in-sample, pooled across assessments and versions, and only as informative as the sample counts shown."
+}

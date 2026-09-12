@@ -23,6 +23,8 @@ import org.springframework.beans.factory.support.StaticListableBeanFactory;
 import project.stockrecommendationengine.broker.BrokerReadService;
 import project.stockrecommendationengine.broker.BrokerException;
 import project.stockrecommendationengine.broker.BrokerData.*;
+import project.stockrecommendationengine.outcome.ConfidenceCalibration;
+import project.stockrecommendationengine.outcome.ConfidenceCalibrationService;
 import project.stockrecommendationengine.outcome.TrackRecord;
 import project.stockrecommendationengine.outcome.TrackRecordService;
 import project.stockrecommendationengine.quant.QuantAnalysis;
@@ -49,6 +51,7 @@ class RecommendationServiceTests {
     private QuantAnalysisService quant;
     private RecommendationRepository store;
     private TrackRecordService trackRecords;
+    private ConfidenceCalibrationService calibrations;
     private final StaticListableBeanFactory beans = new StaticListableBeanFactory();
     private RecommendationService service;
     private RecommendationProperties properties;
@@ -64,6 +67,9 @@ class RecommendationServiceTests {
         trackRecords = mock(TrackRecordService.class);
         beans.addBean("trackRecords", trackRecords);
         when(trackRecords.trackRecord("AAPL", 10)).thenReturn(new TrackRecord("AAPL", 0, List.of(), List.of(), TrackRecordService.CAVEAT));
+        calibrations = mock(ConfidenceCalibrationService.class);
+        beans.addBean("calibrations", calibrations);
+        when(calibrations.apply(any())).thenReturn(new ConfidenceCalibrationService.Applied("NO_CALIBRATION", null, null, null));
         properties = new RecommendationProperties();
         properties.setModel("scripted-test-model");
         // Sequentially scripted scenarios need a deterministic call order; concurrency scenarios opt back in.
@@ -91,7 +97,56 @@ class RecommendationServiceTests {
         return new RecommendationService(beans.getBeanProvider(ChatModel.class), filings, freshness,
                 beans.getBeanProvider(BrokerReadService.class), beans.getBeanProvider(QuantAnalysisService.class),
                 beans.getBeanProvider(QuantProperties.class), store, beans.getBeanProvider(TrackRecordService.class),
-                properties, validators.getValidator());
+                beans.getBeanProvider(ConfidenceCalibrationService.class), properties, validators.getValidator());
+    }
+
+    @Test void directionalConfidenceIsCalibratedThroughTheLatestSnapshotWhileTheRawFigureIsStored() {
+        var bin = new ConfidenceCalibration.Bin(new BigDecimal("0.8"), new BigDecimal("1.0"), 20, new BigDecimal("0.9"),
+                new BigDecimal("0.6"), new BigDecimal("0.386573"), new BigDecimal("0.781201"), new BigDecimal("0.583333"));
+        var snapshot = new ConfidenceCalibration(9L, Instant.parse("2026-09-12T00:30:00Z"), 20, "READY", 40, 30, 10, new BigDecimal("0.55"),
+                new BigDecimal("0.15"), new BigDecimal("0.29"), List.of(bin), Map.of("BULLISH", 40), Map.of("p", 40), ConfidenceCalibration.CAVEAT);
+        when(calibrations.apply(new BigDecimal("0.90"))).thenReturn(new ConfidenceCalibrationService.Applied("APPLIED", new BigDecimal("0.583333"), snapshot, bin));
+        scriptByRole(fullRunScript("BULLISH"));
+        var result = service.recommend(request(false));
+        assertThat(result.status()).isEqualTo("COMPLETE");
+        assertThat(result.confidence()).as("raw input-coverage confidence is unchanged").isEqualByComparingTo("0.90");
+        assertThat(result.calibratedConfidence()).isEqualByComparingTo("0.583333");
+        assertThat(result.calibration()).isEqualTo(new RecommendationResponse.Calibration("APPLIED", 9L, Instant.parse("2026-09-12T00:30:00Z"), 20, 40,
+                new BigDecimal("0.55"), 10, new BigDecimal("0.8"), new BigDecimal("1.0"), 20, new BigDecimal("0.6")));
+        assertThat(result.limitations()).doesNotContain("CONFIDENCE_UNCALIBRATED");
+        assertThat(result.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome()).contains("MANAGER:calibrateConfidence:APPLIED");
+        var records = org.mockito.ArgumentCaptor.forClass(RecommendationRecord.class);
+        verify(store).save(records.capture());
+        assertThat(records.getValue().confidence()).as("the audit row keeps the raw predictor").isEqualByComparingTo("0.90");
+        assertThat(records.getValue().responseJson()).contains("\"calibratedConfidence\":0.583333").contains("\"calibrationId\":9");
+        // Not enough scored runs yet: disclosed, nothing applied.
+        when(calibrations.apply(any())).thenReturn(new ConfidenceCalibrationService.Applied("INSUFFICIENT_SAMPLE", null, snapshot, null));
+        scriptByRole(fullRunScript("BEARISH"));
+        var thin = service.recommend(request(false));
+        assertThat(thin.calibratedConfidence()).isNull();
+        assertThat(thin.calibration().status()).isEqualTo("INSUFFICIENT_SAMPLE");
+        assertThat(thin.calibration().samples()).isEqualTo(40);
+        assertThat(thin.calibration().binSamples()).isNull();
+        assertThat(thin.limitations()).contains("CONFIDENCE_UNCALIBRATED");
+        // NEUTRAL has no direction to calibrate against: no lookup, no trace entry.
+        clearInvocations(calibrations);
+        scriptByRole(fullRunScript("NEUTRAL"));
+        var neutral = service.recommend(request(false));
+        assertThat(neutral.confidence()).isEqualByComparingTo("0.90");
+        assertThat(neutral.calibratedConfidence()).isNull();
+        assertThat(neutral.calibration().status()).isEqualTo("NOT_DIRECTIONAL");
+        assertThat(neutral.toolTrace()).extracting(t -> t.tool()).doesNotContain("MANAGER:calibrateConfidence");
+        verifyNoInteractions(calibrations);
+        // A failing calibration store is disclosed and the run completes.
+        when(calibrations.apply(any())).thenThrow(new IllegalStateException("db"));
+        scriptByRole(fullRunScript("BULLISH"));
+        var failed = service.recommend(request(false));
+        assertThat(failed.status()).isEqualTo("COMPLETE");
+        assertThat(failed.calibration().status()).isEqualTo("UNAVAILABLE");
+        assertThat(failed.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome()).contains("MANAGER:calibrateConfidence:UNAVAILABLE");
+        // No confidence at all means no calibration record either.
+        when(model.call(any(Prompt.class))).thenReturn(answer("INSUFFICIENT_EVIDENCE", "[]"));
+        assertThat(service.recommend(request(false)).calibration()).isNull();
     }
 
     @Test void priorRunsReachTheManagerAsEvidenceAndAreEchoedInTheResponse() {
@@ -635,7 +690,7 @@ class RecommendationServiceTests {
         service = new RecommendationService(withoutQuant.getBeanProvider(ChatModel.class), filings, freshness,
                 withoutQuant.getBeanProvider(BrokerReadService.class), withoutQuant.getBeanProvider(QuantAnalysisService.class),
                 withoutQuant.getBeanProvider(QuantProperties.class), store, withoutQuant.getBeanProvider(TrackRecordService.class),
-                properties, validators.getValidator());
+                withoutQuant.getBeanProvider(ConfidenceCalibrationService.class), properties, validators.getValidator());
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
                 calls(call("b1", "findInstrument", "{}")), calls(call("b2", "analyzePriceHistory", "{\"conid\":1}")));
         var result = service.recommend(request(false));

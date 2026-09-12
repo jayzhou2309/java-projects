@@ -75,3 +75,9 @@ one-line fix, a typo, or a question, just do it directly.
   passed Scrutiny and UT on the first round; hybrid enabled by default after the
   measured comparison (hit@5 0.600 → 0.633, no ticker down); plan in
   `documentation/plans/2026-09-12-hybrid-keyword-retrieval.md`.
+- 2026-09-12, fusion tuning (RAG-12): two milestones, each passed Scrutiny and UT on
+  the first round; a seven-point grid chose keyword weight 0.5 with the figure leg on
+  (snapshot 51: hit@1 0.30 → 0.33, MRR 0.437 → 0.463, no protected FIGURE question
+  leaves the top 5); the evaluation set carries no figure tokens, so the figure leg
+  is evidenced by live queries only; plan in
+  `documentation/plans/2026-09-12-fusion-tuning.md`.

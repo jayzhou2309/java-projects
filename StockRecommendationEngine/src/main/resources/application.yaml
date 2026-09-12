@@ -100,6 +100,17 @@ quant:
   take-profit-atr-multiple: 2.0
   stop-loss-atr-multiple: 1.0
 
+# Nightly scoring of stored recommendations against stored daily bars (after the filing refresh).
+outcomes:
+  enabled: ${OUTCOMES_ENABLED:false}
+  cron: "0 30 7 * * *"
+  zone: Asia/Singapore
+  horizons: 5,20,60
+  benchmark-conid: ${OUTCOMES_BENCHMARK_CONID:756733}
+  history-days: 250
+  refresh-hours: 12
+  max-runs-per-evaluation: 500
+
 recommendation:
   enabled: ${RECOMMENDATION_ENABLED:false}
   model: ${RECOMMENDATION_MODEL:}

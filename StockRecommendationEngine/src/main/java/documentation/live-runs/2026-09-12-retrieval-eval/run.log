@@ -14,4 +14,4 @@ Live test runs (two of the three allowed; each embeds 30 questions with text-emb
   2. live-test-floor-1.01.log floor 1.01          -> exit 1, assertion names hit@5 0.600000 and the nine miss ids
 Both runs are @Transactional, so retrieval_evaluations still holds only ids 7, 12, 13 after them (checked with psql).
 
-Full suite without the property: set -a && source .env && set +a && ./mvnw -q verify -> exit 0 (219 tests, 6 skipped: IbkrLiveTests x4, IbkrQuantLiveTests, RetrievalEvaluationLiveTests).
+Full suite without the property: set -a && source .env && set +a && ./mvnw -q verify -> exit 0 (220 tests, 6 skipped: IbkrLiveTests x4, IbkrQuantLiveTests, RetrievalEvaluationLiveTests).

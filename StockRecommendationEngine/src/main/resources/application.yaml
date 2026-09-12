@@ -71,11 +71,20 @@ rag:
     latest-filings-only: true
     # Requires a FilingReranker adapter before enabling.
     reranking-enabled: false
+    # Fuse full-text keyword candidates with the vector candidates (reciprocal rank fusion). On by default since the 2026-09-12
+    # measurement (RAG.md, Hybrid Retrieval: snapshots 35 and 34, hit@5 0.600000 to 0.633333, no ticker lower); a request's
+    # "hybrid" field overrides per call.
+    hybrid-enabled: true
+    # Keyword candidates fetched per query when the hybrid path runs; 20 to 200.
+    keyword-candidate-count: 40
+    # The k in reciprocal rank fusion's 1 / (k + rank); 1 to 1000.
+    rrf-k: 60
   # Chunks retrieved per question when the bundled evaluation set is run (POST /api/rag/evaluate); 5 to 20.
   evaluation:
     window: 10
-    # hit@5 floor asserted by the opt-in RetrievalEvaluationLiveTests (-Drag.evaluation.live=true): baseline 0.6 minus 0.1,
-    # rounded down to a multiple of 0.05. Override with -Drag.evaluation.min-hit-at-5=<fraction>.
+    # hit@5 floor asserted by the opt-in RetrievalEvaluationLiveTests (-Drag.evaluation.live=true): the current baseline's hit@5
+    # minus 0.1, rounded down to a multiple of 0.05, never lowered. Vector-only baseline 0.6 gave 0.50; the hybrid baseline
+    # 0.633333 (snapshot 34) gives 0.533 -> 0.50, so the floor stays. Override with -Drag.evaluation.min-hit-at-5=<fraction>.
     min-hit-at-5: 0.50
 
 # Opt-in single-owner integration. The configured account never comes from model arguments.

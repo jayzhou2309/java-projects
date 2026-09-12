@@ -41,18 +41,27 @@ public class RetrievalEvaluationService {
     private final RetrievalEvaluationProperties properties;
     private final FilingRetrievalProperties retrievalProperties;
 
-    /** Evaluate every question now and store the snapshot; returns it with its id. */
+    /** Evaluate every question now with the configured retrieval default and store the snapshot; returns it with its id. */
     public RetrievalEvaluation evaluate() {
+        return evaluate(null);
+    }
+
+    /**
+     * Evaluate every question now and store the snapshot; returns it with its id. {@code hybrid} is passed unchanged on
+     * every retrieval request (true or false forces the keyword plus vector path on or off for the whole run; null lets
+     * each request follow {@code rag.retrieval.hybrid-enabled}) and recorded as {@code properties.hybrid}, null when absent.
+     */
+    public RetrievalEvaluation evaluate(Boolean hybrid) {
         RetrievalEvaluationSet set = loader.load();
         int window = properties.getWindow();
         List<QuestionResult> results = new ArrayList<>();
         List<Miss> misses = new ArrayList<>();
         String strategy = null;
-        log.info("Evaluating retrieval: set={}, questions={}, window={}", set.version(), set.questions().size(), window);
+        log.info("Evaluating retrieval: set={}, questions={}, window={}, hybrid={}", set.version(), set.questions().size(), window, hybrid);
         for (RetrievalEvaluationQuestion question : set.questions()) {
             RetrievalResponse response;
             try {
-                response = retrieval.retrieve(new RetrievalRequest(question.ticker(), question.question(), null, null, null, null, window, true));
+                response = retrieval.retrieve(new RetrievalRequest(question.ticker(), question.question(), null, null, null, null, window, true, hybrid));
             } catch (RuntimeException failure) {
                 String error = failure.getClass().getSimpleName() + ": " + failure.getMessage();
                 log.warn("Retrieval failed for evaluation question {}: {}", question.id(), error);
@@ -68,7 +77,7 @@ public class RetrievalEvaluationService {
         }
         RetrievalEvaluation evaluation = new RetrievalEvaluation(null, Instant.now(), set.version(), results.size(),
                 hitAt(results, 1), hitAt(results, 3), hitAt(results, 5), mrr(results), window, strategy == null ? "UNAVAILABLE" : strategy,
-                runProperties(set, window), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses));
+                runProperties(set, window, hybrid), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses));
         RetrievalEvaluation stored = repository.save(evaluation);
         log.info("Retrieval evaluation stored: id={}, hitAt1={}, hitAt3={}, hitAt5={}, mrr={}, misses={}",
                 stored.id(), stored.hitAt1(), stored.hitAt3(), stored.hitAt5(), stored.mrr(), stored.misses().size());
@@ -127,13 +136,17 @@ public class RetrievalEvaluationService {
                 BigDecimal.valueOf(chunk.similarityScore()).setScale(SCALE, RoundingMode.HALF_UP));
     }
 
-    private Map<String, Object> runProperties(RetrievalEvaluationSet set, int window) {
+    private Map<String, Object> runProperties(RetrievalEvaluationSet set, int window, Boolean hybrid) {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("window", window);
         out.put("latestFilingsOnly", true);
         out.put("setCreatedOn", set.createdOn().toString());
         out.put("candidateCount", retrievalProperties.getCandidateCount());
         out.put("rerankingEnabled", retrievalProperties.isRerankingEnabled());
+        out.put("hybridEnabled", retrievalProperties.isHybridEnabled());
+        out.put("keywordCandidateCount", retrievalProperties.getKeywordCandidateCount());
+        out.put("rrfK", retrievalProperties.getRrfK());
+        out.put("hybrid", hybrid);
         return out;
     }
 }

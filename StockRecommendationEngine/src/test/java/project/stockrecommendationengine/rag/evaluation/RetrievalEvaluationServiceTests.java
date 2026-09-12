@@ -69,7 +69,9 @@ class RetrievalEvaluationServiceTests {
         assertThat(miss.top().get(2).accessionNo()).isEqualTo(OTHER);
         assertThat(miss.top().get(2).sectionKey()).isEqualTo("ITEM_2");
         assertThat(miss.top().get(0).similarity()).isEqualByComparingTo("0.9");
-        assertThat(evaluation.properties()).containsEntry("window", 10).containsEntry("latestFilingsOnly", true);
+        assertThat(evaluation.properties()).containsEntry("window", 10).containsEntry("latestFilingsOnly", true)
+                .containsEntry("hybridEnabled", true).containsEntry("keywordCandidateCount", 40).containsEntry("rrfK", 60)
+                .containsKey("hybrid").containsEntry("hybrid", null);
 
         ArgumentCaptor<RetrievalRequest> requests = ArgumentCaptor.forClass(RetrievalRequest.class);
         verify(retrieval, times(4)).retrieve(requests.capture());
@@ -78,6 +80,7 @@ class RetrievalEvaluationServiceTests {
             assertThat(request.latestFilingsOnly()).isTrue();
             assertThat(request.filingTypes()).isNull();
             assertThat(request.sectionKeys()).isNull();
+            assertThat(request.hybrid()).isNull();
         });
         assertThat(requests.getAllValues()).extracting(RetrievalRequest::ticker).containsExactly("AAPL", "AAPL", "MSFT", "MSFT");
         verify(repository).save(argThat(saved -> saved.id() == null));
@@ -105,6 +108,35 @@ class RetrievalEvaluationServiceTests {
         assertThat(evaluation.misses().get(0).top()).isEmpty();
         assertThat(evaluation.misses().get(0).error()).contains("embedding unavailable");
         assertThat(evaluation.tickerHitAt5()).containsEntry("AAPL", new java.math.BigDecimal("0.000000")).containsEntry("NVDA", new java.math.BigDecimal("1.000000"));
+    }
+
+    @Test void theHybridOverrideIsPassedOnEveryRequestAndRecordedInTheSnapshot() {
+        var q1 = question("q1", "AAPL", "net sales were");
+        var q2 = question("q2", "NVDA", "data center revenue");
+        when(loader.load()).thenReturn(new RetrievalEvaluationSet("v1", LocalDate.of(2026, 9, 12), List.of(q1, q2)));
+        when(retrieval.retrieve(any())).thenAnswer(inv -> response(inv.getArgument(0), chunk(1, ACC, "ITEM_7", "Net sales were up")));
+        when(repository.save(any())).thenAnswer(invocation -> ((RetrievalEvaluation) invocation.getArgument(0)).withId(2L));
+
+        var hybrid = service.evaluate(true);
+        assertThat(hybrid.properties()).containsEntry("hybrid", true);
+        assertThat(hybrid.retrievalStrategy()).isEqualTo("HYBRID_RRF");
+        ArgumentCaptor<RetrievalRequest> requests = ArgumentCaptor.forClass(RetrievalRequest.class);
+        verify(retrieval, times(2)).retrieve(requests.capture());
+        assertThat(requests.getAllValues()).extracting(RetrievalRequest::hybrid).containsExactly(true, true);
+        assertThat(requests.getAllValues()).allSatisfy(request -> assertThat(request.latestFilingsOnly()).isTrue());
+
+        clearInvocations(retrieval);
+        var vectorOnly = service.evaluate(false);
+        assertThat(vectorOnly.properties()).containsEntry("hybrid", false);
+        assertThat(vectorOnly.retrievalStrategy()).isEqualTo("FILTERED_VECTOR");
+        verify(retrieval, times(2)).retrieve(requests.capture());
+        assertThat(requests.getAllValues().subList(2, 4)).extracting(RetrievalRequest::hybrid).containsExactly(false, false);
+
+        clearInvocations(retrieval);
+        var byProperty = service.evaluate(null);
+        assertThat(byProperty.properties()).containsKey("hybrid").containsEntry("hybrid", null);
+        verify(retrieval, times(2)).retrieve(requests.capture());
+        assertThat(requests.getAllValues().subList(4, 6)).extracting(RetrievalRequest::hybrid).containsOnlyNulls();
     }
 
     @Test void matchingIsCaseInsensitiveWithWhitespaceCollapsedAndRequiresTheSameFilingAndSection() {
@@ -138,8 +170,10 @@ class RetrievalEvaluationServiceTests {
         return new RetrievalEvaluationQuestion(id, ticker, Kind.NARRATIVE, id + "?", List.of(new ExpectedPassage(ACC, "ITEM_7", phrase)), null);
     }
 
+    /** Scripted retrieval: the strategy mirrors the request's hybrid flag the way the real service resolves it with the property off. */
     private static RetrievalResponse response(RetrievalRequest request, RetrievedFilingChunk... chunks) {
-        return new RetrievalResponse(request.ticker(), request.query(), "FILTERED_VECTOR", true, request.topK(), chunks.length, List.of(chunks));
+        String strategy = Boolean.TRUE.equals(request.hybrid()) ? "HYBRID_RRF" : "FILTERED_VECTOR";
+        return new RetrievalResponse(request.ticker(), request.query(), strategy, true, request.topK(), chunks.length, List.of(chunks));
     }
 
     private static RetrievedFilingChunk chunk(long id, String accessionNo, String sectionKey, String content) {

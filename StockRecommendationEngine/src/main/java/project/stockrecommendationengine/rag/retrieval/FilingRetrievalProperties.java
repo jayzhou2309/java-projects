@@ -22,4 +22,19 @@ public class FilingRetrievalProperties {
 
     private boolean latestFilingsOnly = true;
     private boolean rerankingEnabled = false;
+
+    /**
+     * Fuse full-text keyword candidates with the vector candidates (reciprocal rank fusion); a request's hybrid field
+     * overrides per call. On by default since the 2026-09-12 measurement (RAG.md, Hybrid Retrieval: snapshots 35 and 34,
+     * hit@5 0.600000 to 0.633333 with no ticker's hit@5 lower).
+     */
+    private boolean hybridEnabled = true;
+
+    /** Keyword candidates fetched per query when the hybrid path runs. */
+    @Min(20) @Max(200)
+    private int keywordCandidateCount = 40;
+
+    /** The k in reciprocal rank fusion's 1 / (k + rank). */
+    @Min(1) @Max(1000)
+    private int rrfK = 60;
 }

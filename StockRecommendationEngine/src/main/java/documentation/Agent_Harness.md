@@ -72,7 +72,7 @@
 
 | Tool | Arguments | Availability | Behavior |
 |---|---|---|---|
-| searchFilings | query | Always | Search the request ticker's latest stored filings; at most 5 passages per call |
+| searchFilings | query | Always | Search the request ticker's latest stored filings; at most 5 passages per call. Since 2026-09-12 the search is hybrid by default (keyword plus vector candidates fused by reciprocal rank, `rag.retrieval.hybrid-enabled`), for the filings prefetch and the specialist's own calls alike; see RAG.md, Hybrid Retrieval |
 | findInstrument | None | Broker enabled | Discover stock contracts for the request ticker |
 | getQuote | conid | Broker enabled | Discover implicitly if needed; the conid must be the request conid, the only listing, or the single preferred-currency listing |
 | getPortfolioPositions | None | Broker enabled and includePortfolio=true | Read the configured account's positions |
@@ -157,7 +157,7 @@
     * toolTrace: tool name, sanitized outcome, and elapsed milliseconds.
     * modelCalls and observedTokens: usage counters when available.
     * takeProfit and stopLoss: from priceAnalysis long levels for BULLISH, short levels for BEARISH; null for NEUTRAL, INSUFFICIENT_EVIDENCE, stale bars, or no analysis.
-    * confidence: input-coverage composite in [0,1] (50% cited-passage similarity, 25% quote verification, 25% price-history availability); null for INSUFFICIENT_EVIDENCE; never itself calibrated, so it remains the predictor that later snapshots calibrate.
+    * confidence: input-coverage composite in [0,1] (50% cited-passage similarity, 25% quote verification, 25% price-history availability); null for INSUFFICIENT_EVIDENCE; never itself calibrated, so it remains the predictor that later snapshots calibrate. Since hybrid retrieval became the default (2026-09-12, RAG.md), a cited passage found by the keyword leg can carry a lower vector similarity than a vector-only result would, so the raw confidence may dip for the same question.
     * calibratedConfidence: the realized direction hit rate of prior runs with similar raw confidence, shrunk toward the overall hit rate, from the newest READY calibration snapshot; null unless calibration.status is APPLIED.
     * calibration: status APPLIED, INSUFFICIENT_SAMPLE, NO_CALIBRATION, NOT_DIRECTIONAL, or UNAVAILABLE; the snapshot id, computedAt, horizonDays, samples, baseRate, priorWeight; and the raw-confidence bin used with its binSamples and binHitRate. Null when the run has no confidence.
     * priceAnalysis: the run's QuantAnalysis with provenance and limitations, or null.

@@ -39,7 +39,17 @@ class FilingRetrievalServiceTests {
     }
 
     @Test
+    void hybridRetrievalIsOnByDefaultSinceTheMeasuredComparison() {
+        // Milestone 3 decision (RAG.md, Hybrid Retrieval): snapshots 35 (vector only, hit@5 0.600000) and 34 (hybrid, 0.633333),
+        // no ticker's hit@5 lower, so the property default is on; the yaml carries the same value.
+        assertThat(new FilingRetrievalProperties().isHybridEnabled()).isTrue();
+        when(repository.findKeywordChunks(any(), any(), any(), anyInt())).thenReturn(List.of(evidence(3L)));
+        assertThat(service.retrieve(request()).retrievalStrategy()).isEqualTo("HYBRID_RRF");
+    }
+
+    @Test
     void normalizesInputsAndReturnsLimitedEvidenceWithExplicitStrategy() {
+        properties.setHybridEnabled(false);
         var request = new RetrievalRequest(" aapl ", " risks? ", List.of("10-k"), null, null, List.of("item_1a"), 1, null, null);
         var response = service.retrieve(request);
         assertThat(response.ticker()).isEqualTo("AAPL");
@@ -82,6 +92,7 @@ class FilingRetrievalServiceTests {
     @Test
     void usesConfiguredRerankerWithoutChangingCitationsOrSimilarityScores() {
         FilingReranker reranker = mock(FilingReranker.class);
+        properties.setHybridEnabled(false);
         properties.setRerankingEnabled(true);
         service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
         when(reranker.rerank(anyString(), anyList(), anyInt())).thenReturn(List.of(evidence(2L), evidence(1L)));
@@ -140,6 +151,12 @@ class FilingRetrievalServiceTests {
         assertThat(scores.get(2L)).isEqualByComparingTo(reciprocal(62));
         assertThat(scores.get(4L)).isEqualByComparingTo(reciprocal(62));
         assertThat(scores.get(1L)).isGreaterThan(scores.get(2L));
+
+        // A repeated id within one list counts once at its first position and does not shift the ranks after it:
+        // [a, a, b] scores a = 1/61 and b = 1/62, not 1/63.
+        var repeated = FilingRetrievalService.reciprocalRankScores(List.of(List.of(a, a, b)), 60);
+        assertThat(repeated.get(1L)).isEqualByComparingTo(reciprocal(61));
+        assertThat(repeated.get(2L)).isEqualByComparingTo(reciprocal(62));
 
         var response = service.retrieve(request("risks", 3, true));
         assertThat(response.retrievalStrategy()).isEqualTo("HYBRID_RRF");

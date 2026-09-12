@@ -1,0 +1,50 @@
+Hybrid keyword plus vector retrieval: measurement, default decision, floor (Follow_Ups RAG-2, Milestone 3 of plans/2026-09-12-hybrid-keyword-retrieval.md), 2026-09-12
+
+Snapshots (both made by the Milestone 2 acceptance run on 2026-09-12, same store, same code, set v1, 30 questions, window 10):
+  id 35  evaluated 2026-09-12 14:15:06 UTC  FILTERED_VECTOR  properties.hybrid null   hit@1 0.300000 hit@3 0.533333 hit@5 0.600000 MRR 0.435833  9 misses
+  id 34  evaluated 2026-09-12 14:14:57 UTC  HYBRID_RRF       properties.hybrid true   hit@1 0.300000 hit@3 0.533333 hit@5 0.633333 MRR 0.436667  7 misses
+  per-ticker hit@5: 35 AAPL 0.900000 MSFT 0.600000 NVDA 0.300000; 34 AAPL 0.900000 MSFT 0.700000 NVDA 0.300000
+  misses 35: msft-07, msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07, nvda-09
+  misses 34: msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07
+  (ids 30 and 31 from the Milestone 2 UT check carry the same figures; ids 7, 12, 13 are the vector-only baseline)
+
+Queries (docker exec -i trading-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "..."):
+  SELECT id, evaluated_at, retrieval_strategy, hit_at_1, hit_at_3, hit_at_5, mrr, properties FROM retrieval_evaluations WHERE id IN (34, 35) ORDER BY id
+  SELECT id, set_version, question_count, window_size, jsonb_typeof(results) FROM retrieval_evaluations WHERE id IN (34,35)      -> v1 | 30 | 10 for both
+  SELECT id, results->'tickerHitAt5', jsonb_array_length(results->'misses') FROM retrieval_evaluations WHERE id IN (34,35)
+  SELECT row_to_json(r) FROM retrieval_evaluations r WHERE id = 34   -> hybrid-snapshot-34.json
+  SELECT row_to_json(r) FROM retrieval_evaluations r WHERE id = 35   -> vector-snapshot-35.json
+  Rank diff (results->'questions' of both rows joined on question id):
+    WITH q35 AS (SELECT e->>'id' id, e->>'rank' rank, e->>'matchedChunkId' chunk FROM retrieval_evaluations, jsonb_array_elements(results->'questions') e WHERE id=35),
+         q34 AS (SELECT e->>'id' id, e->>'rank' rank, e->>'matchedChunkId' chunk FROM retrieval_evaluations, jsonb_array_elements(results->'questions') e WHERE id=34)
+    SELECT q35.id, coalesce(q35.rank,'miss'), coalesce(q34.rank,'miss'), q35.chunk, q34.chunk FROM q35 JOIN q34 USING (id) WHERE coalesce(q35.rank,'') <> coalesce(q34.rank,'') ORDER BY 1
+
+Rank changes 35 -> 34 (question: rank vector -> rank hybrid, matched chunk):
+  aapl-06 4 -> 3 (236)        aapl-09 8 -> 10 (280)       msft-01 6 -> 10 (514)      msft-02 2 -> 3 (514)
+  msft-03 3 -> 2 (517)        msft-04 1 -> 8 (467 -> 466) msft-05 6 -> 2 (460)       msft-06 2 -> 1 (489)
+  msft-07 miss -> 4 (495)     msft-10 2 -> 5 (637)        nvda-09 miss -> 8 (879)
+  The other 19 questions kept rank and matched chunk. Miss to hit: msft-07 (into the top 5) and nvda-09 (into the window, rank 8).
+
+Keyword leg alone for the NVDA figure query (no embedding; ts_rank_cd over the latest EMBEDDED NVDA filing per type,
+terms 'fiscal' | '2026' | 'revenue' | '215,938' | 'up' | '65'): positions 1..5 are chunks 806, 842, 881, 864, 873 (none contains
+215,938); the chunk with the "Revenue $ 215,938 $ 130,497 Up 65%" row (802, ITEM_7) is sixth. Recorded in RAG.md as the
+fusion-tuning observation (RAG-12).
+
+Decision (plan rule: enable by default only if hit@5 improves and no ticker's hit@5 decreases):
+  hit@5 0.600000 -> 0.633333 improves; AAPL 0.9 -> 0.9, MSFT 0.6 -> 0.7, NVDA 0.3 -> 0.3, none lower  => rag.retrieval.hybrid-enabled: true
+  (application.yaml and FilingRetrievalProperties; FilingRetrievalServiceTests asserts the property default.)
+  Floor: 0.633333 - 0.1 = 0.533333, rounded down to a multiple of 0.05 = 0.50, not below the current 0.50 => rag.evaluation.min-hit-at-5 stays 0.50.
+  Question-level regressions the ticker rule does not see (msft-04 1 -> 8, msft-01 6 -> 10) are logged as Follow_Ups RAG-12.
+
+Code in this milestone: the yaml/property default flip, and reciprocalRankScores now increments the per-list rank after the
+duplicate check (unit assertion: [a, a, b] scores a = 1/61, b = 1/62). Tests that relied on the old default set hybrid off explicitly.
+
+Runs (never exporting the application enable flags):
+  1. set -a && source .env && set +a && ./mvnw -q -o test -Dtest=FilingRetrievalServiceTests,RetrievalEvaluationServiceTests  -> 25 tests, 0 failures
+  2. set -a && source .env && set +a && ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true
+       -> exit 0 (live-test-pass.log): hybrid=null so the run followed the new default, HYBRID_RRF, hit@5 0.633333, MRR 0.436667,
+          AAPL 0.9 MSFT 0.7 NVDA 0.3, misses identical to snapshot 34; 30 embeddings, no chat model; the snapshot (id 36) rolled back,
+          retrieval_evaluations holds ids 7, 12, 13, 30, 31, 34, 35 afterwards (psql).
+  3. set -a && source .env && set +a && ./mvnw -q -o verify  -> exit 0 (241 tests, 0 failures, 0 errors, 6 skipped:
+       IbkrLiveTests x4, IbkrQuantLiveTests, RetrievalEvaluationLiveTests).
+No application start, no chat model call, one evaluation-sized embedding run.

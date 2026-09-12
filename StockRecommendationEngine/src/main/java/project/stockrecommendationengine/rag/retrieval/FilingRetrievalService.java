@@ -186,7 +186,7 @@ public class FilingRetrievalService {
     /**
      * The reciprocal rank fusion score per chunk id over the given rankings, as exact decimals at a fixed scale
      * so that chunks holding the same ranks tie exactly. A chunk repeated within one ranking counts once, at its
-     * first position.
+     * first position, and does not shift the ranks of the chunks after it.
      */
     static Map<Long, BigDecimal> reciprocalRankScores(List<List<RetrievedFilingChunk>> rankings, int k) {
         Map<Long, BigDecimal> fusedScores = new LinkedHashMap<>();
@@ -194,8 +194,8 @@ public class FilingRetrievalService {
             Set<Long> seenInRanking = new HashSet<>();
             int rank = 0;
             for (RetrievedFilingChunk candidate : ranking) {
-                rank++;
                 if (!seenInRanking.add(candidate.chunkId())) continue;
+                rank++;
                 BigDecimal reciprocalRank = BigDecimal.ONE.divide(
                         BigDecimal.valueOf((long) k + rank), FUSION_SCALE, RoundingMode.HALF_EVEN);
                 fusedScores.merge(candidate.chunkId(), reciprocalRank, BigDecimal::add);

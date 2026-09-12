@@ -112,7 +112,7 @@
             * Return HTTP 400 for missing/blank inputs, invalid limits, or reversed date ranges.
 * FilingRetrievalService
     * Purpose
-        * Orchestrate filtered vector retrieval and optional reranking.
+        * Orchestrate filtered vector retrieval, keyword plus vector fusion (on by default since 2026-09-12), and optional reranking.
         * Return SEC evidence without generating a recommendation or answer.
     * Methods
         * retrieve(RetrievalRequest request)
@@ -171,7 +171,7 @@
         * candidate-count: 40.
         * latest-filings-only: true.
         * reranking-enabled: false.
-        * hybrid-enabled: false (keyword plus vector fusion; off until measured, a request's `hybrid` field overrides per call).
+        * hybrid-enabled: true (keyword plus vector fusion; on by default since 2026-09-12 after the comparison in Hybrid Retrieval below, a request's `hybrid` field overrides per call).
         * keyword-candidate-count: 40 (keyword rows fetched per query when the hybrid path runs).
         * rrf-k: 60 (the k in reciprocal rank fusion's 1 / (k + rank)).
     * Validation
@@ -251,7 +251,7 @@
     * Baseline limitations
         * Results are nearest passages, not a guarantee the query is answerable.
         * Overlapping chunks may still appear together; contextual deduplication is deferred.
-        * Hybrid keyword retrieval, model reranking, and answer generation remain separate next steps.
+        * Model reranking and answer generation remain separate next steps; hybrid keyword retrieval is in place (Hybrid Retrieval below) and its fusion weights are the open tuning item (RAG-12).
 
 * Ingestion Pipeline
   Ticker
@@ -290,9 +290,11 @@
   ↓
   FilingRetrievalRepository
   ↓
-  Filter Eligible Filings and Chunks
+  Filter Eligible Filings and Chunks (one CTE shared by both legs)
   ↓
-  Exact pgvector Cosine Similarity Search
+  Exact pgvector Cosine Similarity Search ∥ Full-text Keyword Search (content_tsv, GIN; hybrid-enabled, default true)
+  ↓
+  Reciprocal Rank Fusion (k = 60), then Diversify
   ↓
   Top Candidate Filing Chunks
   ↓
@@ -335,7 +337,7 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
 
 * Retrieval Design Decisions
     * See [Retrieval Strategy Research](Retrieval_Strategy_Research.md) for source research and alternatives.
-    * Current baseline: filtered exact vector search.
+    * Current baseline: filtered exact vector search fused with full-text keyword search by reciprocal rank (since 2026-09-12; Hybrid Retrieval below).
     * Reranker provider/model and default filing policy were raised for user input.
     * In the absence of a different choice, use the recommended configurable defaults above.
 
@@ -374,7 +376,7 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
         * `POST /api/rag/evaluate?hybrid=true|false` passes that value as the `hybrid` field of every retrieval request (forcing keyword plus vector fusion on or off for the whole run without a restart) and records it as `properties.hybrid`; without the parameter every request carries null (each follows `rag.retrieval.hybrid-enabled`) and `properties.hybrid` is null.
         * A snapshot carries `hitAt1`, `hitAt3`, `hitAt5`, `mrr`, `tickerHitAt5`, `window`, `retrievalStrategy`, the run `properties` (window, latestFilingsOnly, setCreatedOn, candidateCount, rerankingEnabled, hybridEnabled, keywordCandidateCount, rrfK, hybrid), per-question `results` (rank and matched chunk id, null on a miss), and `misses` with the top three returned chunks (chunk id, accession, section, similarity) or the retrieval error.
     * Regression floor
-        * `RetrievalEvaluationLiveTests` (opt-in, `@EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")`) runs the real evaluation against the local store and asserts hit@5 at or above `rag.evaluation.min-hit-at-5` (default 0.50: baseline 0.6 minus 0.1, rounded down to a multiple of 0.05). It prints the metrics, per-ticker hit@5, and every miss with its top chunks, and it runs inside a rolled-back transaction so no snapshot is stored (the id sequence still advances).
+        * `RetrievalEvaluationLiveTests` (opt-in, `@EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")`) runs the real evaluation against the local store and asserts hit@5 at or above `rag.evaluation.min-hit-at-5` (default 0.50: the current baseline's hit@5 minus 0.1, rounded down to a multiple of 0.05, never lowered; vector-only 0.6 gave 0.50 and the hybrid baseline 0.633333 gives 0.533 rounded down to 0.50, so the floor stays). It prints the metrics, per-ticker hit@5, and every miss with its top chunks, and it runs inside a rolled-back transaction so no snapshot is stored (the id sequence still advances).
         * Run: `set -a && source .env && set +a && ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true`; override the floor with `-Drag.evaluation.min-hit-at-5=<fraction>`. Without the system property the test is skipped, so `./mvnw -q verify` never embeds anything.
         * Verified 2026-09-12: the default floor passes (exit 0, hit@5 0.600000); a floor of 1.01 fails with an assertion naming hit@5 0.600000 and the nine miss ids (exit 1). Evidence: `documentation/live-runs/2026-09-12-retrieval-eval/`.
         * Raise the floor after a retrieval improvement lands and its new baseline is recorded here; never lower it to make a change pass.
@@ -415,6 +417,60 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
         * Parser observations recorded while writing the set: 8-K section keys differ by filer (AAPL Item 2.02 as ITEM_2, colliding in name with 10-K/10-Q Item 2; MSFT as ITEM_7_01), and the MSFT 10-Q 0001193125-26-191507 carries ITEM_1 chunks titled ", 1A" and Part II items (Legal Proceedings, Unregistered Sales) under the Part I keys ITEM_1 and ITEM_2 (RAG-8, RAG-9). The whitespace normalisation (`\s+`) excludes U+00A0; no phrase contains one today (RAG-10).
     * Evidence
         * `documentation/live-runs/2026-09-12-retrieval-eval/`: `baseline-snapshot-13.json` (row_to_json of the stored snapshot), `live-test-pass.log` (default floor, exit 0), `live-test-floor-1.01.log` (raised floor, exit 1 with the assertion message), `run.log`.
+
+* Hybrid Retrieval (keyword plus vector, Follow_Ups RAG-2; plan `plans/2026-09-12-hybrid-keyword-retrieval.md`)
+    * How it works
+        * Keyword terms: `FilingRetrievalRepository.keywordTerms(query)` lowercases the query and keeps the distinct alphanumeric tokens of length 2 or more (commas and periods inside numbers kept, so `215,938` and `40.4` stay whole), drops a fixed english stopword list, quotes each token, and OR-joins them (`'fiscal' | '2026' | 'revenue' | '215,938'`); the string is a bound parameter of `to_tsquery('english', :terms)`, never concatenated into SQL. An empty term string (stopwords or punctuation only) means no keyword search.
+        * Generated column: migration V9 adds `sec_filing_chunks.content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED` with the GIN index `idx_sec_filing_chunks_content_tsv`; PostgreSQL keeps it in step with `content`, so rebuilds need nothing extra.
+        * Candidates: `findKeywordChunks` draws from the same eligibility CTE as the vector search (same ticker, EMBEDDED filings, latest-per-type policy, type, date, and section filters), matches `content_tsv @@ to_tsquery`, orders by `ts_rank_cd` then cosine similarity then chunk id, and returns `keyword-candidate-count` rows (default 40), each carrying the cosine similarity to the query embedding as `similarityScore`, so the score keeps one meaning whichever leg found the chunk.
+        * Fusion: reciprocal rank fusion with `rrf-k` (default 60): fused score = sum over the lists that contain the chunk of 1 / (k + rank), rank 1-based within each list, scores kept as exact decimals so equal rank pairs tie exactly; ties break by vector similarity descending, then chunk id ascending; a chunk repeated within one list counts once at its first position without shifting later ranks. The diversify step and the topK cut apply to the fused list exactly as they did to the vector list; a reranker, when one exists, receives the fused, diversified candidates (RAG-1).
+        * Fallback: with hybrid off, an empty term string, or a keyword-path exception (logged at WARN with the exception class) the vector candidates are used alone and the strategy is FILTERED_VECTOR; retrieval never fails because of the keyword path. When the keyword search ran (an empty keyword result included) the strategy is HYBRID_RRF, or HYBRID_RRF_RERANKED with a reranker.
+        * Override: `RetrievalRequest.hybrid` (true forces fusion, false forces vector only, absent follows `rag.retrieval.hybrid-enabled`) and `POST /api/rag/evaluate?hybrid=` for a whole evaluation run, so both strategies can be compared without a restart.
+        * Token effect: none. The keyword leg is a PostgreSQL query; a hybrid retrieval still embeds the query exactly once, and no chat model is involved anywhere in retrieval or evaluation.
+    * Comparison (set v1, both snapshots made on 2026-09-12 with the same store and the same code, `GET /api/rag/evaluate/35` and `/34`)
+
+| Field | Vector only | Hybrid RRF |
+|---|---|---|
+| Snapshot | id 35, evaluated 2026-09-12 14:15:06 UTC, `properties.hybrid` null (no override; the property was false at the time) | id 34, evaluated 2026-09-12 14:14:57 UTC, `properties.hybrid` true (`POST /api/rag/evaluate?hybrid=true`) |
+| Set / questions | v1 / 30 (10 AAPL, 10 MSFT, 10 NVDA) | v1 / 30 |
+| Retrieval | FILTERED_VECTOR, window 10, candidateCount 40, reranking off, latest filings only | HYBRID_RRF, window 10, candidateCount 40, keywordCandidateCount 40, rrfK 60, reranking off, latest filings only |
+| hit@1 | 0.300000 | 0.300000 |
+| hit@3 | 0.533333 | 0.533333 |
+| hit@5 | 0.600000 | 0.633333 |
+| MRR | 0.435833 | 0.436667 |
+| Per-ticker hit@5 | AAPL 0.900000, MSFT 0.600000, NVDA 0.300000 | AAPL 0.900000, MSFT 0.700000, NVDA 0.300000 |
+| Misses (no matching chunk in the window) | 9: msft-07, msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07, nvda-09 | 7: msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07 |
+| Evidence | `documentation/live-runs/2026-09-12-hybrid-retrieval/vector-snapshot-35.json` | `documentation/live-runs/2026-09-12-hybrid-retrieval/hybrid-snapshot-34.json` |
+
+    * Per-question changes (every question whose rank differs between snapshot 35 and 34; the other 19 questions kept their rank and matched chunk)
+
+| Question | Kind | Rank 35 (vector) | Rank 34 (hybrid) | Note |
+|---|---|---|---|---|
+| msft-07 (2030 sustainability goals) | NARRATIVE | miss | 4 | Miss to hit@5: the Item 1A passage itself (chunk 495) is now in the top 5, so it no longer needs the alternative Item 1 expectation planned in RAG-11 |
+| nvda-09 (Q2 fiscal 2027 Data Center revenue, "$89.0 billion") | FIGURE | miss | 8 | Miss to hit within the window (chunk 879): counts for MRR, not yet for hit@5 |
+| msft-05 (three reportable segments) | NARRATIVE | 6 | 2 | Into the top 5 |
+| msft-06 (power and energy constraints) | NARRATIVE | 2 | 1 | |
+| msft-03 (Microsoft Cloud gross margin decline) | NARRATIVE | 3 | 2 | |
+| aapl-06 (total deferred revenue, "$13.7 billion") | FIGURE | 4 | 3 | |
+| msft-02 (commercial remaining performance obligation) | FIGURE | 2 | 3 | |
+| msft-10 (Q3 fiscal 2026 Microsoft Cloud revenue) | FIGURE | 2 | 5 | Still a hit@5 |
+| aapl-09 (Q3 fiscal 2026 buyback, "$25.8 billion") | FIGURE | 8 | 10 | |
+| msft-01 (Microsoft Cloud revenue growth) | FIGURE | 6 | 10 | |
+| msft-04 (employee count and U.S. split) | FIGURE | 1 (chunk 467) | 8 (chunk 466) | Out of the top 5: the largest question-level regression; the expected sentence is in both overlapping chunks and the keyword leg lifted neighbours over them |
+
+    * Default decision
+        * Rule (plan, Milestone 3): enable `rag.retrieval.hybrid-enabled` by default only if hit@5 improves and no ticker's hit@5 decreases between the vector-only and the hybrid snapshot; otherwise keep it off.
+        * Numbers: hit@5 0.600000 (35) to 0.633333 (34) improves; per-ticker hit@5 AAPL 0.900000 to 0.900000, MSFT 0.600000 to 0.700000, NVDA 0.300000 to 0.300000, none lower. Both conditions hold, so `hybrid-enabled` is true by default since 2026-09-12 (application.yaml and `FilingRetrievalProperties` agree; `FilingRetrievalServiceTests` asserts the property default). hit@1, hit@3 unchanged; MRR 0.435833 to 0.436667.
+        * What the rule does not see: msft-04 and msft-01 moved out of, or further from, the top 5 (table above). The rule is ticker-level by design; the question-level regressions are recorded as RAG-12 (fusion tuning), and the next comparison should also require that no FIGURE question drops out of the top 5.
+        * Effect on consumers: the RAG specialist's searchFilings tool and the filings prefetch in recommendation runs now retrieve hybrid by default (Agent_Harness.md); a cited passage found by the keyword leg can carry a lower vector similarity, so the raw input-coverage confidence may dip for the same question. Nothing in the harness code changed.
+    * Floor decision
+        * Rule: `rag.evaluation.min-hit-at-5` = the new hit@5 minus 0.1, rounded down to a multiple of 0.05, never lower than the current floor. 0.633333 minus 0.1 = 0.533333, rounded down to 0.50, equal to the current 0.50, so the floor stays at 0.50 (the value is unchanged; its derivation now cites snapshot 34).
+        * Verified 2026-09-12 with the final default: `./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true` exit 0, `hybrid=null` so the run followed the property, strategy HYBRID_RRF, hit@5 0.633333, metrics identical to snapshot 34; the transaction rolled back (id 36 consumed, not stored). Evidence: `documentation/live-runs/2026-09-12-hybrid-retrieval/live-test-pass.log`.
+    * Observation: exact-figure chunks can still sit behind their neighbours
+        * With two legs of equal weight and k = 60, a chunk at keyword rank 1 adds 1/61 = 0.0164 while ranks 1 and 3 on one leg differ by only 1/61 minus 1/63 = 0.0005, so the fused order follows the sum of both legs, and neighbouring chunks that share the query's words (the same table, the 500-character overlap) and score on both legs stay ahead of the one chunk holding the exact figure: aapl-02 and aapl-06 sit at rank 3 under hybrid, msft-02 moved from 2 to 3.
+        * The OR-joined keyword leg also scores common query words as much as the rare figure. For the query "fiscal 2026 revenue 215,938 up 65%" the keyword leg alone (`ts_rank_cd` over the latest NVDA filings, checked with psql on 2026-09-12) ranks the chunk with the "Revenue $ 215,938 $ 130,497 Up 65%" row (802) sixth, behind five chunks that contain "revenue", "fiscal", and "2026" but not the figure; fusion cannot lift what neither leg ranks first. Weighting the keyword leg, a smaller k for digit-bearing queries, or AND-ing numeric tokens are the candidates (RAG-12), each to be judged by a fresh pair of snapshots.
+    * Evidence
+        * `documentation/live-runs/2026-09-12-hybrid-retrieval/`: `vector-snapshot-35.json` and `hybrid-snapshot-34.json` (row_to_json of the stored snapshots), `live-test-pass.log` (floor test with the final default, exit 0), `run.log` (the psql queries, the rank diff, the decision, the build).
 
 * Filing Freshness
     * Purpose
@@ -504,3 +560,9 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * Parser: headings typeset with Unicode spaces (thin space U+2009 after "Item", as in Donnelley 8-K HTML) were invisible to the item pattern because Java's \s does not match them; normalize now maps every space separator and zero-width character to a plain space. 8-K decimal items keep their sub-item in the key (ITEM_7_01, title "Regulation FD Disclosure") instead of ITEM_7 with a title beginning "01". Filings stored before this change keep their old keys until rebuilt.
     * Tests: freshness assessment and cadence, per-type limits and new-accession detection, per-filing failure isolation, ensure outcomes, scheduler isolation, the parser cases above, and the harness path with scripted responses.
     * Live verification — 2026-09-12, 09:45 SGT: AAPL index comparison in 1.0 second found nothing newer than the stored 2026-07-31 10-Q; freshness reported cadenceExceeded=false and lastVerifiedAt set. MSFT comparison found three 8-Ks (2026-06-05, 2026-07-29, 2026-09-02) absent from the store; the first attempt failed on the thin-space heading and left the 2026-09-02 filing FAILED, the retry after the parser fix ingested all three in 4.4 seconds with sections ITEM_5_02, ITEM_2_02/ITEM_9_01, and ITEM_7_01/ITEM_9_01. Evidence: [freshness before](live-runs/2026-09-12-filing-freshness/freshness-before.json), [AAPL refresh](live-runs/2026-09-12-filing-freshness/refresh-aapl.json), [MSFT first refresh](live-runs/2026-09-12-filing-freshness/refresh-msft.json), [MSFT retry](live-runs/2026-09-12-filing-freshness/refresh-msft-after-fix.json), [MSFT freshness](live-runs/2026-09-12-filing-freshness/freshness-msft.json), [run log](live-runs/2026-09-12-filing-freshness/run.log).
+
+* Change log — 2026-09-12: hybrid keyword plus vector retrieval (RAG-2)
+    * Migration V9 adds the generated `content_tsv` column and GIN index; `FilingRetrievalRepository.findKeywordChunks` and `keywordTerms` run the keyword leg from the same eligibility CTE as the vector search, every row carrying its cosine similarity; `FilingRetrievalService` fuses both legs by reciprocal rank (`rrf-k` 60, `keyword-candidate-count` 40), diversifies, and cuts to topK; strategy HYBRID_RRF / HYBRID_RRF_RERANKED when the keyword leg ran, FILTERED_VECTOR on hybrid off, an empty term string, or a keyword-path failure (WARN, never propagated). `RetrievalRequest.hybrid` and `POST /api/rag/evaluate?hybrid=` override per call or per run.
+    * Measured on set v1 against the same store: vector-only snapshot 35 hit@5 0.600000, MRR 0.435833, 9 misses; hybrid snapshot 34 hit@5 0.633333, MRR 0.436667, 7 misses; per-ticker hit@5 AAPL 0.9 to 0.9, MSFT 0.6 to 0.7, NVDA 0.3 to 0.3. msft-07 became a hit@5 and nvda-09 a hit within the window; msft-04 fell from rank 1 to 8. Under the plan's rule (hit@5 up, no ticker down) `rag.retrieval.hybrid-enabled` is now true by default; `rag.evaluation.min-hit-at-5` stays 0.50 (0.633333 minus 0.1 rounds down to 0.50). Keyword search costs no model tokens.
+    * Fix in the same change: `reciprocalRankScores` increments the per-list rank only after the duplicate check, so a repeated id in one list no longer shifts the ranks after it (unreachable with database lists; unit-asserted).
+    * Live verification — 2026-09-12, 22:24 SGT: `RetrievalEvaluationLiveTests` with the final default, exit 0, HYBRID_RRF, hit@5 0.633333. Evidence: [vector snapshot 35](live-runs/2026-09-12-hybrid-retrieval/vector-snapshot-35.json), [hybrid snapshot 34](live-runs/2026-09-12-hybrid-retrieval/hybrid-snapshot-34.json), [floor test](live-runs/2026-09-12-hybrid-retrieval/live-test-pass.log), [run log](live-runs/2026-09-12-hybrid-retrieval/run.log).

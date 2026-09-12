@@ -70,7 +70,7 @@ class RetrievalEvaluationServiceTests {
         assertThat(miss.top().get(2).sectionKey()).isEqualTo("ITEM_2");
         assertThat(miss.top().get(0).similarity()).isEqualByComparingTo("0.9");
         assertThat(evaluation.properties()).containsEntry("window", 10).containsEntry("latestFilingsOnly", true)
-                .containsEntry("hybridEnabled", false).containsEntry("keywordCandidateCount", 40).containsEntry("rrfK", 60)
+                .containsEntry("hybridEnabled", true).containsEntry("keywordCandidateCount", 40).containsEntry("rrfK", 60)
                 .containsKey("hybrid").containsEntry("hybrid", null);
 
         ArgumentCaptor<RetrievalRequest> requests = ArgumentCaptor.forClass(RetrievalRequest.class);

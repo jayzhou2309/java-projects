@@ -15,6 +15,7 @@ import project.stockrecommendationengine.broker.ibkr.IbkrProperties;
 import project.stockrecommendationengine.outcome.OutcomeController;
 import project.stockrecommendationengine.quant.QuantController;
 import project.stockrecommendationengine.recommendation.RecommendationController;
+import project.stockrecommendationengine.recommendation.WatchlistController;
 
 /** Authorize the resolved controller, avoiding alternate URL encodings bypassing a path-prefix filter. */
 @Configuration
@@ -37,7 +38,8 @@ public class IntegrationAccessConfiguration implements WebMvcConfigurer, Handler
                 || !(BrokerController.class.isAssignableFrom(method.getBeanType())
                 || QuantController.class.isAssignableFrom(method.getBeanType())
                 || OutcomeController.class.isAssignableFrom(method.getBeanType())
-                || RecommendationController.class.isAssignableFrom(method.getBeanType()))) return true;
+                || RecommendationController.class.isAssignableFrom(method.getBeanType())
+                || WatchlistController.class.isAssignableFrom(method.getBeanType()))) return true;
         response.setHeader("Cache-Control", "no-store");
         String supplied = request.getHeader("Authorization");
         if (expected.length < 39 || supplied == null || !MessageDigest.isEqual(expected, supplied.getBytes(StandardCharsets.UTF_8))) {

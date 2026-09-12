@@ -9,6 +9,7 @@ import project.stockrecommendationengine.broker.BrokerData.*;
 import project.stockrecommendationengine.quant.QuantAnalysis;
 import project.stockrecommendationengine.quant.QuantAnalysisService;
 import project.stockrecommendationengine.rag.dto.RetrievalRequest;
+import project.stockrecommendationengine.rag.dto.RetrievalResponse;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
 import tools.jackson.databind.JsonNode;
@@ -21,6 +22,8 @@ final class RecommendationTools {
     private final BrokerReadService broker;
     private final QuantAnalysisService quant;
     private final String preferredCurrency;
+    private final int searchTopK;
+    private final int modelPassageChars;
     private final JsonMapper json = JsonMapper.builder().build();
     final Map<Long, RetrievedFilingChunk> evidence = new LinkedHashMap<>();
     final Map<Long, Instrument> instruments = new LinkedHashMap<>();
@@ -33,11 +36,30 @@ final class RecommendationTools {
 
     RecommendationTools(RecommendationRequest request, FilingRetrievalService filings, BrokerReadService broker,
             QuantAnalysisService quant, String preferredCurrency) {
+        this(request, filings, broker, quant, preferredCurrency, 5, 4000);
+    }
+    RecommendationTools(RecommendationRequest request, FilingRetrievalService filings, BrokerReadService broker,
+            QuantAnalysisService quant, String preferredCurrency, int searchTopK, int modelPassageChars) {
         this.request = request;
         this.filings = filings;
         this.broker = broker;
         this.quant = broker == null ? null : quant;
         this.preferredCurrency = preferredCurrency;
+        this.searchTopK = searchTopK;
+        this.modelPassageChars = modelPassageChars;
+    }
+
+    /** The passages a model sees: full evidence stays in {@link #evidence}; text beyond the limit is cut and marked. */
+    List<RetrievedFilingChunk> forModel(Collection<RetrievedFilingChunk> chunks) {
+        return chunks.stream().map(chunk -> forModel(chunk, modelPassageChars)).toList();
+    }
+    static RetrievedFilingChunk forModel(RetrievedFilingChunk chunk, int maxChars) {
+        String content = chunk.content();
+        if (content == null || content.length() <= maxChars) return chunk;
+        String cut = content.substring(0, maxChars) + " …[" + (content.length() - maxChars) + " more characters not shown]";
+        return new RetrievedFilingChunk(chunk.chunkId(), chunk.filingId(), chunk.ticker(), chunk.cik(), chunk.accessionNo(),
+                chunk.filingType(), chunk.filingDate(), chunk.reportDate(), chunk.sectionKey(), chunk.sectionTitle(), chunk.chunkIndex(),
+                cut, chunk.sourceUrl(), chunk.similarityScore());
     }
 
     Map<String, ToolCallback> callbacks() {
@@ -47,9 +69,10 @@ final class RecommendationTools {
                     var query = args.path("query");
                     if (!query.isString() || query.asText().isBlank() || query.asText().length() > 4000) invalid();
                     var result = filings.retrieve(new RetrievalRequest(request.ticker(), query.asText(),
-                            null, null, null, null, 5, true));
+                            null, null, null, null, searchTopK, true));
                     for (var item : result.results()) evidence.put(item.chunkId(), item);
-                    return result;
+                    return new RetrievalResponse(result.ticker(), result.query(), result.retrievalStrategy(), result.latestFilingsOnly(),
+                            result.topK(), result.candidatesRetrieved(), forModel(result.results()));
                 });
         if (broker != null) {
             add(tools, "findInstrument", "Find stock contracts for the request ticker. Multiple matches require an explicit user conid.",

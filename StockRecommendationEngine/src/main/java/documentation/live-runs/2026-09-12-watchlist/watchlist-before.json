@@ -1,0 +1,9 @@
+{
+  "tickers" : [ "AAPL", "MSFT" ],
+  "cron" : "0 45 10 * * MON-FRI",
+  "zone" : "America/New_York",
+  "question" : "Based on the latest filings and the supplied price statistics, is {ticker} more likely to rise or fall over the next 20 trading days? Give a BULLISH or BEARISH assessment unless the evidence genuinely cannot support a direction, and cite the figures the filings state.",
+  "pauseMs" : 60000,
+  "includePortfolio" : false,
+  "lastRun" : null
+}

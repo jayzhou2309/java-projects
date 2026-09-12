@@ -144,3 +144,19 @@ recommendation:
   max-tool-result-chars: 32000
   max-context-chars: 120000
   max-quote-age-seconds: 120
+  # Passages per searchFilings call and the longest passage text any model sees; both are the main token levers.
+  # Stored evidence, citations, and the response's sources always keep the full text. See application-lean.yaml.
+  search-top-k: 5
+  model-passage-chars: 4000
+  # One retry after this wait when the provider returns a rate limit (HTTP 429); other provider failures stop the run.
+  rate-limit-retry-ms: 5000
+  # Scheduled watchlist: directional runs during US regular hours so outcomes and calibration data accumulate unattended.
+  # Requires recommendation.enabled; the broker and quant should be on for the runs to be scorable.
+  schedule:
+    enabled: ${WATCHLIST_ENABLED:false}
+    tickers: ${WATCHLIST_TICKERS:AAPL,MSFT,NVDA}
+    cron: "0 45 10 * * MON-FRI"
+    zone: America/New_York
+    # A run with the critic can use most of a 30,000 tokens-per-minute allowance; keep consecutive runs in separate minutes.
+    pause-ms: 60000
+    include-portfolio: false

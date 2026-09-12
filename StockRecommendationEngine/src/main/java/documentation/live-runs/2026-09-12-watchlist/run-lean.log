@@ -1,0 +1,5 @@
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=53672c1a-2c9e-4227-91c8-a635974f5894 status=INSUFFICIENT_EVIDENCE modelCalls=5 observedTokens=6549 levels=false confidence=null calibrated=null critic=ACCEPT
+[nio-8081-exec-1] p.s.recommendation.WatchlistScheduler    : Watchlist MANUAL ticker=AAPL run=53672c1a-2c9e-4227-91c8-a635974f5894 status=INSUFFICIENT_EVIDENCE assessment=INSUFFICIENT_EVIDENCE confidence=null calibrated=null
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=12ab9c8d-1237-432b-950e-b40bebd199b5 status=PARTIAL modelCalls=5 observedTokens=7771 levels=false confidence=0.29 calibrated=null critic=ACCEPT
+[nio-8081-exec-1] p.s.recommendation.WatchlistScheduler    : Watchlist MANUAL ticker=MSFT run=12ab9c8d-1237-432b-950e-b40bebd199b5 status=PARTIAL assessment=BULLISH confidence=0.29 calibrated=null
+[nio-8081-exec-1] p.s.recommendation.WatchlistScheduler    : Watchlist MANUAL finished: tickers=2 completed=2 failed=0 elapsedMs=74377

@@ -1,0 +1,16 @@
+# Lean profile for testing and development: the fewest model tokens per run that still exercise every stage.
+# Activate with SPRING_PROFILES_ACTIVE=lean. Production defaults stay in application.yaml.
+# A directional AAPL run with a critic revision used about 23,000 tokens on defaults; see Agent_Harness.md for the lean figure.
+recommendation:
+  # Three passages per search instead of five: the largest single lever, since passages are re-sent to every later call.
+  search-top-k: 3
+  # Passages are cut to 1500 characters at the model boundary; stored evidence, citations, and sources stay full.
+  model-passage-chars: 1500
+  # One critic review, no revision round.
+  critic-rounds: 1
+  # Three prior runs instead of ten in the manager's track record.
+  track-record-runs: 3
+  max-output-tokens: 700
+  max-observed-tokens: 20000
+# Trade-off: shorter and fewer passages make INSUFFICIENT_EVIDENCE likelier (seen on AAPL, 2026-09-12); such runs are not
+# scorable, so use the defaults with the 60-second watchlist pause when runs are meant to feed outcomes and calibration.

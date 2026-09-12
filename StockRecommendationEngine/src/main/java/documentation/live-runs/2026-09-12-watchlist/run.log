@@ -1,0 +1,10 @@
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=835e2ff6-6710-464e-80cd-224b2417502a tool=CRITIC:review outcome=REVISE elapsedMs=1839
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=835e2ff6-6710-464e-80cd-224b2417502a tool=CRITIC:review outcome=REVISE elapsedMs=1808
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=835e2ff6-6710-464e-80cd-224b2417502a tool=MANAGER:calibrateConfidence outcome=INSUFFICIENT_SAMPLE elapsedMs=26
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=835e2ff6-6710-464e-80cd-224b2417502a status=PARTIAL modelCalls=7 observedTokens=22788 levels=false confidence=0.32 calibrated=null critic=REVISE
+[nio-8081-exec-3] p.s.recommendation.WatchlistScheduler    : Watchlist MANUAL ticker=AAPL run=835e2ff6-6710-464e-80cd-224b2417502a status=PARTIAL assessment=BULLISH confidence=0.32 calibrated=null
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=986addb1-4d85-406f-99a7-b61e9ea5ab74 tool=CRITIC:review outcome=ACCEPT elapsedMs=849
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=986addb1-4d85-406f-99a7-b61e9ea5ab74 tool=MANAGER:calibrateConfidence outcome=INSUFFICIENT_SAMPLE elapsedMs=4
+[ommendation-run] p.s.r.RecommendationService              : Recommendation run=986addb1-4d85-406f-99a7-b61e9ea5ab74 status=PARTIAL modelCalls=5 observedTokens=15237 levels=false confidence=0.28 calibrated=null critic=ACCEPT
+[nio-8081-exec-3] p.s.recommendation.WatchlistScheduler    : Watchlist MANUAL ticker=MSFT run=986addb1-4d85-406f-99a7-b61e9ea5ab74 status=PARTIAL assessment=BULLISH confidence=0.28 calibrated=null
+[nio-8081-exec-3] p.s.recommendation.WatchlistScheduler    : Watchlist MANUAL finished: tickers=2 completed=2 failed=0 elapsedMs=78686

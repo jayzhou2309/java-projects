@@ -1,0 +1,22 @@
+{
+  "runId" : "3a7d6e28-06cd-428a-bd95-54d985111ba1",
+  "ticker" : "MSFT",
+  "status" : "FAILED",
+  "assessment" : "INSUFFICIENT_EVIDENCE",
+  "reasoning" : "",
+  "sources" : [ ],
+  "quotes" : [ ],
+  "limitations" : [ "FAILED" ],
+  "toolTrace" : [ ],
+  "modelCalls" : 0,
+  "observedTokens" : 0,
+  "takeProfit" : null,
+  "stopLoss" : null,
+  "confidence" : null,
+  "priceAnalysis" : null,
+  "dataFreshness" : null,
+  "trackRecord" : null,
+  "critique" : null,
+  "calibratedConfidence" : null,
+  "calibration" : null
+}

@@ -106,9 +106,17 @@
 | recommendation.max-tool-result-chars | 32000 | Reject oversized serialized tool results; one five-passage search of 4000-character chunks with citations is about 25000 (raised from 24000) |
 | recommendation.max-context-chars | 120000 | Check message text, tool arguments, and tool results before each model call; fits two full searches (raised from 80000) |
 | recommendation.max-quote-age-seconds | 120 | Freshness requirement for COMPLETE status |
+| recommendation.search-top-k | 5 | Passages per searchFilings call; the largest single token lever because passages are re-sent to every later call |
+| recommendation.model-passage-chars | 4000 | Longest passage text any model sees (specialist results, manager evidence, critic); stored evidence, citations, sources, and the numeral check keep the full text |
+| recommendation.rate-limit-retry-ms | 5000 | One retry of a model call the provider rate-limited (HTTP 429), disclosed as MODEL_RATE_LIMITED_RETRIED; the failed attempt is not a budgeted call; 0 disables |
 | Worker slots | 2 | Fixed concurrent runs; reject overflow |
 | spring.ai.openai.chat.timeout | 20s | Bound an individual OpenAI request |
 | spring.ai.openai.chat.max-retries | 0 | Avoid SDK retry multiplication inside the loop |
+
+* Where the Tokens Go, and the Lean Profile
+    * Provider limits are per minute across all calls, and every call re-sends its whole conversation. In one run the same filing passages travel four or five times: the search result to the RAG specialist, the specialist's report (with the passages) to the manager, the cited passages to the critic, and the manager's whole history again on a revision. Five 4,000-character passages are about 5,000 tokens per copy, so a directional run with a revision reaches 22,000 to 29,000 observed tokens in about 20 seconds; two such runs inside one minute exceed a 30,000 tokens-per-minute allowance, which is what the first watchlist pass hit.
+    * Levers, in order of effect: search-top-k (passages per search), model-passage-chars (passage length at the model boundary; the audit row and citations always keep the full text), critic-rounds (each round is one or two more full-context calls), track-record-runs (prior runs shown to the manager; the critic gets only the statistics), and max-output-tokens. Full context reaches the manager and the critic regardless of who cites what, so the passage levers dominate.
+    * application-lean.yaml (activate with SPRING_PROFILES_ACTIVE=lean) sets search-top-k 3, model-passage-chars 1500, critic-rounds 1, track-record-runs 3, max-output-tokens 700, max-observed-tokens 20000. Measured 2026-09-12 on the same two-ticker watchlist pass, broker off: defaults 22,788 + 15,237 tokens; lean 6,549 + 7,771 tokens, both runs with critic ACCEPT and the full passages still in sources and the audit row. The cost: with shorter and fewer passages the AAPL run declared INSUFFICIENT_EVIDENCE where the default run had found a direction. Use lean for functional testing and development; use the defaults, with the 60-second watchlist pause, when the runs are meant to produce scorable outcomes.
 
 * Budget Semantics
     * Observed usage is measured after responses. It is not a prepaid token limit or hard dollar ceiling.
@@ -151,6 +159,7 @@
     * FILINGS_MAY_BE_STALE means the newest stored quarterly filing is past cadence and the SEC index could not be compared in this run; ensureFilings:<code> names the cause.
     * CRITIC_UNRESOLVED means the critic's last review of the returned answer was REVISE; read critique.issues. critic:<code> and revise:<code> mean the critic or the revision failed and the draft stands; CRITIC_DISABLED means critic-rounds is 0.
     * CONFIDENCE_UNCALIBRATED is present whenever calibratedConfidence is null; calibration.status says why.
+    * MODEL_RATE_LIMITED_RETRIED means one model call hit a provider rate limit and succeeded on its single retry; MODEL_UNAVAILABLE as a status means a provider failure stopped the run (see the status table).
     * Invalid requests return HTTP 400; missing/wrong access tokens return HTTP 401; capacity exhaustion returns HTTP 429.
 
 | Status | Meaning |
@@ -164,7 +173,8 @@
 | TOOL_LIMIT / MODEL_CALL_LIMIT | Iteration budget exhausted |
 | TOKEN_LIMIT / CONTEXT_LIMIT / TOOL_RESULT_LIMIT | Usage or payload bound reached |
 | DEADLINE_EXCEEDED | Run deadline reached |
-| FAILED | Unexpected model or runtime failure; inspect sanitized run logs |
+| MODEL_UNAVAILABLE | The provider rejected or failed a model call (rate limit, 5xx, timeout); counters and trace are kept, and at the critic or a revision the validated draft is returned instead |
+| FAILED | Unexpected runtime failure outside a model call; the cause class is logged at WARN and the stack at DEBUG |
 
 * Meaning of COMPLETE
     * COMPLETE describes the research inputs and validation path, not investment accuracy or execution readiness.
@@ -229,6 +239,31 @@ curl -X POST http://localhost:8080/api/recommendations \
         * Stopped and failed runs are stored with their status so the record is complete rather than success-only.
     * Consumers
         * [Outcomes.md](Outcomes.md) scores stored runs at fixed horizons; calibration and a look-back tool for the agent are still to come.
+
+* Watchlist Schedule
+    * Purpose
+        * Outcome scoring, the track record, and calibration all need directional runs made while the broker is up, and nobody should have to send requests at 22:45 SGT by hand. WatchlistScheduler runs the configured tickers through the ordinary recommend(...) path on a cron in exchange time, one ticker at a time, with a directional question template.
+        * A scheduled run is an ordinary run: same validation, budgets, critic, audit row, and nightly scoring. Scheduled runs are recognisable by their question text (the template with the ticker substituted).
+    * Properties (prefix recommendation.schedule)
+
+| Property | Default | Meaning |
+|---|---|---|
+| recommendation.schedule.enabled | false | Create the scheduler and its endpoints (WATCHLIST_ENABLED); requires recommendation.enabled and at least one ticker |
+| recommendation.schedule.tickers | AAPL,MSFT,NVDA | Tickers run in order each pass (WATCHLIST_TICKERS) |
+| recommendation.schedule.cron | 0 45 10 * * MON-FRI | Fires 75 minutes after the US open, in the zone below |
+| recommendation.schedule.zone | America/New_York | Cron time zone (22:45 SGT in US summer, 23:45 in winter) |
+| recommendation.schedule.question | directional template | {ticker} is substituted; asks for BULLISH or BEARISH over the next 20 trading days unless the evidence cannot support a direction |
+| recommendation.schedule.pause-ms | 60000 | Pause between tickers: a full run with the critic can use most of a 30,000 tokens-per-minute provider allowance, so consecutive runs must sit in separate minutes; it also leaves a worker slot free for manual requests |
+| recommendation.schedule.include-portfolio | false | Send positions with scheduled runs |
+
+    * Behaviour
+        * run(trigger) is synchronized: a manual trigger during a scheduled pass waits for it. Each ticker's failure (HTTP 429 capacity, 400 validation, or an unexpected exception) is recorded as an error in the pass summary and the next ticker runs. The pass returns when the last ticker finishes; with three tickers, default deadlines, and the pause it takes under two minutes in practice.
+        * The last pass summary (trigger, start, elapsed, per-ticker run ID, status, assessment, raw and calibrated confidence, critic verdict, or error) is kept in memory and logged; durable history is PLAT-2 in [Follow_Ups.md](Follow_Ups.md).
+        * Exchange holidays are not known to the scheduler: a pass on a holiday produces runs without a current quote (PARTIAL) whose bar date is the previous session; they are still scored.
+    * Endpoints (integration access token required)
+        * GET /api/recommendations/watchlist: configuration and the last pass.
+        * POST /api/recommendations/watchlist/run: run the watchlist now (MANUAL trigger).
+        * GET /api/recommendations/watchlist/last: the last pass only.
 
 * Portfolio and Contract Selection
     * Set includePortfolio=true when you want the model to receive holdings from the configured account.
@@ -406,3 +441,11 @@ Qualitative Research + Sources + Quotes + Levels + Confidence (+ Calibrated) + C
     * finish(...) now maps the raw confidence of a BULLISH or BEARISH answer through ConfidenceCalibrationService.apply (outcomes enabled): the newest READY snapshot's bin gives calibratedConfidence, and calibration records the snapshot id, its sample count and base rate, and the bin's count and hit rate. NEUTRAL is NOT_DIRECTIONAL without a lookup; no snapshot is NO_CALIBRATION; a snapshot below min-samples is INSUFFICIENT_SAMPLE; a store failure is UNAVAILABLE. Only an actual lookup is traced (MANAGER:calibrateConfidence). CONFIDENCE_UNCALIBRATED is removed only when a value was applied.
     * The raw confidence is unchanged in the response and the audit row, so every later snapshot calibrates the same predictor; the calibrated value and snapshot id live in the stored response JSON. Definitions, properties, endpoints, and the live verification (including the synthetic dataset used to exercise APPLIED and its deletion) are in [Outcomes.md](Outcomes.md); open items are in [Follow_Ups.md](Follow_Ups.md).
     * Scripted tests: calibrated value and provenance for a directional run with the raw figure stored, INSUFFICIENT_SAMPLE disclosure, NEUTRAL without a lookup, a failing store, and no record without a confidence. Full suite: 188 tests, 183 passed, 5 opt-in live tests skipped.
+
+* Watchlist schedule and provider rate limits — 2026-09-12
+    * WatchlistScheduler runs recommendation.schedule.tickers through recommend(...) on a cron in exchange time (default 10:45 New York, weekdays) with a directional question template, one ticker at a time; WatchlistController exposes GET /api/recommendations/watchlist, POST /api/recommendations/watchlist/run, and GET /api/recommendations/watchlist/last behind the integration token. Every scheduled run is an ordinary stored run. This is the operational half of DATA-1 in [Follow_Ups.md](Follow_Ups.md); what remains is keeping TWS, the broker, quant, and outcomes on during US hours from Monday 2026-09-14.
+    * First live pass (broker off, market closed, two tickers, the old 5-second pause) exposed a provider limit: the AAPL run used about 28,000 tokens, and the MSFT run's critic call was rejected with HTTP 429, "Rate limit reached for gpt-4.1 ... on tokens per min (TPM): Limit 30000". The exception escaped as status FAILED with zero counters and no logged cause. Three changes followed: the FAILED path now logs the cause class at WARN and the stack at DEBUG; a model call that fails is stopped as MODEL_UNAVAILABLE with counters and trace intact, and a rate-limited call is retried once after recommendation.rate-limit-retry-ms (disclosed as MODEL_RATE_LIMITED_RETRIED, the failed attempt not budgeted); at the critic or a revision such a failure leaves the validated draft standing (critic:MODEL_UNAVAILABLE). The default watchlist pause is 60 seconds so consecutive runs sit in separate TPM windows. Evidence of the failure: [MSFT request](live-runs/2026-09-12-watchlist/request-msft.json), [FAILED response](live-runs/2026-09-12-watchlist/response-msft-retry.json).
+    * Clean pass after the changes: POST /api/recommendations/watchlist/run returned in 78.7 seconds with two completed runs and no failures. AAPL `835e2ff6-6710-464e-80cd-224b2417502a`: PARTIAL / BULLISH, raw confidence 0.32, seven model calls, 22,788 tokens, critic REVISE twice (CRITIC_UNRESOLVED, both reviews stored). MSFT `986addb1-4d85-406f-99a7-b61e9ea5ab74`: PARTIAL / BULLISH, raw confidence 0.28, five model calls, 15,237 tokens, critic ACCEPT. Both stored rows carry the template question, so scheduled runs are identifiable. Calibration stayed NO_CALIBRATION/INSUFFICIENT_SAMPLE as expected without scored outcomes. Evidence: [configuration](live-runs/2026-09-12-watchlist/watchlist-before.json), [pass](live-runs/2026-09-12-watchlist/run.json), [after](live-runs/2026-09-12-watchlist/watchlist-after.json), stored records for both runs, [run log](live-runs/2026-09-12-watchlist/run.log).
+    * Two earlier passes with the same template returned NEUTRAL for AAPL, so the directional question makes a direction more likely, not certain; AGENT-4 stays open as narrowed.
+    * Token levers added the same day: recommendation.search-top-k and recommendation.model-passage-chars cut passages at the model boundary only (full text stays in evidence, citations, sources, and the numeral check); the critic now receives track-record statistics instead of the per-run history. application-lean.yaml bundles a low-token configuration for testing; the measured comparison is under "Where the Tokens Go" above. Evidence: [lean pass](live-runs/2026-09-12-watchlist/run-lean.json), stored lean records, [lean run log](live-runs/2026-09-12-watchlist/run-lean.log).
+    * Scripted tests: WatchlistSchedulerTests (order, question substitution, failure isolation, error naming, last pass), wiring (disabled by default; enabled requires tickers and a valid cron), provider failure as MODEL_UNAVAILABLE with a spared draft at the critic, the single rate-limit retry, and passage truncation at the model boundary with full text kept elsewhere. Full suite: 193 tests, 188 passed, 5 opt-in live tests skipped.

@@ -866,6 +866,46 @@ class RecommendationServiceTests {
         verify(model, times(1)).call(any(Prompt.class));
     }
 
+    @Test void passagesAreCutAtTheModelBoundaryWhileEvidenceCitationsAndTheNumeralCheckKeepTheFullText() {
+        properties.setModelPassageChars(200);
+        properties.setSearchTopK(2);
+        properties.setCriticRounds(1);
+        String longText = "Material business risks. Net sales were $391,035 million in fiscal 2025. " + "Filler sentence about the business. ".repeat(20);
+        var full = new RetrievedFilingChunk(11L, 1L, "AAPL", "0000320193", "accession", "10-K", LocalDate.of(2025, 10, 31),
+                LocalDate.of(2025, 9, 30), "ITEM_1A", "Risk factors", 0, longText, "https://www.sec.gov/example", 0.8);
+        when(filings.retrieve(any())).thenReturn(new RetrievalResponse("AAPL", "risks", "FILTERED_VECTOR", true, 2, 1, List.of(full)));
+        var script = new java.util.HashMap<>(fullRunScript("BULLISH"));
+        script.put("MANAGER", List.of(calls(call("m1", "researchFilings", "{}"), call("m2", "researchBroker", "{}")),
+                text("{\"assessment\":\"BULLISH\",\"reasoning\":\"Net sales of 391,035 million support the view.\",\"citedChunkIds\":[11]}")));
+        when(trackRecords.trackRecord("AAPL", 10)).thenReturn(new TrackRecord("AAPL", 1, List.of(
+                new TrackRecord.PriorRun("old-1", Instant.parse("2026-06-01T21:00:00Z"), "COMPLETE", "NEUTRAL", new BigDecimal("0.5"),
+                        null, null, null, null, List.of())),
+                List.of(new TrackRecord.AssessmentStats("NEUTRAL", 1, 0, 0, null, 20)), TrackRecordService.CAVEAT));
+        scriptByRole(withCritic(script, verdict("ACCEPT", "[]")));
+        var result = service.recommend(request(false));
+        assertThat(result.status()).isEqualTo("COMPLETE");
+        assertThat(result.sources()).as("the response carries the full passage").containsExactly(full);
+        assertThat(result.critique().unsupportedNumerals()).as("the numeral check saw the full text").isEmpty();
+        var requests = org.mockito.ArgumentCaptor.forClass(project.stockrecommendationengine.rag.dto.RetrievalRequest.class);
+        verify(filings).retrieve(requests.capture());
+        assertThat(requests.getValue().topK()).isEqualTo(2);
+        var prompts = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+        verify(model, times(8)).call(prompts.capture());
+        String marker = "more characters not shown]";
+        var ragReport = prompts.getAllValues().get(2).toString();      // RAG specialist after its search result
+        var managerFinal = prompts.getAllValues().get(6).toString();   // manager consolidating the specialist reports
+        var critic = prompts.getAllValues().get(7).toString();
+        for (String prompt : List.of(ragReport, managerFinal, critic)) {
+            assertThat(prompt).contains(marker).doesNotContain("Filler sentence about the business. Filler sentence about the business. Filler sentence about the business. Filler sentence about the business. Filler sentence about the business. Filler sentence about the business. Filler sentence about the business. ");
+        }
+        assertThat(critic).as("the critic gets track-record statistics, not the per-run history").contains("\"runsConsidered\":1").doesNotContain("old-1");
+        assertThat(prompts.getAllValues().get(0).toString()).as("the manager still sees the runs").contains("old-1");
+        var records = org.mockito.ArgumentCaptor.forClass(RecommendationRecord.class);
+        verify(store).save(records.capture());
+        assertThat(records.getValue().responseJson()).contains("Filler sentence").doesNotContain(marker);
+        assertThat(RecommendationTools.forModel(full, 10_000)).isSameAs(full);
+    }
+
     @Test void rejectsUnknownToolsWithoutExecutingAnyService() {
         when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "placeOrder", "{}")));
         assertThat(service.recommend(request(false)).status()).isEqualTo("TOOL_NOT_ALLOWED");

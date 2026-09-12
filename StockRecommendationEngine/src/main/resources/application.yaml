@@ -144,6 +144,10 @@ recommendation:
   max-tool-result-chars: 32000
   max-context-chars: 120000
   max-quote-age-seconds: 120
+  # Passages per searchFilings call and the longest passage text any model sees; both are the main token levers.
+  # Stored evidence, citations, and the response's sources always keep the full text. See application-lean.yaml.
+  search-top-k: 5
+  model-passage-chars: 4000
   # One retry after this wait when the provider returns a rate limit (HTTP 429); other provider failures stop the run.
   rate-limit-retry-ms: 5000
   # Scheduled watchlist: directional runs during US regular hours so outcomes and calibration data accumulate unattended.

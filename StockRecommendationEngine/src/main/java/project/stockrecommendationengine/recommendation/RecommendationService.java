@@ -209,7 +209,8 @@ public class RecommendationService {
 
     private RecommendationResponse run(String runId, RecommendationRequest request) {
         var state = new RunState(runId);
-        var tools = new RecommendationTools(request, filings, broker, quant, properties.getPreferredCurrency());
+        var tools = new RecommendationTools(request, filings, broker, quant, properties.getPreferredCurrency(),
+                properties.getSearchTopK(), properties.getModelPassageChars());
         state.limitations.add("POSITION_SIZING_NOT_IMPLEMENTED");
         state.limitations.add("CONFIDENCE_UNCALIBRATED");
         if (broker == null) state.limitations.add("BROKER_DISABLED");
@@ -346,7 +347,7 @@ public class RecommendationService {
                     throw new IllegalArgumentException("INVALID_SPECIALIST_REPORT");
                 }
                 return json.writeValueAsString(Map.of("specialist", role, "summary", report.path("summary").asText(),
-                        "evidence", role.equals("RAG") ? List.copyOf(tools.evidence.values()) : List.of(),
+                        "evidence", role.equals("RAG") ? tools.forModel(tools.evidence.values()) : List.of(),
                         "quotes", role.equals("BROKER") ? List.copyOf(tools.quotes.values()) : List.of(),
                         "portfolio", role.equals("BROKER") && tools.portfolio != null ? tools.portfolio : Map.of(),
                         "priceAnalysis", role.equals("BROKER") && tools.priceAnalysis != null ? tools.priceAnalysis : Map.of(),
@@ -678,11 +679,13 @@ public class RecommendationService {
         try {
             var evidence = new LinkedHashMap<String, Object>();
             evidence.put("draft", Map.of("assessment", draft.assessment(), "reasoning", draft.reasoning()));
-            evidence.put("citedPassages", draft.cited().stream().map(tools.evidence::get).toList());
+            evidence.put("citedPassages", tools.forModel(draft.cited().stream().map(tools.evidence::get).toList()));
             evidence.put("uncitedRetrievedPassages", tools.evidence.size() - draft.cited().size());
             evidence.put("quotes", List.copyOf(tools.quotes.values()));
             evidence.put("priceAnalysis", tools.priceAnalysis == null ? Map.of() : tools.priceAnalysis);
-            evidence.put("trackRecord", state.trackRecord == null ? Map.of() : state.trackRecord);
+            // The critic judges anchoring from the statistics; the per-run history would only repeat what the manager saw.
+            evidence.put("trackRecord", state.trackRecord == null ? Map.of() : Map.of("ticker", state.trackRecord.ticker(),
+                    "runsConsidered", state.trackRecord.runsConsidered(), "stats", state.trackRecord.stats(), "caveat", state.trackRecord.caveat()));
             evidence.put("dataFreshness", dataFreshness(state.filingFreshness, tools));
             evidence.put("limitations", state.limitations());
             evidence.put("numeralsNotFoundInEvidence", numerals);

@@ -1,0 +1,27 @@
+{
+  "trigger" : "MANUAL",
+  "startedAt" : "2026-09-12T05:25:38.116259Z",
+  "elapsedMs" : 74377,
+  "tickers" : 2,
+  "completed" : 2,
+  "failed" : 0,
+  "results" : [ {
+    "ticker" : "AAPL",
+    "runId" : "53672c1a-2c9e-4227-91c8-a635974f5894",
+    "status" : "INSUFFICIENT_EVIDENCE",
+    "assessment" : "INSUFFICIENT_EVIDENCE",
+    "confidence" : null,
+    "calibratedConfidence" : null,
+    "critic" : "ACCEPT",
+    "error" : null
+  }, {
+    "ticker" : "MSFT",
+    "runId" : "12ab9c8d-1237-432b-950e-b40bebd199b5",
+    "status" : "PARTIAL",
+    "assessment" : "BULLISH",
+    "confidence" : 0.29,
+    "calibratedConfidence" : null,
+    "critic" : "ACCEPT",
+    "error" : null
+  } ]
+}

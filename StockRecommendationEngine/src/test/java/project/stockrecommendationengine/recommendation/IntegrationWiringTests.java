@@ -22,7 +22,8 @@ class IntegrationWiringTests {
             .withUserConfiguration(IntegrationAccessConfiguration.class, RecommendationService.class,
                     IbkrConfiguration.class, IbkrBrokerAdapter.class, QuantAnalysisService.class, QuantController.class,
                     OutcomeEvaluationService.class, OutcomeScheduler.class, OutcomeController.class, TrackRecordService.class,
-                    ConfidenceCalibrationService.class, RecommendationController.class, BrokerController.class)
+                    ConfidenceCalibrationService.class, RecommendationController.class, WatchlistScheduler.class,
+                    WatchlistController.class, BrokerController.class)
             .withBean(IntegrationAccessProperties.class).withBean(IbkrProperties.class).withBean(RecommendationProperties.class)
             .withBean(QuantProperties.class).withBean(OutcomeProperties.class)
             .withBean(OutcomeRepository.class, () -> mock(OutcomeRepository.class))
@@ -39,8 +40,25 @@ class IntegrationWiringTests {
                     .doesNotHaveBean(RecommendationService.class).doesNotHaveBean(TwsClient.class)
                     .doesNotHaveBean(QuantAnalysisService.class).doesNotHaveBean(QuantController.class)
                     .doesNotHaveBean(OutcomeEvaluationService.class).doesNotHaveBean(OutcomeScheduler.class)
-                    .doesNotHaveBean(TrackRecordService.class).doesNotHaveBean(ConfidenceCalibrationService.class);
+                    .doesNotHaveBean(TrackRecordService.class).doesNotHaveBean(ConfidenceCalibrationService.class)
+                    .doesNotHaveBean(WatchlistScheduler.class).doesNotHaveBean(WatchlistController.class);
         });
+    }
+
+    @Test void watchlistScheduleWiresOnlyWhenEnabledWithTickers() {
+        var enabled = runner.withPropertyValues("recommendation.enabled=true", "recommendation.model=test-model",
+                        "integration.access.token=test-token-with-at-least-32-characters")
+                .withBean(ChatModel.class, () -> mock(ChatModel.class));
+        enabled.run(context -> assertThat(context).hasNotFailed().doesNotHaveBean(WatchlistScheduler.class).doesNotHaveBean(WatchlistController.class));
+        enabled.withPropertyValues("recommendation.schedule.enabled=true", "recommendation.schedule.tickers=AAPL,MSFT")
+                .run(context -> {
+                    assertThat(context).hasNotFailed().hasSingleBean(WatchlistScheduler.class).hasSingleBean(WatchlistController.class);
+                    assertThat(context.getBean(RecommendationProperties.class).getSchedule().getTickers()).containsExactly("AAPL", "MSFT");
+                    verifyNoInteractions(context.getBean(ChatModel.class));
+                });
+        enabled.withPropertyValues("recommendation.schedule.enabled=true").run(context -> assertThat(context).hasFailed());
+        enabled.withPropertyValues("recommendation.schedule.enabled=true", "recommendation.schedule.tickers=AAPL", "recommendation.schedule.cron=not a cron")
+                .run(context -> assertThat(context).hasFailed());
     }
 
     @Test void enabledFeaturesWireWithoutContactingExternalServicesAtStartup() {

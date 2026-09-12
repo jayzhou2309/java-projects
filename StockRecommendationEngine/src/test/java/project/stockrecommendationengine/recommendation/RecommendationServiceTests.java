@@ -816,6 +816,56 @@ class RecommendationServiceTests {
 
     private static ChatResponse report() { return text("{\"summary\":\"Findings from the available evidence.\"}"); }
 
+    @Test void providerFailuresStopWithANamedCodeAndSpareAValidatedDraft() {
+        when(model.call(any(Prompt.class))).thenThrow(new IllegalStateException("503 Service Unavailable"));
+        var stopped = service.recommend(request(false));
+        assertThat(stopped.status()).isEqualTo("MODEL_UNAVAILABLE");
+        assertThat(stopped.limitations()).contains("MODEL_UNAVAILABLE").doesNotContain("MODEL_RATE_LIMITED_RETRIED");
+        verify(model, times(1)).call(any(Prompt.class));
+        assertThat(stopped.toolTrace()).extracting(t -> t.tool()).as("counters and trace survive").contains("MANAGER:reviewTrackRecord");
+        var records = org.mockito.ArgumentCaptor.forClass(RecommendationRecord.class);
+        verify(store).save(records.capture());
+        assertThat(records.getValue().status()).isEqualTo("MODEL_UNAVAILABLE");
+        // Same failure at the critic: the manager's validated answer is returned with the critic's absence disclosed.
+        properties.setCriticRounds(2);
+        var script = fullRunScript("BULLISH");
+        var queues = new java.util.HashMap<String, java.util.Deque<ChatResponse>>();
+        script.forEach((role, responses) -> queues.put(role, new java.util.ArrayDeque<>(responses)));
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            String system = invocation.<Prompt>getArgument(0).getInstructions().get(0).getText();
+            if (system.contains("You are the critic")) throw new IllegalStateException("503");
+            String role = system.contains("You are the manager") ? "MANAGER" : system.contains("RAG specialist") ? "RAG" : "BROKER";
+            return queues.get(role).pollFirst();
+        });
+        var spared = service.recommend(request(false));
+        assertThat(spared.status()).isEqualTo("COMPLETE");
+        assertThat(spared.assessment()).isEqualTo("BULLISH");
+        assertThat(spared.limitations()).contains("critic:MODEL_UNAVAILABLE");
+        assertThat(spared.critique().verdict()).isEqualTo("UNAVAILABLE");
+    }
+
+    @Test void aRateLimitedModelCallIsRetriedOnceAndDisclosed() {
+        properties.setRateLimitRetryMs(10);
+        properties.setCriticRounds(0);
+        var attempts = new java.util.concurrent.atomic.AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            if (attempts.getAndIncrement() == 0) throw new IllegalStateException("429: Rate limit reached for gpt-4.1 on tokens per min");
+            return answer("INSUFFICIENT_EVIDENCE", "[]");
+        });
+        var result = service.recommend(request(false));
+        assertThat(result.status()).isEqualTo("INSUFFICIENT_EVIDENCE");
+        assertThat(result.limitations()).contains("MODEL_RATE_LIMITED_RETRIED");
+        assertThat(result.modelCalls()).as("the failed attempt is not a second budgeted call").isEqualTo(1);
+        verify(model, times(2)).call(any(Prompt.class));
+        // A second rate limit in a row stops the run; with the retry disabled the first one does.
+        when(model.call(any(Prompt.class))).thenThrow(new IllegalStateException("429 again"));
+        assertThat(service.recommend(request(false)).status()).isEqualTo("MODEL_UNAVAILABLE");
+        properties.setRateLimitRetryMs(0);
+        clearInvocations(model);
+        assertThat(service.recommend(request(false)).status()).isEqualTo("MODEL_UNAVAILABLE");
+        verify(model, times(1)).call(any(Prompt.class));
+    }
+
     @Test void rejectsUnknownToolsWithoutExecutingAnyService() {
         when(model.call(any(Prompt.class))).thenReturn(calls(call("1", "placeOrder", "{}")));
         assertThat(service.recommend(request(false)).status()).isEqualTo("TOOL_NOT_ALLOWED");

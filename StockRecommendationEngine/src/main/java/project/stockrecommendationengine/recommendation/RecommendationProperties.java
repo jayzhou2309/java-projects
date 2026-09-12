@@ -1,6 +1,8 @@
 package project.stockrecommendationengine.recommendation;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -35,4 +37,30 @@ public class RecommendationProperties {
     @Min(1000) @Max(100000) private int maxToolResultChars = 32000;
     @Min(4000) @Max(200000) private int maxContextChars = 120000;
     @Min(1) @Max(3600) private int maxQuoteAgeSeconds = 120;
+    /** Wait before the single retry of a model call the provider rate-limited; 0 disables the retry. */
+    @Min(0) @Max(120000) private int rateLimitRetryMs = 5000;
+    @Valid private Schedule schedule = new Schedule();
+
+    /** Scheduled watchlist runs with a directional question, so scored directional outcomes accumulate unattended. */
+    @Getter
+    @Setter
+    public static class Schedule {
+        private boolean enabled;
+        private List<@Pattern(regexp = "[A-Za-z0-9.-]{1,16}") String> tickers = List.of();
+        /** Exchange-local time; the default fires after the US open so quotes and the day's bar context are live. */
+        @NotBlank private String cron = "0 45 10 * * MON-FRI";
+        @NotBlank private String zone = "America/New_York";
+        /** {ticker} is replaced per run. Directional by construction: NEUTRAL runs are never scored for direction. */
+        @NotBlank @Size(max = 3000) private String question = "Based on the latest filings and the supplied price statistics, is {ticker} "
+                + "more likely to rise or fall over the next 20 trading days? Give a BULLISH or BEARISH assessment unless the evidence "
+                + "genuinely cannot support a direction, and cite the figures the filings state.";
+        /**
+         * Pause between tickers. A full run with the critic can use most of a 30,000 tokens-per-minute provider allowance,
+         * so consecutive runs must sit in separate minutes; the pause also leaves a worker slot free for manual requests.
+         */
+        @Min(0) @Max(600000) private int pauseMs = 60000;
+        private boolean includePortfolio;
+        @AssertTrue(message = "recommendation.schedule.tickers must list at least one ticker when the schedule is enabled")
+        public boolean isTickersConfigured() { return !enabled || !tickers.isEmpty(); }
+    }
 }

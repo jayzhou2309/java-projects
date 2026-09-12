@@ -137,7 +137,10 @@ public class RecommendationService {
             Thread.currentThread().interrupt();
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Request interrupted");
         } catch (ExecutionException ex) {
-            log.warn("Recommendation run={} status=FAILED", runId);
+            // The cause class is safe to log; its message can carry provider or SQL detail, so that stays at debug.
+            Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+            log.warn("Recommendation run={} status=FAILED cause={}", runId, cause.getClass().getSimpleName());
+            log.debug("Recommendation run={} failure detail", runId, cause);
             response = stopped(runId, normalized.ticker(), "FAILED");
         }
         return persist(normalized, requestedAt, response);
@@ -420,7 +423,7 @@ public class RecommendationService {
                         : ToolCallingChatOptions.builder().model(properties.getModel()).toolCallbacks(new ArrayList<>(callbacks.values()))
                             .maxTokens(properties.getMaxOutputTokens()).build();
                 // Spring AI 2.0 ChatModel returns tool requests; this loop exclusively owns their execution.
-                var response = model.call(new Prompt(List.copyOf(messages), options));
+                var response = callModel(role, messages, options, state);
                 checkDeadline(state.deadline);
                 if (response == null || response.getResult() == null) throw new RunLimitException("INVALID_MODEL_OUTPUT");
                 var usage = response.getMetadata().getUsage();
@@ -445,6 +448,34 @@ public class RecommendationService {
                 else for (var call : output.getToolCalls()) results.add(executeCall(role, call, callbacks.get(call.name()), state));
                 messages.add(ToolResponseMessage.builder().responses(results).build());
             }
+    }
+
+    /**
+     * One model call. A provider rate limit is retried once after recommendation.rate-limit-retry-ms (within the
+     * deadline) and disclosed; any other provider failure, or a second rate limit, stops the run as MODEL_UNAVAILABLE
+     * with counters and trace intact. At the critic or a revision the validated draft then stands. Exception messages
+     * can carry provider detail, so only the class is logged at WARN.
+     */
+    private org.springframework.ai.chat.model.ChatResponse callModel(String role, List<Message> messages,
+            ToolCallingChatOptions options, RunState state) {
+        for (int attempt = 0; ; attempt++) {
+            try { return model.call(new Prompt(List.copyOf(messages), options)); }
+            catch (RuntimeException ex) {
+                boolean retry = attempt == 0 && rateLimited(ex) && properties.getRateLimitRetryMs() > 0;
+                log.warn("Recommendation run={} role={} model call failed: {}{}", state.runId, role, ex.getClass().getSimpleName(),
+                        retry ? " (retrying once)" : "");
+                log.debug("Recommendation run={} model call failure detail", state.runId, ex);
+                if (!retry) throw new RunLimitException("MODEL_UNAVAILABLE");
+                state.limitations.add("MODEL_RATE_LIMITED_RETRIED");
+                long wait = Math.min(properties.getRateLimitRetryMs(), TimeUnit.NANOSECONDS.toMillis(state.deadline - System.nanoTime()));
+                if (wait <= 0) throw new RunLimitException("DEADLINE_EXCEEDED");
+                try { Thread.sleep(wait); }
+                catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new RunLimitException("DEADLINE_EXCEEDED"); }
+            }
+        }
+    }
+    private static boolean rateLimited(RuntimeException ex) {
+        return ex.getClass().getSimpleName().contains("RateLimit") || String.valueOf(ex.getMessage()).contains("429");
     }
 
     /** Manager delegations run on the specialist pool; the manager thread waits, propagates limits, and cancels the rest. */

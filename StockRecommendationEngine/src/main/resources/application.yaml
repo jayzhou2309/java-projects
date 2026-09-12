@@ -49,6 +49,18 @@ sec:
   archives-base-url: https://www.sec.gov/Archives/edgar/data
 
 rag:
+  # Nightly SEC index comparison for stored tickers; the recommendation loop runs the same check on demand.
+  refresh:
+    enabled: ${RAG_REFRESH_ENABLED:true}
+    cron: "0 0 7 * * *"
+    zone: Asia/Singapore
+    quarterly-cadence-days: 100
+    recheck-hours: 24
+    index-limit: 40
+    limits:
+      "[10-K]": 1
+      "[10-Q]": 1
+      "[8-K]": 3
   retrieval:
     default-top-k: 5
     candidate-count: 40
@@ -96,13 +108,12 @@ recommendation:
   deadline-ms: ${RECOMMENDATION_DEADLINE_MS:120000}
   # Manager delegations to both specialists run concurrently on a shared pool.
   parallel-specialists: true
-  # A ticker with no embedded filings triggers ingestion of the latest filing per type before RAG research.
+  # A ticker with no embedded filings is ingested, and one past its filing cadence refreshed, before RAG research.
   auto-ingest: true
-  auto-ingest-filing-types: 10-K,10-Q
   # Several listings without a request conid: the single listing in this currency is used and disclosed.
   preferred-currency: USD
   max-output-tokens: 1200
   max-observed-tokens: 16000
-  max-tool-result-chars: 24000
-  max-context-chars: 80000
+  max-tool-result-chars: 32000
+  max-context-chars: 120000
   max-quote-age-seconds: 120

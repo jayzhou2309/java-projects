@@ -18,8 +18,9 @@ import java.util.regex.Pattern;
 @Component
 public class FilingHtmlParser {
 
+    // "Item 1A. Risk Factors" and 8-K style "Item 7.01. Regulation FD Disclosure" (sub-item kept in the key).
     private static final Pattern ITEM_PATTERN = Pattern.compile(
-            "(?i)^item\\s+(\\d+[a-z]?)\\.?\\s*(.*)$"
+            "(?i)^item\\s+(\\d+[a-z]?(?:\\.\\d+)?)\\.?\\s*(.*)$"
     );
 
     private static final int MAX_HEADING_LENGTH = 250;
@@ -92,7 +93,8 @@ public class FilingHtmlParser {
 
                 String itemNumber =
                         matcher.group(1)
-                                .toUpperCase(Locale.ROOT);
+                                .toUpperCase(Locale.ROOT)
+                                .replace('.', '_');
 
                 currentSectionKey =
                         "ITEM_" + itemNumber;
@@ -211,15 +213,16 @@ public class FilingHtmlParser {
         return blocks;
     }
 
+    // SEC HTML uses thin, figure, narrow no-break, and ideographic spaces plus zero-width characters
+    // inside headings such as "Item\u20097.01"; Java's \s does not match them, so map them first.
+    private static final Pattern UNICODE_SPACES = Pattern.compile("[\\p{Zs}\\u200B\\u200C\\u200D\\u2060\\uFEFF]");
+
     private String normalize(String value) {
         if (value == null) {
             return "";
         }
 
-        return value
-                .replace('\u00A0', ' ')
-                .replace('\u2007', ' ')
-                .replace('\u202F', ' ')
+        return UNICODE_SPACES.matcher(value).replaceAll(" ")
                 .replaceAll("\\s+", " ")
                 .trim();
     }

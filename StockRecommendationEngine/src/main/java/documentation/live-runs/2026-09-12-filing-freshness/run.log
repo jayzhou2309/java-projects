@@ -1,0 +1,21 @@
+[nio-8081-exec-3] Filing refresh: ticker=AAPL indexFilings=40 new=0 ingestedTypes=[] failedTypes=[]
+[nio-8081-exec-5] Finding SEC filings: ticker=MSFT, filingTypes=[8-K], limit=3
+[nio-8081-exec-5] Found 3 matching filings for ticker=MSFT
+2026-09-12T09:45:36.391+08:00  WARN 30447 --- [StockRecommendationEngine] [nio-8081-exec-5] p.s.r.freshness.FilingFreshnessService   : Filing refresh failed: ticker=MSFT type=8-K cause=IllegalStateException
+[nio-8081-exec-5] Filing refresh: ticker=MSFT indexFilings=40 new=3 ingestedTypes=[] failedTypes=[8-K]
+[ommendation-run] Recommendation run=07d8891d-4d74-4926-bd68-aa236e9bb186 tool=RAG:ensureFilings outcome=FRESH elapsedMs=4
+[ommendation-run] Recommendation run=07d8891d-4d74-4926-bd68-aa236e9bb186 tool=RAG:searchFilings outcome=OK elapsedMs=3905
+[ommendation-run] Recommendation run=07d8891d-4d74-4926-bd68-aa236e9bb186 tool=MANAGER:researchFilings outcome=OK elapsedMs=7457
+[ommendation-run] Recommendation run=07d8891d-4d74-4926-bd68-aa236e9bb186 status=PARTIAL modelCalls=4 observedTokens=9971 levels=false confidence=0.24
+[nio-8081-exec-1] Filing transaction committed: ticker=MSFT, accession=0001193125-26-380280, elapsedMs=2055
+[nio-8081-exec-1] Filing transaction committed: ticker=MSFT, accession=0001193125-26-323632, elapsedMs=709
+[nio-8081-exec-1] Filing transaction committed: ticker=MSFT, accession=0001193125-26-258667, elapsedMs=251
+[nio-8081-exec-1] Filing refresh: ticker=MSFT indexFilings=40 new=3 ingested=3 failed=0
+[ommendation-run] Recommendation run=3a0949df-ddb6-464c-8762-48be57c7138e tool=RAG:ensureFilings outcome=FRESH elapsedMs=4
+[ommendation-run] Recommendation run=3a0949df-ddb6-464c-8762-48be57c7138e tool=RAG:searchFilings outcome=OK elapsedMs=289
+[ommendation-run] Recommendation run=3a0949df-ddb6-464c-8762-48be57c7138e tool=RAG:searchFilings outcome=OK elapsedMs=230
+[ommendation-run] Recommendation run=8e16d310-80ef-4584-a89d-8684038440d2 tool=RAG:ensureFilings outcome=FRESH elapsedMs=59
+[ommendation-run] Recommendation run=8e16d310-80ef-4584-a89d-8684038440d2 tool=RAG:searchFilings outcome=OK elapsedMs=417
+[ommendation-run] Recommendation run=8e16d310-80ef-4584-a89d-8684038440d2 tool=RAG:searchFilings outcome=OK elapsedMs=275
+[ommendation-run] Recommendation run=8e16d310-80ef-4584-a89d-8684038440d2 tool=MANAGER:researchFilings outcome=OK elapsedMs=4579
+[ommendation-run] Recommendation run=8e16d310-80ef-4584-a89d-8684038440d2 status=PARTIAL modelCalls=4 observedTokens=14374 levels=false confidence=0.28

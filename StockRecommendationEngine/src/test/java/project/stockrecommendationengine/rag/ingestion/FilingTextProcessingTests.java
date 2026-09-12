@@ -54,6 +54,16 @@ class FilingTextProcessingTests {
     }
 
     @Test
+    void recognizesEightKDecimalItemsAndUnicodeSpacesInHeadings() {
+        // Thin space (U+2009) after "Item" and a narrow no-break space in the body, as typeset in SEC 8-K HTML.
+        var sections = parser.parse("<p>Item\u20097.01. Regulation FD Disclosure</p><p>Posted\u202Fmaterials.</p>"
+                + "<p>Item\u00A09.01. Financial Statements and Exhibits</p><p>(d) Exhibits:</p>");
+        assertThat(sections).containsExactly(
+                new FilingSection("ITEM_7_01", "Regulation FD Disclosure", "Posted materials."),
+                new FilingSection("ITEM_9_01", "Financial Statements and Exhibits", "(d) Exhibits:"));
+    }
+
+    @Test
     void returnsNoSectionsWhenHeadingsCannotBeRecognized() {
         assertThat(parser.parse("<div>Only body text</div>")).isEmpty();
     }

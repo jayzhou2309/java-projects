@@ -1,7 +1,6 @@
 package project.stockrecommendationengine.recommendation;
 
 import jakarta.validation.constraints.*;
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -23,14 +22,13 @@ public class RecommendationProperties {
     @Min(100) @Max(300000) private int deadlineMs = 120000;
     /** Run the RAG and broker specialists concurrently when the manager delegates to both in one response. */
     private boolean parallelSpecialists = true;
-    /** Ingest the latest filing of each listed type when the ticker has no embedded filings before RAG research. */
+    /** Before RAG research, ingest a ticker with no embedded filings or refresh one past its filing cadence (rag.refresh limits). */
     private boolean autoIngest = true;
-    @NotEmpty private List<@NotBlank String> autoIngestFilingTypes = List.of("10-K", "10-Q");
     /** With several listings and no request conid, the single listing in this currency is selected and disclosed. */
     @NotBlank private String preferredCurrency = "USD";
     @Min(128) @Max(4096) private int maxOutputTokens = 1200;
     @Min(1000) @Max(100000) private int maxObservedTokens = 16000;
-    @Min(1000) @Max(100000) private int maxToolResultChars = 24000;
-    @Min(4000) @Max(200000) private int maxContextChars = 80000;
+    @Min(1000) @Max(100000) private int maxToolResultChars = 32000;
+    @Min(4000) @Max(200000) private int maxContextChars = 120000;
     @Min(1) @Max(3600) private int maxQuoteAgeSeconds = 120;
 }

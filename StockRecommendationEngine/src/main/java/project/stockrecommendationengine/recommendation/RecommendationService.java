@@ -25,9 +25,10 @@ import project.stockrecommendationengine.broker.BrokerReadService;
 import project.stockrecommendationengine.quant.QuantAnalysis;
 import project.stockrecommendationengine.quant.QuantAnalysisService;
 import project.stockrecommendationengine.quant.QuantProperties;
+import project.stockrecommendationengine.rag.freshness.FilingFreshness;
+import project.stockrecommendationengine.rag.freshness.FilingFreshnessService;
 import project.stockrecommendationengine.rag.ingestion.FilingIngestionService;
 import project.stockrecommendationengine.rag.ingestion.UnknownTickerException;
-import project.stockrecommendationengine.rag.repository.SECFilingRepository;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
 import tools.jackson.databind.json.JsonMapper;
 import static project.stockrecommendationengine.recommendation.RecommendationResponse.ToolTrace;
@@ -54,8 +55,7 @@ public class RecommendationService {
             """;
     private final ChatModel model;
     private final FilingRetrievalService filings;
-    private final FilingIngestionService ingestion;
-    private final SECFilingRepository filingRepository;
+    private final FilingFreshnessService freshness;
     private final BrokerReadService broker;
     private final QuantAnalysisService quant;
     private final QuantProperties quantProperties;
@@ -77,15 +77,14 @@ public class RecommendationService {
     });
 
     public RecommendationService(ObjectProvider<ChatModel> models, FilingRetrievalService filings,
-            FilingIngestionService ingestion, SECFilingRepository filingRepository,
+            FilingFreshnessService freshness,
             ObjectProvider<BrokerReadService> brokers, ObjectProvider<QuantAnalysisService> quants,
             ObjectProvider<QuantProperties> quantProperties, RecommendationRepository store,
             RecommendationProperties properties, Validator validator) {
         this.model = models.getIfAvailable();
         if (model == null) throw new IllegalStateException("Enable a Spring AI chat model before enabling recommendations");
         this.filings = filings;
-        this.ingestion = ingestion;
-        this.filingRepository = filingRepository;
+        this.freshness = freshness;
         this.broker = brokers.getIfAvailable();
         this.quant = broker == null ? null : quants.getIfAvailable();
         this.quantProperties = quantProperties.getIfAvailable();
@@ -148,7 +147,7 @@ public class RecommendationService {
             return new RecommendationResponse(response.runId(), response.ticker(), response.status(), response.assessment(),
                     response.reasoning(), response.sources(), response.quotes(), List.copyOf(limitations), response.toolTrace(),
                     response.modelCalls(), response.observedTokens(), response.takeProfit(), response.stopLoss(),
-                    response.confidence(), response.priceAnalysis());
+                    response.confidence(), response.priceAnalysis(), response.dataFreshness());
         }
     }
 
@@ -158,6 +157,7 @@ public class RecommendationService {
         final long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(properties.getDeadlineMs());
         final List<ToolTrace> trace = Collections.synchronizedList(new ArrayList<>());
         final Set<String> limitations = Collections.synchronizedSet(new LinkedHashSet<>());
+        volatile FilingFreshness filingFreshness;
         private int modelCalls, observedTokens, toolCalls;
         RunState(String runId) { this.runId = runId; }
         synchronized boolean reserveModelCall() {
@@ -199,38 +199,62 @@ public class RecommendationService {
                     delayed-data labels, uncertainty, and failures. Do not invent metrics or reranking results.
                     """ + SYSTEM, request, managerTools, state);
             return finish(runId, request, text, tools, new LinkedHashSet<>(state.limitations()), state.trace(),
-                    state.modelCalls(), state.observedTokens());
+                    state.modelCalls(), state.observedTokens(), state.filingFreshness);
         } catch (RunLimitException ex) {
             state.limitations.add(ex.getMessage());
             return new RecommendationResponse(runId, request.ticker(), ex.getMessage(), "INSUFFICIENT_EVIDENCE", "",
                     List.of(), List.copyOf(tools.quotes.values()), state.limitations(), state.trace(),
-                    state.modelCalls(), state.observedTokens(), null, null, null, tools.priceAnalysis);
+                    state.modelCalls(), state.observedTokens(), null, null, null, tools.priceAnalysis,
+                    dataFreshness(state.filingFreshness, tools));
         }
     }
 
-    /** The RAG branch fetches the latest filing per configured type when the ticker has nothing embedded yet. */
+    private static RecommendationResponse.DataFreshness dataFreshness(FilingFreshness filings, RecommendationTools tools) {
+        Quote quote = tools.quotes.values().stream().findFirst().orElse(null);
+        return new RecommendationResponse.DataFreshness(
+                filings == null ? Map.of() : filings.latestFilingDates(),
+                filings == null ? null : filings.lastVerifiedAt(),
+                filings != null && filings.mayBeStale(),
+                tools.priceAnalysis == null ? null : tools.priceAnalysis.asOf(),
+                quote == null ? null : quote.updatedAt(),
+                quote == null ? null : quote.availability());
+    }
+
+    /**
+     * The RAG branch ingests a ticker with nothing embedded and refreshes one past its filing cadence, through
+     * FilingFreshnessService. The freshness it saw is kept for the response; staleness becomes a limitation.
+     */
     private void ensureFilings(RecommendationRequest request, RunState state) {
-        if (!properties.isAutoIngest()) return;
         checkDeadline(state.deadline);
-        if (filingRepository.existsByTickerAndIngestionStatus(request.ticker(), "EMBEDDED")) return;
         long started = System.nanoTime();
-        String outcome = "OK";
+        String outcome;
+        FilingFreshness seen = null;
         try {
-            for (String type : properties.getAutoIngestFilingTypes()) {
-                checkDeadline(state.deadline);
-                ingestion.ingest(request.ticker(), List.of(type), 1);
+            if (properties.isAutoIngest()) {
+                var ensured = freshness.ensure(request.ticker());
+                outcome = ensured.action();
+                seen = ensured.freshness();
+            } else {
+                seen = freshness.assess(request.ticker());
+                outcome = "AUTO_INGEST_DISABLED";
             }
-        } catch (RunLimitException ex) {
-            throw ex;
         } catch (UnknownTickerException ex) {
             outcome = "TICKER_NOT_FOUND";
         } catch (RuntimeException ex) {
             outcome = "INGESTION_FAILED";
         }
+        checkDeadline(state.deadline);
         long elapsed = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
-        state.trace.add(new ToolTrace("RAG:ingestFilings", outcome, elapsed));
-        log.info("Recommendation run={} tool=RAG:ingestFilings outcome={} elapsedMs={}", state.runId, outcome, elapsed);
-        if (!outcome.equals("OK")) state.limitations.add("ingestFilings:" + outcome);
+        state.trace.add(new ToolTrace("RAG:ensureFilings", outcome, elapsed));
+        log.info("Recommendation run={} tool=RAG:ensureFilings outcome={} elapsedMs={}", state.runId, outcome, elapsed);
+        if (Set.of("TICKER_NOT_FOUND", "INGESTION_FAILED", "INGESTED_PARTIALLY", "REFRESH_FAILED", "REFRESHED_PARTIALLY",
+                "NO_FILINGS_AVAILABLE").contains(outcome)) {
+            state.limitations.add("ensureFilings:" + outcome);
+        }
+        if (seen != null) {
+            state.filingFreshness = seen;
+            if (seen.mayBeStale()) state.limitations.add("FILINGS_MAY_BE_STALE");
+        }
     }
 
     private void addSpecialist(Map<String, org.springframework.ai.tool.ToolCallback> target, String name,
@@ -411,7 +435,8 @@ public class RecommendationService {
     }
 
     private RecommendationResponse finish(String runId, RecommendationRequest request, String text,
-            RecommendationTools tools, Set<String> limitations, List<ToolTrace> trace, int modelCalls, int tokens) {
+            RecommendationTools tools, Set<String> limitations, List<ToolTrace> trace, int modelCalls, int tokens,
+            FilingFreshness filingFreshness) {
         if (text == null || text.length() > 16000) throw new RunLimitException("INVALID_MODEL_OUTPUT");
         tools.jackson.databind.JsonNode draft;
         try { draft = json.readTree(text); }
@@ -456,7 +481,7 @@ public class RecommendationService {
                 cited.stream().map(tools.evidence::get).toList(), List.copyOf(tools.quotes.values()),
                 List.copyOf(limitations), List.copyOf(trace), modelCalls, tokens,
                 levels == null ? null : levels.takeProfit(), levels == null ? null : levels.stopLoss(),
-                confidence, tools.priceAnalysis);
+                confidence, tools.priceAnalysis, dataFreshness(filingFreshness, tools));
     }
 
     /**
@@ -489,7 +514,7 @@ public class RecommendationService {
     }
     private static RecommendationResponse stopped(String runId, String ticker, String code) {
         return new RecommendationResponse(runId, ticker, code, "INSUFFICIENT_EVIDENCE", "", List.of(), List.of(),
-                List.of(code), List.of(), 0, 0, null, null, null, null);
+                List.of(code), List.of(), 0, 0, null, null, null, null, null);
     }
     @PreDestroy public void close() { workers.shutdownNow(); specialists.shutdownNow(); }
 }

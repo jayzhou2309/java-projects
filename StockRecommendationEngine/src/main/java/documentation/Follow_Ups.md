@@ -96,5 +96,5 @@ closed items instead of deleting them.
 
 | ID | Item | Why it matters | What unblocks it | Status |
 |---|---|---|---|---|
-| DELIV-1 | Push and merge `critic-synthesis`, then `confidence-calibration` (stacked) | Both phases are committed locally only | `git push -u origin critic-synthesis && gh pr create --fill`, then the same for confidence-calibration with `--base critic-synthesis` (or rebase onto main after the first merge) | OPEN |
+| DELIV-1 | Push and merge `critic-synthesis`, then `confidence-calibration` (stacked) | Both phases were committed locally only | Merged as [PR #6](https://github.com/jayzhou2309/java-projects/pull/6) and [PR #7](https://github.com/jayzhou2309/java-projects/pull/7) | DONE (2026-09-12) |
 | DELIV-2 | Update the PRD phase table and this log at the end of each phase | The table is the only place the overall status is summarised | Habit; the memory note records it | OPEN |

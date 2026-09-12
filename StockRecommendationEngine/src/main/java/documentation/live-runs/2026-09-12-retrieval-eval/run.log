@@ -1,0 +1,17 @@
+Retrieval evaluation baseline and regression floor, 2026-09-12 (Follow_Ups AGENT-3, Milestone 3 of plans/2026-09-12-retrieval-evaluation-set.md)
+
+Baseline snapshot: retrieval_evaluations id 13, evaluated 2026-09-12 09:49:07 UTC, set v1 (30 questions), window 10, FILTERED_VECTOR,
+candidateCount 40, reranking off. Saved as baseline-snapshot-13.json via
+  docker exec -i trading-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "SELECT row_to_json(r) FROM retrieval_evaluations r WHERE id = 13"
+Ids 7, 12, and 13 (all from Milestone 2's checks, same store) carry identical figures:
+  hit@1 0.300000, hit@3 0.533333, hit@5 0.600000, MRR 0.435833; per-ticker hit@5 AAPL 0.9, MSFT 0.6, NVDA 0.3;
+  misses msft-07, msft-08, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-07, nvda-09.
+
+Floor: rag.evaluation.min-hit-at-5 = 0.50 (baseline 0.6 minus 0.1, rounded down to a multiple of 0.05).
+
+Live test runs (two of the three allowed; each embeds 30 questions with text-embedding-3-small, no chat model):
+  1. live-test-pass.log      default floor 0.50  -> exit 0, hit@5 0.600000, metrics identical to snapshot 13
+  2. live-test-floor-1.01.log floor 1.01          -> exit 1, assertion names hit@5 0.600000 and the nine miss ids
+Both runs are @Transactional, so retrieval_evaluations still holds only ids 7, 12, 13 after them (checked with psql).
+
+Full suite without the property: set -a && source .env && set +a && ./mvnw -q verify -> exit 0 (219 tests, 6 skipped: IbkrLiveTests x4, IbkrQuantLiveTests, RetrievalEvaluationLiveTests).

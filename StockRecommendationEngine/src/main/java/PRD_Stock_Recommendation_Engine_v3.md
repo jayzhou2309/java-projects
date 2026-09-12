@@ -129,7 +129,7 @@ Implementation is phased; work may be delegated to sub-agents under skill files,
 | 6 | Orchestration | Partial: bounded explicit tool loop, no MCP or multi-user |
 | 7 | Critic and synthesis | Partial: a tool-less critic reviews the manager's answer against the run's own evidence and sends it back for one bounded revision; a deterministic numeral check feeds the critic ([Agent_Harness.md](documentation/Agent_Harness.md)); no ensemble of models or calibration of the critic's verdicts |
 | 8 | Memory | Partial: the manager is shown the ticker's prior stored runs and realized outcomes ([Agent_Harness.md](documentation/Agent_Harness.md)); no cross-request conversational memory |
-| 9 | Evaluation platform | Partial: stored runs scored at 5/20/60-day horizons with benchmark and level touches, nightly calibration snapshots with ECE and Brier ([Outcomes.md](documentation/Outcomes.md)); no retrieval evaluation set; open items in [Follow_Ups.md](documentation/Follow_Ups.md) |
+| 9 | Evaluation platform | Partial: stored runs scored at 5/20/60-day horizons with benchmark and level touches, nightly calibration snapshots with ECE and Brier ([Outcomes.md](documentation/Outcomes.md)); versioned retrieval evaluation set (30 filing questions, `POST /api/rag/evaluate`, baseline snapshot 13 on 2026-09-12: hit@5 0.60, MRR 0.44) with an opt-in regression floor test ([RAG.md](documentation/RAG.md), Retrieval Evaluation); answer-level evaluation still open (AGENT-10); open items in [Follow_Ups.md](documentation/Follow_Ups.md) |
 | — | Trade staging, Guard Pipeline, UTA, execution (v2 scope) | Planned — sequence after core phases above |
 
 ## 9. Open Questions

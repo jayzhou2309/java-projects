@@ -71,3 +71,7 @@ one-line fix, a typo, or a question, just do it directly.
 - 2026-09-12, retrieval evaluation set (PR #10): three milestones, each passed
   Scrutiny and UT on the first round; plan in
   `documentation/plans/2026-09-12-retrieval-evaluation-set.md`.
+- 2026-09-12, hybrid keyword plus vector retrieval (RAG-2): three milestones, each
+  passed Scrutiny and UT on the first round; hybrid enabled by default after the
+  measured comparison (hit@5 0.600 → 0.633, no ticker down); plan in
+  `documentation/plans/2026-09-12-hybrid-keyword-retrieval.md`.

@@ -1,0 +1,161 @@
+{
+  "runId" : "d7eb8d19-9192-4c95-b6ca-560b0494cb68",
+  "ticker" : "AAPL",
+  "status" : "INSUFFICIENT_EVIDENCE",
+  "assessment" : "INSUFFICIENT_EVIDENCE",
+  "reasoning" : "The filings for AAPL confirm routine disclosures: no defaults on senior securities, no unresolved SEC staff comments, and management's affirmation of effective controls and procedures. However, these are standard compliance statements and do not provide substantive market analysis, forward-looking outlooks, or investment theses. There is no analytical or narrative support for a BULLISH, BEARISH, or NEUTRAL assessment in the evidence provided.",
+  "sources" : [ {
+    "chunkId" : 293,
+    "filingId" : 4,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-26-000020",
+    "filingType" : "10-Q",
+    "filingDate" : "2026-07-31",
+    "reportDate" : "2026-06-27",
+    "sectionKey" : "ITEM_3",
+    "sectionTitle" : "Defaults Upon Senior Securities",
+    "chunkIndex" : 27,
+    "content" : "None.",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/aapl-20260627.htm",
+    "similarityScore" : 0.45188494079300634
+  }, {
+    "chunkId" : 216,
+    "filingId" : 3,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-25-000079",
+    "filingType" : "10-K",
+    "filingDate" : "2025-10-31",
+    "reportDate" : "2025-09-27",
+    "sectionKey" : "ITEM_1B",
+    "sectionTitle" : "Unresolved Staff Comments",
+    "chunkIndex" : 26,
+    "content" : "None.",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+    "similarityScore" : 0.40746142878150193
+  }, {
+    "chunkId" : 252,
+    "filingId" : 3,
+    "ticker" : "AAPL",
+    "cik" : "0000320193",
+    "accessionNo" : "0000320193-25-000079",
+    "filingType" : "10-K",
+    "filingDate" : "2025-10-31",
+    "reportDate" : "2025-09-27",
+    "sectionKey" : "ITEM_9A",
+    "sectionTitle" : "Controls and Procedures",
+    "chunkIndex" : 62,
+    "content" : "Evaluation of Disclosure Controls and Procedures\nBased on an evaluation under the supervision and with the participation of the Company’s management, the Company’s principal executive officer and principal financial officer have concluded that the Company’s disclosure controls and procedures as defined in Rules 13a-15(e) and 15d-15(e) under the Exchange Act were effective as of September 27, 2025 to provide reasonable assurance that information required to be disclosed by the Company in reports that it files or submits under the Exchange Act is (i) recorded, processed, summarized and reported within the time periods specified in the SEC rules and forms and (ii) accumulated and communicated to the Company’s management, including its principal executive officer and principal financial officer, as appropriate to allow timely decisions regarding required disclosure.\nInherent Limitations over Internal Controls\nThe Company’s internal control over financial reporting is designed to provide reasonable assurance regarding the reliability of financial reporting and the preparation of financial statements for external purposes in accordance with GAAP. The Company’s internal control over financial reporting includes those policies and procedures that:\n(i)pertain to the maintenance of records that, in reasonable detail, accurately and fairly reflect the transactions and dispositions of the Company’s assets;\n(ii)provide reasonable assurance that transactions are recorded as necessary to permit preparation of financial statements in accordance with GAAP, and that the Company’s receipts and expenditures are being made only in accordance with authorizations of the Company’s management and directors; and\n(iii)provide reasonable assurance regarding prevention or timely detection of unauthorized acquisition, use, or disposition of the Company’s assets that could have a material effect on the financial statements.\nManagement, including the Company’s Chief Executive Officer and Chief Financial Officer, does not expect that the Company’s internal controls will prevent or detect all errors and all fraud. A control system, no matter how well designed and operated, can provide only reasonable, not absolute, assurance that the objectives of the control system are met. Further, the design of a control system must reflect the fact that there are resource constraints, and the benefits of controls must be considered relative to their costs. Because of the inherent limitations in all control systems, no evaluation of internal controls can provide absolute assurance that all control issues and instances of fraud, if any, have been detected. Also, any evaluation of the effectiveness of controls in future periods are subject to the risk that those internal controls may become inadequate because of changes in business conditions, or that the degree of compliance with the policies or procedures may deteriorate.\nManagement’s Annual Report on Internal Control over Financial Reporting\nThe Company’s management is responsible for establishing and maintaining adequate internal control over financial reporting (as defined in Rule 13a-15(f) under the Exchange Act). Management conducted an assessment of the effectiveness of the Company’s internal control over financial reporting based on the criteria set forth in Internal Control – Integrated Framework issued by the Committee of Sponsoring Organizations of the Treadway Commission (2013 framework). Based on the Company’s assessment, management has concluded that its internal control over financial reporting was effective as of September 27, 2025 to provide reasonable assurance regarding the reliability of financial reporting and the preparation of financial statements in accordance with GAAP.",
+    "sourceUrl" : "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+    "similarityScore" : 0.39324288569969634
+  } ],
+  "quotes" : [ ],
+  "limitations" : [ "POSITION_SIZING_NOT_IMPLEMENTED", "CONFIDENCE_UNCALIBRATED", "BROKER_DISABLED", "QUANT_DISABLED", "NO_VERIFIED_CURRENT_QUOTE" ],
+  "toolTrace" : [ {
+    "tool" : "MANAGER:reviewTrackRecord",
+    "outcome" : "OK",
+    "elapsedMs" : 11
+  }, {
+    "tool" : "RAG:ensureFilings",
+    "outcome" : "FRESH",
+    "elapsedMs" : 61
+  }, {
+    "tool" : "RAG:searchFilings",
+    "outcome" : "OK",
+    "elapsedMs" : 1998
+  }, {
+    "tool" : "MANAGER:researchFilings",
+    "outcome" : "OK",
+    "elapsedMs" : 3562
+  }, {
+    "tool" : "CRITIC:review",
+    "outcome" : "ACCEPT",
+    "elapsedMs" : 1545
+  } ],
+  "modelCalls" : 4,
+  "observedTokens" : 5463,
+  "takeProfit" : null,
+  "stopLoss" : null,
+  "confidence" : null,
+  "priceAnalysis" : null,
+  "dataFreshness" : {
+    "latestFilingDates" : {
+      "10-K" : "2025-10-31",
+      "10-Q" : "2026-07-31",
+      "8-K" : "2026-07-30"
+    },
+    "filingsVerifiedAt" : null,
+    "filingsMayBeStale" : false,
+    "barsAsOf" : null,
+    "quoteUpdatedAt" : null,
+    "quoteAvailability" : null
+  },
+  "trackRecord" : {
+    "ticker" : "AAPL",
+    "runsConsidered" : 3,
+    "runs" : [ {
+      "runId" : "b006e10d-a78a-4948-9a16-a7d57bbdf947",
+      "requestedAt" : "2026-09-12T05:35:41.682044Z",
+      "status" : "INSUFFICIENT_EVIDENCE",
+      "assessment" : "INSUFFICIENT_EVIDENCE",
+      "confidence" : null,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    }, {
+      "runId" : "53672c1a-2c9e-4227-91c8-a635974f5894",
+      "requestedAt" : "2026-09-12T05:25:38.120503Z",
+      "status" : "INSUFFICIENT_EVIDENCE",
+      "assessment" : "INSUFFICIENT_EVIDENCE",
+      "confidence" : null,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    }, {
+      "runId" : "835e2ff6-6710-464e-80cd-224b2417502a",
+      "requestedAt" : "2026-09-12T05:08:03.690282Z",
+      "status" : "PARTIAL",
+      "assessment" : "BULLISH",
+      "confidence" : 0.3200,
+      "lastClose" : null,
+      "barsAsOf" : null,
+      "takeProfit" : null,
+      "stopLoss" : null,
+      "outcomes" : [ ]
+    } ],
+    "stats" : [ {
+      "assessment" : "INSUFFICIENT_EVIDENCE",
+      "runs" : 2,
+      "scored" : 0,
+      "directionCorrect" : 0,
+      "averageReturnPct" : null,
+      "referenceHorizonDays" : 20
+    }, {
+      "assessment" : "BULLISH",
+      "runs" : 1,
+      "scored" : 0,
+      "directionCorrect" : 0,
+      "averageReturnPct" : null,
+      "referenceHorizonDays" : 20
+    } ],
+    "caveat" : "Prior runs are evidence, not proof. Samples are small; a rate without its count is meaningless. Outcomes use daily bars after each run's bar date; NEUTRAL runs are not scored for direction."
+  },
+  "critique" : {
+    "verdict" : "ACCEPT",
+    "issues" : [ ],
+    "reviews" : [ {
+      "assessment" : "INSUFFICIENT_EVIDENCE",
+      "verdict" : "ACCEPT",
+      "issues" : [ ]
+    } ],
+    "revised" : false,
+    "unsupportedNumerals" : [ ]
+  },
+  "calibratedConfidence" : null,
+  "calibration" : null
+}

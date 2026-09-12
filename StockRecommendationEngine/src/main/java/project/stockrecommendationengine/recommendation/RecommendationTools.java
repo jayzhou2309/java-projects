@@ -26,6 +26,8 @@ final class RecommendationTools {
     private final int modelPassageChars;
     private final JsonMapper json = JsonMapper.builder().build();
     final Map<Long, RetrievedFilingChunk> evidence = new LinkedHashMap<>();
+    /** Retrieved passages whose text looks like instructions to a model rather than filing prose; disclosed, never acted on. */
+    final Set<Long> instructionLikeEvidence = new LinkedHashSet<>();
     final Map<Long, Instrument> instruments = new LinkedHashMap<>();
     final Map<Long, Quote> quotes = new LinkedHashMap<>();
     boolean portfolioRetrieved;
@@ -70,7 +72,10 @@ final class RecommendationTools {
                     if (!query.isString() || query.asText().isBlank() || query.asText().length() > 4000) invalid();
                     var result = filings.retrieve(new RetrievalRequest(request.ticker(), query.asText(),
                             null, null, null, null, searchTopK, true));
-                    for (var item : result.results()) evidence.put(item.chunkId(), item);
+                    for (var item : result.results()) {
+                        evidence.put(item.chunkId(), item);
+                        if (looksLikeInstructions(item.content())) instructionLikeEvidence.add(item.chunkId());
+                    }
                     return new RetrievalResponse(result.ticker(), result.query(), result.retrievalStrategy(), result.latestFilingsOnly(),
                             result.topK(), result.candidatesRetrieved(), forModel(result.results()));
                 });
@@ -162,6 +167,23 @@ final class RecommendationTools {
                 return json.writeValueAsString(action.apply(args));
             }
         });
+    }
+
+    private static final java.util.regex.Pattern INSTRUCTION_LIKE = java.util.regex.Pattern.compile(
+            "(?i)(ignore|disregard|forget)\\s+(all\\s+|any\\s+|the\\s+|your\\s+)?(previous|prior|above|earlier|system)\\s+(instructions?|prompts?|rules?)"
+            + "|\\b(system|assistant|developer)\\s*(prompt|message)?\\s*:"
+            + "|\\byou are (now|an? (ai|assistant|language model))\\b"
+            + "|\\bnew instructions?\\b|\\bdo not follow\\b|\\bcall(ing)? the\\s+\\w+\\s+tool\\b"
+            + "|\\b(respond|answer|reply|return)\\s+(only\\s+)?(with\\s+)?(bullish|bearish|neutral|json)\\b"
+            + "|\\bcite\\s+chunk\\b|\\bset\\s+(the\\s+)?confidence\\b");
+    /**
+     * A cheap, deterministic screen for text addressed to a model (override phrases, role markers, tool or citation
+     * directions). Filing prose can say "disregard" or "instructions" in isolation; the patterns need the combination.
+     * A hit is disclosed as a limitation and shown to the critic; nothing is removed, since the passage may still be
+     * genuine evidence and the model is told all passages are untrusted regardless.
+     */
+    static boolean looksLikeInstructions(String content) {
+        return content != null && INSTRUCTION_LIKE.matcher(content).find();
     }
 
     private static void invalid() { throw new IllegalArgumentException("INVALID_ARGUMENT"); }

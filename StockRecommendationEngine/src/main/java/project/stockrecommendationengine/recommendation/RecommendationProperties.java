@@ -24,6 +24,8 @@ public class RecommendationProperties {
     private boolean parallelSpecialists = true;
     /** Before RAG research, ingest a ticker with no embedded filings or refresh one past its filing cadence (rag.refresh limits). */
     private boolean autoIngest = true;
+    /** Prior stored runs for the ticker shown to the manager with their outcomes; 0 disables the look-back. */
+    @Min(0) @Max(50) private int trackRecordRuns = 10;
     /** With several listings and no request conid, the single listing in this currency is selected and disclosed. */
     @NotBlank private String preferredCurrency = "USD";
     @Min(128) @Max(4096) private int maxOutputTokens = 1200;

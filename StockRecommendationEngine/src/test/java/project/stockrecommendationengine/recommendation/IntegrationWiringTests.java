@@ -21,7 +21,7 @@ class IntegrationWiringTests {
             .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration.class, ValidationAutoConfiguration.class))
             .withUserConfiguration(IntegrationAccessConfiguration.class, RecommendationService.class,
                     IbkrConfiguration.class, IbkrBrokerAdapter.class, QuantAnalysisService.class, QuantController.class,
-                    OutcomeEvaluationService.class, OutcomeScheduler.class, OutcomeController.class,
+                    OutcomeEvaluationService.class, OutcomeScheduler.class, OutcomeController.class, TrackRecordService.class,
                     RecommendationController.class, BrokerController.class)
             .withBean(IntegrationAccessProperties.class).withBean(IbkrProperties.class).withBean(RecommendationProperties.class)
             .withBean(QuantProperties.class).withBean(OutcomeProperties.class)
@@ -37,7 +37,8 @@ class IntegrationWiringTests {
             assertThat(context).hasNotFailed().doesNotHaveBean(BrokerReadService.class)
                     .doesNotHaveBean(RecommendationService.class).doesNotHaveBean(TwsClient.class)
                     .doesNotHaveBean(QuantAnalysisService.class).doesNotHaveBean(QuantController.class)
-                    .doesNotHaveBean(OutcomeEvaluationService.class).doesNotHaveBean(OutcomeScheduler.class);
+                    .doesNotHaveBean(OutcomeEvaluationService.class).doesNotHaveBean(OutcomeScheduler.class)
+                    .doesNotHaveBean(TrackRecordService.class);
         });
     }
 
@@ -57,7 +58,8 @@ class IntegrationWiringTests {
     @Test void outcomesWireWithOrWithoutTheBrokerButRequireTheToken() {
         runner.withPropertyValues("outcomes.enabled=true", "integration.access.token=test-token-with-at-least-32-characters")
                 .run(context -> assertThat(context).hasNotFailed().hasSingleBean(OutcomeEvaluationService.class)
-                        .hasSingleBean(OutcomeScheduler.class).hasSingleBean(OutcomeController.class).doesNotHaveBean(BrokerReadService.class));
+                        .hasSingleBean(OutcomeScheduler.class).hasSingleBean(OutcomeController.class).hasSingleBean(TrackRecordService.class)
+                        .doesNotHaveBean(BrokerReadService.class));
         runner.withPropertyValues("outcomes.enabled=true").run(context -> assertThat(context).hasFailed());
     }
 

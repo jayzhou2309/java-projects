@@ -23,6 +23,8 @@ import org.springframework.beans.factory.support.StaticListableBeanFactory;
 import project.stockrecommendationengine.broker.BrokerReadService;
 import project.stockrecommendationengine.broker.BrokerException;
 import project.stockrecommendationengine.broker.BrokerData.*;
+import project.stockrecommendationengine.outcome.TrackRecord;
+import project.stockrecommendationengine.outcome.TrackRecordService;
 import project.stockrecommendationengine.quant.QuantAnalysis;
 import project.stockrecommendationengine.quant.QuantAnalysisService;
 import project.stockrecommendationengine.quant.QuantProperties;
@@ -46,6 +48,7 @@ class RecommendationServiceTests {
     private BrokerReadService broker;
     private QuantAnalysisService quant;
     private RecommendationRepository store;
+    private TrackRecordService trackRecords;
     private final StaticListableBeanFactory beans = new StaticListableBeanFactory();
     private RecommendationService service;
     private RecommendationProperties properties;
@@ -58,6 +61,9 @@ class RecommendationServiceTests {
         broker = mock(BrokerReadService.class);
         quant = mock(QuantAnalysisService.class);
         store = mock(RecommendationRepository.class);
+        trackRecords = mock(TrackRecordService.class);
+        beans.addBean("trackRecords", trackRecords);
+        when(trackRecords.trackRecord("AAPL", 10)).thenReturn(new TrackRecord("AAPL", 0, List.of(), List.of(), TrackRecordService.CAVEAT));
         properties = new RecommendationProperties();
         properties.setModel("scripted-test-model");
         // Sequentially scripted scenarios need a deterministic call order; concurrency scenarios opt back in.
@@ -82,7 +88,44 @@ class RecommendationServiceTests {
     private RecommendationService service() {
         return new RecommendationService(beans.getBeanProvider(ChatModel.class), filings, freshness,
                 beans.getBeanProvider(BrokerReadService.class), beans.getBeanProvider(QuantAnalysisService.class),
-                beans.getBeanProvider(QuantProperties.class), store, properties, validators.getValidator());
+                beans.getBeanProvider(QuantProperties.class), store, beans.getBeanProvider(TrackRecordService.class),
+                properties, validators.getValidator());
+    }
+
+    @Test void priorRunsReachTheManagerAsEvidenceAndAreEchoedInTheResponse() {
+        var prior = new TrackRecord("AAPL", 2, List.of(
+                new TrackRecord.PriorRun("old-1", Instant.parse("2026-06-01T21:00:00Z"), "COMPLETE", "BULLISH", new BigDecimal("0.6"),
+                        new BigDecimal("306.31"), LocalDate.of(2026, 6, 1), new BigDecimal("324.69"), new BigDecimal("297.12"),
+                        List.of(new TrackRecord.HorizonOutcome(20, new BigDecimal("-0.055336"), null, false, "STOP_LOSS")))),
+                List.of(new TrackRecord.AssessmentStats("BULLISH", 2, 1, 0, new BigDecimal("-0.055336"), 20)), TrackRecordService.CAVEAT);
+        when(trackRecords.trackRecord("AAPL", 10)).thenReturn(prior);
+        scriptByRole(fullRunScript("NEUTRAL"));
+        var result = service.recommend(request(false));
+        assertThat(result.status()).isEqualTo("COMPLETE");
+        assertThat(result.trackRecord()).isEqualTo(prior);
+        assertThat(result.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome()).contains("MANAGER:reviewTrackRecord:OK");
+        var prompts = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+        verify(model, atLeastOnce()).call(prompts.capture());
+        var manager = prompts.getAllValues().get(0);
+        assertThat(manager.getInstructions()).as("system, request, track-record evidence").hasSize(3);
+        assertThat(manager.toString()).contains("\"trackRecord\"").contains("STOP_LOSS").contains("not proof");
+        // Track-record failure is disclosed and the run continues; no prior runs means no evidence message.
+        doThrow(new IllegalStateException("db")).when(trackRecords).trackRecord("AAPL", 10);
+        scriptByRole(fullRunScript("NEUTRAL"));
+        var degraded = service.recommend(request(false));
+        assertThat(degraded.status()).isEqualTo("COMPLETE");
+        assertThat(degraded.limitations()).contains("reviewTrackRecord:TRACK_RECORD_UNAVAILABLE");
+        assertThat(degraded.trackRecord()).isNull();
+        doReturn(new TrackRecord("AAPL", 0, List.of(), List.of(), TrackRecordService.CAVEAT)).when(trackRecords).trackRecord("AAPL", 10);
+        scriptByRole(fullRunScript("NEUTRAL"));
+        var none = service.recommend(request(false));
+        assertThat(none.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome()).contains("MANAGER:reviewTrackRecord:NO_PRIOR_RUNS");
+        assertThat(none.trackRecord()).isNull();
+        properties.setTrackRecordRuns(0);
+        clearInvocations(trackRecords);
+        scriptByRole(fullRunScript("NEUTRAL"));
+        service.recommend(request(false));
+        verifyNoInteractions(trackRecords);
     }
     private static FilingFreshness fresh(boolean stale) {
         return new FilingFreshness("AAPL", Map.of("10-K", LocalDate.of(2025, 10, 31), "10-Q", LocalDate.of(2026, 7, 31)),
@@ -325,7 +368,8 @@ class RecommendationServiceTests {
         assertThat(result.quotes()).hasSize(1);
         assertThat(result.priceAnalysis()).isNotNull();
         assertThat(result.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome())
-                .containsExactly("BROKER:findInstrument:OK", "BROKER:getQuote:OK", "BROKER:analyzePriceHistory:OK", "MANAGER:researchBroker:OK");
+                .containsExactly("MANAGER:reviewTrackRecord:NO_PRIOR_RUNS", "BROKER:findInstrument:OK", "BROKER:getQuote:OK",
+                        "BROKER:analyzePriceHistory:OK", "MANAGER:researchBroker:OK");
         var prompts = org.mockito.ArgumentCaptor.forClass(Prompt.class);
         verify(model, times(3)).call(prompts.capture());
         var specialistPrompt = prompts.getAllValues().get(1);
@@ -428,7 +472,8 @@ class RecommendationServiceTests {
         withoutQuant.addBean("broker", broker);
         service = new RecommendationService(withoutQuant.getBeanProvider(ChatModel.class), filings, freshness,
                 withoutQuant.getBeanProvider(BrokerReadService.class), withoutQuant.getBeanProvider(QuantAnalysisService.class),
-                withoutQuant.getBeanProvider(QuantProperties.class), store, properties, validators.getValidator());
+                withoutQuant.getBeanProvider(QuantProperties.class), store, withoutQuant.getBeanProvider(TrackRecordService.class),
+                properties, validators.getValidator());
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
                 calls(call("b1", "findInstrument", "{}")), calls(call("b2", "analyzePriceHistory", "{\"conid\":1}")));
         var result = service.recommend(request(false));
@@ -448,7 +493,7 @@ class RecommendationServiceTests {
         assertThat(result.modelCalls()).isEqualTo(7);
         assertThat(result.sources()).containsExactly(evidence());
         assertThat(result.quotes()).hasSize(1);
-        assertThat(result.toolTrace()).extracting(t -> t.tool()).containsExactly("RAG:ensureFilings", "RAG:searchFilings",
+        assertThat(result.toolTrace()).extracting(t -> t.tool()).containsExactly("MANAGER:reviewTrackRecord", "RAG:ensureFilings", "RAG:searchFilings",
                 "MANAGER:researchFilings", "BROKER:findInstrument", "BROKER:getQuote", "BROKER:analyzePriceHistory", // deterministic prefetch
                 "BROKER:findInstrument", "BROKER:getQuote", "MANAGER:researchBroker");
         verify(broker, never()).getPositions();

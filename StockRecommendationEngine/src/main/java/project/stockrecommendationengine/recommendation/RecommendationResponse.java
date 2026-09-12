@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import project.stockrecommendationengine.broker.BrokerData.Quote;
+import project.stockrecommendationengine.outcome.TrackRecord;
 import project.stockrecommendationengine.quant.QuantAnalysis;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 
@@ -13,7 +14,7 @@ public record RecommendationResponse(String runId, String ticker, String status,
         String reasoning, List<RetrievedFilingChunk> sources, List<Quote> quotes,
         List<String> limitations, List<ToolTrace> toolTrace, int modelCalls, int observedTokens,
         BigDecimal takeProfit, BigDecimal stopLoss, BigDecimal confidence, QuantAnalysis priceAnalysis,
-        DataFreshness dataFreshness) {
+        DataFreshness dataFreshness, TrackRecord trackRecord) {
     public record ToolTrace(String tool, String outcome, long elapsedMs) { }
     /** What the run actually saw: filing dates per type, the bar date behind the levels, and the quote timestamp. */
     public record DataFreshness(Map<String, LocalDate> latestFilingDates, Instant filingsVerifiedAt,

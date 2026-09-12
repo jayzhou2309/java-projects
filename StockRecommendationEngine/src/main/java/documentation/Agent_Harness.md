@@ -32,6 +32,7 @@
             * Create fresh RecommendationTools, message history, evidence state, and trace.
             * When the manager returns several delegations in one response, submit them to the specialist pool and wait with the run deadline; a limit violation in either specialist stops the run and cancels the other.
             * Before the RAG specialist starts, ensureFilings(...) calls FilingFreshnessService.ensure: a missing ticker is ingested, a stale one refreshed against the SEC index, a fresh one left alone. The outcome appears in the trace as RAG:ensureFilings (FRESH, VERIFIED, REFRESHED, INGESTED, or a failure code); failures and FILINGS_MAY_BE_STALE become limitations. See [RAG.md](RAG.md).
+            * Before the manager's first model call, lookBack(...) loads the ticker's prior stored runs with their realized outcomes through TrackRecordService (outcomes enabled, recommendation.track-record-runs > 0) and supplies them as an evidence message; traced as MANAGER:reviewTrackRecord with OK, NO_PRIOR_RUNS, or TRACK_RECORD_UNAVAILABLE (also a limitation). See [Outcomes.md](Outcomes.md).
             * Before the broker specialist starts, prefetchBroker(...) runs findInstrument, and when the contract is unambiguous, getQuote and analyzePriceHistory through the same validated callbacks; the results are handed to the specialist model as an evidence message. The model cannot forget to fetch evidence; it may still call tools for what is missing.
             * Send the request through ChatModel.call(Prompt).
             * Advertise only the callbacks allowed for this run.
@@ -86,6 +87,7 @@
 | recommendation.auto-ingest | true | Ingest missing and refresh stale filings before RAG research; false only assesses and discloses |
 | rag.refresh.* | see RAG.md | Per-type limits, cadence, recheck window, and nightly schedule shared with the refresh job |
 | recommendation.preferred-currency | USD | Listing chosen among several when no request conid is supplied |
+| recommendation.track-record-runs | 10 | Prior stored runs shown to the manager with outcomes; 0 disables the look-back |
 | Specialist pool | 4 threads | Shared by concurrent runs; a saturated pool delays a specialist within the deadline |
 | recommendation.max-output-tokens | 1200 | Per-model-request output limit |
 | recommendation.max-observed-tokens | 16000 | Stop after reported cumulative usage exceeds the threshold |
@@ -128,6 +130,7 @@
     * confidence: input-coverage composite in [0,1] (50% cited-passage similarity, 25% quote verification, 25% price-history availability); null for INSUFFICIENT_EVIDENCE; not calibrated.
     * priceAnalysis: the run's QuantAnalysis with provenance and limitations, or null.
     * dataFreshness: latestFilingDates per type, filingsVerifiedAt, filingsMayBeStale, barsAsOf, quoteUpdatedAt, quoteAvailability; what this run actually saw.
+    * trackRecord: the prior runs and per-assessment statistics the manager was shown, or null when none exist or the look-back is disabled.
     * HTTP 200 returns a structured run result, including unsuccessful research statuses; callers must inspect status.
     * AUDIT_NOT_PERSISTED in limitations means the run completed but its audit row could not be written; inspect the application log.
     * FILINGS_MAY_BE_STALE means the newest stored quarterly filing is past cadence and the SEC index could not be compared in this run; ensureFilings:<code> names the cause.
@@ -253,6 +256,8 @@ RecommendationController → RecommendationService
     ↓
 Bounded Worker + Fresh Run Context
     ↓
+lookBack: prior runs + outcomes for the ticker (TrackRecordService) → manager evidence
+    ↓
 Manager ChatModel → researchFilings ∥ researchBroker (specialist pool)
     ↓                                   ↓
 RAG Specialist                      Broker Specialist
@@ -357,3 +362,9 @@ Qualitative Research + Sources + Quotes + Levels + Confidence + Limitations + Tr
     * Live AAPL run `07d8891d-4d74-4926-bd68-aa236e9bb186` (broker and quant disabled, TWS closed): ensureFilings FRESH in 4 ms after an earlier index comparison, dataFreshness listing the 2026-07-31 10-Q, 2026-07-30 8-K, and 2025-10-31 10-K with filingsVerifiedAt set and filingsMayBeStale=false. Evidence: [response](live-runs/2026-09-12-filing-freshness/response.json).
     * A MSFT run asking about the newly ingested 8-Ks stopped with TOOL_RESULT_LIMIT after two filing searches: a five-passage result of 4000-character 10-K chunks serializes to about 25,000 characters, just over the old 24,000 cap. Defaults raised to 32,000 result characters and 120,000 context characters so two full searches fit; the second attempt is recorded below.
     * MSFT run `8e16d310-80ef-4584-a89d-8684038440d2` after the limit change: HTTP 200 in 8.4 seconds, PARTIAL / NEUTRAL, four model calls, 14,374 tokens, two searches. Sources: the 2026-09-02 8-K (ITEM_7_01), the 2026-07-29 10-K (ITEM_1C), and the 2026-04-29 10-Q (ITEM_2); the reasoning correctly summarized the 8-K's fiscal-2027 segment change. dataFreshness listed the 8-K dated 2026-09-02 with filingsVerifiedAt null, because verification times are in-memory and the application had been restarted; ensureFilings returned FRESH since the newest quarterly filing is within cadence. Evidence: [request](live-runs/2026-09-12-filing-freshness/request-msft.json), [response](live-runs/2026-09-12-filing-freshness/response-msft.json), [run log](live-runs/2026-09-12-filing-freshness/run.log).
+
+* Track-record look-back — 2026-09-12
+    * TrackRecordService (outcome package) returns the newest recommendation.track-record-runs stored runs for the ticker with their stored outcomes and per-assessment statistics at the 20-day reference horizon: runs, scored, directionCorrect, averageReturnPct. A fixed caveat travels with the record: prior runs are evidence, not proof; samples are small; NEUTRAL runs are not scored for direction.
+    * The harness calls it deterministically before the manager's first model call and passes the result as an evidence message, the same way the broker prefetch works; the manager prompt says to weigh outcomes only with sample sizes and never to let prior assessments anchor the current one. The record is echoed in RecommendationResponse.trackRecord and therefore stored in the audit row.
+    * The model never queries the store itself; there is no tool for it. This keeps the look-back read-only, bounded, and outside the tool budget.
+    * Live AAPL run `ca3f38fb-1e71-4465-9451-ce59b07d6eeb` (outcomes enabled, broker off): MANAGER:reviewTrackRecord OK in 9 ms, one prior run (`07d8891d`, NEUTRAL, PARTIAL, no outcomes yet) shown to the manager and echoed in trackRecord with stats NEUTRAL runs=1 scored=0; HTTP 200 in 7.7 seconds, PARTIAL / NEUTRAL, four model calls, 10,281 tokens. Scripted tests cover evidence delivery to the manager, the disclosed failure path, the empty case, and the disabled switch. Full suite: 175 tests, 170 passed, 5 opt-in live tests skipped. Evidence: [request](live-runs/2026-09-12-track-record/request.json), [response](live-runs/2026-09-12-track-record/response.json), [run log](live-runs/2026-09-12-track-record/run.log).

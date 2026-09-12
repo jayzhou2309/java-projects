@@ -1,0 +1,5 @@
+[ommendation-run] Recommendation run=ca3f38fb-1e71-4465-9451-ce59b07d6eeb tool=MANAGER:reviewTrackRecord outcome=OK elapsedMs=9
+[ommendation-run] Recommendation run=ca3f38fb-1e71-4465-9451-ce59b07d6eeb tool=RAG:ensureFilings outcome=FRESH elapsedMs=59
+[ommendation-run] Recommendation run=ca3f38fb-1e71-4465-9451-ce59b07d6eeb tool=RAG:searchFilings outcome=OK elapsedMs=1201
+[ommendation-run] Recommendation run=ca3f38fb-1e71-4465-9451-ce59b07d6eeb tool=MANAGER:researchFilings outcome=OK elapsedMs=4260
+[ommendation-run] Recommendation run=ca3f38fb-1e71-4465-9451-ce59b07d6eeb status=PARTIAL modelCalls=4 observedTokens=10281 levels=false confidence=0.24

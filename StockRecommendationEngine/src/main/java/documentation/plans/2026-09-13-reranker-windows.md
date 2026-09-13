@@ -130,3 +130,25 @@ Both validators must pass before the next milestone; at most two remediation rou
 see the Worker's report or each other's output, and run one at a time (shared `target/`). Scrutiny recomputes
 metrics from stored ranks, reads the window arithmetic against C1 with its own examples, and checks that failure
 messages name what they guard.
+
+## Amendment 1 (2026-09-13, after Milestone 1 Scrutiny PASS)
+
+Milestone 1 passed Scrutiny on every contract item (commit a791a8d). Two things it surfaced change Milestone 2:
+
+- **Position sensitivity.** The Milestone 1 live sweep (`live-runs/2026-09-13-reranker-windows/live-test-windows.log`,
+  `positionSweep`) shows the logit for the same answering sentence falling from about +10 at a window's start to -11 at
+  token 213 on synthetic filler, non-monotonically. The truncation probe in the Why section placed each window about
+  50 tokens ahead of the answer, the favourable case. Milestone 2 therefore adds one grid row beyond the defaults:
+  `rerank-candidates` 20 with `window-overlap-tokens` 224 (stride about 250, so every token sits within 250 of a
+  window start; three to four windows for a median chunk, latency about 1.5 times the default row, recorded). The
+  selection rule is applied to it like any other row; if it qualifies where the default row does not, the
+  recommendation names the overlap to set.
+- **Documentation corrections folded into Milestone 2's RAG.md pass** (Scrutiny findings, wording only): the Position
+  sensitivity paragraph must quote the sweep as logged (-11.09 at token 213, -7.10 at 257, +2.57 at 340), not "about
+  -4 by 250 tokens"; the Latency line must cite only figures present in the evidence file, or the second run's log
+  must be committed beside it; the Modes line must name the classes that construct the scorer with `HEAD`
+  (`CrossEncoderRerankerLiveTests`, `CrossEncoderLengthProbe`, `CrossEncoderResourceProbe`), not
+  `CrossEncoderSeparateTokenizationLiveTests`, which never constructs it.
+- **Timeout for the 40-candidate rows.** Milestone 1 measured 40 chunks of 1,009 tokens at about 3.1 s under the
+  defaults, so the 40-candidate row is run with `rag.retrieval.rerank-timeout-ms` 4,000 from the start (override
+  recorded), instead of after a fallback.

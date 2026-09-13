@@ -16,8 +16,10 @@ import org.springframework.stereotype.Service;
 import project.stockrecommendationengine.rag.dto.RetrievalRequest;
 import project.stockrecommendationengine.rag.dto.RetrievalResponse;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
+import project.stockrecommendationengine.rag.repository.FilingRetrievalRepository;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.Miss;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionResult;
+import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.SliceMetrics;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.TopChunk;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalProperties;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
@@ -27,7 +29,8 @@ import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
  * ticker, the question text as the query, the latest filings only, and a fixed window; the only external call is the
  * query embedding. A question's rank is the 1-based position of the first chunk that matches any expected passage
  * (same accession and section, content containing the phrase); a failed retrieval counts as a miss with the error
- * recorded, so one failure never voids the run. Nothing here reaches a chat model.
+ * recorded, so one failure never voids the run. The same results are also summarised per slice (figure versus non-figure
+ * question text, by {@link FilingRetrievalRepository#figureTerms}). Nothing here reaches a chat model.
  */
 @Service
 @RequiredArgsConstructor
@@ -56,28 +59,36 @@ public class RetrievalEvaluationService {
         int window = properties.getWindow();
         List<QuestionResult> results = new ArrayList<>();
         List<Miss> misses = new ArrayList<>();
+        List<QuestionResult> figure = new ArrayList<>();
+        List<QuestionResult> nonFigure = new ArrayList<>();
         String strategy = null;
         log.info("Evaluating retrieval: set={}, questions={}, window={}, hybrid={}", set.version(), set.questions().size(), window, hybrid);
         for (RetrievalEvaluationQuestion question : set.questions()) {
+            List<QuestionResult> slice = isFigureQuestion(question.question()) ? figure : nonFigure;
             RetrievalResponse response;
             try {
                 response = retrieval.retrieve(new RetrievalRequest(question.ticker(), question.question(), null, null, null, null, window, true, hybrid));
             } catch (RuntimeException failure) {
                 String error = failure.getClass().getSimpleName() + ": " + failure.getMessage();
                 log.warn("Retrieval failed for evaluation question {}: {}", question.id(), error);
-                results.add(new QuestionResult(question.id(), question.ticker(), question.kind(), null, null, error));
+                QuestionResult failed = new QuestionResult(question.id(), question.ticker(), question.kind(), null, null, error);
+                results.add(failed);
+                slice.add(failed);
                 misses.add(new Miss(question.id(), List.of(), error));
                 continue;
             }
             if (strategy == null) strategy = response.retrievalStrategy();
             RetrievedFilingChunk matched = firstMatch(question, response.results(), window);
             Integer rank = matched == null ? null : response.results().indexOf(matched) + 1;
-            results.add(new QuestionResult(question.id(), question.ticker(), question.kind(), rank, matched == null ? null : matched.chunkId(), null));
+            QuestionResult result = new QuestionResult(question.id(), question.ticker(), question.kind(), rank, matched == null ? null : matched.chunkId(), null);
+            results.add(result);
+            slice.add(result);
             if (matched == null) misses.add(new Miss(question.id(), response.results().stream().limit(MISS_CHUNKS).map(RetrievalEvaluationService::top).toList(), null));
         }
         RetrievalEvaluation evaluation = new RetrievalEvaluation(null, Instant.now(), set.version(), results.size(),
                 hitAt(results, 1), hitAt(results, 3), hitAt(results, 5), mrr(results), window, strategy == null ? "UNAVAILABLE" : strategy,
-                runProperties(set, window, hybrid), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses));
+                runProperties(set, window, hybrid), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses),
+                slices(figure, nonFigure));
         RetrievalEvaluation stored = repository.save(evaluation);
         log.info("Retrieval evaluation stored: id={}, hitAt1={}, hitAt3={}, hitAt5={}, mrr={}, misses={}",
                 stored.id(), stored.hitAt1(), stored.hitAt3(), stored.hitAt5(), stored.mrr(), stored.misses().size());
@@ -102,6 +113,25 @@ public class RetrievalEvaluationService {
 
     static String normalise(String text) {
         return text.replaceAll("\\s+", " ").trim().toLowerCase(Locale.ROOT);
+    }
+
+    /** True when the question text carries a figure, the rule under which retrieval's figure leg runs. Package-private for tests. */
+    static boolean isFigureQuestion(String question) {
+        return !FilingRetrievalRepository.figureTerms(question).isEmpty();
+    }
+
+    private static Map<String, SliceMetrics> slices(List<QuestionResult> figure, List<QuestionResult> nonFigure) {
+        Map<String, SliceMetrics> out = new LinkedHashMap<>();
+        out.put(RetrievalEvaluation.FIGURE_SLICE, slice(figure));
+        out.put(RetrievalEvaluation.NON_FIGURE_SLICE, slice(nonFigure));
+        return out;
+    }
+
+    /** The aggregate metric computation over one slice; an empty slice has null metrics rather than zeros. */
+    private static SliceMetrics slice(List<QuestionResult> results) {
+        List<String> missIds = results.stream().filter(r -> r.rank() == null).map(QuestionResult::id).toList();
+        if (results.isEmpty()) return new SliceMetrics(0, null, null, null, null, missIds);
+        return new SliceMetrics(results.size(), hitAt(results, 1), hitAt(results, 3), hitAt(results, 5), mrr(results), missIds);
     }
 
     private static BigDecimal hitAt(List<QuestionResult> results, int k) {

@@ -46,6 +46,12 @@ class RetrievalEvaluationSetLoaderTests {
     @Test void theDefaultPropertySelectsSetV2WithinItsBoundsAndShapeRules() {
         assertThat(new RetrievalEvaluationProperties().getSet()).isEqualTo("evaluation/retrieval-set-v2.json");
         assertThat(new RetrievalEvaluationProperties().getMinHitAt5()).isEqualByComparingTo("0.65");
+        // Non-figure floor from set v2 snapshot 91: non-figure hit@5 0.700000 (21 of 30) - 0.1, rounded down to a multiple of 0.05.
+        var step = new java.math.BigDecimal("0.05");
+        var derived = new java.math.BigDecimal("0.700000").subtract(new java.math.BigDecimal("0.1")).divide(step)
+                .setScale(0, java.math.RoundingMode.FLOOR).multiply(step);
+        assertThat(derived).isEqualByComparingTo("0.60");
+        assertThat(new RetrievalEvaluationProperties().getMinNonFigureHitAt5()).isEqualByComparingTo(derived);
         var set = loader.load();
         assertThat(set.version()).isEqualTo("v2");
         assertThat(set.createdOn()).isEqualTo(LocalDate.parse("2026-09-13"));
@@ -81,6 +87,23 @@ class RetrievalEvaluationSetLoaderTests {
             assertThat(validators.getValidator().validate(properties)).isEmpty();
             properties.setSet(" ");
             assertThat(validators.getValidator().validate(properties)).extracting(v -> v.getPropertyPath().toString()).containsExactly("set");
+        }
+    }
+
+    @Test void theNonFigureFloorMustBeAFractionBetweenZeroAndOne() {
+        try (ValidatorFactory validators = Validation.buildDefaultValidatorFactory()) {
+            var properties = new RetrievalEvaluationProperties();
+            for (String valid : List.of("0.0", "0.60", "1.0")) {
+                properties.setMinNonFigureHitAt5(new java.math.BigDecimal(valid));
+                assertThat(validators.getValidator().validate(properties)).as(valid).isEmpty();
+            }
+            for (String invalid : List.of("-0.01", "1.01")) {
+                properties.setMinNonFigureHitAt5(new java.math.BigDecimal(invalid));
+                assertThat(validators.getValidator().validate(properties)).as(invalid).extracting(v -> v.getPropertyPath().toString())
+                        .containsExactly("minNonFigureHitAt5");
+            }
+            properties.setMinNonFigureHitAt5(null);
+            assertThat(validators.getValidator().validate(properties)).extracting(v -> v.getPropertyPath().toString()).containsExactly("minNonFigureHitAt5");
         }
     }
 

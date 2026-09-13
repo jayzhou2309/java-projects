@@ -11,8 +11,10 @@ The 2026-09-13 measurement (snapshots 247 to 250) found no configuration meeting
 diagnosed on 2026-09-13 with the real tokenizer and model against every chunk in the database
 (`live-runs/2026-09-13-reranker-windows/truncation-probe-512.txt`, source beside it):
 
-- The chunker cuts filings at 4,000 characters and stores `token_count` as characters / 4. Exact WordPiece lengths
-  are higher on filing text: median 647 tokens, 90th percentile 849, longest 1,214. The model's window is 512 tokens
+- The chunker cuts filings at 4,000 characters and stores `token_count` as characters / 4 (median 780). Exact
+  WordPiece lengths are somewhat lower but still well past the window: median 647 tokens, 90th percentile 849, longest
+  1,214 (corrected 2026-09-13 after Milestone 2 Scrutiny; this line first said exact lengths were higher than the
+  estimate, which the probe does not show). The model's window is 512 tokens
   including the question and three special tokens, so a chunk keeps about 475 to 495 tokens: 371 of 569 chunks (65%)
   are longer than that, and on average the model sees 78% of a chunk.
 - The scorer keeps the head of the chunk (longest-first truncation), so an answer in the tail is invisible. For 11 of
@@ -152,3 +154,11 @@ Milestone 1 passed Scrutiny on every contract item (commit a791a8d). Two things 
 - **Timeout for the 40-candidate rows.** Milestone 1 measured 40 chunks of 1,009 tokens at about 3.1 s under the
   defaults, so the 40-candidate row is run with `rag.retrieval.rerank-timeout-ms` 4,000 from the start (override
   recorded), instead of after a fallback.
+
+## Amendment 2 (2026-09-13, after Milestone 2 Scrutiny FAIL)
+
+Milestone 2's measurement, decision, defaults, and floors were confirmed by Scrutiny's own recomputation from the stored
+snapshots and the database; it failed on documentation counts and claims the committed evidence contradicts. Remediation
+round 1 is documentation only, with no new runs. The Why section's claim that exact WordPiece lengths exceed the stored
+characters / 4 estimate was wrong (estimate median 780, exact median 647) and is corrected above; the conclusion that 65%
+of chunks exceed the window is unaffected.

@@ -294,3 +294,22 @@ Remediation round 2, the last before escalating to Jay:
   at report time; settings snapshots do not record. CLAUDE.md must no longer say write-ups are generated without that limit.
 - **Templates documented exactly**, every branch including failing and unknown wordings (Scrutiny finding 4); duplicate labels
   resolving to one file are a problem; the cosmetic message fixes.
+
+## Amendment 7 (2026-09-14, Milestone 3 closed at the remediation cap; Milestone 4b scope)
+
+Milestone 3's final Scrutiny (e11b9b6) passed every contract item and every Amendment 4 and 6 bullet except one
+documentation guarantee: RAG.md said a heading or lead-in could not state a number, cause, or generalisation beside a
+block, while only one physical line above the start marker is screened (a wrapped lead-in, a setext heading, and text
+above a multi-line comment pass). Jay chose to close it by rewording: the Orchestrator corrected RAG.md and CLAUDE.md
+(the limits and a claim-id uniqueness rule), confirmed by a documentation-only Scrutiny check before Milestone 4b.
+
+Milestone 4b (F2, F3, F4 on Milestone 4a's merged evidence), constraints added:
+- Its claims file lives in `live-runs/2026-09-13-evaluation-evidence/measurement/claims.json` and uses the id prefix
+  `W-` so no id repeats the existing `C-` claims in RAG.md.
+- Every lead-in above a generated block is a single short line with no causal or absolute word and no number, never a
+  wrapped line or setext heading; the rest of each regenerated section is block bullets.
+- Cite Milestone 4a's run records with their limits (Amendment 6): run 627's 4,000 ms timeout as a run record whose
+  committed files show only that calls exceeded 3,072 ms without fallback; settings from stored properties.
+- RAG-15 facts at the current settings (nvda-02 chunk 802 fused 41, nvda-04 chunk 754 fused 54, in all five runs) are
+  observed claims from 4a's evidence; the candidate-count 200 experiment (snapshot 694, branch `rag15-recall-e1`) is not
+  merged and is not cited in 4b.

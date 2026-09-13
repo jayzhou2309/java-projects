@@ -200,3 +200,16 @@ of nvda-09 with the never-retrieved questions is corrected above.
 - Revisit by recording evidence rather than rewording: store each question's reranker candidates, fused and reranked
   positions, and scores in evaluation snapshots, generate the per-question facts (accepted phrase spans in every chunk,
   head and window membership, rank source observed or inferred) from that record, and regenerate the write-up from it.
+- Closed 2026-09-14 (plan `2026-09-13-evaluation-evidence.md`, Milestone 4b, commit 95a3f63): the write-up is regenerated from
+  the traced runs at snapshots 295 to 299's settings (598, 599, 613, 627, 641, each reproducing its counterpart) as generated
+  blocks in RAG.md, Cross-encoder reranker, Reranker measurement, Windowed rows, written from
+  `live-runs/2026-09-13-evaluation-evidence/measurement/claims.json`; the replaced text can be read at commit e11b9b6. The open
+  findings are resolved there and in dated notes, not by rewording: chunk 515's candidacy for msft-05 and "every accepted phrase is
+  scored" (observed candidate and derived row claims per traced run, and an inferred summary, in the Microsoft segments question's
+  block; the Milestone 1 change-log correction and run.log's Other movements sentence marked superseded); chunk 466's position at
+  40 candidates and the chunks ranked above nvda-01's, nvda-11's, and msft-04's accepted chunks (observed reranked positions in the
+  NVIDIA total revenue, Microsoft headcount, and NVIDIA Compute and Networking blocks; the chunk ids above them, which no check type
+  renders, are copied from the evidence reports into the measurement `run.log`, section Milestone 4b); "The cause was diagnosed" in
+  this plan's Why (dated correction note there); the earlier correction notes (run.log's re-validation msft-05 note, RAG.md's
+  Windows Why note, and this plan's Why msft-05 bullet, kept and marked superseded, naming c9b2e5f for their earlier wording); and
+  "its matched chunk's" in the Milestone 1 change-log correction (its superseded note names chunks 805 and 466).

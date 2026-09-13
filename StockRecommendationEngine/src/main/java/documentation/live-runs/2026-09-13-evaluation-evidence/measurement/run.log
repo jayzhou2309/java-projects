@@ -189,3 +189,6 @@ Main checkout, branch evaluation-evidence from b1e6fcf. No application run, no e
 
   Build, after the documentation edits: ./mvnw -q -o verify -> exit 0 (58 test classes, 534 tests, 0 failures, 0 errors, 28 skipped; counted from
   target/surefire-reports of this run), 03:18:38 to 03:18:51.
+  After commit 95a3f63, the frozen status of plans/2026-09-13-reranker-windows.md closed with a dated note naming that commit and claims.json (documentation
+  only): ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 0, CLAIMS_CHECK claimsFiles=2 documents=21 problems=0; ./mvnw -q -o verify -> exit 0
+  (58 test classes, 534 tests, 0 failures, 0 errors, 28 skipped; target/surefire-reports of this run), 03:20:47 to 03:21:00.

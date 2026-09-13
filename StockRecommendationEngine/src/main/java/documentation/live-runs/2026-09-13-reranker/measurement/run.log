@@ -46,6 +46,13 @@ Run 4 RERANK 40   start 12:33:49 SGT  overrides: RAG_CROSS_ENCODER_ENABLED=true 
 No run reported a fallback, so no rerun was needed and every rerank row is valid. Each app log held only the four JVM
 "restricted method" (JNA System::load) WARNING lines; no reranker WARN, no fallback, no query-truncation line.
 
+Per-call scoring times (added 2026-09-13, remediation): latency-247.txt, latency-248.txt, latency-249.txt, latency-250.txt hold every
+"Cross-encoder scoring completed ... elapsedMs=" line of each run, grep-extracted verbatim from that run's application log with its
+start line and the "Retrieval evaluation stored: id=<snapshot>" line. Recomputed from them (topK=10 calls, warm-up topK=5 excluded):
+  248: 42 calls, median 258.5, max 425, min 247 (warm-up 446)   249: 42 calls, median 519.5, max 629, min 500 (warm-up 600)
+  250: 42 calls, median 981, max 1103, min 954 (warm-up 1110)   247: 0 evaluation calls (warm-up 602)
+  -> equal to the figures above.
+
 Metrics, the rule row by row, and every question's rank: rule-table.txt (computed by a script from the four JSON files and
 asserted equal to the stored hit@5, MRR, slice hit@5 and MRR, and tickerHitAt5 of each row).
 
@@ -67,6 +74,12 @@ cross-encoder.enabled false, rerank-candidates 20 (no winner, so no reason to ch
 Best-MRR rerank row 250 against 247, top-5 membership: gained aapl-09 (8->5), msft-01 (6->2), msft-07 (7->3), msft-08 (miss->2);
 lost msft-05 (2->8), msft-12 (2->6), nvda-01 (3->miss), nvda-11 (1->10), nvda-14 (1->miss). nonFigure +4 -2 = 23/30; figure slice -3 = 9/12;
 AAPL +1, MSFT +3 -2, NVDA -3. Aggregate 33 -> 32.
+Rows 248 and 249 against 247 (top-5 membership, recomputed from the JSON files):
+  248: nonFigure +aapl-09 +msft-01 +msft-07 -msft-04 -nvda-01 = 22/30; figure -nvda-11 -nvda-14 = 10/12; AAPL 13->14, MSFT 11->12, NVDA 9->6
+  249: nonFigure +aapl-09 +msft-01 +msft-07 +msft-08 -msft-04 -msft-05 -nvda-01 = 22/30; figure -msft-12 -nvda-11 -nvda-14 = 9/12;
+       AAPL 13->14, MSFT 11->11 (+3 -3), NVDA 9->6
+The non-figure change is a net +1 or +2 of 30 questions from one run per configuration, with questions moving both ways; it does not
+offset the aggregate, NVDA, and figure-slice losses.
 Named: nvda-02, nvda-04, nvda-09 no match in the window in all four rows; nvda-07 miss -> 6 (249) / 7 (250), still outside the top 5;
 msft-08 miss -> 2 (249, 250; chunk 547), still a miss at 10 candidates.
 

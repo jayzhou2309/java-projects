@@ -267,3 +267,30 @@ Milestone 4 splits so its measurement runs while Milestone 3's remediation is st
   other Maven test JVM or application from another worktree is running, records the load average when it starts, and
   follows the Amendment 1 rule on any fallback. Validators for different milestones may run at the same time only in
   separate worktrees on separate ports.
+
+## Amendment 6 (2026-09-13, after Milestone 3 re-validation FAIL; final remediation round)
+
+Milestone 4a (8835758) passed Scrutiny and is merged into `evaluation-evidence`; its evidence notes for 4b: run 627's
+4,000 ms timeout is a run record (committed files show only that it exceeded 3,072 ms); run 598's startup line is quoted
+only in run.log; the run log's environment grep likely printed nothing; "each question has one accepted phrase" holds
+only for nvda-02 and nvda-04.
+
+Milestone 3 remediation 1 (e44f4c1) passed every code item and every Amendment 4 bullet and failed on documentation: prose
+outside generated blocks is unchecked, a sentence citing a claim outside a block borrows its authority unscreened (a false,
+causal heading above a block passed `verify`), and RAG.md and CLAUDE.md did not list it among the things people must read.
+Remediation round 2, the last before escalating to Jay:
+
+- **Citations only inside generated blocks.** A `(C-nnn` citation outside a generated block is a problem, so hand-written
+  prose can never appear backed by a claim.
+- **The line that introduces a block is screened.** The nearest non-empty line above each start marker (a heading or
+  lead-in) must pass the causal and absolute screen and may not contain digits or spelled-out numbers.
+- **Screen normalisation and coverage.** Before screening, remove soft hyphens, zero-width characters, and markdown emphasis
+  and code marks; extend absolute and predictive wording (each, any, whole, entire, must, consistently, going to, expect,
+  and contractions of will) and causal stems (raise, put, give, is behind, source of); reject spelled-out numbers in labels.
+  The remaining limits (meaning, not words; since, after, so) stay documented.
+- **Review items listed completely**, in RAG.md and in CLAUDE.md's rule: prose outside generated blocks; labels; free text of
+  inferred, unknown, and experiment claims, including numbers that contradict premises and inferences from unknown claims;
+  whether referenced JSON files are committed, unaltered exports; that window wording rests on max-length from configuration
+  at report time; settings snapshots do not record. CLAUDE.md must no longer say write-ups are generated without that limit.
+- **Templates documented exactly**, every branch including failing and unknown wordings (Scrutiny finding 4); duplicate labels
+  resolving to one file are a problem; the cosmetic message fixes.

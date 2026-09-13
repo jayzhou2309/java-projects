@@ -1,8 +1,6 @@
 package project.stockrecommendationengine.rag.retrieval;
 
-import ai.djl.huggingface.tokenizers.Encoding;
 import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
-import ai.djl.util.PairList;
 import ai.djl.util.Platform;
 import ai.djl.util.Utils;
 import ai.onnxruntime.NodeInfo;
@@ -25,25 +23,35 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
- * A cross-encoder run on the CPU with ONNX Runtime and the model's Hugging Face tokenizer, both from local files. Each pair is
- * encoded query first and passage second with the model's special tokens and truncated to {@code maxLength} tokens with the
- * tokenizer's {@code longest_first} strategy, the one the reference sentence-transformers {@code CrossEncoder} uses. Pairs run
- * in batches of {@code batchSize}, padded to the longest pair in the batch, as int64
- * {@code input_ids}, {@code attention_mask}, and (when the model declares it) {@code token_type_ids}; the score is the single
- * logit per pair. Both native libraries come from the dependency jars: the tokenizer's library for the current platform must be
- * bundled on the classpath, otherwise construction fails rather than letting DJL download one.
+ * A cross-encoder run on the CPU with ONNX Runtime and the model's Hugging Face tokenizer, both from local files. Pairs are
+ * query first and passage second, {@code [CLS] query [SEP] passage [SEP]}, cut to {@code maxLength} tokens longest first, and
+ * fed as int64 {@code input_ids}, {@code attention_mask}, and (when the model declares it) {@code token_type_ids}; the score is
+ * the single logit per pair. Both native libraries come from the dependency jars: the tokenizer's library for the current
+ * platform must be bundled on the classpath, otherwise construction fails rather than letting DJL download one.
  * <p>
- * Input bounds. The native tokenizer turns an error into a Rust panic that aborts the whole JVM (no Java exception), so every
- * call is kept to encodings the tokenizer can always produce. Query and passages are first bounded in Java by
- * {@link CrossEncoderInputBounds} (null to empty, at most 20,000 UTF-16 units each, unpaired surrogates replaced). Truncation is
- * {@code longest_first}, not {@code only_second}: with {@code only_second}, a query that alone fills {@code maxLength - 3}
- * tokens (509 one-token words at 512, with 3 special tokens for a BERT pair) leaves no passage tokens to remove, the tokenizer
- * returns {@code TruncationError::SequenceTooShort}, and DJL's JNI layer unwraps it and aborts the process. {@code longest_first} on a pair only computes two target lengths
- * (the shorter sequence keeps up to half the budget, the longer takes the rest) and cuts each sequence to its target, so it has
- * no error branch; the query is cut only when both sequences are long (more than about 254 query tokens at 512), and a query
- * cut is logged at INFO with lengths only. The option {@code optTruncation(true)} maps to {@code LONGEST_FIRST}
- * ({@code HuggingFaceTokenizer$TruncationStrategy.fromValue}); the opt-in {@code CrossEncoderForkedLiveTests} exercise the
- * boundary lengths in a child JVM so an abort fails the test with its exit code.
+ * Tokenization. The native tokenizer never sees a pair. The query and each passage are tokenized alone by
+ * {@link #singleSequenceTokenizer} (no special tokens, truncation and padding off, so no overflow encodings exist), and
+ * {@link CrossEncoderPairAssembler} cuts the two id sequences longest first, adds the special tokens read from
+ * {@code tokenizer.json}, and pads each ONNX Runtime call to its longest pair. Two native failure modes are thereby out of
+ * reach: {@code only_second} truncation's {@code SequenceTooShort}, which DJL's JNI layer turns into a Rust panic that aborts
+ * the JVM (Milestone 2), and native pair truncation's overflow pieces, which it builds for every combination of query and passage
+ * pieces even when none is read, so memory grew with the product of the two lengths and an OS memory kill (exit 137) bypassed
+ * the fallback (41 GB at max-length 16 for a 4,000-character CJK query with 20 passages; remediation 1). Per pair the work is now
+ * linear in the input length. The assembled tensors equal the replaced native pair encoding exactly: 320 generated pairs that
+ * need no truncation (English, digits, CJK, accents, punctuation, emoji) and 160 truncating pairs at 512 matched id for id
+ * ({@code CrossEncoderSeparateTokenizationLiveTests}, RAG.md Input bounds).
+ * <p>
+ * Input bounds. Query and passages are first bounded in Java by {@link CrossEncoderInputBounds} (null to empty, at most 20,000
+ * UTF-16 units each, unpaired surrogates replaced). A query cut by characters or tokens in any pair is logged at INFO with
+ * lengths only.
+ * <p>
+ * Work per call. Passages are tokenized {@code batchSize} at a time, and each batch runs as one or more ONNX Runtime calls whose
+ * rows times longest-pair width squared stays within {@link CrossEncoderPairAssembler#MAX_ATTENTION_CELLS_PER_RUN} (eight
+ * 512-token pairs), because attention memory, about 88 MB per 512-token row, would otherwise reach 3.9 GB at batch size 64.
+ * Measured in child JVMs under {@code /usr/bin/time -l} on the development Mac (2026-09-13, RAG.md Latency): a query and 40
+ * passages of 20,000 characters take at most about 2.1 s per call with a peak process footprint under 1.0 GB at max-length 512
+ * (any batch size, CJK or {@code "a "}), and at most 1.1 s and 0.38 GB at max-length 16; 20 passages of 2,000 characters at the
+ * defaults take about 0.3 s. Memory adds up per concurrent call (two simultaneous heaviest calls: 1.43 GB).
  * <p>
  * Network. The static initializer applies {@link DjlRuntimeDefaults} (system properties {@code OPT_OUT_TRACKING=true} and
  * {@code ai.djl.offline=true} when absent) before any DJL class is initialised, so {@code Ec2Utils.callHome} in
@@ -55,10 +63,8 @@ import java.util.stream.Collectors;
  * running after 30 s, close logs {@code Cross-encoder scoring still in flight after 30 s; leaving the native session open} at
  * WARN and returns without freeing anything: the JVM then exits with the session and tokenizer still allocated, and an
  * inference still running natively while the process tears down can crash at exit (a native crash report instead of a clean
- * exit code). With the input bounds above one call is at most {@code ceil(candidates / batchSize)} batches of 512-token pairs
- * (one batch at the defaults of 20 candidates and batch size 20); the worst bounded batch, a 20,000-character query with 20
- * passages of 2,000 characters, took 542 to 882 ms on the development Mac (two runs, 2026-09-13), so reaching the 30 s wait needs a
- * stalled or heavily oversubscribed machine.
+ * exit code). With the worst measured call at about 2.1 s, reaching the 30 s wait needs a stalled or heavily oversubscribed
+ * machine, or many concurrent calls queued on the CPU.
  */
 @Slf4j
 public final class OnnxCrossEncoderScorer implements PairScorer {
@@ -69,6 +75,7 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
     private final OrtEnvironment environment;
     private final OrtSession session;
     private final HuggingFaceTokenizer tokenizer;
+    private final CrossEncoderPairAssembler assembler;
     private final int batchSize;
     private final String outputName;
     private final boolean usesTokenTypeIds;
@@ -77,7 +84,6 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
     private boolean closed;
     /** Longest wait in close for scoring calls in flight. */
     private static final long CLOSE_WAIT_SECONDS = 30;
-    private final int maxLength;
 
     static {
         // Before any DJL class is initialised: HuggingFaceTokenizer.Builder.build() otherwise calls Ec2Utils.callHome.
@@ -86,7 +92,6 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
 
     public OnnxCrossEncoderScorer(Path modelPath, Path tokenizerPath, int maxLength, int batchSize) {
         this.batchSize = batchSize;
-        this.maxLength = maxLength;
         requireBundledTokenizerLibrary();
         this.environment = OrtEnvironment.getEnvironment();
         OrtSession createdSession = null;
@@ -100,15 +105,8 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
             this.session = createdSession;
             this.usesTokenTypeIds = createdSession.getInputNames().contains(TOKEN_TYPE_IDS);
             this.outputName = createdSession.getOutputNames().iterator().next();
-            this.tokenizer = HuggingFaceTokenizer.builder()
-                    .optTokenizerPath(tokenizerPath)
-                    .optAddSpecialTokens(true)
-                    // longest_first: never returns a truncation error for a pair (class Javadoc); only_second aborts the JVM
-                    // when the query alone fills the window.
-                    .optTruncation(true)
-                    .optMaxLength(maxLength)
-                    .optPadding(false)
-                    .build();
+            this.assembler = CrossEncoderPairAssembler.fromTokenizerJson(tokenizerPath, maxLength);
+            this.tokenizer = singleSequenceTokenizer(tokenizerPath);
         } catch (OrtException | IOException | RuntimeException failure) {
             closeQuietly(createdSession);
             throw new IllegalStateException("Cannot load the cross-encoder from " + modelPath + " and " + tokenizerPath + ": "
@@ -140,65 +138,75 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
         try {
             if (closed) throw new IllegalStateException("Cross-encoder is closed");
             String boundedQuery = CrossEncoderInputBounds.bound(query);
-            List<String> boundedPassages = passages.stream().map(CrossEncoderInputBounds::bound).toList();
+            long[] queryIds = tokenIds(boundedQuery);
             float[] scores = new float[passages.size()];
-            int[] queryTokensKept = {Integer.MAX_VALUE};
-            for (int start = 0; start < boundedPassages.size(); start += batchSize) {
-                List<String> batch = boundedPassages.subList(start, Math.min(boundedPassages.size(), start + batchSize));
-                float[] batchScores = scoreBatch(boundedQuery, batch, queryTokensKept);
-                System.arraycopy(batchScores, 0, scores, start, batchScores.length);
+            int queryTokensKept = Integer.MAX_VALUE;
+            for (int start = 0; start < passages.size(); start += batchSize) {
+                List<String> batch = passages.subList(start, Math.min(passages.size(), start + batchSize));
+                List<long[]> passageIds = new ArrayList<>(batch.size());
+                for (String passage : batch) passageIds.add(tokenIds(CrossEncoderInputBounds.bound(passage)));
+                for (int from = 0; from < passageIds.size(); ) {
+                    int end = assembler.runEnd(queryIds.length, passageIds, from);
+                    CrossEncoderPairAssembler.Batch tensors = assembler.assemble(queryIds, passageIds.subList(from, end));
+                    queryTokensKept = Math.min(queryTokensKept, tensors.queryTokensKept());
+                    float[] runScores = run(tensors);
+                    System.arraycopy(runScores, 0, scores, start + from, runScores.length);
+                    from = end;
+                }
             }
-            logQueryTruncation(query, boundedQuery, queryTokensKept[0]);
+            logQueryTruncation(query, boundedQuery, queryIds.length, queryTokensKept);
             return scores;
         } finally {
             lifecycle.readLock().unlock();
         }
     }
 
+    /**
+     * The tokenizer the scorer encodes with: one text at a time, no special tokens (added in Java), truncation and padding off,
+     * no overflow encodings. Fails, closing it, if DJL reports any other truncation or padding strategy.
+     */
+    static HuggingFaceTokenizer singleSequenceTokenizer(Path tokenizerPath) throws IOException {
+        HuggingFaceTokenizer tokenizer = HuggingFaceTokenizer.builder()
+                .optTokenizerPath(tokenizerPath)
+                .optAddSpecialTokens(false)
+                .optWithOverflowingTokens(false)
+                .optTruncation(false)
+                .optPadding(false)
+                .build();
+        if (!"DO_NOT_TRUNCATE".equals(tokenizer.getTruncation()) || !"DO_NOT_PAD".equals(tokenizer.getPadding())) {
+            String settings = tokenizer.getTruncation() + "/" + tokenizer.getPadding();
+            tokenizer.close();
+            throw new IllegalStateException("tokenizer truncation/padding " + settings + " is not DO_NOT_TRUNCATE/DO_NOT_PAD");
+        }
+        return tokenizer;
+    }
+
+    /** One text alone: no special tokens, no truncation, no padding, so no overflow encodings are ever built. */
+    private long[] tokenIds(String text) {
+        return tokenizer.encode(text, false, false).getIds();
+    }
+
     /** Logs at INFO, lengths only, when the query was cut by the character bound or by token truncation in any pair. */
-    private void logQueryTruncation(String query, String boundedQuery, int queryTokensKept) {
+    private static void logQueryTruncation(String query, String boundedQuery, int queryTokens, int queryTokensKept) {
         if (queryTokensKept == Integer.MAX_VALUE) return;
         boolean charsCut = query != null && boundedQuery.length() < query.length();
-        // longest_first keeps at least half the content budget of a query it cuts, so a shorter kept query was not cut and the
-        // extra encode below is skipped for ordinary questions.
-        if (!charsCut && queryTokensKept < (maxLength - 3) / 2) return;
-        // The query alone, truncated at maxLength by the same tokenizer: a count of maxLength means "at least maxLength".
-        int queryTokens = tokenizer.encode(boundedQuery, false, false).getIds().length;
         if (charsCut || queryTokensKept < queryTokens) {
-            log.info("Cross-encoder query truncated: queryChars={}, queryCharsKept={}, queryTokens={}{}, queryTokensKept={}",
-                    query == null ? 0 : query.length(), boundedQuery.length(), queryTokens, queryTokens >= maxLength ? "+" : "", queryTokensKept);
+            log.info("Cross-encoder query truncated: queryChars={}, queryCharsKept={}, queryTokens={}, queryTokensKept={}",
+                    query == null ? 0 : query.length(), boundedQuery.length(), queryTokens, queryTokensKept);
         }
     }
 
-    private float[] scoreBatch(String query, List<String> passages, int[] queryTokensKept) {
-        PairList<String, String> pairs = new PairList<>(passages.size());
-        for (String passage : passages) pairs.add(query, passage);
-        Encoding[] encodings = tokenizer.batchEncode(pairs);
-        int length = 0;
-        for (Encoding encoding : encodings) {
-            length = Math.max(length, encoding.getIds().length);
-            int kept = 0;
-            for (long sequence : encoding.getSequenceIds()) if (sequence == 0) kept++;
-            queryTokensKept[0] = Math.min(queryTokensKept[0], kept);
-        }
-        long[][] ids = new long[encodings.length][length];
-        long[][] mask = new long[encodings.length][length];
-        long[][] types = new long[encodings.length][length];
-        for (int row = 0; row < encodings.length; row++) {
-            long[] rowIds = encodings[row].getIds();
-            System.arraycopy(rowIds, 0, ids[row], 0, rowIds.length);
-            System.arraycopy(encodings[row].getAttentionMask(), 0, mask[row], 0, rowIds.length);
-            System.arraycopy(encodings[row].getTypeIds(), 0, types[row], 0, rowIds.length);
-        }
+    private float[] run(CrossEncoderPairAssembler.Batch batch) {
+        int rows = batch.inputIds().length;
         List<OnnxTensor> tensors = new ArrayList<>();
         try {
             Map<String, OnnxTensor> inputs = new LinkedHashMap<>();
-            inputs.put(INPUT_IDS, track(tensors, OnnxTensor.createTensor(environment, ids)));
-            inputs.put(ATTENTION_MASK, track(tensors, OnnxTensor.createTensor(environment, mask)));
-            if (usesTokenTypeIds) inputs.put(TOKEN_TYPE_IDS, track(tensors, OnnxTensor.createTensor(environment, types)));
+            inputs.put(INPUT_IDS, track(tensors, OnnxTensor.createTensor(environment, batch.inputIds())));
+            inputs.put(ATTENTION_MASK, track(tensors, OnnxTensor.createTensor(environment, batch.attentionMask())));
+            if (usesTokenTypeIds) inputs.put(TOKEN_TYPE_IDS, track(tensors, OnnxTensor.createTensor(environment, batch.tokenTypeIds())));
             try (OrtSession.Result result = session.run(inputs)) {
                 OnnxValue output = result.get(outputName).orElseThrow(() -> new IllegalStateException("Cross-encoder output missing"));
-                if (!(output.getValue() instanceof float[][] logits) || logits.length != passages.size()) {
+                if (!(output.getValue() instanceof float[][] logits) || logits.length != rows) {
                     throw new IllegalStateException("Cross-encoder output is not float logits of shape [batch, 1]");
                 }
                 float[] scores = new float[logits.length];

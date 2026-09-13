@@ -32,7 +32,16 @@ final class ForkedJvm {
      */
     static Result run(Class<?> mainClass, List<String> jvmOptions, List<String> args, List<String> removeEnvironment,
                       long timeoutSeconds, LongConsumer whileRunning) throws IOException, InterruptedException {
-        List<String> command = new ArrayList<>();
+        return run(List.of(), mainClass, jvmOptions, args, removeEnvironment, timeoutSeconds, whileRunning);
+    }
+
+    /**
+     * As above, with {@code commandPrefix} placed before the java executable (for example {@code /usr/bin/time -l}, whose report
+     * on stderr is merged into the returned lines). The pid given to {@code whileRunning} is then the prefix command's.
+     */
+    static Result run(List<String> commandPrefix, Class<?> mainClass, List<String> jvmOptions, List<String> args, List<String> removeEnvironment,
+                      long timeoutSeconds, LongConsumer whileRunning) throws IOException, InterruptedException {
+        List<String> command = new ArrayList<>(commandPrefix);
         command.add(Path.of(System.getProperty("java.home"), "bin", "java").toString());
         command.addAll(jvmOptions);
         command.add("-cp");
@@ -61,6 +70,7 @@ final class ForkedJvm {
         }
         boolean finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
         if (!finished) {
+            process.descendants().forEach(ProcessHandle::destroyForcibly);
             process.destroyForcibly();
             process.waitFor(10, TimeUnit.SECONDS);
         }

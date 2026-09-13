@@ -6,8 +6,12 @@ package project.stockrecommendationengine.rag.retrieval;
  * halves of a surrogate pair), and an unpaired surrogate (possible in JSON such as a lone escaped high surrogate) is replaced with U+FFFD so
  * the native side only ever receives well-formed Unicode. Imports nothing from DJL or ONNX Runtime.
  * <p>
- * Token-length safety is not decided here: the tokenizer uses {@code longest_first} truncation, which for a pair never fails
- * (see {@link OnnxCrossEncoderScorer}).
+ * Token lengths are not decided here: the query and each passage are tokenized alone without truncation and cut to the model
+ * window in Java ({@link CrossEncoderPairAssembler}). The bound keeps that untruncated tokenization cheap: it is linear in the text,
+ * about 25 ms for 20,000 CJK characters (20,000 tokens) and 10 ms for 20,000 characters of {@code "a "} (10,000 tokens) on the
+ * development Mac, so a call with a query and 40 bounded passages spends about 1 s tokenizing. It is five times the API's
+ * 4,000-character query limit and ten times a 2,000-character chunk, so ordinary text reaches its first 512 tokens long before
+ * it; only text made mostly of characters that yield no token (whitespace, combining marks) can be cut before that.
  */
 final class CrossEncoderInputBounds {
     /** Longest query or passage passed to the tokenizer, in UTF-16 code units. The API caps a query at 4,000. */

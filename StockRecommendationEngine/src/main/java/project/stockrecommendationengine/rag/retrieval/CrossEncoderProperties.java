@@ -34,11 +34,11 @@ public class CrossEncoderProperties {
     /** Expected SHA-256 of the tokenizer file, hex; checked when set. */
     private String tokenizerSha256;
 
-    /** Longest (query, chunk) pair in tokens; only the chunk is cut to fit. The model's window is 512. */
+    /** Longest (query, chunk) pair in tokens, special tokens included; the longer of the two is cut first. The model's window is 512. */
     @Min(16) @Max(512)
     private int maxLength = 512;
 
-    /** Pairs per ONNX Runtime call. */
+    /** Chunks tokenized and scored together; long pairs run in several ONNX Runtime calls (OnnxCrossEncoderScorer, Work per call). */
     @Min(1) @Max(64)
     private int batchSize = 20;
 }

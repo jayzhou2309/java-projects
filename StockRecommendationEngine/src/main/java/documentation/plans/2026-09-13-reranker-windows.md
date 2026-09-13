@@ -177,3 +177,21 @@ aapl-09, msft-04) and on claims no committed evidence supports. Remediation roun
 is documentation only. Rule for it: a per-question cause is written only when the committed evidence establishes it;
 otherwise the text states the observed rank change and says the cause was not determined. The Why section's grouping
 of nvda-09 with the never-retrieved questions is corrected above.
+
+## Status at merge (2026-09-13, Jay: revisit the write-up later)
+
+- Milestone 1 (a791a8d): Scrutiny PASS and UT PASS on the first round.
+- Milestone 2 measurement and decision: snapshots 295 to 299, the selection rule (no row qualifies), the defaults, both
+  floors, and the latency figures were confirmed by independent recomputation in every validation round.
+- Milestone 2 write-up: NOT validated. It failed Scrutiny after the first attempt and after both remediation rounds
+  (da0394c, 788eacd); two Orchestrator corrections at the cap (c9b2e5f, f757ad1) each failed their docs-only check. The
+  UT flow for Milestone 2 was not run. Jay chose to freeze it and merge. Open findings from the last check (f757ad1):
+  "every accepted phrase is scored in the windowed rows" (RAG.md Windowed rows msft-05 text, the Milestone 1 change-log
+  correction, run.log) is unsupported, because no snapshot records whether chunk 515 was a reranker candidate; this
+  plan's Why still says "The cause was diagnosed"; run.log's first correction note still calls msft-05 not a truncation
+  case without a superseded marker; two earlier correction notes (RAG.md Windows Why, this plan's Why msft-05 bullet) were
+  rewritten in place instead of marked superseded; "its matched chunk's" in the Milestone 1 change-log correction should
+  name chunks 805 and 466.
+- Revisit by recording evidence rather than rewording: store each question's reranker candidates, fused and reranked
+  positions, and scores in evaluation snapshots, generate the per-question facts (accepted phrase spans in every chunk,
+  head and window membership, rank source observed or inferred) from that record, and regenerate the write-up from it.

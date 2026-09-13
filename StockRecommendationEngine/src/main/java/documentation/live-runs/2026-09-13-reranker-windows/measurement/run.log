@@ -119,7 +119,7 @@ answering sentence at +10.29 at a window's start, +5.91 at token 141, +2.56 at 1
     stores only rank and matched chunk for a hit; the diagnostic ran at overlap 64, where chunk 872 ranked first), and why it moved from 1 to 2 was not determined.
   msft-12 (FIGURE, figure slice; chunk 519, 605 tokens, W 490, answer at 544: not seen; head -1.84, answer window 5.14). Head rows 5, 6, 6; windowed rows 2 in all
     four (reference 2). Recovered. The chunk is 115 tokens longer than W, so both overlaps give the same windows (0 and 115) and the answer sits 429 into the second.
-  nvda-01 (FIGURE, nonFigure slice; chunk 805, 854 tokens, W 489, answer at 485: the head cut kept only its first four tokens; head -1.75, answer window 5.03; in
+  nvda-01 (FIGURE, nonFigure slice; chunk 805, 854 tokens, W 489, answer at 485 by the probe's offset, which points inside the phrase; the count from the phrase start follows below; head -1.75, answer window 5.03; in
     the probe's head ranking of all 162 NVDA chunks 805 was 30th, with 852 at 5.75 and 873 at 5.62). The probe's 485 points at "215,938"; counted with the real
     tokenizer from the matched phrase's first word ("Total $ 215,938 $ 130,497 $ 85,441 65 %"), the phrase is tokens 483 to 500 (17 tokens), so the head window kept
     its first 6 tokens. Head rows 9, miss, miss; windowed rows 8, miss, miss, miss (reference 3). Not recovered, and not a truncation loss: overlap 64 windows at 0
@@ -252,3 +252,9 @@ retrieval-set-v2.json and a read-only select of the chunks. The corrections abov
   - Against the head rows: "cut the NVDA top-5 loss by two thirds (...; none at overlap 224)" mixed a gross count with a net one. Replaced by NVDA questions lost
     and gained per row, head rows included: 248 to 250 lose 3 and gain 0 (net -3); 296 to 298 lose 1 and gain 0 (net -1); 299 loses 1 and gains 1 (net 0).
   - msft-10: "A gain in the matched chunk" now "A change in the matched chunk". Added the complete 297 to 299 comparison (four questions differ).
+
+Corrections (3), 2026-09-13, Orchestrator at the Milestone 2 remediation cap, approved by Jay (documentation only, no run):
+  nvda-01: the parenthetical no longer says the head cut kept four tokens; that figure came from the probe's offset (485, inside the phrase). The phrase
+    starts at token 483 and the head window kept its first 6 tokens, as the same entry states.
+  RAG.md change log: the Milestone 1 bullet claiming the diagnosis named the cause of the failed measurement now carries a dated correction; RAG.md's
+    chunk 466 rank at 40 candidates (298) is marked as inferred from row 297.

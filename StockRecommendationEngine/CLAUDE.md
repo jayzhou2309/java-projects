@@ -70,10 +70,11 @@ one-line fix, a typo, or a question, just do it directly.
   measurement's conclusions in its `claims.json`; `verify` checks the claims and the generated
   blocks written from them (format: `RAG.md`, "Claims"). Only block bullets are generated, and only
   observed and derived bullets are rendered from their checks. Prose outside blocks may not cite a
-  claim; the one physical line directly above each block's start marker is screened for causal and
-  absolute words and numbers (a wrapped lead-in's earlier lines, a setext heading's text, and text
-  above a multi-line comment are not). Claim ids must be unique across claims files whose blocks
-  share a document; give each claims file its own id prefix.
+  claim; only the nearest line above each block's start marker that is not blank (blank lines and
+  one-line comments are skipped) is screened for causal and absolute words and numbers, so a wrapped
+  lead-in's earlier lines, a setext heading's text, and text above a multi-line comment are not.
+  Claim ids (`C-` and at least three digits) must be unique across claims files whose blocks share a
+  document; give each such file its own number range.
   The check does not prove, so reviewers and validators read all of: prose outside generated
   blocks; labels; the free text of inferred, unknown, and experiment claims (screened for listed
   words only), including numbers that contradict premises, inferences drawn from unknown claims,
@@ -82,7 +83,7 @@ one-line fix, a typo, or a question, just do it directly.
   max-length from configuration at report time; and settings snapshots do not record (for example
   rerank-timeout-ms). (Corrected 2026-09-13, plan amendment 6: this rule said write-ups are
   generated from `claims.json` without saying that only block bullets are. Corrected 2026-09-14:
-  it did not say only one physical line above a block is screened.)
+  it did not say only one line above a block is screened, and it gave no rule for claim ids.)
 
 ## Loop history
 

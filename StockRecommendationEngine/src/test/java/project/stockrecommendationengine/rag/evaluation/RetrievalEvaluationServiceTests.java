@@ -89,7 +89,9 @@ class RetrievalEvaluationServiceTests {
                 .containsEntry("window", 10).containsEntry("latestFilingsOnly", true)
                 .containsEntry("hybridEnabled", true).containsEntry("keywordCandidateCount", 40).containsEntry("rrfK", 60)
                 .containsEntry("rrfVectorWeight", 1.0).containsEntry("rrfKeywordWeight", 0.5).containsEntry("rrfFigureWeight", 1.0)
-                .containsKey("hybrid").containsEntry("hybrid", null);
+                .containsKey("hybrid").containsEntry("hybrid", null)
+                .containsKey("rerank").containsEntry("rerank", null).containsEntry("rerankingEnabled", false)
+                .containsEntry("rerankCandidates", 20).containsKey("reranker").containsEntry("reranker", null);
 
         ArgumentCaptor<RetrievalRequest> requests = ArgumentCaptor.forClass(RetrievalRequest.class);
         verify(retrieval, times(4)).retrieve(requests.capture());
@@ -99,6 +101,7 @@ class RetrievalEvaluationServiceTests {
             assertThat(request.filingTypes()).isNull();
             assertThat(request.sectionKeys()).isNull();
             assertThat(request.hybrid()).isNull();
+            assertThat(request.rerank()).isNull();
         });
         assertThat(requests.getAllValues()).extracting(RetrievalRequest::ticker).containsExactly("AAPL", "AAPL", "MSFT", "MSFT");
         verify(repository).save(argThat(saved -> saved.id() == null));
@@ -273,6 +276,39 @@ class RetrievalEvaluationServiceTests {
         assertThat(byProperty.properties()).containsKey("hybrid").containsEntry("hybrid", null);
         verify(retrieval, times(2)).retrieve(requests.capture());
         assertThat(requests.getAllValues().subList(4, 6)).extracting(RetrievalRequest::hybrid).containsOnlyNulls();
+    }
+
+    // Reranker milestone 1 (RAG-1), C4: the rerank override and the reranker name are passed and recorded.
+
+    @Test void theRerankOverrideIsPassedOnEveryRequestAndRecordedWithTheRerankerName() {
+        var q1 = question("q1", "AAPL", "net sales were");
+        var q2 = question("q2", "NVDA", "data center revenue");
+        when(loader.load()).thenReturn(new RetrievalEvaluationSet("v1", LocalDate.of(2026, 9, 12), List.of(q1, q2)));
+        when(retrieval.retrieve(any())).thenAnswer(inv -> response(inv.getArgument(0), chunk(1, ACC, "ITEM_7", "Net sales were up")));
+        when(retrieval.rerankerName()).thenReturn(java.util.Optional.of("ReversingFilingReranker"));
+        when(repository.save(any())).thenAnswer(invocation -> ((RetrievalEvaluation) invocation.getArgument(0)).withId(3L));
+
+        var reranked = service.evaluate(null, true);
+        assertThat(reranked.properties()).containsEntry("rerank", true).containsEntry("reranker", "ReversingFilingReranker")
+                .containsEntry("rerankCandidates", 20).containsEntry("hybrid", null);
+        ArgumentCaptor<RetrievalRequest> requests = ArgumentCaptor.forClass(RetrievalRequest.class);
+        verify(retrieval, times(2)).retrieve(requests.capture());
+        assertThat(requests.getAllValues()).extracting(RetrievalRequest::rerank).containsExactly(true, true);
+
+        clearInvocations(retrieval);
+        var fused = service.evaluate(true, false);
+        assertThat(fused.properties()).containsEntry("rerank", false).containsEntry("hybrid", true).containsEntry("reranker", "ReversingFilingReranker");
+        verify(retrieval, times(2)).retrieve(requests.capture());
+        assertThat(requests.getAllValues().subList(2, 4)).extracting(RetrievalRequest::rerank).containsExactly(false, false);
+    }
+
+    @Test void rerankTrueWithoutARerankerFailsBeforeAnyQuestionRunsOrAnySnapshotIsStored() {
+        when(retrieval.rerankerName()).thenReturn(java.util.Optional.empty());
+        assertThatThrownBy(() -> service.evaluate(null, true))
+                .isInstanceOf(project.stockrecommendationengine.rag.retrieval.RerankerUnavailableException.class)
+                .hasMessageContaining("no FilingReranker is configured");
+        verifyNoInteractions(loader, repository);
+        verify(retrieval, never()).retrieve(any());
     }
 
     @Test void matchingIsCaseInsensitiveWithWhitespaceCollapsedAndRequiresTheSameFilingAndSection() {

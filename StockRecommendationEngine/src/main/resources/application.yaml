@@ -69,8 +69,12 @@ rag:
     default-top-k: 5
     candidate-count: 40
     latest-filings-only: true
-    # Requires a FilingReranker adapter before enabling.
+    # Requires a FilingReranker adapter before enabling; a request's "rerank" field (or ?rerank= on evaluate) overrides per call.
     reranking-enabled: false
+    # How many of the fused, diversified candidates the reranker receives (the first N); 5 to 40.
+    rerank-candidates: 20
+    # Longest wait for the reranker in milliseconds; on timeout or any reranker failure retrieval keeps the fused order; 100 to 60000.
+    rerank-timeout-ms: 2000
     # Fuse full-text keyword candidates with the vector candidates (reciprocal rank fusion). On by default since the 2026-09-12
     # measurement (RAG.md, Hybrid Retrieval: snapshots 35 and 34, hit@5 0.600000 to 0.633333, no ticker lower); a request's
     # "hybrid" field overrides per call.

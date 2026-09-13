@@ -108,6 +108,8 @@ class RetrievalEvaluationRepositoryTests {
                 """, Long.class, java.sql.Timestamp.from(base.plusSeconds(2)));
         var legacy = repository.findById(legacyId).orElseThrow();
         assertThat(legacy.slices()).isNull();
+        // Reranker milestone 1, C4: a snapshot stored before rerank existed reads back with its properties unchanged.
+        assertThat(legacy.properties()).containsExactly(Map.entry("window", 10));
         assertThat(legacy.results()).extracting(QuestionResult::rank).containsExactly(1);
         assertThat(repository.latest().orElseThrow().id()).isEqualTo(legacyId);
         assertThat(repository.latest().orElseThrow().slices()).isNull();

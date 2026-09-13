@@ -123,7 +123,9 @@
             * Resolve hybrid retrieval: the request's `hybrid` field when present, else `rag.retrieval.hybrid-enabled`. When on and `keywordTerms(query)` is non-empty, also call findKeywordChunks (keyword-candidate-count rows) and fuse the rankings (a figure leg joins them for numeric queries, Hybrid Retrieval below) by weighted reciprocal rank fusion: fused score = sum over the legs containing the chunk of weight / (rrf-k + rank), rank 1-based per leg, weights `rrf-vector-weight` 1.0, `rrf-keyword-weight` 0.5, `rrf-figure-weight` 1.0 since the 2026-09-12 fusion tuning; order by fused score descending, then similarityScore descending, then chunk id; `candidatesRetrieved` is the fused set size.
             * A stopword-only query skips the keyword search (repository not called); a keyword-search exception is logged at WARN with its class name and the vector candidates are used alone; neither fails the retrieval.
             * Keep vector order when reranking is disabled; diversify and cut to topK after fusion exactly as without it.
-            * Invoke FilingReranker when enabled and a provider adapter is configured.
+            * Resolve reranking: the request's `rerank` field when present, else `rag.retrieval.reranking-enabled`. `rerank: true` with no FilingReranker bean throws RerankerUnavailableException before the query is embedded; `/api/rag/retrieve` maps it to HTTP 400 with the reason in the problem detail (`detail`), never a silent skip.
+            * When reranking resolves on and candidates exist, pass the first `rerank-candidates` (default 20) of the fused, diversified list to FilingReranker on a small bounded pool of daemon threads (two threads, queue of 16, shut down on bean destroy) and wait at most `rerank-timeout-ms` (default 2000). The reranked topK is taken from those candidates only; the strategy gains `_RERANKED`.
+            * Fallback: a timeout (the call is cancelled), an exception from the reranker, a call rejected by a saturated pool, or a result failing validateRerankedEvidence is logged at WARN with `reason` (timeout, failure, invalidEvidence) and the exception class name only, never its message; retrieval then returns the fused order cut to topK from the full fused list with the strategy HYBRID_RRF or FILTERED_VECTOR. Retrieval never fails because of the reranker.
             * Return selected passages with unchanged citation metadata and cosine scores; a chunk found only by the keyword path carries the cosine similarity the keyword query computed.
             * Log query-embedding, vector-search, keyword-search (candidates, elapsed ms), fusion (fused size), selection, completion, and failure steps.
         * fuse(List vectorCandidates, List keywordCandidates, int k) and reciprocalRankScores(List rankings, int k) (package-private, static)
@@ -170,7 +172,9 @@
         * default-top-k: 5.
         * candidate-count: 40.
         * latest-filings-only: true.
-        * reranking-enabled: false.
+        * reranking-enabled: false (a request's `rerank` field, or `?rerank=` on evaluate, overrides per call).
+        * rerank-candidates: 20 (how many of the fused, diversified candidates the reranker receives, the first N; the rest are dropped when reranking runs; with reranking off topK is cut from the full fused list).
+        * rerank-timeout-ms: 2000 (longest wait for the reranker; past it retrieval keeps the fused order).
         * hybrid-enabled: true (keyword plus vector fusion; on by default since 2026-09-12 after the comparison in Hybrid Retrieval below, a request's `hybrid` field overrides per call).
         * keyword-candidate-count: 40 (keyword rows fetched per query when the hybrid path runs).
         * rrf-k: 60 (the k in reciprocal rank fusion's 1 / (k + rank)).
@@ -183,18 +187,23 @@
         * keyword-candidate-count must be between 20 and 200.
         * rrf-k must be between 1 and 1000.
         * rrf-vector-weight, rrf-keyword-weight, and rrf-figure-weight must be between 0 and 10.
+        * rerank-candidates must be between 5 and 40.
+        * rerank-timeout-ms must be between 100 and 60000.
 * FilingReranker
     * Purpose
         * Define the extension point for a future model-based reranker.
-        * No hosted or local reranker implementation is installed in this baseline.
+        * No hosted or local reranker implementation is installed in this baseline; tests use a scripted reranker that reverses the candidate order (`ReversingFilingReranker`, test sources only).
     * Methods
         * rerank(String query, List<RetrievedFilingChunk> candidates, int topK)
             * Return a ranked subset of the supplied candidate records.
-            * Preserve original text, citation metadata, and similarityScore.
+            * Preserve original text, citation metadata, and similarityScore (cosine similarity from the fused list; the reranker's own score is never written into it, and a changed score fails validation).
+            * Receives at most `rerank-candidates` records and must return at most topK of them.
     * Configuration
         * Disabled by default pending provider/model selection and benchmarking.
         * Enabling reranking without a FilingReranker bean fails application startup clearly.
-        * A reranker failure propagates; it is not silently reported as successful reranking.
+        * `rerank: true` on a request (or `?rerank=true` on evaluate) with no FilingReranker bean is an HTTP 400, not a silent skip.
+        * A reranker failure, timeout, or invalid result is never reported as successful reranking: retrieval falls back to the fused order with the non-reranked strategy and a WARN naming the exception class only (FilingRetrievalService above).
+        * The reranker's name recorded in evaluation snapshots is its simple class name (`FilingRetrievalService.rerankerName()`).
 * RetrievalRequest
     * Required fields
         * ticker: nonblank, maximum 16 characters.
@@ -207,6 +216,7 @@
         * topK: final result count, between 1 and 20; default 5.
         * latestFilingsOnly: explicit override for latest-per-type selection.
         * hybrid: true forces keyword plus vector fusion for this call, false forces vector only; absent follows `rag.retrieval.hybrid-enabled`.
+        * rerank: true reranks this call (HTTP 400 when no FilingReranker is configured), false keeps the fused order; absent follows `rag.retrieval.reranking-enabled`.
     * Default filing scope
         * Without dates, use the latest stored EMBEDDED filing per type by default.
         * With either date bound, search all eligible filings in that range by default.
@@ -415,7 +425,8 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * Endpoints (integration token required, `Authorization: Bearer <INTEGRATION_ACCESS_TOKEN>`)
         * `POST /api/rag/evaluate` runs every question through retrieval and stores a snapshot in `retrieval_evaluations` (migration V8); `GET /api/rag/evaluate` returns the newest snapshot (404 before the first); `GET /api/rag/evaluate/{id}` returns one by id.
         * `POST /api/rag/evaluate?hybrid=true|false` passes that value as the `hybrid` field of every retrieval request (forcing keyword plus vector fusion on or off for the whole run without a restart) and records it as `properties.hybrid`; without the parameter every request carries null (each follows `rag.retrieval.hybrid-enabled`) and `properties.hybrid` is null.
-        * A snapshot carries `hitAt1`, `hitAt3`, `hitAt5`, `mrr`, `tickerHitAt5`, `window`, `retrievalStrategy`, the run `properties` (window, latestFilingsOnly, set, setCreatedOn, candidateCount, rerankingEnabled, hybridEnabled, keywordCandidateCount, rrfK, rrfVectorWeight, rrfKeywordWeight, rrfFigureWeight, hybrid), per-question `results` (rank and matched chunk id, null on a miss), `misses` with the top three returned chunks (chunk id, accession, section, similarity) or the retrieval error, and `slices` (`figure` and `nonFigure`, see Metrics). `slices` is stored inside the `results` JSONB document (no migration); snapshots stored before 2026-09-13 (id 75 and earlier, including 69) have no slices key and return `slices: null`; nothing is backfilled.
+        * `POST /api/rag/evaluate?rerank=true|false` does the same for the `rerank` field (null when absent, following `rag.retrieval.reranking-enabled`) and records `properties.rerank`; `?rerank=true` with no FilingReranker configured returns HTTP 400 before any question runs and stores no snapshot.
+        * A snapshot carries `hitAt1`, `hitAt3`, `hitAt5`, `mrr`, `tickerHitAt5`, `window`, `retrievalStrategy`, the run `properties` (window, latestFilingsOnly, set, setCreatedOn, candidateCount, rerankingEnabled, hybridEnabled, keywordCandidateCount, rrfK, rrfVectorWeight, rrfKeywordWeight, rrfFigureWeight, hybrid, and since the reranker plumbing rerank, rerankCandidates, and reranker, the reranker's simple class name or null when none is configured; snapshots stored earlier keep their properties as stored), per-question `results` (rank and matched chunk id, null on a miss), `misses` with the top three returned chunks (chunk id, accession, section, similarity) or the retrieval error, and `slices` (`figure` and `nonFigure`, see Metrics). `slices` is stored inside the `results` JSONB document (no migration); snapshots stored before 2026-09-13 (id 75 and earlier, including 69) have no slices key and return `slices: null`; nothing is backfilled.
     * Regression floor
         * `RetrievalEvaluationLiveTests` (opt-in, `@EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")`) runs the real evaluation against the local store and asserts hit@5 at or above `rag.evaluation.min-hit-at-5` (default 0.65 since 2026-09-13: the current baseline's hit@5 minus 0.1, rounded down to a multiple of 0.05; on set v2 the baseline 0.785714 gives 0.65. Under set v1 it was 0.50: vector-only 0.6 gave 0.50 and the hybrid baseline 0.633333 gave 0.533 rounded down to 0.50; that floor is superseded, see Set v2 baseline and figure-leg measurement). It prints the metrics, both slices, a `RETRIEVAL_EVAL notInTop5` line for the aggregate and for each slice (hits out of the question count, every question not in the top 5 with its rank, and for the aggregate and the `nonFigure` slice `minHits` = ceiling(floor x question count) and `margin` = hits minus `minHits`, so a passing run shows how many hits it can still lose), per-ticker hit@5, and every miss with its top chunks, and it runs inside a rolled-back transaction so no snapshot is stored (the id sequence still advances).
         * Second floor (since 2026-09-13, Follow_Ups RAG-13): after the aggregate assertion the same test asserts the `nonFigure` slice's hit@5 at or above `rag.evaluation.min-non-figure-hit-at-5` (default 0.60, derived by the same rule from snapshot 91's non-figure hit@5 0.700000). The aggregate is asserted first, so a run that fails only on the second floor shows the aggregate passed. A snapshot with no non-figure questions (every question carries a figure) fails with a message naming the set instead of passing vacuously. Each floor's failure message gives the hit@5 value, the hit count out of the question count, the floor and its property, and names every question not in the top 5 with its rank ("rank 6" to "rank 10", or "no match in window"): the aggregate message lists them across the set (from `results`), the non-figure message lists the slice's `notInTop5`. A breach caused by questions sliding from ranks 1 to 5 down to 6 to 10 therefore names those questions, not only the long-standing misses. Both assertions live in the test-scope `RetrievalEvaluationFloors` so `RetrievalEvaluationServiceTests` exercises them, the empty slice included, without a live run.

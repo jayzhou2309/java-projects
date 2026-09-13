@@ -24,6 +24,7 @@ import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.Slic
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.TopChunk;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalProperties;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
+import project.stockrecommendationengine.rag.retrieval.RerankerUnavailableException;
 
 /**
  * Runs the bundled evaluation set through retrieval and stores a snapshot. Each question is retrieved once with the
@@ -47,15 +48,25 @@ public class RetrievalEvaluationService {
 
     /** Evaluate every question now with the configured retrieval default and store the snapshot; returns it with its id. */
     public RetrievalEvaluation evaluate() {
-        return evaluate(null);
+        return evaluate(null, null);
+    }
+
+    /** {@link #evaluate(Boolean, Boolean)} with no rerank override. */
+    public RetrievalEvaluation evaluate(Boolean hybrid) {
+        return evaluate(hybrid, null);
     }
 
     /**
      * Evaluate every question now and store the snapshot; returns it with its id. {@code hybrid} is passed unchanged on
      * every retrieval request (true or false forces the keyword plus vector path on or off for the whole run; null lets
      * each request follow {@code rag.retrieval.hybrid-enabled}) and recorded as {@code properties.hybrid}, null when absent.
+     * {@code rerank} is passed and recorded ({@code properties.rerank}) the same way, with {@code properties.reranker} the
+     * reranker's simple class name (null when none) and {@code properties.rerankCandidates}. {@code rerank} true with no
+     * reranker bean throws {@link RerankerUnavailableException} before any question runs or any snapshot is stored.
      */
-    public RetrievalEvaluation evaluate(Boolean hybrid) {
+    public RetrievalEvaluation evaluate(Boolean hybrid, Boolean rerank) {
+        String reranker = retrieval.rerankerName().orElse(null);
+        if (Boolean.TRUE.equals(rerank) && reranker == null) throw new RerankerUnavailableException();
         RetrievalEvaluationSet set = loader.load();
         int window = properties.getWindow();
         List<QuestionResult> results = new ArrayList<>();
@@ -63,12 +74,12 @@ public class RetrievalEvaluationService {
         List<QuestionResult> figure = new ArrayList<>();
         List<QuestionResult> nonFigure = new ArrayList<>();
         String strategy = null;
-        log.info("Evaluating retrieval: set={}, questions={}, window={}, hybrid={}", set.version(), set.questions().size(), window, hybrid);
+        log.info("Evaluating retrieval: set={}, questions={}, window={}, hybrid={}, rerank={}", set.version(), set.questions().size(), window, hybrid, rerank);
         for (RetrievalEvaluationQuestion question : set.questions()) {
             List<QuestionResult> slice = isFigureQuestion(question.question()) ? figure : nonFigure;
             RetrievalResponse response;
             try {
-                response = retrieval.retrieve(new RetrievalRequest(question.ticker(), question.question(), null, null, null, null, window, true, hybrid));
+                response = retrieval.retrieve(new RetrievalRequest(question.ticker(), question.question(), null, null, null, null, window, true, hybrid, rerank));
             } catch (RuntimeException failure) {
                 String error = failure.getClass().getSimpleName() + ": " + failure.getMessage();
                 log.warn("Retrieval failed for evaluation question {}: {}", question.id(), error);
@@ -88,7 +99,7 @@ public class RetrievalEvaluationService {
         }
         RetrievalEvaluation evaluation = new RetrievalEvaluation(null, Instant.now(), set.version(), results.size(),
                 hitAt(results, 1), hitAt(results, 3), hitAt(results, 5), mrr(results), window, strategy == null ? "UNAVAILABLE" : strategy,
-                runProperties(set, window, hybrid), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses),
+                runProperties(set, window, hybrid, rerank, reranker), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses),
                 slices(figure, nonFigure));
         RetrievalEvaluation stored = repository.save(evaluation);
         log.info("Retrieval evaluation stored: id={}, hitAt1={}, hitAt3={}, hitAt5={}, mrr={}, misses={}",
@@ -173,7 +184,7 @@ public class RetrievalEvaluationService {
                 BigDecimal.valueOf(chunk.similarityScore()).setScale(SCALE, RoundingMode.HALF_UP));
     }
 
-    private Map<String, Object> runProperties(RetrievalEvaluationSet set, int window, Boolean hybrid) {
+    private Map<String, Object> runProperties(RetrievalEvaluationSet set, int window, Boolean hybrid, Boolean rerank, String reranker) {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("window", window);
         out.put("latestFilingsOnly", true);
@@ -188,6 +199,9 @@ public class RetrievalEvaluationService {
         out.put("rrfKeywordWeight", retrievalProperties.getRrfKeywordWeight());
         out.put("rrfFigureWeight", retrievalProperties.getRrfFigureWeight());
         out.put("hybrid", hybrid);
+        out.put("rerank", rerank);
+        out.put("rerankCandidates", retrievalProperties.getRerankCandidates());
+        out.put("reranker", reranker);
         return out;
     }
 }

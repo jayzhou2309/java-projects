@@ -5,7 +5,7 @@ Orchestrated build per CLAUDE.md. Two serial milestones with contracts written b
 never export the application enable flags or `RAG_*` overrides in a shell that runs tests. Plan
 `2026-09-13-reranker.md` and its Amendments 1 and 2 stay in force unless changed below.
 
-## Why: the reranker cannot see most answers
+## Why: the head cut does not reach some expected phrases
 
 The 2026-09-13 measurement (snapshots 247 to 250) found no configuration meeting the selection rule. The cause was
 diagnosed on 2026-09-13 with the real tokenizer and model against every chunk in the database
@@ -15,6 +15,10 @@ supported. The probe recorded which expected phrases the head cut did not reach;
 as the cause of the measurement's outcome was run, so the probe is a finding about what the model saw, not a
 diagnosed cause. The windowed rows' outcome is stated in RAG.md, Cross-encoder reranker, Reranker measurement,
 Windowed rows, generated blocks.)
+(Corrected 2026-09-14, plan `2026-09-13-evaluation-evidence.md` Milestone 4b remediation round 1: this section's heading
+read "the reranker cannot see most answers". The probe's 65% and 78% describe chunk length and the share of a chunk the
+model saw; for answers it records that for 11 of the 39 questions with a matched chunk the expected phrase starts past the
+kept tokens.)
 
 - The chunker cuts filings at 4,000 characters and stores `token_count` as characters / 4 (median 780). Exact
   WordPiece lengths are somewhat lower but still well past the window: median 647 tokens, 90th percentile 849, longest
@@ -210,6 +214,8 @@ of nvda-09 with the never-retrieved questions is corrected above.
   40 candidates and the chunks ranked above nvda-01's, nvda-11's, and msft-04's accepted chunks (observed reranked positions in the
   NVIDIA total revenue, Microsoft headcount, and NVIDIA Compute and Networking blocks; the chunk ids above them, which no check type
   renders, are copied from the evidence reports into the measurement `run.log`, section Milestone 4b); "The cause was diagnosed" in
-  this plan's Why (dated correction note there); the earlier correction notes (run.log's re-validation msft-05 note, RAG.md's
-  Windows Why note, and this plan's Why msft-05 bullet, kept and marked superseded, naming c9b2e5f for their earlier wording); and
-  "its matched chunk's" in the Milestone 1 change-log correction (its superseded note names chunks 805 and 466).
+  this plan's Why (dated correction note there); the earlier correction notes (run.log's re-validation msft-05 note, kept and marked
+  superseded; RAG.md's Windows Why note and this plan's Why msft-05 bullet, kept and marked superseded, naming c9b2e5f for their
+  earlier wording; corrected 2026-09-14, plan `2026-09-13-evaluation-evidence.md` Milestone 4b remediation round 1: this
+  parenthesis grouped run.log's note, which names no commit, with the two that name c9b2e5f); and "its matched chunk's" in the
+  Milestone 1 change-log correction (its superseded note names chunks 805 and 466).

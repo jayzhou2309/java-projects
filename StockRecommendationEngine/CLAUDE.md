@@ -85,10 +85,12 @@ one-line fix, a typo, or a question, just do it directly.
   max-length from configuration at report time; and settings snapshots do not record (for example
   rerank-timeout-ms). (Corrected 2026-09-13, plan amendment 6: this rule said write-ups are
   generated from `claims.json` without saying that only block bullets are. Corrected 2026-09-14:
-  it did not say which line above a block is screened, or that a wrapped lead-in's earlier lines, a
-  setext heading's text, and text above a multi-line comment go unscreened, and it gave no rule for
-  claim ids. Corrected again 2026-09-14, Milestone 4b: the skipped lines were given as blank lines
-  and one-line comments only, and this note named only the one-line limit.)
+  it did not say only one line above a block is screened, and it gave no rule for claim ids.
+  Corrected again 2026-09-14, Milestone 4b: the skipped lines were given as blank lines and one-line
+  comments only, and the note before this one named only the one-line limit, not that a wrapped
+  lead-in's earlier lines, a setext heading's text, and text above a multi-line comment go
+  unscreened. Corrected 2026-09-14, Milestone 4b remediation round 1: the Milestone 4b correction
+  rewrote the earlier note in place; that note's text is restored and this addition follows it.)
 
 ## Loop history
 

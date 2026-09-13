@@ -192,3 +192,33 @@ Main checkout, branch evaluation-evidence from b1e6fcf. No application run, no e
   After commit 95a3f63, the frozen status of plans/2026-09-13-reranker-windows.md closed with a dated note naming that commit and claims.json (documentation
   only): ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 0, CLAIMS_CHECK claimsFiles=2 documents=21 problems=0; ./mvnw -q -o verify -> exit 0
   (58 test classes, 534 tests, 0 failures, 0 errors, 28 skipped; target/surefire-reports of this run), 03:20:47 to 03:21:00.
+
+Milestone 4b remediation round 1 (validation of 95a3f63 and 1832b4a failed on documentation), 2026-09-14 (times +08)
+Main checkout, branch evaluation-evidence from 1832b4a. Documentation, claims, and evidence text only: no code change, no application run, no evaluation
+snapshot, no floor test, no chat model. Every shell below: set -a && source .env && set +a, and the env grep above -> 0.
+
+  Sets computed by a scratchpad script from the committed snapshot files (295 to 299, 248 to 250, 598 to 641) and evidence reports:
+    rank-1 status differs between 295 and some row of 296 to 299 (12): aapl-02, aapl-03, aapl-05, aapl-06, msft-03, msft-04, msft-11, msft-14, nvda-08,
+      nvda-10, nvda-11, nvda-14. Rank-1 counts 23 (295), 21 (296), 21 (297), 22 (298), 20 (299) of 42, equal to the stored hit@1 0.547619, 0.500000,
+      0.500000, 0.523810, 0.476190. The block listed nine; msft-04, nvda-11, and nvda-14 added (C-315 to C-317).
+    top-5 membership differs among 295 to 299 and 248 to 250 (11): aapl-09, msft-01, msft-04, msft-05, msft-07, msft-08, msft-12, nvda-01, nvda-09,
+      nvda-11, nvda-14, the questions the block listed; C-163 to C-166 (msft-01, msft-07, msft-08, nvda-09) now list 248 to 250 like the other seven.
+    rank differs between 295 and some row of 296 to 299 and the question is in neither block above (3): nvda-05, nvda-07, nvda-12, as listed.
+    rank or matched chunk differs between 613 and 641 (4): aapl-09 (no match / 10, chunk 280), nvda-09 (no match / 2, chunk 879), nvda-10 (2, chunk 878 /
+      2, chunk 895), nvda-14 (1 / 2, chunk 872); 297 against 299 give the same four. nvda-10 added (C-333 to C-345): in evidence-613.json chunk 878 fused 5,
+      reranked 2 and chunk 895 fused 1, reranked 5; in evidence-641.json chunk 878 reranked 3 and chunk 895 reranked 2; rank 2 in both snapshots.
+    stored metrics per snapshot: hit_at_1, hit_at_3, hit_at_5, mrr; slices.figure and slices.nonFigure hitAt1, hitAt3, hitAt5, mrr; tickerHitAt5 AAPL,
+      MSFT, NVDA. The block listed the slices' hitAt5 only; the slices' hitAt1, hitAt3, and mrr added for 295 to 299 (C-285 to C-314).
+    per-question blocks (msft-05, nvda-01, msft-04, nvda-11): accepted chunks 460, 515, 571; 802, 805; 466, 467; 805. Rows of each chunk in 599, 613, 627,
+      and 641 and fused positions in 598 to 641 now listed; added: rows of 460 and 571 in 599, 627, 641 and 460's fused position in 598 (C-318 to C-324),
+      802's rows in 599, 627, 641 (C-325 to C-327), 467's rows in 599, 613, 641 (C-328 to C-330), 805's rows for nvda-11 in 599 and 627 (C-331, C-332).
+    traced against untraced (598/295, 599/296, 613/297, 627/298, 641/299): no question differs in rank or matched chunk.
+
+  Claims: claims.json C-101 to C-345 (245 claims: 144 observed, 92 derived, 6 inferred, 3 experiment); the new ids C-285 to C-345 (37 observed, 23 derived, 1 inferred)
+  are numbered in file order; every expected value was read from the committed files by the script, and the generated sentences were reread against them.
+    ./mvnw -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> exit 0, CLAIMS_GENERATE changed=0 [] notGenerated=0 (the earlier generations
+      of this round wrote the blocks), CLAIMS_CHECK claimsFiles=2 documents=21 problems=0, 03:54:00. (One intermediate check reported four problems, the
+      change-log bullet citing new ids in parentheses outside a block; reworded to "claims C-...".)
+    ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 0, CLAIMS_CHECK claimsFiles=2 documents=21 problems=0, 03:54:04.
+    ./mvnw -q -o verify -> exit 0 (58 test classes, 534 tests, 0 failures, 0 errors, 28 skipped; counted from target/surefire-reports of this run, which
+      was emptied first), CLAIMS_CHECK claimsFiles=2 documents=21 problems=0, 03:54:30 to 03:54:42.

@@ -45,6 +45,7 @@ class RetrievalEvaluationSetLoaderTests {
 
     @Test void theDefaultPropertySelectsSetV2WithinItsBoundsAndShapeRules() {
         assertThat(new RetrievalEvaluationProperties().getSet()).isEqualTo("evaluation/retrieval-set-v2.json");
+        assertThat(new RetrievalEvaluationProperties().getMinHitAt5()).isEqualByComparingTo("0.65");
         var set = loader.load();
         assertThat(set.version()).isEqualTo("v2");
         assertThat(set.createdOn()).isEqualTo(LocalDate.parse("2026-09-13"));

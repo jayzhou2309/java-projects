@@ -364,7 +364,7 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
 
 * Retrieval Design Decisions
     * See [Retrieval Strategy Research](Retrieval_Strategy_Research.md) for source research and alternatives.
-    * Current baseline: filtered exact vector search fused with full-text keyword search by weighted reciprocal rank (since 2026-09-12; Hybrid Retrieval below), the keyword leg at 0.5 and a figure leg at 1.0 for queries that carry a number (Fusion tuning below).
+    * Current baseline: filtered exact vector search fused with full-text keyword search by weighted reciprocal rank (since 2026-09-12; Hybrid Retrieval below), the keyword leg at 0.5 and a figure leg at 1.0 for queries that carry a number (Fusion tuning below; the figure weight re-measured and kept on set v2, Set v2 baseline and figure-leg measurement below).
     * Reranker provider/model and default filing policy were raised for user input.
     * In the absence of a different choice, use the recommended configurable defaults above.
 
@@ -408,17 +408,17 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
 |---|---|---|
 | rag.evaluation.set | evaluation/retrieval-set-v2.json | Classpath resource of the set every run evaluates, recorded as `properties.set`; `evaluation/retrieval-set-v1.json` for comparison runs; must not be blank |
 | rag.evaluation.window | 10 | Chunks retrieved per question, 5 to 20; a passage beyond it is a miss |
-| rag.evaluation.min-hit-at-5 | 0.50 | Floor asserted by the opt-in `RetrievalEvaluationLiveTests` |
+| rag.evaluation.min-hit-at-5 | 0.65 | Floor asserted by the opt-in `RetrievalEvaluationLiveTests`; derived on set v2 (snapshot 69), superseding the set v1 floor of 0.50 |
 
     * Endpoints (integration token required, `Authorization: Bearer <INTEGRATION_ACCESS_TOKEN>`)
         * `POST /api/rag/evaluate` runs every question through retrieval and stores a snapshot in `retrieval_evaluations` (migration V8); `GET /api/rag/evaluate` returns the newest snapshot (404 before the first); `GET /api/rag/evaluate/{id}` returns one by id.
         * `POST /api/rag/evaluate?hybrid=true|false` passes that value as the `hybrid` field of every retrieval request (forcing keyword plus vector fusion on or off for the whole run without a restart) and records it as `properties.hybrid`; without the parameter every request carries null (each follows `rag.retrieval.hybrid-enabled`) and `properties.hybrid` is null.
         * A snapshot carries `hitAt1`, `hitAt3`, `hitAt5`, `mrr`, `tickerHitAt5`, `window`, `retrievalStrategy`, the run `properties` (window, latestFilingsOnly, set, setCreatedOn, candidateCount, rerankingEnabled, hybridEnabled, keywordCandidateCount, rrfK, rrfVectorWeight, rrfKeywordWeight, rrfFigureWeight, hybrid), per-question `results` (rank and matched chunk id, null on a miss), and `misses` with the top three returned chunks (chunk id, accession, section, similarity) or the retrieval error.
     * Regression floor
-        * `RetrievalEvaluationLiveTests` (opt-in, `@EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")`) runs the real evaluation against the local store and asserts hit@5 at or above `rag.evaluation.min-hit-at-5` (default 0.50: the current baseline's hit@5 minus 0.1, rounded down to a multiple of 0.05, never lowered; vector-only 0.6 gave 0.50 and the hybrid baseline 0.633333 gives 0.533 rounded down to 0.50, so the floor stays). It prints the metrics, per-ticker hit@5, and every miss with its top chunks, and it runs inside a rolled-back transaction so no snapshot is stored (the id sequence still advances).
+        * `RetrievalEvaluationLiveTests` (opt-in, `@EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")`) runs the real evaluation against the local store and asserts hit@5 at or above `rag.evaluation.min-hit-at-5` (default 0.65 since 2026-09-13: the current baseline's hit@5 minus 0.1, rounded down to a multiple of 0.05; on set v2 the baseline 0.785714 gives 0.65. Under set v1 it was 0.50: vector-only 0.6 gave 0.50 and the hybrid baseline 0.633333 gave 0.533 rounded down to 0.50; that floor is superseded, see Set v2 baseline and figure-leg measurement). It prints the metrics, per-ticker hit@5, and every miss with its top chunks, and it runs inside a rolled-back transaction so no snapshot is stored (the id sequence still advances).
         * Run: `set -a && source .env && set +a && ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true`; override the floor with `-Drag.evaluation.min-hit-at-5=<fraction>`. Without the system property the test is skipped, so `./mvnw -q verify` never embeds anything.
         * Verified 2026-09-12: the default floor passes (exit 0, hit@5 0.600000); a floor of 1.01 fails with an assertion naming hit@5 0.600000 and the nine miss ids (exit 1). Evidence: `documentation/live-runs/2026-09-12-retrieval-eval/`.
-        * Raise the floor after a retrieval improvement lands and its new baseline is recorded here; never lower it to make a change pass.
+        * Raise the floor after a retrieval improvement lands and its new baseline is recorded here; never lower it to make a change pass. The one exception is a new set version: the floor is then re-derived from that set's baseline and may move either way, because numbers from different sets are not comparable (2026-09-13, v1 0.50 to v2 0.65).
     * First baseline (set v1, snapshot id 13, `GET /api/rag/evaluate/13`)
 
 | Field | Value |
@@ -445,7 +445,7 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
 | nvda-03 (FIGURE, share repurchases) | 10-K ITEM_7 | 10-K ITEM_5 (chunk 797, 0.69), ITEM_15, ITEM_5 | Item 5 states the identical sentence ("we repurchased 282 million shares ... $40.4 billion") and was rank 1; the expectation's section is too narrow (RAG-11) |
 | nvda-04 (FIGURE, employees and R&D headcount) | 10-K ITEM_1 | 10-K ITEM_7 (0.62), ITEM_15 (0.62), ITEM_7 (0.62) | Low, flat similarities; the headcount sentence sits in a 15-chunk Item 1 that the query does not pull ahead of MD&A. Keyword ("employees") would help (RAG-2) |
 | nvda-05 (NARRATIVE, fabless manufacturing) | 10-K ITEM_1 | 10-K ITEM_1 (chunks 742, 744, 743; 0.57 to 0.54) | Right section, the three chunks before the passage (749); Item 1's opening business overview outscores the manufacturing paragraph. A reranker (RAG-1) is the fix; the adjacent-chunk pattern also argues for RAG-5 |
-| nvda-07 (NARRATIVE, manufacturing concentration and geopolitics) | 10-K ITEM_1A | 10-Q ITEM_1A (0.59), 10-K ITEM_1A (0.59), 10-K ITEM_7 | Right sections in both filings, wrong chunks among 35 risk-factor chunks; the country list is in chunk 770. Reranking (RAG-1); the 10-Q may restate the risk, worth a second expectation (RAG-11) |
+| nvda-07 (NARRATIVE, manufacturing concentration and geopolitics) | 10-K ITEM_1A | 10-Q ITEM_1A (0.59), 10-K ITEM_1A (0.59), 10-K ITEM_7 | Right sections in both filings, wrong chunks among 35 risk-factor chunks; the country list is in chunk 770. Reranking (RAG-1); the 10-Q may restate the risk, worth a second expectation (RAG-11). Note 2026-09-13: plan Amendment 1 rejected a second expectation, because the 10-K and 10-Q passages naming Taiwan and South Korea answer only part of the question; the concentration statement is only in chunk 770, so nvda-07 stays a genuine miss |
 | nvda-09 (FIGURE, Q2 fiscal 2027 Data Center revenue) | 10-Q ITEM_2 | 10-Q ITEM_1 (0.70), ITEM_2 (0.70), ITEM_2 (0.69) | Right filing, financial statements and neighbouring MD&A chunks outrank the sentence in chunk 879; "$89.0 billion" is a keyword case (RAG-2) |
 
     * Reading the misses
@@ -577,6 +577,70 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
         * Verified 2026-09-12 with the final defaults: `./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true` exit 0 (`live-test-pass.log`), the run following the new properties (weights 1.0 / 0.5 / 1.0, HYBRID_RRF, hit@5 0.633333, MRR 0.463373); the transaction rolled back.
     * Evidence
         * `documentation/live-runs/2026-09-12-fusion-tuning/`: `snapshot-<id>-<configuration>.json` for 48 to 54 (row_to_json of the stored rows), `rule-table.txt` (the metrics, the rule per row, and the per-question ranks of 35, 34, and 48 to 54 side by side), `retrieve-nvda-figure-top5.json`, `retrieve-nvda-figure-top10.json`, `retrieve-msft-04-top5.json` (the checks above), `live-test-pass.log`, `run.log` (each start command's overrides, the snapshot ids, the decision, the builds). Snapshot ids 36 to 47 were consumed by rolled-back live-test transactions and are not stored.
+    * Set v2 baseline and figure-leg measurement (Follow_Ups RAG-11 and RAG-12; plan `plans/2026-09-13-evaluation-set-v2.md`, Milestone 2; measured 2026-09-13)
+        * v1 and v2 numbers are not comparable. Set v2 adds 12 questions that all carry a figure and counts alternative expectations that v1 does not, so the same retrieval scores differently: under identical code, store, and defaults, snapshot 70 (v1) has hit@5 0.633333 and snapshot 69 (v2) 0.785714, and even the 30 carried questions score 21 of 30 (0.7) under v2 against 19 of 30 under v1 with every returned ranking unchanged, because nvda-01 and nvda-03 now match an alternative and aapl-02, aapl-06, msft-05, and nvda-06 match one at a better rank. Compare a v2 snapshot only with other v2 snapshots; the v1 tables above stay comparable only with each other.
+        * Method: as in Fusion tuning, one application start per configuration with the weights overridden through `RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT` and `RAG_RETRIEVAL_RRF_FIGURE_WEIGHT` (and `RAG_EVALUATION_SET` for the v1 check), one `POST /api/rag/evaluate` without `hybrid` (`properties.hybrid` null, `hybridEnabled` true, strategy HYBRID_RRF), `rrf-k` 60 and `rrf-vector-weight` 1.0 throughout, 42 embeddings per v2 run, no chat model. Each snapshot's `properties` carry the `set` and the weights it claims (`GET /api/rag/evaluate/{id}`; psql check in `run.log`). The figure leg now runs: each v2 run with a non-zero figure weight logs `Figure search completed` for exactly the 12 new questions and skips the other 30 (`reason=noFigureTerms`).
+        * v1 check: snapshot 70 (current defaults, `rag.evaluation.set=evaluation/retrieval-set-v1.json`) reproduces snapshot 51 exactly: hit@1 0.333333, hit@3 0.533333, hit@5 0.633333, MRR 0.463373, AAPL 0.9 / MSFT 0.7 / NVDA 0.3, and every question's rank and matched chunk identical, so nothing in the store or the retrieval drifted between the fusion tuning and this measurement.
+    * Baseline and grid (set v2, 42 questions, 14 per ticker, 28 FIGURE; window 10, candidateCount 40, keywordCandidateCount 40, reranking off, latest filings only)
+
+| Configuration (k / vector / keyword / figure) | Snapshot | Set | hit@1 | hit@3 | hit@5 | MRR | Per-ticker hit@5 (AAPL / MSFT / NVDA) | FIGURE questions in the top 5 (of 28) |
+|---|---|---|---|---|---|---|---|---|
+| 60 / 1.0 / 0.5 / 1.0 (v2 baseline, current defaults) | 69 | evaluation/retrieval-set-v2.json | 0.547619 | 0.714286 | 0.785714 | 0.655187 | 0.928571 / 0.785714 / 0.642857 | 22 |
+| 60 / 1.0 / 0.5 / 0.0 (figure leg off) | 71 | evaluation/retrieval-set-v2.json | 0.380952 | 0.619048 | 0.738095 | 0.533362 | 0.928571 / 0.714286 / 0.571429 | 20 (without msft-13, nvda-12) |
+| 60 / 1.0 / 0.5 / 0.5 | 72 | evaluation/retrieval-set-v2.json | 0.547619 | 0.714286 | 0.761905 | 0.650425 | 0.928571 / 0.785714 / 0.571429 | 21 (without nvda-12) |
+| 60 / 1.0 / 0.5 / 1.5 (added: 69 and 73 tied on hit@5, so the one weight between them could still win on MRR) | 75 | evaluation/retrieval-set-v2.json | 0.523810 | 0.714286 | 0.785714 | 0.644473 | 0.928571 / 0.785714 / 0.642857 | 22 |
+| 60 / 1.0 / 0.5 / 2.0 | 73 | evaluation/retrieval-set-v2.json | 0.523810 | 0.714286 | 0.785714 | 0.644473 | 0.928571 / 0.785714 / 0.642857 | 22 |
+| 60 / 1.0 / 1.0 / 1.0 (keyword cross-check) | 74 | evaluation/retrieval-set-v2.json | 0.500000 | 0.690476 | 0.785714 | 0.619444 | 0.928571 / 0.785714 / 0.642857 | 21 (without msft-04) |
+| reference: 60 / 1.0 / 0.5 / 1.0 on set v1 (v1 check, not comparable with the rows above) | 70 | evaluation/retrieval-set-v1.json | 0.333333 | 0.533333 | 0.633333 | 0.463373 | 0.9 / 0.7 / 0.3 | 8 (of 16) |
+
+        * Questions outside the top 5 under 69: aapl-09 (8), msft-01 (6), msft-07 (7), nvda-05 (10), and msft-08, nvda-02, nvda-04, nvda-07, nvda-09 not in the window. 71 and 72 add msft-13 and nvda-12 (71) or nvda-12 (72) as not in the window; 73 and 75 have 69's misses with the same ranks; 74 moves msft-04 to 8, msft-07 to 4, msft-01 and aapl-09 to 10, nvda-09 to 8, and drops nvda-05 from the window.
+    * Rule (restated for v2): among the v2 configurations, the highest hit@5 such that, compared with the v2 baseline 69, (a) no ticker's hit@5 decreases and (b) no FIGURE question in the top 5 under 69 (22 questions: aapl-01, aapl-02, aapl-06, aapl-07, aapl-11 to aapl-14, msft-02, msft-04, msft-10, msft-11 to msft-14, nvda-01, nvda-03, nvda-08, nvda-11 to nvda-14) leaves the top 5; ties on hit@5 break by MRR, then by the smaller change from the current defaults (sum of absolute weight differences). The baseline always qualifies.
+    * Rule applied row by row
+
+| Snapshot | (a) tickers vs 69 | (b) protected FIGURE questions kept | hit@5 / MRR / change | Result |
+|---|---|---|---|---|
+| 69 (60 / 1.0 / 0.5 / 1.0) | baseline | baseline | 0.785714 / 0.655187 / 0.0 | qualifies |
+| 71 (60 / 1.0 / 0.5 / 0.0) | fails: MSFT 0.714286, NVDA 0.571429 | fails: msft-13 rank 1 to not in the window, nvda-12 rank 5 to not in the window | 0.738095 / 0.533362 / 1.0 | out |
+| 72 (60 / 1.0 / 0.5 / 0.5) | fails: NVDA 0.571429 | fails: nvda-12 rank 5 to not in the window | 0.761905 / 0.650425 / 0.5 | out |
+| 75 (60 / 1.0 / 0.5 / 1.5) | holds | holds (every rank as 73) | 0.785714 / 0.644473 / 0.5 | qualifies; ties 69 on hit@5, lower MRR |
+| 73 (60 / 1.0 / 0.5 / 2.0) | holds | holds | 0.785714 / 0.644473 / 1.0 | qualifies; ties 69 on hit@5, lower MRR |
+| 74 (60 / 1.0 / 1.0 / 1.0) | holds (MSFT stays 0.785714: msft-07 enters at 4 as msft-04 leaves) | fails: msft-04 rank 4 to 8 | 0.785714 / 0.619444 / 0.5 | out |
+
+        * Chosen: snapshot 69, the current defaults (`rrf-k` 60, `rrf-vector-weight` 1.0, `rrf-keyword-weight` 0.5, `rrf-figure-weight` 1.0). Order of the qualifying rows: 69 (0.785714, MRR 0.655187) ahead of 75 and 73 (0.785714, MRR 0.644473). No default changes; application.yaml and `FilingRetrievalProperties` keep these values, with comments now citing this measurement.
+        * The figure weight survived measurement. With the leg off (71) hit@5 falls 0.785714 to 0.738095, hit@1 0.547619 to 0.380952, and MRR 0.655187 to 0.533362; at 0.5 nvda-12 leaves the window; at 1.5 and 2.0 the only changes against 69 are nvda-11 rank 1 to 2 and nvda-12 rank 5 to 4, so hit@1 drops to 0.523810 and MRR to 0.644473. 1.0 is the best measured point by the rule, not merely a tie-break.
+    * Former narrow misses under v2 (the two questions that gained genuine alternatives; nvda-07 kept its single expectation under plan Amendment 1 and stays a miss, not in the window under 51 or 69)
+
+| Question | Rank in v1 snapshot 51 | Rank in v2 baseline 69 | Matched passage under 69 |
+|---|---|---|---|
+| nvda-01 (fiscal 2026 revenue and growth) | not in the window | 3 | chunk 805, 10-K ITEM_7 segment table "Total $ 215,938 $ 130,497 $ 85,441 65 %" (the alternative; retrieval is unchanged, chunk 805 was rank 3 under 51 too) |
+| nvda-03 (fiscal 2026 share repurchases) | not in the window | 1 | chunk 797, 10-K ITEM_5 "we repurchased 282 million shares of our common stock for $40.4 billion" (the alternative; also rank 1 under 51) |
+
+    * The 12 new FIGURE questions, figure leg on (69, weight 1.0) against off (71, weight 0.0); rank and matched chunk
+
+| Question | Figure in the question | Leg on (69) | Leg off (71) | Moved |
+|---|---|---|---|---|
+| aapl-11 | 14%, $109,158 million | 1 (225) | 1 (225) | no |
+| aapl-12 | 75.4%, 73.9% | 1 (226) | 2 (226) | yes, up one with the leg |
+| aapl-13 | $54,252 million | 1 (278) | 1 (278) | no |
+| aapl-14 | 32%, $11,729 million | 1 (279) | 1 (279) | no |
+| msft-11 | $31.0 billion, 31% | 1 (519) | 4 (519) | yes |
+| msft-12 | 29% | 2 (519) | 4 (519) | yes |
+| msft-13 | $182.9 billion, $46.8 billion | 1 (523) | not in the window | yes, into the top 5 only with the leg |
+| msft-14 | 40% | 1 (644) | 2 (644) | yes |
+| nvda-11 | $193,479 million | 1 (805) | 2 (805) | yes |
+| nvda-12 | 70% | 5 (802) | not in the window | yes, into the top 5 only with the leg |
+| nvda-13 | $7.2 billion | 1 (880) | 4 (880) | yes |
+| nvda-14 | $96,221 million | 1 (872) | 3 (872) | yes |
+
+        * Nine of the 12 moved, every one of them up with the leg on; the three AAPL questions that did not move were already rank 1 without it. None of the 30 carried questions changed rank between 69 and 71, as expected: none carries a figure token, so the leg never ran for them.
+    * Floor decision
+        * Rule: the v2 winner's hit@5 minus 0.1, rounded down to a multiple of 0.05. 0.785714 minus 0.1 = 0.685714, rounded down to 0.65, so `rag.evaluation.min-hit-at-5` is 0.65 since 2026-09-13 (application.yaml and the `RetrievalEvaluationProperties` default; `RetrievalEvaluationSetTests` and `RetrievalEvaluationSetLoaderTests` assert it). The set v1 floor of 0.50 (derived from snapshots 13 and 34) is superseded: a floor is only meaningful against the set it was derived from, which is why this re-derivation may move it in either direction; here it rises.
+        * Verified 2026-09-13 with the final defaults and set v2: `./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true` exit 0, `set=v2 questions=42 strategy=HYBRID_RRF hitAt5=0.785714 mrr=0.655187 floor=0.65` (identical to 69); `retrieval_evaluations` held 21 rows (max id 75) before and after, id 76 consumed by the rolled-back transaction.
+    * Known v2 limitations
+        * msft-14's phrase ("Azure and other cloud services revenue grew 40% driven by demand for services across the platform") also occurs in the 10-Q's nine-month discussion (chunk 646, revenue up $22.1 billion) as well as the third-quarter one (chunk 644, up $7.9 billion), so retrieving the nine-month chunk would count as a hit for a third-quarter question. Every run here matched chunk 644.
+        * The phrase-echo test in `RetrievalEvaluationSetLoaderTests` (no run of five or more words shared between question and phrase) covers only the four questions reworded under Amendment 1 (msft-11, msft-12, msft-14, nvda-13), not the other eight new questions.
+    * Evidence
+        * `documentation/live-runs/2026-09-13-evaluation-set-v2/`: `snapshot-<id>-<set>-<configuration>.json` for 69 to 75 (row_to_json of the stored rows), `rule-table.txt` (metrics, the rule per row, the narrow-miss and figure-question tables, and every question's rank under 69, 71, 72, 73, 75, 74 and under 51 and 70), `run.log` (each start's overrides, the snapshot ids, the psql configuration check, the figure-search log counts, the rule, the decision), `live-test.log` (the floor test with row counts).
 
 * Filing Freshness
     * Purpose
@@ -677,3 +741,9 @@ curl -X POST http://localhost:8080/api/rag/retrieve \
     * `FilingRetrievalRepository.figureTerms` and `findFigureChunks` add a third ranking for queries that carry a figure (AND of the numeric tokens, a year alone excluded); `FilingRetrievalService` fuses the legs by weighted reciprocal rank (`rrf-vector-weight`, `rrf-keyword-weight`, `rrf-figure-weight`, `rrf-k`), the snapshot `properties` record the three weights, and a figure-leg failure falls back to the two-leg fusion with a WARN.
     * Measured on set v1 (Fusion tuning above): seven configurations, snapshots 48 to 54, against 35 and 34 under a rule that also protects every FIGURE question either reference had in the top 5. Winner snapshot 51 (k 60, weights 1.0 / 0.5 / 1.0): hit@5 0.633333 unchanged, hit@1 0.333333, MRR 0.463373, no ticker lower, msft-04 back from rank 8 to 4, msft-10 5 to 1; msft-07 4 to 7 and nvda-09 8 to miss are the costs. The set's questions carry no figures, so the figure weight moved nothing there; on the NVDA figure query the "215,938" chunk is rank 1 instead of 3. Defaults changed accordingly; `rag.evaluation.min-hit-at-5` stays 0.50.
     * Live verification — 2026-09-12: `RetrievalEvaluationLiveTests` with the final defaults, exit 0, HYBRID_RRF, hit@5 0.633333. Evidence: [snapshot 51](live-runs/2026-09-12-fusion-tuning/snapshot-51-k60-kw0.5-fig1.0.json), [rule table](live-runs/2026-09-12-fusion-tuning/rule-table.txt), [floor test](live-runs/2026-09-12-fusion-tuning/live-test-pass.log), [run log](live-runs/2026-09-12-fusion-tuning/run.log).
+
+* Change log — 2026-09-13: evaluation set v2 re-baseline and figure-leg measurement (RAG-11, RAG-12)
+    * Measured the current defaults on set v2 (Set v2 baseline and figure-leg measurement above): baseline snapshot 69 hit@1 0.547619, hit@3 0.714286, hit@5 0.785714, MRR 0.655187, AAPL 0.928571 / MSFT 0.785714 / NVDA 0.642857, 22 of 28 FIGURE questions in the top 5; the v1 check (snapshot 70) reproduces snapshot 51 exactly. v1 and v2 numbers are not comparable.
+    * Figure-weight grid on v2 (snapshots 71 to 75, plus a keyword cross-check): the leg ran for the 12 new figure questions; weight 0.0 drops hit@5 to 0.738095 and MRR to 0.533362, 0.5 loses nvda-12, 1.5 and 2.0 tie hit@5 with lower MRR, keyword 1.0 loses msft-04. The rule keeps the current defaults (k 60, 1.0 / 0.5 / 1.0); no retrieval code or weight changed.
+    * Floor re-derived on v2: 0.785714 minus 0.1 rounded down to 0.05 gives `rag.evaluation.min-hit-at-5` 0.65, superseding the v1 floor of 0.50.
+    * Live verification — 2026-09-13: `RetrievalEvaluationLiveTests` with the final defaults and set v2, exit 0, HYBRID_RRF, hit@5 0.785714, floor 0.65, rolled back. Evidence: [baseline snapshot 69](live-runs/2026-09-13-evaluation-set-v2/snapshot-69-v2-k60-kw0.5-fig1.0-baseline.json), [v1 check snapshot 70](live-runs/2026-09-13-evaluation-set-v2/snapshot-70-v1-k60-kw0.5-fig1.0-check.json), [rule table](live-runs/2026-09-13-evaluation-set-v2/rule-table.txt), [floor test](live-runs/2026-09-13-evaluation-set-v2/live-test.log), [run log](live-runs/2026-09-13-evaluation-set-v2/run.log).

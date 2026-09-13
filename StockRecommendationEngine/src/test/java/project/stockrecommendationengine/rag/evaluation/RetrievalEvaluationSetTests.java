@@ -37,6 +37,11 @@ class RetrievalEvaluationSetTests {
         assertThat(set.questions()).hasSizeBetween(40, 44);
     }
 
+    @Test void theBoundHitAt5FloorIsTheSetV2Derivation() {
+        // Set v2 winner snapshot 69: hit@5 0.785714 - 0.1 = 0.685714, rounded down to a multiple of 0.05.
+        assertThat(properties.getMinHitAt5()).isEqualByComparingTo("0.65");
+    }
+
     @Test void everyExpectedPassageOfTheSelectedSetIsAVerbatimExcerptOfAStoredChunk() {
         var set = loader.load();
         assertThat(misses(set)).as("expected passages of set %s (%s) not found in the store", set.version(), properties.getSet()).isEmpty();

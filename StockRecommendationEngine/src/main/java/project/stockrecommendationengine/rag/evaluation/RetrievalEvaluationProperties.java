@@ -31,10 +31,11 @@ public class RetrievalEvaluationProperties {
     private int window = 10;
 
     /**
-     * Regression floor for hit@5 asserted by the opt-in live test (RetrievalEvaluationLiveTests). Set from the first
-     * baseline (snapshot 13, hit@5 0.6) minus 0.1, rounded down to a multiple of 0.05. A value above 1 can never be met,
-     * which is how the assertion is proven live.
+     * Regression floor for hit@5 asserted by the opt-in live test (RetrievalEvaluationLiveTests): the baseline's hit@5
+     * minus 0.1, rounded down to a multiple of 0.05. Derived on set v2 (snapshot 69, hit@5 0.785714, gives 0.65); this
+     * supersedes the set v1 floor of 0.50 (snapshot 13, hit@5 0.6), since metrics are not comparable across sets. A value
+     * above 1 can never be met, which is how the assertion is proven live.
      */
     @NotNull @DecimalMin("0.0")
-    private BigDecimal minHitAt5 = new BigDecimal("0.50");
+    private BigDecimal minHitAt5 = new BigDecimal("0.65");
 }

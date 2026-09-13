@@ -54,8 +54,9 @@ public class FilingRetrievalProperties {
 
     /**
      * Weight of the figure ranking (chunks containing every numeric token of the query; {@code figureTerms}); 0 leaves
-     * that leg off. 1.0 since the 2026-09-12 fusion tuning (snapshot 51): the leg runs only for queries that carry a
-     * figure, which none of the evaluation set's questions do, so it is active for numeric questions at no measured cost.
+     * that leg off. 1.0 since the 2026-09-12 fusion tuning (snapshot 51, where set v1 carried no figure and the leg never
+     * ran); kept after measurement on set v2 (2026-09-13): snapshot 69 at 1.0 has hit@5 0.785714 and MRR 0.655187, against
+     * 0.738095 and 0.533362 with the leg off (snapshot 71), and no other figure weight qualified with a higher MRR.
      */
     @DecimalMin("0.0") @DecimalMax("10.0")
     private double rrfFigureWeight = 1.0;

@@ -214,3 +214,37 @@ is not loaded. UT also recorded, from snapshot 459's report, facts Milestone 4's
 [-4.609346, 0.81250834]; chunk 466 (msft-04) reranked 11 with ten chunks above; chunk 467 fused 21, not a rerank input;
 nvda-02's and nvda-04's accepted chunks at fused positions 41 and 54, outside the 20 inputs. These are properties of
 snapshot 459 only; Milestone 4 cites them from its own traced runs.
+
+## Amendment 4 (2026-09-13, after Milestone 3 Scrutiny FAIL)
+
+Milestone 3 (811ca14) failed Scrutiny. Every check type passed true claims and failed false ones, but the checker never
+compares a claim's `text` with its `check`, while RAG.md said a sentence could not drift from its check: "Snapshot 297
+ranks msft-05 first" passed with a check expecting rank 10, and "every row" passed with a check listing two rows. A
+metric with more than six decimals crashed the whole check. Remediation round 1 changes the design, in line with Jay's
+rule that a sentence is generated from computed values rather than written beside them:
+
+- **Sentences for observed and derived claims are rendered from the check.** Each check type has a fixed sentence
+  template filled from its parameters and the values found in the evidence (for example rank: "Snapshot {label} ranks
+  {question} {rank or 'outside the window'}."; topK: one clause per listed row, so "every" appears only when the list
+  equals a named, checked set of rows). The claims file no longer carries free `text` for these claims; an optional
+  `label` names a snapshot or report file for readability and may not contain digits. The generator prints the rendered
+  sentence; the check renders it again and compares.
+- **Free text only where no check can render it:** `inferred`, `unknown`, and `experiment` claims keep a `text`. It is
+  printed with its premises or reason ("inferred from C-004, C-005"), it is screened by the causal and absolute-wording
+  rules below, and RAG.md states plainly that such sentences are reviewed by people and validators, not proven by the
+  checker.
+- **Causal and absolute wording.** The screen matches word stems and inflections (for example caus-, result-, lead-/led,
+  driv-/drove, lift-, push-, boost-, improv-, trigger-, contribut-, stem- from, account- for, responsible for, reason,
+  why, thus, therefore, consequently, because, due to, thanks to, owing to, made ... to) and absolute or predictive
+  wording (always, never, will, every, all, none, guarantee-). A causal match requires basis `experiment`; an absolute
+  or predictive match in free text is rejected. The list and its limits are documented.
+- **Experiments are checked against recorded runs.** An experiment file names the factor, the two settings, and the two
+  committed snapshot files; the check reads both snapshots' recorded properties and fails unless they differ in exactly
+  the named factor (every other recorded property equal, `trace` and identifiers excepted), and the claim's check must
+  reference one of those snapshots or reports built from them.
+- **Robustness and scope:** paths must resolve inside `src/main/java/documentation/live-runs/`; unknown keys are
+  rejected at every nesting level, including topK rows; a ruleRow criterion whose data is absent fails rather than
+  passing; any exception inside one claim becomes a problem naming it, so one bad claim never stops the list; the
+  generator reports an unbalanced document and continues with the rest; the RAG.md wording about differing lines and
+  unbalanced files matches the code. Whether referenced files are committed stays a review item, documented.
+- The worked example `claims.json` (13 claims) and its RAG.md block are regenerated under the new format.

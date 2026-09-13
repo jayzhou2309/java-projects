@@ -49,9 +49,11 @@ import java.util.stream.Collectors;
  * rows times longest-pair width squared stays within {@link CrossEncoderPairAssembler#MAX_ATTENTION_CELLS_PER_RUN} (eight
  * 512-token pairs), because attention memory, about 88 MB per 512-token row, would otherwise reach 3.9 GB at batch size 64.
  * Measured in child JVMs under {@code /usr/bin/time -l} on the development Mac (2026-09-13, RAG.md Latency): a query and 40
- * passages of 20,000 characters take at most about 2.1 s per call with a peak process footprint under 1.0 GB at max-length 512
- * (any batch size, CJK or {@code "a "}), and at most 1.1 s and 0.38 GB at max-length 16; 20 passages of 2,000 characters at the
- * defaults take about 0.3 s. Memory adds up per concurrent call (two simultaneous heaviest calls: 1.43 GB).
+ * passages of 20,000 characters take at most about 2.1 s per call with a peak process footprint of about 1.0 GB at max-length 512
+ * (CJK or {@code "a "}), and at most 1.1 s and 0.38 GB at max-length 16; 20 passages of 2,000 characters at the defaults take
+ * about 0.3 s. The cap bounds memory at about 1.0 GB per call (1,008 MiB for 64 passages of 181-token pairs at batch size 64,
+ * the worst shape found), but below that ceiling a larger batch size still raises it (303 MiB at batch size 1, 880 MiB at 20).
+ * Memory adds up per concurrent call: up to 1.65 GB measured for the two calls the retrieval pool allows at once.
  * <p>
  * Network. The static initializer applies {@link DjlRuntimeDefaults} (system properties {@code OPT_OUT_TRACKING=true} and
  * {@code ai.djl.offline=true} when absent) before any DJL class is initialised, so {@code Ec2Utils.callHome} in

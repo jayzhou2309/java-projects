@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.Miss;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionResult;
+import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.SliceMetrics;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -21,8 +22,11 @@ public class RetrievalEvaluationRepository {
     private final JdbcTemplate jdbc;
     private final JsonMapper json = JsonMapper.builder().build();
 
-    /** The results column: per-question ranks, per-ticker hit@5, and the misses, as one JSON document. */
-    record StoredResults(List<QuestionResult> questions, Map<String, BigDecimal> tickerHitAt5, List<Miss> misses) { }
+    /**
+     * The results column: per-question ranks, per-ticker hit@5, the misses, and the per-slice metrics, as one JSON
+     * document. Rows written before slices were added have no {@code slices} key and read back with slices null.
+     */
+    record StoredResults(List<QuestionResult> questions, Map<String, BigDecimal> tickerHitAt5, List<Miss> misses, Map<String, SliceMetrics> slices) { }
 
     public RetrievalEvaluation save(RetrievalEvaluation e) {
         Long id = jdbc.queryForObject("""
@@ -31,7 +35,7 @@ public class RetrievalEvaluationRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb)) RETURNING id
                 """, Long.class, Timestamp.from(e.evaluatedAt()), e.setVersion(), e.questionCount(), e.hitAt1(), e.hitAt3(), e.hitAt5(),
                 e.mrr(), e.window(), e.retrievalStrategy(), json.writeValueAsString(e.properties()),
-                json.writeValueAsString(new StoredResults(e.results(), e.tickerHitAt5(), e.misses())));
+                json.writeValueAsString(new StoredResults(e.results(), e.tickerHitAt5(), e.misses(), e.slices())));
         return e.withId(id);
     }
 
@@ -51,6 +55,6 @@ public class RetrievalEvaluationRepository {
                 rs.getInt("question_count"), rs.getBigDecimal("hit_at_1"), rs.getBigDecimal("hit_at_3"), rs.getBigDecimal("hit_at_5"),
                 rs.getBigDecimal("mrr"), rs.getInt("window_size"), rs.getString("retrieval_strategy"), properties,
                 stored.questions() == null ? List.of() : stored.questions(), stored.tickerHitAt5() == null ? Map.of() : stored.tickerHitAt5(),
-                stored.misses() == null ? List.of() : stored.misses());
+                stored.misses() == null ? List.of() : stored.misses(), stored.slices());
     };
 }

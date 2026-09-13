@@ -1,0 +1,57 @@
+Non-figure regression floor (Follow_Ups RAG-13; Milestone 1 of plans/2026-09-13-non-figure-floor.md), 2026-09-13
+Branch non-figure-floor from 78c132d. Code under test: slice metrics in RetrievalEvaluationService (compiled before the run), no retrieval, set, or weight change.
+
+Harness (one application start, one POST, stop; no RAG_* overrides; the application enable flags never exported; .env holds only POSTGRES_*, SEC_USER_AGENT, OPENAI_API_KEY):
+  set -a && source .env && set +a && export INTEGRATION_ACCESS_TOKEN=<32+ chars> SERVER_PORT=8081 && nohup ./mvnw -q -o spring-boot:run > worker-app.log 2>&1 &
+  wait for "Started StockRecommendationEngineApplication"
+  curl -X POST -H "Authorization: Bearer $INTEGRATION_ACCESS_TOKEN" http://localhost:8081/api/rag/evaluate    -> HTTP 200
+  pkill -f spring-boot:run; pkill -f StockRecommendationEngineApplication; lsof -i :8081 empty ("port free")
+  No chat model; 42 embeddings for the run, 42 per live-test run (84), 126 in total.
+
+Rows before the run: 21 stored, max id 75. After: 22 stored, new snapshot id 91 (ids 76 to 90 were taken by earlier rolled-back test transactions and are not stored).
+
+Snapshot 91 (set evaluation/retrieval-set-v2.json, v2, HYBRID_RRF, window 10, k 60, weights 1.0 / 0.5 / 1.0, hybrid null, hybridEnabled true):
+  aggregate  42 questions  hit@1 0.547619  hit@3 0.714286  hit@5 0.785714  MRR 0.655187   (identical to snapshot 69)
+  figure     12 questions  hit@1 0.833333  hit@3 0.916667  hit@5 1.000000  MRR 0.891667   window misses []
+  nonFigure  30 questions  hit@1 0.433333  hit@3 0.633333  hit@5 0.700000  MRR 0.560595   window misses [msft-08, nvda-02, nvda-04, nvda-07, nvda-09]
+  -> snapshot-91.json (select row_to_json(r) from retrieval_evaluations r where id=91)
+
+Reproduction check against snapshot 69 (rank, matched chunk, error, and position of every question):
+  select a.q->>'id', a.q->>'rank', b.q->>'rank', a.q->>'matchedChunkId', b.q->>'matchedChunkId', a.q->>'error', b.q->>'error'
+  from (select q, ord from retrieval_evaluations, jsonb_array_elements(results->'questions') with ordinality as t(q,ord) where id=69) a
+  full join (select q, ord from retrieval_evaluations, jsonb_array_elements(results->'questions') with ordinality as t(q,ord) where id=91) b on a.q->>'id'=b.q->>'id'
+  where a.q->>'rank' is distinct from b.q->>'rank' or a.q->>'matchedChunkId' is distinct from b.q->>'matchedChunkId' or a.q is null or b.q is null or a.ord<>b.ord;
+  -> 0 rows. The aggregate columns and properties of 69 and 91 are equal (psql select of both rows). No drift.
+
+Slice split recomputed outside the service (question text from retrieval-set-v2.json through FilingRetrievalRepository.figureTerms via jshell on target/classes; ranks from snapshot 91):
+  figure (12): aapl-11 1, aapl-12 1, aapl-13 1, aapl-14 1, msft-11 1, msft-12 2, msft-13 1, msft-14 1, nvda-11 1, nvda-12 5, nvda-13 1, nvda-14 1   -> 12 of 12 at 5
+  nonFigure (30): aapl-01..10 ranks 1 1 2 1 1 2 1 1 8 1; msft-01..10 ranks 6 2 2 4 2 1 7 miss 1 1; nvda-01..10 ranks 3 miss 1 miss 10 1 miss 5 miss 1   -> 21 of 30 at 5
+  Not at 5 in the non-figure slice: ranked 6 to 10 aapl-09 (8), msft-01 (6), msft-07 (7), nvda-05 (10); not in the window msft-08, nvda-02, nvda-04, nvda-07, nvda-09.
+  On v2 the slices are exactly the 12 questions added in v2 (-11 to -14) and the 30 carried from v1.
+
+Floor derivation (BigDecimal, jshell): 0.700000 - 0.1 = 0.600000; / 0.05 = 12; FLOOR -> 12; x 0.05 = 0.60.
+  rag.evaluation.min-non-figure-hit-at-5 = 0.60 (application.yaml, RetrievalEvaluationProperties default; RetrievalEvaluationSetTests and RetrievalEvaluationSetLoaderTests assert it).
+  What it protects: 0.60 of 30 = 18 hits needed (17 of 30 = 0.566667 fails); snapshot 91 has 21, so at most 3 can be lost.
+  Aggregate floor unchanged at 0.65: 28 of 42 needed; snapshot 91 has 33, so at most 5 can be lost in total. With both floors, a loss of up to 5 hits passes
+  when no more than 3 of them are non-figure; the figure slice alone is guarded only by the aggregate (up to 5 of its 12 hits if the non-figure slice holds).
+
+Live test (RetrievalEvaluationLiveTests), both runs in a shell with no RAG_* overrides (env | grep -c ^RAG_ -> 0):
+  Re-run 2026-09-13 after the Scrutiny remediation (the first failure message named only the five no-match questions, not those ranked 6 to 10).
+  Code under test: SliceMetrics.notInTop5 ({id, rank} for rank null or > 5), RetrievalEvaluationFloors messages naming every question not in the
+  top 5 with its rank and the hit count, and RETRIEVAL_EVAL notInTop5 lines with minHits = ceiling(floor x count) and margin = hits - minHits.
+  -Drag.evaluation.live=true                                                   -> exit 0; rows 22|91 before and after     (live-test-pass.log)
+    RETRIEVAL_EVAL notInTop5 aggregate hits=33/42 minHits=28 margin=5 questions=<the nine below>
+    RETRIEVAL_EVAL notInTop5 slice=figure hits=12/12 questions=none
+    RETRIEVAL_EVAL notInTop5 slice=nonFigure hits=21/30 minHits=18 margin=3 questions=aapl-09 (rank 8), msft-01 (rank 6), msft-07 (rank 7), msft-08 (no match in window), nvda-02 (no match in window), nvda-04 (no match in window), nvda-05 (rank 10), nvda-07 (no match in window), nvda-09 (no match in window)
+  -Drag.evaluation.live=true -Drag.evaluation.min-non-figure-hit-at-5=0.95     -> exit 1; rows 22|91 before and after     (live-test-non-figure-floor-0.95.log)
+    message: [non-figure hit@5 0.700000 (21 of 30) is below the floor 0.95 (rag.evaluation.min-non-figure-hit-at-5); not in top 5: aapl-09 (rank 8), msft-01 (rank 6), msft-07 (rank 7), msft-08 (no match in window), nvda-02 (no match in window), nvda-04 (no match in window), nvda-05 (rank 10), nvda-07 (no match in window), nvda-09 (no match in window)]
+    failing line 75 (assertNonFigureFloor); the aggregate assertion on line 74 ran first and passed (0.785714 >= 0.65). The forced run prints nonFigure minHits=29 margin=-8.
+  Check against snapshot 91 (python over snapshot-91.json, questions with rank null or > 5): aapl-09 8, msft-01 6, msft-07 7, msft-08 null, nvda-02 null,
+  nvda-04 null, nvda-05 10, nvda-07 null, nvda-09 null -> the message names all nine, in set order, with matching ranks. All nine are non-figure, so the
+  aggregate list is the same nine. No application start and no POST /api/rag/evaluate in the re-run; no chat model; 84 embeddings (42 per run).
+
+Note added 2026-09-13 after validation: the two live-test logs in this directory were produced one commit-tree line
+before the final HEAD (a comment-only Javadoc edit landed afterwards), so they cite RetrievalEvaluationLiveTests.java
+lines 74 (aggregate) and 75 (non-figure). At commit 2c6966b those assertions are on lines 75 and 76; the Scrutiny
+Validator's own forced runs at 2c6966b failed at :75 for the aggregate floor and :76 for the non-figure floor with
+message text identical to these logs. The logs are left unedited as raw output.

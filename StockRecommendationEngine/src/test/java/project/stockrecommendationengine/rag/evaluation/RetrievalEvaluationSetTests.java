@@ -42,6 +42,11 @@ class RetrievalEvaluationSetTests {
         assertThat(properties.getMinHitAt5()).isEqualByComparingTo("0.65");
     }
 
+    @Test void theBoundNonFigureHitAt5FloorIsTheSetV2SliceDerivation() {
+        // Set v2 snapshot 91 non-figure slice: hit@5 0.700000 (21 of 30) - 0.1 = 0.60, already a multiple of 0.05.
+        assertThat(properties.getMinNonFigureHitAt5()).isEqualByComparingTo("0.60");
+    }
+
     @Test void everyExpectedPassageOfTheSelectedSetIsAVerbatimExcerptOfAStoredChunk() {
         var set = loader.load();
         assertThat(misses(set)).as("expected passages of set %s (%s) not found in the store", set.version(), properties.getSet()).isEmpty();

@@ -1,0 +1,575 @@
+Command (shell with .env exported, no RAG_* overrides, no application enable flags): ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true -Drag.evaluation.min-non-figure-hit-at-5=0.95
+retrieval_evaluations count|max(id) rows before: 22|91
+retrieval_evaluations count|max(id) rows after: 22|91
+exit 1
+--- build output ---
+09:00:31.194 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests]: RetrievalEvaluationLiveTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:00:31.254 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration project.stockrecommendationengine.StockRecommendationEngineApplication for test class project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests
+09:00:31.281 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests]: RetrievalEvaluationLiveTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:00:31.282 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration project.stockrecommendationengine.StockRecommendationEngineApplication for test class project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-09-13T09:00:31.399+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.e.RetrievalEvaluationLiveTests     : Starting RetrievalEvaluationLiveTests using Java 26.0.1 with PID 96339 (started by jayzhou in /Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine)
+2026-09-13T09:00:31.400+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.e.RetrievalEvaluationLiveTests     : No active profile set, falling back to 1 default profile: "default"
+2026-09-13T09:00:31.782+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T09:00:31.846+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 59 ms. Found 2 JPA repository interfaces.
+2026-09-13T09:00:32.067+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-13T09:00:32.131+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@136fece2
+2026-09-13T09:00:32.132+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-13T09:00:32.140+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/rag_db (PostgreSQL 16.15)
+2026-09-13T09:00:32.170+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 9 migrations (execution time 00:00.011s)
+2026-09-13T09:00:32.186+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 9
+2026-09-13T09:00:32.187+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-09-13T09:00:32.233+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-13T09:00:32.259+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-09-13T09:00:32.360+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:5432/rag_db]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 16.15
+	Default catalog/schema: rag_db/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-13T09:00:32.428+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T09:00:32.806+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T09:00:32.839+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T09:00:33.072+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-09-13T09:00:33.612+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.e.RetrievalEvaluationLiveTests     : Started RetrievalEvaluationLiveTests in 2.31 seconds (process running for 2.747)
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (/Users/jayzhou/.m2/repository/net/bytebuddy/byte-buddy-agent/1.18.11/byte-buddy-agent-1.18.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+2026-09-13T09:00:33.843+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.e.RetrievalEvaluationService       : Evaluating retrieval: set=v2, questions=42, window=10, hybrid=null
+2026-09-13T09:00:33.843+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:33.843+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=93
+2026-09-13T09:00:34.528+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=684
+2026-09-13T09:00:34.528+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:34.552+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=23
+2026-09-13T09:00:34.552+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:34.564+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=11
+2026-09-13T09:00:34.564+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:34.565+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=45, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:34.587+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:34.587+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=744
+2026-09-13T09:00:34.588+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:34.588+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=74
+2026-09-13T09:00:34.799+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=210
+2026-09-13T09:00:34.799+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:34.816+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=16
+2026-09-13T09:00:34.816+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:34.831+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=14
+2026-09-13T09:00:34.831+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:34.831+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=53, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:34.852+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:34.852+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=264
+2026-09-13T09:00:34.853+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:34.853+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=69
+2026-09-13T09:00:35.070+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=217
+2026-09-13T09:00:35.071+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:35.089+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=18
+2026-09-13T09:00:35.089+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:35.101+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=12
+2026-09-13T09:00:35.102+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:35.102+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=49, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:35.116+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:35.116+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=263
+2026-09-13T09:00:35.118+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:35.118+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=72
+2026-09-13T09:00:35.324+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=206
+2026-09-13T09:00:35.325+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:35.337+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=11
+2026-09-13T09:00:35.337+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:35.348+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=10
+2026-09-13T09:00:35.348+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:35.349+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=61, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:35.370+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:35.370+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=252
+2026-09-13T09:00:35.370+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:35.370+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=48
+2026-09-13T09:00:35.591+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=220
+2026-09-13T09:00:35.591+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:35.609+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=17
+2026-09-13T09:00:35.609+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:35.625+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=15
+2026-09-13T09:00:35.626+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:35.626+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=53, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:35.644+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:35.645+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=274
+2026-09-13T09:00:35.645+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:35.645+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=74
+2026-09-13T09:00:35.876+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=230
+2026-09-13T09:00:35.877+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:35.894+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=17
+2026-09-13T09:00:35.895+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:35.909+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=14
+2026-09-13T09:00:35.909+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:35.910+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=46, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:35.928+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:35.928+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=282
+2026-09-13T09:00:35.929+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:35.929+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=115
+2026-09-13T09:00:36.150+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=221
+2026-09-13T09:00:36.151+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:36.167+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=15
+2026-09-13T09:00:36.167+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:36.182+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=14
+2026-09-13T09:00:36.182+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:36.182+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=51, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:36.198+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:36.199+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=269
+2026-09-13T09:00:36.199+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:36.199+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=77
+2026-09-13T09:00:36.433+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=234
+2026-09-13T09:00:36.434+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:36.451+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=16
+2026-09-13T09:00:36.451+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:36.467+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=15
+2026-09-13T09:00:36.468+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:36.468+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=62, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:36.487+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:36.487+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=287
+2026-09-13T09:00:36.487+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:36.487+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=81
+2026-09-13T09:00:36.710+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=222
+2026-09-13T09:00:36.710+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:36.723+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=12
+2026-09-13T09:00:36.723+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:36.736+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=12
+2026-09-13T09:00:36.736+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:36.736+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=56, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:36.747+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:36.747+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=259
+2026-09-13T09:00:36.748+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:36.748+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=95
+2026-09-13T09:00:36.959+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=211
+2026-09-13T09:00:36.959+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:36.973+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=13
+2026-09-13T09:00:36.973+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:36.995+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=21
+2026-09-13T09:00:36.995+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=AAPL, reason=noFigureTerms
+2026-09-13T09:00:36.995+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=49, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:37.005+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:37.005+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=257
+2026-09-13T09:00:37.005+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:37.005+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=96
+2026-09-13T09:00:37.223+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=217
+2026-09-13T09:00:37.223+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:37.238+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=15
+2026-09-13T09:00:37.239+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:37.269+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=30
+2026-09-13T09:00:37.270+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:37.272+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=AAPL, candidates=3, elapsedMs=2
+2026-09-13T09:00:37.272+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=3, fused=46, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:37.288+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:37.288+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=282
+2026-09-13T09:00:37.289+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:37.289+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=102
+2026-09-13T09:00:37.502+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=213
+2026-09-13T09:00:37.503+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:37.519+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=16
+2026-09-13T09:00:37.520+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:37.552+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=31
+2026-09-13T09:00:37.552+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:37.553+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=AAPL, candidates=1, elapsedMs=1
+2026-09-13T09:00:37.554+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=1, fused=49, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:37.577+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:37.577+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=288
+2026-09-13T09:00:37.578+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:37.578+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=125
+2026-09-13T09:00:37.839+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=261
+2026-09-13T09:00:37.840+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:37.858+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=17
+2026-09-13T09:00:37.858+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:37.893+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=34
+2026-09-13T09:00:37.893+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:37.895+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=AAPL, candidates=2, elapsedMs=2
+2026-09-13T09:00:37.896+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=2, fused=49, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:37.918+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:37.918+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=340
+2026-09-13T09:00:37.918+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=AAPL, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:37.918+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=AAPL, characters=135
+2026-09-13T09:00:38.156+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=AAPL, elapsedMs=237
+2026-09-13T09:00:38.156+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:38.169+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=AAPL, candidates=40, elapsedMs=12
+2026-09-13T09:00:38.169+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:38.192+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=AAPL, candidates=40, elapsedMs=22
+2026-09-13T09:00:38.192+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=AAPL, candidateLimit=40
+2026-09-13T09:00:38.194+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=AAPL, candidates=1, elapsedMs=1
+2026-09-13T09:00:38.194+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=AAPL, vectorCandidates=40, keywordCandidates=40, figureCandidates=1, fused=50, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:38.203+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=AAPL, rerankingEnabled=false
+2026-09-13T09:00:38.203+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=AAPL, results=10, strategy=HYBRID_RRF, elapsedMs=284
+2026-09-13T09:00:38.203+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:38.203+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=79
+2026-09-13T09:00:38.438+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=234
+2026-09-13T09:00:38.438+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:38.455+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=17
+2026-09-13T09:00:38.456+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:38.490+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=34
+2026-09-13T09:00:38.490+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:38.491+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=51, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:38.507+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:38.507+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=304
+2026-09-13T09:00:38.507+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:38.507+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=91
+2026-09-13T09:00:38.747+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=239
+2026-09-13T09:00:38.747+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:38.765+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=17
+2026-09-13T09:00:38.765+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:38.802+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=37
+2026-09-13T09:00:38.802+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:38.803+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=57, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:38.827+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:38.827+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=319
+2026-09-13T09:00:38.827+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:38.827+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=73
+2026-09-13T09:00:39.048+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=220
+2026-09-13T09:00:39.048+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:39.065+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=16
+2026-09-13T09:00:39.065+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:39.104+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=38
+2026-09-13T09:00:39.104+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:39.105+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=53, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:39.122+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:39.123+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=295
+2026-09-13T09:00:39.123+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:39.123+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=125
+2026-09-13T09:00:39.396+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=273
+2026-09-13T09:00:39.397+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:39.415+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=18
+2026-09-13T09:00:39.416+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:39.448+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=32
+2026-09-13T09:00:39.448+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:39.449+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=59, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:39.470+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:39.471+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=347
+2026-09-13T09:00:39.471+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:39.471+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=80
+2026-09-13T09:00:39.725+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=254
+2026-09-13T09:00:39.726+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:39.746+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=20
+2026-09-13T09:00:39.747+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:39.781+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=34
+2026-09-13T09:00:39.781+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:39.782+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=59, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:39.798+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:39.798+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=327
+2026-09-13T09:00:39.798+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:39.798+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=78
+2026-09-13T09:00:40.025+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=226
+2026-09-13T09:00:40.025+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:40.042+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=16
+2026-09-13T09:00:40.042+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:40.073+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=31
+2026-09-13T09:00:40.074+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:40.074+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=62, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:40.098+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:40.099+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=300
+2026-09-13T09:00:40.099+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:40.099+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=93
+2026-09-13T09:00:40.329+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=229
+2026-09-13T09:00:40.329+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:40.337+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=8
+2026-09-13T09:00:40.338+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:40.356+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=17
+2026-09-13T09:00:40.356+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:40.356+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=53, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:40.372+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:40.372+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=273
+2026-09-13T09:00:40.372+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:40.372+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=98
+2026-09-13T09:00:40.623+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=251
+2026-09-13T09:00:40.624+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:40.643+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=19
+2026-09-13T09:00:40.643+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:40.683+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=39
+2026-09-13T09:00:40.683+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:40.683+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=54, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:40.708+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:40.709+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=336
+2026-09-13T09:00:40.709+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:40.709+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=78
+2026-09-13T09:00:40.933+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=223
+2026-09-13T09:00:40.934+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:40.950+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=16
+2026-09-13T09:00:40.951+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:40.988+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=37
+2026-09-13T09:00:40.988+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:40.989+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=58, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:41.007+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:41.007+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=297
+2026-09-13T09:00:41.007+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:41.007+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=69
+2026-09-13T09:00:41.244+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=237
+2026-09-13T09:00:41.245+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:41.262+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=17
+2026-09-13T09:00:41.262+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:41.299+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=36
+2026-09-13T09:00:41.299+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=MSFT, reason=noFigureTerms
+2026-09-13T09:00:41.299+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=52, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:41.320+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:41.320+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=313
+2026-09-13T09:00:41.321+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:41.321+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=155
+2026-09-13T09:00:41.573+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=251
+2026-09-13T09:00:41.573+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:41.590+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=17
+2026-09-13T09:00:41.591+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:41.631+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=40
+2026-09-13T09:00:41.631+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:41.633+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=MSFT, candidates=1, elapsedMs=1
+2026-09-13T09:00:41.633+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=1, fused=57, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:41.653+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:41.653+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=332
+2026-09-13T09:00:41.653+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:41.653+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=90
+2026-09-13T09:00:41.865+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=211
+2026-09-13T09:00:41.865+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:41.882+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=17
+2026-09-13T09:00:41.883+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:41.915+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=32
+2026-09-13T09:00:41.915+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:41.922+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=MSFT, candidates=27, elapsedMs=6
+2026-09-13T09:00:41.922+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=27, fused=74, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:41.945+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:41.945+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=292
+2026-09-13T09:00:41.945+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:41.945+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=116
+2026-09-13T09:00:42.166+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=220
+2026-09-13T09:00:42.166+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:42.182+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=15
+2026-09-13T09:00:42.182+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:42.216+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=34
+2026-09-13T09:00:42.217+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:42.219+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=MSFT, candidates=2, elapsedMs=1
+2026-09-13T09:00:42.219+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=2, fused=57, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:42.243+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:42.243+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=298
+2026-09-13T09:00:42.244+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=MSFT, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:42.244+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=MSFT, characters=117
+2026-09-13T09:00:42.466+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=MSFT, elapsedMs=222
+2026-09-13T09:00:42.466+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:42.484+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=MSFT, candidates=40, elapsedMs=17
+2026-09-13T09:00:42.484+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:42.524+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=MSFT, candidates=40, elapsedMs=39
+2026-09-13T09:00:42.524+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=MSFT, candidateLimit=40
+2026-09-13T09:00:42.530+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=MSFT, candidates=19, elapsedMs=5
+2026-09-13T09:00:42.530+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=MSFT, vectorCandidates=40, keywordCandidates=40, figureCandidates=19, fused=61, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:42.560+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=MSFT, rerankingEnabled=false
+2026-09-13T09:00:42.560+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=MSFT, results=10, strategy=HYBRID_RRF, elapsedMs=316
+2026-09-13T09:00:42.560+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:42.560+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=73
+2026-09-13T09:00:42.762+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=201
+2026-09-13T09:00:42.762+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:42.779+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=16
+2026-09-13T09:00:42.779+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:42.804+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=24
+2026-09-13T09:00:42.804+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:42.804+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=55, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:42.833+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:42.833+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=272
+2026-09-13T09:00:42.834+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:42.834+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=72
+2026-09-13T09:00:43.045+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=211
+2026-09-13T09:00:43.045+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:43.058+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=12
+2026-09-13T09:00:43.058+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:43.084+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=26
+2026-09-13T09:00:43.085+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:43.085+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=55, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:43.107+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:43.107+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=273
+2026-09-13T09:00:43.107+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:43.107+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=76
+2026-09-13T09:00:43.315+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=208
+2026-09-13T09:00:43.315+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:43.331+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=15
+2026-09-13T09:00:43.331+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:43.363+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=32
+2026-09-13T09:00:43.363+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:43.363+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=52, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:43.389+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:43.390+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=282
+2026-09-13T09:00:43.390+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:43.390+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=109
+2026-09-13T09:00:43.702+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=312
+2026-09-13T09:00:43.702+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:43.719+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=16
+2026-09-13T09:00:43.719+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:43.749+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=30
+2026-09-13T09:00:43.749+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:43.750+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=56, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:43.773+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:43.773+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=383
+2026-09-13T09:00:43.773+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:43.773+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=77
+2026-09-13T09:00:43.982+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=208
+2026-09-13T09:00:43.982+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:43.999+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=16
+2026-09-13T09:00:43.999+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:44.027+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=28
+2026-09-13T09:00:44.028+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:44.028+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=53, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:44.057+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:44.057+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=283
+2026-09-13T09:00:44.058+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:44.058+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=96
+2026-09-13T09:00:44.274+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=216
+2026-09-13T09:00:44.274+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:44.290+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=15
+2026-09-13T09:00:44.290+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:44.312+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=22
+2026-09-13T09:00:44.312+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:44.313+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=51, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:44.337+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:44.337+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=279
+2026-09-13T09:00:44.337+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:44.337+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=131
+2026-09-13T09:00:44.558+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=220
+2026-09-13T09:00:44.558+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:44.575+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=17
+2026-09-13T09:00:44.575+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:44.608+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=32
+2026-09-13T09:00:44.609+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:44.609+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=58, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:44.646+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:44.646+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=309
+2026-09-13T09:00:44.647+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:44.647+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=85
+2026-09-13T09:00:44.869+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=222
+2026-09-13T09:00:44.870+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:44.886+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=16
+2026-09-13T09:00:44.886+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:44.921+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=34
+2026-09-13T09:00:44.921+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:44.921+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=57, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:44.956+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:44.956+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=309
+2026-09-13T09:00:44.956+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:44.956+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=75
+2026-09-13T09:00:45.164+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=208
+2026-09-13T09:00:45.165+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:45.181+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=16
+2026-09-13T09:00:45.181+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:45.216+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=34
+2026-09-13T09:00:45.216+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:45.217+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=53, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:45.246+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:45.246+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=290
+2026-09-13T09:00:45.246+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:45.246+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=93
+2026-09-13T09:00:45.463+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=216
+2026-09-13T09:00:45.464+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:45.472+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=8
+2026-09-13T09:00:45.472+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:45.494+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=21
+2026-09-13T09:00:45.495+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Skipping figure search: ticker=NVDA, reason=noFigureTerms
+2026-09-13T09:00:45.495+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=off, fused=55, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:45.526+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:45.527+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=280
+2026-09-13T09:00:45.527+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:45.527+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=122
+2026-09-13T09:00:45.735+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=208
+2026-09-13T09:00:45.735+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:45.753+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=17
+2026-09-13T09:00:45.753+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:45.790+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=36
+2026-09-13T09:00:45.791+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:45.793+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=NVDA, candidates=2, elapsedMs=2
+2026-09-13T09:00:45.793+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=2, fused=54, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:45.825+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:45.825+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=298
+2026-09-13T09:00:45.825+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:45.825+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=97
+2026-09-13T09:00:46.043+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=217
+2026-09-13T09:00:46.044+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:46.061+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=17
+2026-09-13T09:00:46.061+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:46.094+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=32
+2026-09-13T09:00:46.094+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:46.097+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=NVDA, candidates=9, elapsedMs=2
+2026-09-13T09:00:46.097+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=9, fused=59, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:46.131+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:46.131+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=306
+2026-09-13T09:00:46.132+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:46.132+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=164
+2026-09-13T09:00:46.352+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=219
+2026-09-13T09:00:46.352+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:46.369+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=17
+2026-09-13T09:00:46.370+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:46.400+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=30
+2026-09-13T09:00:46.400+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:46.402+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=NVDA, candidates=4, elapsedMs=2
+2026-09-13T09:00:46.402+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=4, fused=51, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:46.428+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:46.428+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=296
+2026-09-13T09:00:46.428+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieving filing evidence: ticker=NVDA, topK=10, latestFilingsOnly=true, hybrid=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+2026-09-13T09:00:46.428+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Embedding retrieval query: ticker=NVDA, characters=138
+2026-09-13T09:00:46.642+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Query embedding completed: ticker=NVDA, elapsedMs=213
+2026-09-13T09:00:46.642+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:46.658+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Vector search completed: ticker=NVDA, candidates=40, elapsedMs=16
+2026-09-13T09:00:46.659+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by keyword: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:46.694+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Keyword search completed: ticker=NVDA, candidates=40, elapsedMs=35
+2026-09-13T09:00:46.695+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Searching filing chunks by figure: ticker=NVDA, candidateLimit=40
+2026-09-13T09:00:46.697+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Figure search completed: ticker=NVDA, candidates=4, elapsedMs=2
+2026-09-13T09:00:46.697+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Reciprocal rank fusion completed: ticker=NVDA, vectorCandidates=40, keywordCandidates=40, figureCandidates=4, fused=56, k=60, weights=1.0/0.5/1.0
+2026-09-13T09:00:46.732+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Selecting evidence by fused order: ticker=NVDA, rerankingEnabled=false
+2026-09-13T09:00:46.732+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.FilingRetrievalService   : Retrieval completed: ticker=NVDA, results=10, strategy=HYBRID_RRF, elapsedMs=303
+2026-09-13T09:00:46.752+08:00  INFO 96339 --- [StockRecommendationEngine] [           main] p.s.r.e.RetrievalEvaluationService       : Retrieval evaluation stored: id=139, hitAt1=0.547619, hitAt3=0.714286, hitAt5=0.785714, mrr=0.655187, misses=5
+RETRIEVAL_EVAL set=v2 questions=42 window=10 strategy=HYBRID_RRF hitAt1=0.547619 hitAt3=0.714286 hitAt5=0.785714 mrr=0.655187 floor=0.65 nonFigureFloor=0.95
+RETRIEVAL_EVAL slice=figure questions=12 hitAt1=0.833333 hitAt3=0.916667 hitAt5=1.000000 mrr=0.891667 misses=[]
+RETRIEVAL_EVAL slice=nonFigure questions=30 hitAt1=0.433333 hitAt3=0.633333 hitAt5=0.700000 mrr=0.560595 misses=[msft-08, nvda-02, nvda-04, nvda-07, nvda-09]
+RETRIEVAL_EVAL notInTop5 aggregate hits=33/42 minHits=28 margin=5 questions=aapl-09 (rank 8), msft-01 (rank 6), msft-07 (rank 7), msft-08 (no match in window), nvda-02 (no match in window), nvda-04 (no match in window), nvda-05 (rank 10), nvda-07 (no match in window), nvda-09 (no match in window)
+RETRIEVAL_EVAL notInTop5 slice=figure hits=12/12 questions=none
+RETRIEVAL_EVAL notInTop5 slice=nonFigure hits=21/30 minHits=29 margin=-8 questions=aapl-09 (rank 8), msft-01 (rank 6), msft-07 (rank 7), msft-08 (no match in window), nvda-02 (no match in window), nvda-04 (no match in window), nvda-05 (rank 10), nvda-07 (no match in window), nvda-09 (no match in window)
+RETRIEVAL_EVAL tickerHitAt5={AAPL=0.928571, MSFT=0.785714, NVDA=0.642857}
+RETRIEVAL_EVAL misses=[msft-08, nvda-02, nvda-04, nvda-07, nvda-09]
+RETRIEVAL_EVAL miss msft-08 top=[TopChunk[chunkId=514, accessionNo=0001193125-26-323660, sectionKey=ITEM_7, similarity=0.674791], TopChunk[chunkId=642, accessionNo=0001193125-26-191507, sectionKey=ITEM_2, similarity=0.668428], TopChunk[chunkId=643, accessionNo=0001193125-26-191507, sectionKey=ITEM_2, similarity=0.643649]]
+RETRIEVAL_EVAL miss nvda-02 top=[TopChunk[chunkId=806, accessionNo=0001045810-26-000021, sectionKey=ITEM_7, similarity=0.664878], TopChunk[chunkId=852, accessionNo=0001045810-26-000021, sectionKey=ITEM_15, similarity=0.666630], TopChunk[chunkId=805, accessionNo=0001045810-26-000021, sectionKey=ITEM_7, similarity=0.684028]]
+RETRIEVAL_EVAL miss nvda-04 top=[TopChunk[chunkId=852, accessionNo=0001045810-26-000021, sectionKey=ITEM_15, similarity=0.615632], TopChunk[chunkId=851, accessionNo=0001045810-26-000021, sectionKey=ITEM_15, similarity=0.591500], TopChunk[chunkId=805, accessionNo=0001045810-26-000021, sectionKey=ITEM_7, similarity=0.617723]]
+RETRIEVAL_EVAL miss nvda-07 top=[TopChunk[chunkId=800, accessionNo=0001045810-26-000021, sectionKey=ITEM_7, similarity=0.569719], TopChunk[chunkId=783, accessionNo=0001045810-26-000021, sectionKey=ITEM_1A, similarity=0.587088], TopChunk[chunkId=898, accessionNo=0001045810-26-000075, sectionKey=ITEM_1A, similarity=0.588990]]
+RETRIEVAL_EVAL miss nvda-09 top=[TopChunk[chunkId=873, accessionNo=0001045810-26-000075, sectionKey=ITEM_1, similarity=0.703921], TopChunk[chunkId=881, accessionNo=0001045810-26-000075, sectionKey=ITEM_2, similarity=0.696727], TopChunk[chunkId=876, accessionNo=0001045810-26-000075, sectionKey=ITEM_2, similarity=0.694445]]
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 15.67 s <<< FAILURE! -- in project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests
+[ERROR] project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests.hitAt5StaysAtOrAboveTheConfiguredFloor -- Time elapsed: 13.17 s <<< FAILURE!
+java.lang.AssertionError: 
+[non-figure hit@5 0.700000 (21 of 30) is below the floor 0.95 (rag.evaluation.min-non-figure-hit-at-5); not in top 5: aapl-09 (rank 8), msft-01 (rank 6), msft-07 (rank 7), msft-08 (no match in window), nvda-02 (no match in window), nvda-04 (no match in window), nvda-05 (rank 10), nvda-07 (no match in window), nvda-09 (no match in window)] 
+Expecting actual:
+  0.700000
+to be greater than or equal to:
+  0.95
+
+	at project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationFloors.assertNonFigureFloor(RetrievalEvaluationFloors.java:46)
+	at project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationLiveTests.hitAt5StaysAtOrAboveTheConfiguredFloor(RetrievalEvaluationLiveTests.java:75)
+
+[ERROR] Failures: 
+[ERROR]   RetrievalEvaluationLiveTests.hitAt5StaysAtOrAboveTheConfiguredFloor:75 [non-figure hit@5 0.700000 (21 of 30) is below the floor 0.95 (rag.evaluation.min-non-figure-hit-at-5); not in top 5: aapl-09 (rank 8), msft-01 (rank 6), msft-07 (rank 7), msft-08 (no match in window), nvda-02 (no match in window), nvda-04 (no match in window), nvda-05 (rank 10), nvda-07 (no match in window), nvda-09 (no match in window)] 
+Expecting actual:
+  0.700000
+to be greater than or equal to:
+  0.95
+
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project StockRecommendationEngine: There are test failures.
+[ERROR] 
+[ERROR] See /Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/target/surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

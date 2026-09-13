@@ -1,0 +1,76 @@
+package project.stockrecommendationengine.rag.retrieval;
+
+import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.IntStream;
+
+/** Throwaway diagnostic (scratchpad only): exact WordPiece lengths, what the 512 window keeps, and scores with and without the answer in view. */
+public final class CrossEncoderTruncationProbe {
+    public static void main(String[] args) throws Exception {
+        Path dir = Path.of(args[0]);
+        int maxLength = Integer.parseInt(args[2]);
+        JsonNode root = JsonMapper.builder().build().readTree(Files.readString(Path.of(args[1])));
+        try (OnnxCrossEncoderScorer scorer = new OnnxCrossEncoderScorer(dir.resolve("model.onnx"), dir.resolve("tokenizer.json"), maxLength, 20);
+             HuggingFaceTokenizer tok = OnnxCrossEncoderScorer.singleSequenceTokenizer(dir.resolve("tokenizer.json"))) {
+            // Corpus: exact token counts versus the stored chars/4 estimate.
+            List<int[]> corpus = new ArrayList<>();
+            for (JsonNode c : root.path("chunks")) {
+                int exact = tok.encode(c.path("content").asString(""), false, false).getIds().length;
+                corpus.add(new int[] {c.path("id").intValue(), c.path("tok").intValue(), exact});
+            }
+            int[] exact = corpus.stream().mapToInt(r -> r[2]).sorted().toArray();
+            int window = maxLength - 3 - 40; // passage tokens left beside a 40-token question
+            long over = Arrays.stream(exact).filter(n -> n > window).count();
+            double seen = corpus.stream().mapToDouble(r -> Math.min(1.0, (double) window / r[2])).average().orElse(0);
+            System.out.printf("CORPUS chunks=%d exactTokens p50=%d p90=%d max=%d estimate(chars/4) p50=%d | chunks longer than the %d-token passage window: %d (%.0f%%) | mean fraction of a chunk the model sees: %.2f%n",
+                    exact.length, exact[exact.length / 2], exact[(int) (exact.length * 0.9)], exact[exact.length - 1],
+                    corpus.stream().mapToInt(r -> r[1]).sorted().toArray()[exact.length / 2], window, over, 100.0 * over / exact.length, seen);
+
+            System.out.println("QUESTIONS id | kind | rank247->rank250 | qTokens | chunk | chunkTokens | keptPassageTokens | answerTokenOffset | answerVisible | score(prodTruncation) | score(answerWindow)");
+            for (JsonNode q : root.path("questions")) {
+                String question = q.path("question").asString("");
+                int qTokens = tok.encode(question, false, false).getIds().length;
+                if (!q.has("content")) {
+                    System.out.printf("Q %s | %s | %s->%s | %d | miss in both%n", q.path("id").asString(""), q.path("kind").asString(""),
+                            q.path("rank247").asString("miss"), q.path("rank250").asString("miss"), qTokens);
+                    continue;
+                }
+                String content = q.path("content").asString("");
+                int n = tok.encode(content, false, false).getIds().length;
+                int offset = q.path("phraseOffset").intValue();
+                int answerAt = offset < 0 ? -1 : tok.encode(content.substring(0, offset), false, false).getIds().length;
+                int[] kept = CrossEncoderPairAssembler.keptLengths(qTokens, n, maxLength);
+                float prod = scorer.score(question, List.of(content))[0];
+                float windowScore = Float.NaN;
+                if (offset >= 0) windowScore = scorer.score(question, List.of(content.substring(Math.max(0, offset - 200))))[0];
+                String visible = answerAt < 0 ? "?" : answerAt < kept[1] ? "yes" : "NO";
+                System.out.printf("Q %s | %s | %s->%s | %d | %d | %d | %d | %d | %s | %.3f | %.3f%n", q.path("id").asString(""), q.path("kind").asString(""),
+                        q.path("rank247").asString("miss"), q.path("rank250").asString("miss"), qTokens, q.path("chunkId").intValue(), n, kept[1], answerAt, visible, prod, windowScore);
+
+                JsonNode competitors = q.path("competitors");
+                if (competitors.size() > 0) {
+                    List<String> texts = new ArrayList<>();
+                    List<Integer> ids = new ArrayList<>();
+                    for (JsonNode c : competitors) { ids.add(c.path("id").intValue()); texts.add(c.path("content").asString("")); }
+                    float[] scores = scorer.score(question, texts);
+                    List<Integer> order = IntStream.range(0, ids.size()).boxed()
+                            .sorted(Comparator.<Integer>comparingDouble(i -> scores[i]).reversed()).toList();
+                    int expected = q.path("chunkId").intValue();
+                    int rank = 1 + order.stream().map(ids::get).toList().indexOf(expected);
+                    StringBuilder top = new StringBuilder();
+                    for (int i = 0; i < Math.min(5, order.size()); i++) top.append(ids.get(order.get(i))).append('=').append(String.format("%.2f", scores[order.get(i)])).append(' ');
+                    System.out.printf("   all %d %s chunks, production truncation: expected chunk %d ranks %d of %d; top5 %s%n", ids.size(), q.path("ticker").asString(""), expected, rank, ids.size(), top);
+                }
+            }
+        }
+        System.exit(0);
+    }
+}

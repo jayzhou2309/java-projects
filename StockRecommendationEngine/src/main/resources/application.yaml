@@ -70,7 +70,9 @@ rag:
     candidate-count: 40
     latest-filings-only: true
     # Whether retrieval reranks by default. Requires a FilingReranker bean (cross-encoder.enabled below) before enabling; a request's
-    # "rerank" field (or ?rerank= on evaluate) overrides per call. Off until the cross-encoder is measured (plan 2026-09-13-reranker, Milestone 3).
+    # "rerank" field (or ?rerank= on evaluate) overrides per call. Off: the cross-encoder was measured on 2026-09-13 under head scoring
+    # (snapshots 248 to 250) and under windowed scoring (296 to 299) and no configuration met the selection rule (RAG.md, Cross-encoder
+    # reranker, Reranker measurement).
     reranking-enabled: false
     # The reranker receives the first max(rerank-candidates, topK) of the fused, diversified candidates, so a reranked response is never
     # shorter than the requested topK; 5 to 40.

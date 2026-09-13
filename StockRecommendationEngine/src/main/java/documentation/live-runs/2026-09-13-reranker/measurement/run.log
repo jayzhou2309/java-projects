@@ -1,0 +1,88 @@
+Reranker measurement (Follow_Ups RAG-1; plans/2026-09-13-reranker.md Milestone 3 with Amendment 2), 2026-09-13
+Branch reranker from 708d1d9. No code change under test; set v2 (evaluation/retrieval-set-v2.json, 42 questions), window 10, hybrid on,
+k 60, weights vector 1.0 / keyword 0.5 / figure 1.0, candidateCount 40. Cross-encoder cross-encoder/ms-marco-MiniLM-L-6-v2, rerankerVersion 5d3e70fd0c9f.
+
+Harness (one application start per configuration; the application enable flags never exported):
+  set -a && source .env && set +a && export INTEGRATION_ACCESS_TOKEN=<32+ chars> SERVER_PORT=8081 RAG_CROSS_ENCODER_ENABLED=true [RAG_RETRIEVAL_RERANK_CANDIDATES=<n>]
+  nohup ./mvnw -q -o spring-boot:run > worker-app.log 2>&1 &   ; wait for "Started StockRecommendationEngineApplication"
+  warm-up: POST /api/rag/retrieve {"ticker":"NVDA","query":"What was NVIDIA gross margin in fiscal 2026?","rerank":true}   (topK 5)
+  POST /api/rag/evaluate?rerank=<true|false> with Authorization: Bearer <token>
+  select row_to_json(r) from retrieval_evaluations r where id=<id>   -> snapshot-<id>-<config>.json
+  pkill -f spring-boot:run; pkill -f StockRecommendationEngineApplication; lsof -i :8081 empty ("port free") after every run
+  No chat model. Embeddings: 42 per evaluation (4 runs) + 1 per warm-up (4) + 42 for the floor test + 7 diagnostic retrievals = 221.
+
+Rows before: 22 stored, max id 91 (sequence last_value 246). After the four runs: 26 stored, max id 250. Evaluation runs used: 4 of the budget of 7.
+
+Run 1 REFERENCE   start 12:31:18 SGT  overrides: RAG_CROSS_ENCODER_ENABLED=true (rerank-candidates default 20, unused)
+  warm-up HTTP 200 in 2.45 s, strategy HYBRID_RRF_RERANKED, 5 chunks; warm-up scoring call 602 ms (candidates=20, topK=5)
+  evaluate?rerank=false HTTP 200 in 15.9 s -> snapshot 247
+  properties: rerank=false rerankCandidates=20 reranker=CrossEncoderReranker rerankerVersion=5d3e70fd0c9f rerankedQuestions=0 rerankFallbackQuestions=0
+  scoring calls during the evaluation: 0 (reranking not requested)
+  Reproduction check against snapshot 91 (rank, matched chunk, presence, and position of every question):
+    select ... from (questions of 91 with ordinality) a full join (questions of 247 with ordinality) b on id
+    where rank or matchedChunkId differ, either side missing, or position differs   -> 0 rows
+    hit_at_1, hit_at_3, hit_at_5, mrr, tickerHitAt5 and misses equal between 91 and 247 (psql, all true). slices differ only by the
+    notInTop5 key, which the non-figure floor remediation added to new snapshots after 91 was stored; every other slice value is equal.
+  -> reproduces snapshot 91; no drift.
+
+Run 2 RERANK 10   start 12:32:14 SGT  overrides: RAG_CROSS_ENCODER_ENABLED=true RAG_RETRIEVAL_RERANK_CANDIDATES=10
+  warm-up HTTP 200 in 1.37 s, HYBRID_RRF_RERANKED; warm-up scoring call 446 ms (candidates=10, topK=5)
+  evaluate?rerank=true HTTP 200 in 25.5 s -> snapshot 248
+  properties: rerank=true rerankCandidates=10 (override took effect) reranker=CrossEncoderReranker rerankerVersion=5d3e70fd0c9f rerankedQuestions=42 rerankFallbackQuestions=0
+  scoring: 42 calls, all candidates=10 topK=10; median 258.5 ms, max 425 ms, min 247 ms (warm-up excluded)
+
+Run 3 RERANK 20   start 12:32:59 SGT  overrides: RAG_CROSS_ENCODER_ENABLED=true RAG_RETRIEVAL_RERANK_CANDIDATES=20
+  warm-up HTTP 200 in 1.50 s, HYBRID_RRF_RERANKED; warm-up scoring call 600 ms (candidates=20, topK=5)
+  evaluate?rerank=true HTTP 200 in 36.8 s -> snapshot 249
+  properties: rerank=true rerankCandidates=20 reranker=CrossEncoderReranker rerankerVersion=5d3e70fd0c9f rerankedQuestions=42 rerankFallbackQuestions=0
+  scoring: 42 calls, all candidates=20 topK=10; median 519.5 ms, max 629 ms, min 500 ms
+
+Run 4 RERANK 40   start 12:33:49 SGT  overrides: RAG_CROSS_ENCODER_ENABLED=true RAG_RETRIEVAL_RERANK_CANDIDATES=40
+  warm-up HTTP 200 in 2.17 s, HYBRID_RRF_RERANKED; warm-up scoring call 1110 ms (candidates=40, topK=5)
+  evaluate?rerank=true HTTP 200 in 56.7 s -> snapshot 250
+  properties: rerank=true rerankCandidates=40 reranker=CrossEncoderReranker rerankerVersion=5d3e70fd0c9f rerankedQuestions=42 rerankFallbackQuestions=0
+  scoring: 42 calls, all candidates=40 topK=10; median 981 ms, max 1103 ms, min 954 ms
+
+No run reported a fallback, so no rerun was needed and every rerank row is valid. Each app log held only the four JVM
+"restricted method" (JNA System::load) WARNING lines; no reranker WARN, no fallback, no query-truncation line.
+
+Metrics, the rule row by row, and every question's rank: rule-table.txt (computed by a script from the four JSON files and
+asserted equal to the stored hit@5, MRR, slice hit@5 and MRR, and tickerHitAt5 of each row).
+
+Summary
+  id   cand  hit@1    hit@3    hit@5    MRR       AAPL@5   MSFT@5   NVDA@5   nonFigure@5    figure top5  reranked/fallback  scoring ms median/max
+  247  off   0.547619 0.714286 0.785714 0.655187  0.928571 0.785714 0.642857 0.700000 21/30  12/12        0/0                -
+  248  10    0.500000 0.690476 0.761905 0.616988  1.000000 0.857143 0.428571 0.733333 22/30  10/12        42/0               258.5/425
+  249  20    0.500000 0.690476 0.738095 0.607341  1.000000 0.785714 0.428571 0.733333 22/30   9/12        42/0               519.5/629
+  250  40    0.523810 0.714286 0.761905 0.630584  1.000000 0.857143 0.428571 0.766667 23/30   9/12        42/0               981/1103
+
+Rule (applied to 248, 249, 250, each against 247): qualifies only if (1) aggregate hit@5 does not decrease, (2) nonFigure hit@5 does not
+decrease, (3) no ticker's hit@5 decreases, (4) no kind-FIGURE question in the top 5 under 247 (22 questions) leaves the top 5.
+  248: FAILS (1) 32/42 < 33/42; (2) passes 22/30 >= 21/30; (3) NVDA 6/14 < 9/14; (4) msft-04 4->10, nvda-01 3->9, nvda-11 1->7, nvda-14 1->7
+  249: FAILS (1) 31/42 < 33/42; (2) passes 22/30; (3) NVDA 6/14 < 9/14; (4) msft-04 4->miss, msft-12 2->6, nvda-01 3->miss, nvda-11 1->10, nvda-14 1->miss
+  250: FAILS (1) 32/42 < 33/42; (2) passes 23/30; (3) NVDA 6/14 < 9/14; (4) msft-12 2->6, nvda-01 3->miss, nvda-11 1->10, nvda-14 1->miss
+Outcome: no row qualifies. Reranking is not recommended for set v2 with this model. Defaults unchanged: reranking-enabled false,
+cross-encoder.enabled false, rerank-candidates 20 (no winner, so no reason to change it). Floors not re-derived (no row qualified).
+
+Best-MRR rerank row 250 against 247, top-5 membership: gained aapl-09 (8->5), msft-01 (6->2), msft-07 (7->3), msft-08 (miss->2);
+lost msft-05 (2->8), msft-12 (2->6), nvda-01 (3->miss), nvda-11 (1->10), nvda-14 (1->miss). nonFigure +4 -2 = 23/30; figure slice -3 = 9/12;
+AAPL +1, MSFT +3 -2, NVDA -3. Aggregate 33 -> 32.
+Named: nvda-02, nvda-04, nvda-09 no match in the window in all four rows; nvda-07 miss -> 6 (249) / 7 (250), still outside the top 5;
+msft-08 miss -> 2 (249, 250; chunk 547), still a miss at 10 candidates.
+
+Diagnostic for nvda-02 (one extra start, no evaluation; RAG_CROSS_ENCODER_ENABLED=true, rerank-candidates default 20), 12:37 SGT:
+  expected passage: 0001045810-26-000021 ITEM_7 "Data Center revenue for fiscal year 2026 was up 68% from a year ago" -> chunk 802 only (psql over content)
+  body {"ticker":"NVDA","query":"By what percentage did NVIDIA's Data Center revenue grow in fiscal 2026?","topK":10,"latestFilingsOnly":true,"rerank":<v>}
+  rerank false   HYBRID_RRF          [806, 852, 805, 851, 881, 873, 745, 876, 800, 744]  802 absent
+  rerank true    HYBRID_RRF_RERANKED [852, 873, 881, 863, 880, 806, 800, 876, 745, 842]  802 absent (identical on a second call)
+  rerank omitted HYBRID_RRF          same order as rerank false
+  topK 20 rerank false  HYBRID_RRF          802 absent from the first 20 fused candidates
+  topK 20 rerank true   HYBRID_RRF_RERANKED 802 absent
+  candidatesRetrieved 55 on every call. Chunk 802 is not among the first 20 fused candidates, so at 10 and 20 candidates the reranker never
+  sees it; at 40 candidates (snapshot 250) it is not in the reranked top 10. Whether it lies in fused positions 21 to 40 was not determined
+  (topK is capped at 20). The same chunk answers nvda-12, which reranking moved from rank 5 to 2 or 3.
+
+Floor test (final configuration: defaults unchanged, reranking off), shell with env | grep -c ^RAG_ -> 0:
+  set -a && source .env && set +a && ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true  -> exit 0 (live-test.log)
+  hitAt5=0.785714 floor=0.65; notInTop5 aggregate hits=33/42 minHits=28 margin=5; slice=nonFigure hits=21/30 minHits=18 margin=3
+  rows 26|250 before and after (rolled back).

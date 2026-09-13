@@ -1,0 +1,178 @@
+Reranker measurement (plan 2026-09-13-reranker, Milestone 3 with Amendment 2), set v2, window 10, 2026-09-13
+All numbers below are recomputed from the stored snapshots (row_to_json files in this directory) and cross-checked against the stored aggregates and slices.
+Slices: figure = the 12 questions -11 to -14 (question text carries a figure; FilingRetrievalRepository.figureTerms, see live-runs/2026-09-13-non-figure-floor/run.log); nonFigure = the other 30.
+FIGURE question (rule criterion 4) = question kind FIGURE in retrieval-set-v2.json, as in the fusion-tuning and set-v2 rules; this is not the figure slice (e.g. nvda-02 is kind FIGURE in the nonFigure slice).
+
+ROWS
+id  | config                     | rerank cand | hit@1    hit@3    hit@5    MRR      | AAPL@5   MSFT@5   NVDA@5   | nonFig@5        | fig top5 | FIGURE-kind top5 | reranked fallback | strategies | scoring ms median max (n)
+247 | reference-rerank-off       | False  20 | 0.547619 0.714286 0.785714 0.655187 | 0.928571 0.785714 0.642857 | 0.700000 (21/30) | 12/12 | 22 | 0 0 | HYBRID_RRF | none (0 scoring calls in the evaluation)
+      properties: rerank=False rerankCandidates=20 reranker=CrossEncoderReranker rerankerVersion=5d3e70fd0c9f rerankedQuestions=0 rerankFallbackQuestions=0 retrievalStrategy=HYBRID_RRF; warm-up scoring call 602 ms (excluded)
+      slices: figure hit@1 10/12 hit@3 11/12 hit@5 12/12 MRR 0.891667; nonFigure hit@1 13/30 hit@3 19/30 hit@5 21/30 MRR 0.560595
+248 | rerank-candidates-10       | True   10 | 0.500000 0.690476 0.761905 0.616988 | 1.000000 0.857143 0.428571 | 0.733333 (22/30) | 10/12 | 20 | 42 0 | HYBRID_RRF_RERANKED | 258.5 425 (42)
+      properties: rerank=True rerankCandidates=10 reranker=CrossEncoderReranker rerankerVersion=5d3e70fd0c9f rerankedQuestions=42 rerankFallbackQuestions=0 retrievalStrategy=HYBRID_RRF_RERANKED; warm-up scoring call 446 ms (excluded)
+      slices: figure hit@1 6/12 hit@3 9/12 hit@5 10/12 MRR 0.651587; nonFigure hit@1 15/30 hit@3 20/30 hit@5 22/30 MRR 0.603148
+249 | rerank-candidates-20       | True   20 | 0.500000 0.690476 0.738095 0.607341 | 1.000000 0.785714 0.428571 | 0.733333 (22/30) | 9/12 | 20 | 42 0 | HYBRID_RRF_RERANKED | 519.5 629 (42)
+      properties: rerank=True rerankCandidates=20 reranker=CrossEncoderReranker rerankerVersion=5d3e70fd0c9f rerankedQuestions=42 rerankFallbackQuestions=0 retrievalStrategy=HYBRID_RRF_RERANKED; warm-up scoring call 600 ms (excluded)
+      slices: figure hit@1 6/12 hit@3 8/12 hit@5 9/12 MRR 0.598611; nonFigure hit@1 15/30 hit@3 21/30 hit@5 22/30 MRR 0.610833
+250 | rerank-candidates-40       | True   40 | 0.523810 0.714286 0.761905 0.630584 | 1.000000 0.857143 0.428571 | 0.766667 (23/30) | 9/12 | 21 | 42 0 | HYBRID_RRF_RERANKED | 981 1103 (42)
+      properties: rerank=True rerankCandidates=40 reranker=CrossEncoderReranker rerankerVersion=5d3e70fd0c9f rerankedQuestions=42 rerankFallbackQuestions=0 retrievalStrategy=HYBRID_RRF_RERANKED; warm-up scoring call 1110 ms (excluded)
+      slices: figure hit@1 6/12 hit@3 8/12 hit@5 9/12 MRR 0.598611; nonFigure hit@1 16/30 hit@3 22/30 hit@5 23/30 MRR 0.643373
+
+REFERENCE 247: kind-FIGURE questions in the top 5 (22), which must stay in the top 5: ['aapl-01', 'aapl-02', 'aapl-06', 'aapl-07', 'aapl-11', 'aapl-12', 'aapl-13', 'aapl-14', 'msft-02', 'msft-04', 'msft-10', 'msft-11', 'msft-12', 'msft-13', 'msft-14', 'nvda-01', 'nvda-03', 'nvda-08', 'nvda-11', 'nvda-12', 'nvda-13', 'nvda-14']
+
+RULE, ROW BY ROW (valid rerank rows, each against REFERENCE 247): qualifies iff (1) aggregate hit@5 does not decrease, (2) nonFigure hit@5 does not decrease, (3) no ticker hit@5 decreases, (4) no kind-FIGURE question in the top 5 under 247 leaves the top 5. Among qualifying rows: highest MRR, then fewer candidates.
+id 248 candidates 10 MRR 0.616988: FAILS
+    (1) aggregate hit@5 32/42=0.761905 vs 33/42=0.785714 -> FAIL
+    (2) nonFigure hit@5 22/30 vs 21/30 -> pass
+    (3) AAPL 14/14 vs 13/14 pass; MSFT 12/14 vs 11/14 pass; NVDA 6/14 vs 9/14 FAIL -> FAIL
+    (4) kind-FIGURE left top 5: ['msft-04 rank 10 (was 4)', 'nvda-01 rank 9 (was 3)', 'nvda-11 rank 7 (was 1)', 'nvda-14 rank 7 (was 1)'] -> FAIL
+id 249 candidates 20 MRR 0.607341: FAILS
+    (1) aggregate hit@5 31/42=0.738095 vs 33/42=0.785714 -> FAIL
+    (2) nonFigure hit@5 22/30 vs 21/30 -> pass
+    (3) AAPL 14/14 vs 13/14 pass; MSFT 11/14 vs 11/14 pass; NVDA 6/14 vs 9/14 FAIL -> FAIL
+    (4) kind-FIGURE left top 5: ['msft-04 rank miss (was 4)', 'msft-12 rank 6 (was 2)', 'nvda-01 rank miss (was 3)', 'nvda-11 rank 10 (was 1)', 'nvda-14 rank miss (was 1)'] -> FAIL
+id 250 candidates 40 MRR 0.630584: FAILS
+    (1) aggregate hit@5 32/42=0.761905 vs 33/42=0.785714 -> FAIL
+    (2) nonFigure hit@5 23/30 vs 21/30 -> pass
+    (3) AAPL 14/14 vs 13/14 pass; MSFT 12/14 vs 11/14 pass; NVDA 6/14 vs 9/14 FAIL -> FAIL
+    (4) kind-FIGURE left top 5: ['msft-12 rank 6 (was 2)', 'nvda-01 rank miss (was 3)', 'nvda-11 rank 10 (was 1)', 'nvda-14 rank miss (was 1)'] -> FAIL
+
+OUTCOME: no row qualifies; reranking is not recommended; the comparison row for the per-question analysis is the best-MRR rerank row, id 250
+
+RANK CHANGES, REFERENCE 247 -> 250 (candidates 40): id | kind | slice | ticker | 247 rank(chunk) | 250 rank(chunk) | top-5 effect
+   aapl-02 | FIGURE | nonFigure | AAPL | 1(241) | 2(227) | 
+   aapl-03 | NARRATIVE | nonFigure | AAPL | 2(226) | 1(226) | 
+   aapl-05 | NARRATIVE | nonFigure | AAPL | 1(190) | 2(246) | 
+   aapl-06 | FIGURE | nonFigure | AAPL | 2(269) | 1(269) | 
+   aapl-09 | FIGURE | nonFigure | AAPL | 8(280) | 5(280) | gained top 5
+   aapl-11 | FIGURE | figure | AAPL | 1(225) | 1(226) | 
+   msft-01 | FIGURE | nonFigure | MSFT | 6(514) | 2(573) | gained top 5
+   msft-02 | FIGURE | nonFigure | MSFT | 2(514) | 1(514) | 
+   msft-03 | NARRATIVE | nonFigure | MSFT | 2(517) | 1(517) | 
+   msft-04 | FIGURE | nonFigure | MSFT | 4(466) | 1(467) | 
+   msft-05 | NARRATIVE | nonFigure | MSFT | 2(571) | 8(460) | LOST top 5
+   msft-07 | NARRATIVE | nonFigure | MSFT | 7(495) | 3(680) | gained top 5
+   msft-08 | FIGURE | nonFigure | MSFT | miss(-) | 2(547) | gained top 5
+   msft-10 | FIGURE | nonFigure | MSFT | 1(637) | 1(635) | 
+   msft-11 | FIGURE | figure | MSFT | 1(519) | 3(519) | 
+   msft-12 | FIGURE | figure | MSFT | 2(519) | 6(519) | LOST top 5
+   msft-13 | FIGURE | figure | MSFT | 1(523) | 1(524) | 
+   msft-14 | FIGURE | figure | MSFT | 1(644) | 1(646) | 
+   nvda-01 | FIGURE | nonFigure | NVDA | 3(805) | miss(-) | LOST top 5
+   nvda-03 | FIGURE | nonFigure | NVDA | 1(797) | 2(850) | 
+   nvda-05 | NARRATIVE | nonFigure | NVDA | 10(749) | miss(-) | 
+   nvda-07 | NARRATIVE | nonFigure | NVDA | miss(-) | 7(770) | 
+   nvda-08 | FIGURE | nonFigure | NVDA | 5(852) | 1(852) | 
+   nvda-10 | NARRATIVE | nonFigure | NVDA | 1(895) | 1(878) | 
+   nvda-11 | FIGURE | figure | NVDA | 1(805) | 10(805) | LOST top 5
+   nvda-12 | FIGURE | figure | NVDA | 5(802) | 3(802) | 
+   nvda-13 | FIGURE | figure | NVDA | 1(880) | 4(880) | 
+   nvda-14 | FIGURE | figure | NVDA | 1(872) | miss(-) | LOST top 5
+
+RANK CHANGES, REFERENCE 247 -> 248 (candidates 10): id | kind | slice | ticker | 247 rank(chunk) | 248 rank(chunk) | top-5 effect
+   aapl-02 | FIGURE | nonFigure | AAPL | 1(241) | 2(227) | 
+   aapl-03 | NARRATIVE | nonFigure | AAPL | 2(226) | 1(226) | 
+   aapl-05 | NARRATIVE | nonFigure | AAPL | 1(190) | 2(246) | 
+   aapl-06 | FIGURE | nonFigure | AAPL | 2(269) | 1(269) | 
+   aapl-09 | FIGURE | nonFigure | AAPL | 8(280) | 4(280) | gained top 5
+   aapl-11 | FIGURE | figure | AAPL | 1(225) | 1(226) | 
+   msft-01 | FIGURE | nonFigure | MSFT | 6(514) | 2(573) | gained top 5
+   msft-02 | FIGURE | nonFigure | MSFT | 2(514) | 1(514) | 
+   msft-03 | NARRATIVE | nonFigure | MSFT | 2(517) | 1(517) | 
+   msft-04 | FIGURE | nonFigure | MSFT | 4(466) | 10(466) | LOST top 5
+   msft-05 | NARRATIVE | nonFigure | MSFT | 2(571) | 5(460) | 
+   msft-07 | NARRATIVE | nonFigure | MSFT | 7(495) | 3(495) | gained top 5
+   msft-10 | FIGURE | nonFigure | MSFT | 1(637) | 1(635) | 
+   msft-11 | FIGURE | figure | MSFT | 1(519) | 3(519) | 
+   msft-12 | FIGURE | figure | MSFT | 2(519) | 5(519) | 
+   msft-13 | FIGURE | figure | MSFT | 1(523) | 1(524) | 
+   msft-14 | FIGURE | figure | MSFT | 1(644) | 1(646) | 
+   nvda-01 | FIGURE | nonFigure | NVDA | 3(805) | 9(805) | LOST top 5
+   nvda-03 | FIGURE | nonFigure | NVDA | 1(797) | 2(850) | 
+   nvda-08 | FIGURE | nonFigure | NVDA | 5(852) | 1(852) | 
+   nvda-10 | NARRATIVE | nonFigure | NVDA | 1(895) | 1(878) | 
+   nvda-11 | FIGURE | figure | NVDA | 1(805) | 7(805) | LOST top 5
+   nvda-12 | FIGURE | figure | NVDA | 5(802) | 2(802) | 
+   nvda-13 | FIGURE | figure | NVDA | 1(880) | 2(880) | 
+   nvda-14 | FIGURE | figure | NVDA | 1(872) | 7(872) | LOST top 5
+
+RANK CHANGES, REFERENCE 247 -> 249 (candidates 20): id | kind | slice | ticker | 247 rank(chunk) | 249 rank(chunk) | top-5 effect
+   aapl-02 | FIGURE | nonFigure | AAPL | 1(241) | 2(227) | 
+   aapl-03 | NARRATIVE | nonFigure | AAPL | 2(226) | 1(226) | 
+   aapl-05 | NARRATIVE | nonFigure | AAPL | 1(190) | 2(246) | 
+   aapl-06 | FIGURE | nonFigure | AAPL | 2(269) | 1(269) | 
+   aapl-09 | FIGURE | nonFigure | AAPL | 8(280) | 5(280) | gained top 5
+   aapl-11 | FIGURE | figure | AAPL | 1(225) | 1(226) | 
+   msft-01 | FIGURE | nonFigure | MSFT | 6(514) | 2(573) | gained top 5
+   msft-02 | FIGURE | nonFigure | MSFT | 2(514) | 1(514) | 
+   msft-03 | NARRATIVE | nonFigure | MSFT | 2(517) | 1(517) | 
+   msft-04 | FIGURE | nonFigure | MSFT | 4(466) | miss(-) | LOST top 5
+   msft-05 | NARRATIVE | nonFigure | MSFT | 2(571) | 8(460) | LOST top 5
+   msft-07 | NARRATIVE | nonFigure | MSFT | 7(495) | 3(680) | gained top 5
+   msft-08 | FIGURE | nonFigure | MSFT | miss(-) | 2(547) | gained top 5
+   msft-10 | FIGURE | nonFigure | MSFT | 1(637) | 1(635) | 
+   msft-11 | FIGURE | figure | MSFT | 1(519) | 3(519) | 
+   msft-12 | FIGURE | figure | MSFT | 2(519) | 6(519) | LOST top 5
+   msft-13 | FIGURE | figure | MSFT | 1(523) | 1(524) | 
+   msft-14 | FIGURE | figure | MSFT | 1(644) | 1(646) | 
+   nvda-01 | FIGURE | nonFigure | NVDA | 3(805) | miss(-) | LOST top 5
+   nvda-03 | FIGURE | nonFigure | NVDA | 1(797) | 2(850) | 
+   nvda-05 | NARRATIVE | nonFigure | NVDA | 10(749) | miss(-) | 
+   nvda-07 | NARRATIVE | nonFigure | NVDA | miss(-) | 6(770) | 
+   nvda-08 | FIGURE | nonFigure | NVDA | 5(852) | 1(852) | 
+   nvda-10 | NARRATIVE | nonFigure | NVDA | 1(895) | 1(878) | 
+   nvda-11 | FIGURE | figure | NVDA | 1(805) | 10(805) | LOST top 5
+   nvda-12 | FIGURE | figure | NVDA | 5(802) | 3(802) | 
+   nvda-13 | FIGURE | figure | NVDA | 1(880) | 4(880) | 
+   nvda-14 | FIGURE | figure | NVDA | 1(872) | miss(-) | LOST top 5
+
+NAMED QUESTIONS (247 | 248 | 249 | 250):
+   nvda-02 FIGURE nonFigure: miss(-) | miss(-) | miss(-) | miss(-)
+   nvda-04 FIGURE nonFigure: miss(-) | miss(-) | miss(-) | miss(-)
+   nvda-07 NARRATIVE nonFigure: miss(-) | miss(-) | 6(770) | 7(770)
+   nvda-09 FIGURE nonFigure: miss(-) | miss(-) | miss(-) | miss(-)
+   msft-08 FIGURE nonFigure: miss(-) | miss(-) | 2(547) | 2(547)
+
+PER-QUESTION RANKS, ALL ROWS: id kind slice | 247 | 248 | 249 | 250
+   aapl-01 FIGURE nonFigure | 1(225) | 1(225) | 1(225) | 1(225)
+   aapl-02 FIGURE nonFigure | 1(241) | 2(227) | 2(227) | 2(227)
+   aapl-03 NARRATIVE nonFigure | 2(226) | 1(226) | 1(226) | 1(226)
+   aapl-04 NARRATIVE nonFigure | 1(210) | 1(210) | 1(210) | 1(210)
+   aapl-05 NARRATIVE nonFigure | 1(190) | 2(246) | 2(246) | 2(246)
+   aapl-06 FIGURE nonFigure | 2(269) | 1(269) | 1(269) | 1(269)
+   aapl-07 FIGURE nonFigure | 1(240) | 1(240) | 1(240) | 1(240)
+   aapl-08 NARRATIVE nonFigure | 1(297) | 1(297) | 1(297) | 1(297)
+   aapl-09 FIGURE nonFigure | 8(280) | 4(280) | 5(280) | 5(280)
+   aapl-10 NARRATIVE nonFigure | 1(277) | 1(277) | 1(277) | 1(277)
+   aapl-11 FIGURE figure | 1(225) | 1(226) | 1(226) | 1(226)
+   aapl-12 FIGURE figure | 1(226) | 1(226) | 1(226) | 1(226)
+   aapl-13 FIGURE figure | 1(278) | 1(278) | 1(278) | 1(278)
+   aapl-14 FIGURE figure | 1(279) | 1(279) | 1(279) | 1(279)
+   msft-01 FIGURE nonFigure | 6(514) | 2(573) | 2(573) | 2(573)
+   msft-02 FIGURE nonFigure | 2(514) | 1(514) | 1(514) | 1(514)
+   msft-03 NARRATIVE nonFigure | 2(517) | 1(517) | 1(517) | 1(517)
+   msft-04 FIGURE nonFigure | 4(466) | 10(466) | miss(-) | 1(467)
+   msft-05 NARRATIVE nonFigure | 2(571) | 5(460) | 8(460) | 8(460)
+   msft-06 NARRATIVE nonFigure | 1(489) | 1(489) | 1(489) | 1(489)
+   msft-07 NARRATIVE nonFigure | 7(495) | 3(495) | 3(680) | 3(680)
+   msft-08 FIGURE nonFigure | miss(-) | miss(-) | 2(547) | 2(547)
+   msft-09 NARRATIVE nonFigure | 1(1064) | 1(1064) | 1(1064) | 1(1064)
+   msft-10 FIGURE nonFigure | 1(637) | 1(635) | 1(635) | 1(635)
+   msft-11 FIGURE figure | 1(519) | 3(519) | 3(519) | 3(519)
+   msft-12 FIGURE figure | 2(519) | 5(519) | 6(519) | 6(519)
+   msft-13 FIGURE figure | 1(523) | 1(524) | 1(524) | 1(524)
+   msft-14 FIGURE figure | 1(644) | 1(646) | 1(646) | 1(646)
+   nvda-01 FIGURE nonFigure | 3(805) | 9(805) | miss(-) | miss(-)
+   nvda-02 FIGURE nonFigure | miss(-) | miss(-) | miss(-) | miss(-)
+   nvda-03 FIGURE nonFigure | 1(797) | 2(850) | 2(850) | 2(850)
+   nvda-04 FIGURE nonFigure | miss(-) | miss(-) | miss(-) | miss(-)
+   nvda-05 NARRATIVE nonFigure | 10(749) | 10(749) | miss(-) | miss(-)
+   nvda-06 NARRATIVE nonFigure | 1(894) | 1(894) | 1(894) | 1(894)
+   nvda-07 NARRATIVE nonFigure | miss(-) | miss(-) | 6(770) | 7(770)
+   nvda-08 FIGURE nonFigure | 5(852) | 1(852) | 1(852) | 1(852)
+   nvda-09 FIGURE nonFigure | miss(-) | miss(-) | miss(-) | miss(-)
+   nvda-10 NARRATIVE nonFigure | 1(895) | 1(878) | 1(878) | 1(878)
+   nvda-11 FIGURE figure | 1(805) | 7(805) | 10(805) | 10(805)
+   nvda-12 FIGURE figure | 5(802) | 2(802) | 3(802) | 3(802)
+   nvda-13 FIGURE figure | 1(880) | 2(880) | 4(880) | 4(880)
+   nvda-14 FIGURE figure | 1(872) | 7(872) | miss(-) | miss(-)

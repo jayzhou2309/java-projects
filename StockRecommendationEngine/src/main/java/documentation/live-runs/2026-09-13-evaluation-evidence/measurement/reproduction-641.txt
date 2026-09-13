@@ -1,0 +1,4 @@
+reference=src/main/java/documentation/live-runs/2026-09-13-reranker-windows/measurement/snapshot-299-rerank-candidates-20-overlap-224.json (snapshot 299)
+run=src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/measurement/snapshot-641-traced-snapshot-299-rerank-candidates-20-overlap-224.json (snapshot 641)
+questions reference=42 run=42 traces=42
+problems=0

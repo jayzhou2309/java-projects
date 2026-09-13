@@ -248,3 +248,22 @@ rule that a sentence is generated from computed values rather than written besid
   generator reports an unbalanced document and continues with the rest; the RAG.md wording about differing lines and
   unbalanced files matches the code. Whether referenced files are committed stays a review item, documented.
 - The worked example `claims.json` (13 claims) and its RAG.md block are regenerated under the new format.
+
+## Amendment 5 (2026-09-13, Jay: run what can run in parallel)
+
+Milestone 4 splits so its measurement runs while Milestone 3's remediation is still in progress:
+
+- **Milestone 4a, measure (branch `evaluation-evidence-m4a`, worktree `java-projects-m4a`, app port 8082).** Traced
+  runs at the settings of snapshots 295 to 299 (reference off; windowed at 10, 20, and 40 candidates with
+  `rerank-timeout-ms` 4,000 at 40; 20 candidates with overlap 224), each snapshot exported as row_to_json, each
+  evidence report as compact JSON, and a per-run reproduction result against its untraced counterpart using
+  `TraceReproductionCheck`. Contract: F1 (reproduction per question; a difference is reported and stops for a decision)
+  and F5 (nvda-02's and nvda-04's accepted chunks' fused positions in every run, as recorded facts in run.log), plus the
+  Amendment 1 timeout rule. No RAG.md, claims, or plan-status changes. Gate: Scrutiny only (recomputation from the
+  committed files).
+- **Milestone 4b, claims and regeneration**, after Milestone 3 passes and 4a is merged into `evaluation-evidence`:
+  F2, F3, F4 on 4a's evidence, with UT as planned for Milestone 4.
+- **Parallel runs share the CPU.** Rerank timeouts are part of each run's settings, so a traced run waits until no
+  other Maven test JVM or application from another worktree is running, records the load average when it starts, and
+  follows the Amendment 1 rule on any fallback. Validators for different milestones may run at the same time only in
+  separate worktrees on separate ports.

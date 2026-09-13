@@ -1,0 +1,4 @@
+reference=src/main/java/documentation/live-runs/2026-09-13-reranker-windows/measurement/snapshot-298-rerank-candidates-40-timeout-4000.json (snapshot 298)
+run=src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/measurement/snapshot-627-traced-snapshot-298-rerank-candidates-40-timeout-4000.json (snapshot 627)
+questions reference=42 run=42 traces=42
+problems=0

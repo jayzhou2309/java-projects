@@ -85,10 +85,13 @@ hit@5 decreases, (4) no kind-FIGURE question in the top 5 under 295 (22 question
 Outcome: no row qualifies. Reranking is not recommended for set v2 with this model, windowed or not. Defaults unchanged: reranking-enabled false, cross-encoder.enabled
 false, rerank-candidates 20, passage-scoring max-window, window-overlap-tokens 64, max-windows 4. Floors not re-derived (no row qualified).
 Against the head rows: windowing repaired the figure slice (12/12 in every windowed row, against 10/12, 9/12, 9/12), removed nvda-11, nvda-14 and msft-12 from the
-criterion-4 failures, cut the NVDA top-5 loss by two thirds (one question, 8/14, against three, 6/14; none at overlap 224), and at 40 candidates or overlap 224 raised
-aggregate hit@5 above the reference (34/42) with a higher hit@3 (0.785714 against 0.714286); it left nvda-01 outside the top 5 in every row and msft-04 in every row
-but 298 (both kind FIGURE, nonFigure slice), and
-lowered hit@1 (23/42 to 21, 21, 22, 20). Every windowed row has 2.1 to 2.5 times the head row's median scoring time (windows per call 21, 43, 83.5, 51 against 10, 20, 40, 20 rows).
+criterion-4 failures, and at 40 candidates or overlap 224 raised aggregate hit@5 above the reference (34/42) with a higher hit@3 (0.785714 against 0.714286); it left
+nvda-01 outside the top 5 in every row and msft-04 in every row but 298 (both kind FIGURE, nonFigure slice), and lowered hit@1 (23/42 to 21, 21, 22, 20).
+NVDA top-5 questions against the reference (247 for the head rows, 295 for the windowed rows), lost and gained per row, recomputed from the JSON files:
+  248, 249, 250 (head): each lost nvda-01, nvda-11, nvda-14 and gained none, net -3 (9/14 to 6/14)
+  296, 297, 298:        each lost nvda-01 and gained none, net -1 (9/14 to 8/14)
+  299:                  lost nvda-01 and gained nvda-09, net 0 (9/14)
+Every windowed row has 2.1 to 2.5 times the head row's median scoring time (windows per call 21, 43, 83.5, 51 against 10, 20, 40, 20 rows).
 
 Top-5 membership against 295, per row (recomputed from the JSON files):
   296: gained msft-01, msft-07; lost msft-04, msft-05, nvda-01.        nonFigure +2 -3 = 20/30; figure 12/12; AAPL 13, MSFT 11, NVDA 8; aggregate 32
@@ -106,52 +109,77 @@ final window at length - W; W = 509 - question tokens for these questions). The 
 answering sentence at +10.29 at a window's start, +5.91 at token 141, +2.56 at 164, -11.09 at 213, -7.10 at 257, +2.57 at 340, +3.45 at 419, +3.06 at 484 (max-window).
   nvda-11 (FIGURE, figure slice; chunk 805, 854 tokens, W 477, answer at 596: not seen by the head cut; head 2.62, answer window 5.26). Head rows 7, 10, 10; windowed
     rows 5, 5, 5, 5 (reference 1). Recovered into the top 5, not to the top. Overlap 64 gives windows at 0 and 377 (854 - 477), so the answer sits 219 tokens into the
-    second window, the sweep's trough (-11.09 at 213); overlap 224 gives 0, 253, 377, the answer 343 into the second window (+2.57 at 340 in the sweep) and 219 into the
-    third, and the rank is still 5, behind chunks 852, 881, 873 and 851 (diagnostic order at the defaults, diagnostic-defaults.txt). Consistent with position
-    sensitivity; the sweep is synthetic filler and the logits of chunk 805's windows for this question were not measured.
+    second window (the sweep logged -11.09 at 213); overlap 224 gives 0, 253, 377, the answer 343 into the second window (+2.57 at 340 in the sweep) and 219 into the
+    third, and the rank is still 5. At the defaults (297, diagnostic-defaults.txt) the chunks above it are 852, 881, 873 and 851; in 299 they are not recorded (a
+    snapshot stores only rank and matched chunk for a hit, and the diagnostic ran at overlap 64). Why it ranks 5 rather than 1 was not determined: the logits of
+    chunk 805's windows for this question were not measured, the sweep is synthetic filler, and the window overlap 224 adds (answer 343 tokens in) left the rank at 5.
   nvda-14 (FIGURE, figure slice; chunk 872, 996 tokens, W 477, answer at 820: not seen; head -0.26, answer window 4.78). Head rows 7, miss, miss; windowed rows
-    1, 1, 1, 2 (reference 1). Fully recovered: overlap 64 windows at 0, 413, 519 put the answer 407 into the second window and 301 into the third; overlap 224
-    (0, 253, 506, 519) 314 into the third and 301 into the fourth, rank 2 behind chunk 873.
+    1, 1, 1, 2 (reference 1). Back at rank 1 in 296 to 298: overlap 64 windows at 0, 413, 519 put the answer 407 into the second window and 301 into the third;
+    overlap 224 (0, 253, 506, 519) puts it 314 into the third and 301 into the fourth, and the rank is 2. The chunk ranked first in 299 is not recorded (the snapshot
+    stores only rank and matched chunk for a hit; the diagnostic ran at overlap 64, where chunk 872 ranked first), and why it moved from 1 to 2 was not determined.
   msft-12 (FIGURE, figure slice; chunk 519, 605 tokens, W 490, answer at 544: not seen; head -1.84, answer window 5.14). Head rows 5, 6, 6; windowed rows 2 in all
     four (reference 2). Recovered. The chunk is 115 tokens longer than W, so both overlaps give the same windows (0 and 115) and the answer sits 429 into the second.
   nvda-01 (FIGURE, nonFigure slice; chunk 805, 854 tokens, W 489, answer at 485: the head cut kept only its first four tokens; head -1.75, answer window 5.03; in
-    the probe's head ranking of all 162 NVDA chunks 805 was 30th, with 852 at 5.75 and 873 at 5.62). Head rows 9, miss, miss; windowed rows 8, miss, miss, miss
-    (reference 3). Not recovered, and not a truncation loss: overlap 64 windows at 0 and 365 put the answer about 120 tokens into the second window, inside a scored
-    window. The probe's 5.03 did not measure that window: it scored the text from 200 characters before the phrase, the phrase 59 tokens in, and the sweep changes
-    between those depths (+9.42 at 54, +8.09 at 98, +5.91 at 141), so 5.03 does not bound the production window's logit, which was not measured. Chunk 805 is the
-    third fused candidate, so every row scores it; it ranks 8 at 10 candidates and outside the reranked top 10 at 20 and 40. The reranked order at the defaults is
-    852, 873, 864, 851, 842, 881, 872, 857, 800, 863 (diagnostic-defaults.txt), so the answering table row scores below those chunks in its best window: inferred
-    from the ranks, not measured. Overlap 224 (windows 0, 265, 365; the answer 220 and 120 tokens in) leaves it a miss too. One of the two
-    questions that fail criterion 4 in every windowed row but 298 (298: nvda-01 alone).
+    the probe's head ranking of all 162 NVDA chunks 805 was 30th, with 852 at 5.75 and 873 at 5.62). The probe's 485 points at "215,938"; counted with the real
+    tokenizer from the matched phrase's first word ("Total $ 215,938 $ 130,497 $ 85,441 65 %"), the phrase is tokens 483 to 500 (17 tokens), so the head window kept
+    its first 6 tokens. Head rows 9, miss, miss; windowed rows 8, miss, miss, miss (reference 3). Not recovered, and not a truncation loss: overlap 64 windows at 0
+    and 365 put the whole phrase at tokens 118 to 135 of the second window, inside a scored window. The probe's 5.03 did not measure that window: it scored the text
+    from 200 characters before the probe's offset, "215,938" 59 tokens in, and the sweep changes between those depths (+9.42 at 54, +8.09 at 98, +5.91 at 141), so 5.03 does
+    not bound the production window's logit, which was not measured. Chunk 805 is the third fused candidate, so every row scores it; it ranks 8 at 10 candidates and
+    outside the reranked top 10 at 20 and 40. The reranked order at the defaults is 852, 873, 864, 851, 842, 881, 872, 857, 800, 863 (diagnostic-defaults.txt), and
+    the top three recorded for the miss in 297, 298 and 299 are 852, 873, 864, so the chunk's best window scores below those chunks: inferred from the ranks, not
+    measured; why was not determined. Overlap 224 (windows 0, 265, 365; the phrase 218 and 118 tokens in) leaves it a miss too. One of the two questions that fail
+    criterion 4 in every windowed row but 298 (298: nvda-01 alone).
   msft-04 (FIGURE, nonFigure slice; chunk 466, 693 tokens, W 480, answer at 606: not seen; head -10.68, answer window 0.20; the probe's head ranking of all 263
     MSFT chunks put 467 first at 3.04 and 466 150th). Head rows 10, miss, 1 (chunk 467); windowed rows 8, miss, 1 (chunk 467), miss (reference 4, chunk 466).
-    The chunk is 213 tokens longer than W and both strides (416, 256) overshoot its end, so both overlaps give the same windows (0 and 213), the answer 393 tokens into
-    the second, whose logit was not measured (the probe's text from 200 characters before the phrase, 39 tokens in, scored 0.20, below chunk 467's 3.04). Chunk 467
-    (1,564 characters; 391 is the stored characters / 4 token_count, 282 WordPiece tokens with the real tokenizer, so one window at W 480; the following chunk of the
-    same section, holding the same sentence from character 96 in the database) is not among the first 20 fused candidates (inferred from the ranks: first of 40 in
-    298, it would rank first in any row whose candidates included it) and enters only at 40 candidates, where the reranker puts it first (rows 250 and 298):
-    truncation plus the short-chunk edge the plan names. At 20 candidates the reranked order at the defaults is 514, 516, 573, 637, 635, 642, 518, 645, 512, 641
-    (diagnostic-defaults.txt), chunks 466 and 467 absent; at 10 candidates (296) chunk 466 ranks 8. The other question failing criterion 4 in rows 296, 297 and 299.
+    The chunk is 213 tokens longer than W and both strides (416, 256) overshoot its end, so both overlaps give the same windows (0 and 213); the 28-token phrase
+    (tokens 606 to 634, counted with the real tokenizer) lies wholly inside the second window, at its tokens 393 to 421 of 480, so in the windowed rows it is not a
+    truncation loss. That window's logit was not measured (the probe's text from 200 characters before the phrase, 39 tokens in, scored 0.20, below chunk 467's
+    3.04). Why chunk 466 ranks 8 at 10 candidates and outside the reranked top 10 at 20 and 40 was not determined. At 20 candidates the reranked order at the
+    defaults is 514, 516, 573, 637, 635, 642, 518, 645, 512, 641 (diagnostic-defaults.txt), chunks 466 and 467 absent. Chunk 467 (1,564 characters; 391 is the
+    stored characters / 4 token_count, 282 WordPiece tokens with the real tokenizer, so one window at W 480, scored exactly as under head; the following chunk of
+    the same section, holding the same sentence from character 96, at its tokens 20 to 48) is the matched chunk at rank 1 in 298 (and in head row 250). It is not
+    among the first 20 fused candidates, inferred from the ranks: its one-window score does not depend on the other candidates, it ranks first of the 40 in 298,
+    and 296 and 297 score with the same settings (max-window, overlap 64) over the first 10 and 20 of those candidates, so it would rank first there if either
+    included it, and msft-04 is 8 and a miss there (head rows 249 and 250 give the same inference under head scoring; 299, where the other candidates have other
+    windows, does not bear on it). The other question failing criterion 4 in rows 296, 297 and 299.
   msft-10 (chunk 637, 737 tokens, W 495, answer at 620: not seen; head -9.52, answer window 9.88): rank 1 in every row; the head rows matched the alternative chunk
-    635, the windowed rows match 637 itself (the answer 378 tokens into the second window). A gain in the matched chunk, not in rank.
-  msft-13 (chunk 523, 734 tokens, W 483, answer at 630: not seen; head -1.66, answer window 7.73): rank 1 in every row through the alternative chunk 524 under every
-    rerank row, head and windowed. No change.
+    635, the windowed rows match 637 itself (the answer 378 tokens into the second window). A change in the matched chunk, not in rank.
+  msft-13 (chunk 523, 734 tokens, W 483, answer at 630: not seen; head -1.66, answer window 7.73): rank 1 in every row through chunk 524 under every rerank row, head
+    and windowed. msft-13 has a single expectation, and chunk 524, a different chunk of the same section, also holds its phrase (it is not an alternative
+    expectation). No change in rank.
   aapl-05 (chunk 190, 808 tokens, W 500, answer at 655: not seen; head -6.63, answer window 5.06): rank 1 (chunk 190) in the reference, 2 (the alternative chunk 246)
     in every rerank row, head and windowed alike. Windowing (answer 347 tokens into the second window at overlap 64; 379 and 347 at overlap 224) did not lift chunk 190
     above 246. Still in the top 5.
-  nvda-02, nvda-04: no match in every row, as before (the answering chunks are not among the reranker's candidates; see the 2026-09-13 nvda-02 retrieval check).
-  nvda-09: no match in eight rows, rank 2 (chunk 879) in 299 only. Chunk 879 is not in the probe (no match in 247 and 250), so its token positions were not measured;
-    the phrase begins at character 3,150 of its 3,827, in the last quarter of the chunk. It is among the first 20 fused candidates (299 reranked it to 2 from 20
-    candidates) and stays a miss at 20 and 40 candidates under overlap 64 (297, 298) and under head (249, 250), so the 224 overlap's extra window, whose start is
-    nearer the phrase, is what lifted it: consistent with position sensitivity, one question, not probed with the tokenizer.
+  nvda-02, nvda-04: no match in every row. What was checked: for nvda-02, the head measurement's retrieval check (live-runs/2026-09-13-reranker/measurement/run.log,
+    topK 20, rerank false) found its expected chunk 802 absent from the first 20 fused candidates, so at 10 and 20 candidates the reranker never scores it; whether it
+    lies in fused positions 21 to 40 was not determined. nvda-04's candidates were never checked. The plan's Why section grouped nvda-09 with these two as never
+    retrieved; nvda-09's chunk 879 is within the first 20 candidates (299 reranked it to 2 from 20), so that grouping was not established (plan Amendment 3).
+  nvda-09 (FIGURE, nonFigure slice): no match in eight rows, rank 2 (chunk 879) in 299 only, so it entered the top 5 only in row 299. Chunk 879 is not in the probe
+    (no match in 247 and 250); counted with the real tokenizer (no model) during the second documentation correction: 889 tokens, the question 19 tokens so W 490,
+    the 23-token phrase at tokens 740 to 763, in the last quarter of the chunk. Overlap 64 gives windows at 0 and 399; overlap 224 gives 0, 266 and 399. The window
+    holding the whole phrase is the one at 399 under both overlaps (the phrase 341 tokens in); the extra window at 266 is further from the phrase (474 tokens in) and
+    holds only its first 16 of 23 tokens. The chunk is among the first 20 fused candidates and stays a miss at 20 and 40 candidates under overlap 64 (297, 298) and
+    under head (249, 250). The cause of the lift in 299 was not determined: the extra window at 266 scoring higher, or other candidates scoring lower under overlap
+    224's windows, are both possible (under max-window chunk 879's own score at overlap 224 is at least its score at overlap 64, since its windows there are a
+    superset), and neither was measured.
   nvda-07: no match -> 8, 9, 8 (chunk 770) at 20 candidates and above (head 6, 7); still outside the top 5. msft-08: no match -> 2 (chunk 547) at 20 and 40 candidates,
     as under head; still no match at 10. nvda-05: 10 -> no match at 20 candidates and above, as under head.
-Other movements (every windowed row unless stated): msft-05 2 -> 6, 10, 10, 10 (chunk 460, an alternative; head 5, 8, 8; the probe saw its answer at token 121 of
-  chunk 571 and ranked 571 13th of 263 MSFT chunks under head, so the segment question is answered by many chunks; the probe's rescoring from 200 characters before
-  the phrase gave 2.90, below the head logits of 1064 (6.65) and 640 (3.82), and that is not a production window: a model preference, not truncation); aapl-09 8 -> 8, miss, miss, 10 (head 4, 5, 5: the head rows had it in the top 5, windowed rows do not; chunk 280, answer
-  at 509 of 818, W 490, the answer 181 tokens into the second window at overlap 64, near the sweep's trough); aapl-02 1 -> 3 (chunk 226, an alternative); msft-11
-  1 -> 3; msft-14 1 -> 2; nvda-10 1 -> 2; nvda-13 1 -> 1 (chunk 879); nvda-08 5 -> 1; nvda-12 5 -> 2; msft-01 6 -> 2; msft-07 7 -> 4, 2, 2, 2; msft-03, aapl-03,
-  aapl-06 2 -> 1; nvda-03 1 -> 1 (chunk 850). The other 13 questions (42 less the 29 named in this section) keep rank and chunk in every row.
+Other movements (every windowed row unless stated): msft-05 2 -> 6, 10, 10, 10 (chunk 460, which holds the set's first, ITEM_1 expectation; the reference matched
+  chunk 571 through the ITEM_8 alternative; head 5, 8, 8). Its answer lies inside the first window under every setting (counted with the real tokenizer: chunk 571 at
+  tokens 121 to 132 of 655, W 492; chunk 460 at tokens 105 to 121 of 650), so it is not a truncation case. The probe ranked chunk 571 13th of 263 MSFT chunks under
+  head (1064 at 6.65 and 640 at 3.82 above it), and its rescoring from 200 characters before the phrase gave 2.90, not a production window. Which chunks rank above
+  chunk 460 in the windowed rows, and why, was not determined.
+  aapl-09 8 -> 8, miss, miss, 10 (chunk 280; head 4, 5, 5: the head rows had it in the top 5, windowed rows do not). Its 23-token answer (tokens 509 to 532 of 818,
+  W 490) is outside the head window and wholly inside the second window: 181 tokens in at overlap 64 (windows 0, 328); 243 and 181 in at overlap 224 (0, 266, 328).
+  Under max-window a chunk's first window is exactly its head row, so chunk 280's score in every windowed row is at least its head score, which ranked it 4 or 5 in the
+  head rows at the same candidate counts; its lower windowed ranks mean other candidates now score above it (inferred from the ranks). Which chunks overtook it, and
+  whether its own score rose, was not determined.
+  aapl-02 1 -> 3 (chunk 226, which holds the first, ITEM_7 expectation; the reference matched chunk 241 through the ITEM_8 alternative); msft-11 1 -> 3; msft-14
+  1 -> 2; nvda-10 1 -> 2; nvda-13 1 -> 1 (chunk 879); nvda-08 5 -> 1; nvda-12 5 -> 2; msft-01 6 -> 2; msft-07 7 -> 4, 2, 2, 2; msft-03, aapl-03, aapl-06 2 -> 1;
+  nvda-03 1 -> 1 (chunk 850). The other 13 questions (42 less the 29 named in this section) keep rank and chunk in every row.
+  Against 297 (the same 20 candidates at overlap 64), 299 differs on four questions only: nvda-09 no match -> 2 (879), aapl-09 no match -> 10, nvda-14 1 -> 2, and
+  nvda-10's matched chunk 878 -> 895 at rank 2.
 
 Diagnostic (one extra start, no evaluation; RAG_CROSS_ENCODER_ENABLED=true, defaults: rerank-candidates 20, overlap 64), 13:55 SGT, diagnostic-defaults.txt:
   body {"ticker":<t>,"query":<question text>,"topK":10,"latestFilingsOnly":true,"rerank":<v>}, warm-up first
@@ -189,3 +217,38 @@ snapshots, latency-298.txt, the truncation probe and its source, the database, a
   - msft-04: chunk 467 is 282 WordPiece tokens (391 is the stored characters / 4 estimate); the sentence starts at character 96, not 123; at 10 candidates
     chunk 466 ranks 8 (296), so "absent at 10 and 20 candidates" was wrong.
   - The probe description: the rescored text starts 200 characters before the phrase, not "about 50 tokens ahead" in general.
+
+Corrections, 2026-09-13, after Milestone 2 re-validation (remediation 2; plan Amendment 3: a per-question cause is written only where the committed evidence
+establishes it, otherwise the observed rank change and "not determined"). Documentation only; no application run, evaluation, snapshot, or model call. Token
+positions were counted with the real tokenizer alone (OnnxCrossEncoderScorer.singleSequenceTokenizer and CrossEncoderPairAssembler.windowLength / windowStarts on
+the stored chunk text, from a scratchpad program); ranks and matched chunks from snapshots 247 to 250 and 295 to 299; expectation membership from
+retrieval-set-v2.json and a read-only select of the chunks. The corrections above this one stay as they were.
+  - nvda-09: the text said overlap 224's extra window, "whose start is nearer the phrase", lifted it. Chunk 879 is 889 tokens, W 490, the 23-token phrase at tokens
+    740 to 763; the window holding the whole phrase starts at 399 under both overlaps (341 tokens in), and the extra window at 266 is further from it (474 in) and
+    holds 16 of its 23 tokens. Now: it entered the top 5 only in 299, the answer window is the same under both overlaps, and the cause was not determined.
+  - nvda-02, nvda-04: "the answering chunks are not among the reranker's candidates" was not established. Only nvda-02 was checked, at 20 candidates; fused
+    positions 21 to 40 were not determined, and nvda-04 was never checked. nvda-09's chunk is within the first 20 candidates (299), so grouping it with them as never
+    retrieved was not established either.
+  - nvda-14: "rank 2 behind chunk 873" in 299 named a chunk no committed evidence records (a snapshot stores rank and matched chunk for a hit; the diagnostic ran at
+    overlap 64). Removed; the move from 1 to 2 is now "not determined". "Fully recovered" now reads back at rank 1 in 296 to 298, 2 in 299.
+  - nvda-11: "behind chunks 852, 881, 873 and 851" sat in the overlap-224 clause, but that order is the diagnostic at overlap 64 (297); now attributed to 297, with
+    299's chunks not recorded. "Consistent with position sensitivity" replaced: why it ranks 5 was not determined, and the window overlap 224 adds (answer 343 tokens
+    in) left the rank at 5.
+  - msft-04: "truncation plus the short-chunk edge" removed. Under windowed scoring the 28-token phrase lies wholly inside window 2 (its tokens 393 to 421 of 480),
+    not a truncation loss; chunk 467 (282 tokens, the same sentence at its tokens 20 to 48) is the matched chunk in 298; why chunk 466 ranks low was not
+    determined. "It would rank first in any row whose candidates included it" narrowed to 296 and 297, which share 298's scoring settings (and head rows 249 and 250
+    under head scoring); the inference that chunk 467 is not in the first 20 fused candidates is kept, marked as inferred from the ranks.
+  - aapl-09: "the answer 181 tokens into the second window at overlap 64, near the sweep's trough" given as why it stays out. Under max-window the first window is
+    the head row, so chunk 280 scores at least its head score, which ranked it 4 or 5 at the same candidate counts; its drop means other candidates now score above
+    it. Now: observed ranks, that bound, and "which chunks overtook it was not determined".
+  - msft-05: "so the segment question is answered by many chunks" and "a model preference, not truncation" replaced by what is established (the answer lies in the
+    first window under every setting, so not truncation; why other chunks rank above chunk 460 not determined). Chunk 460 was called "an alternative"; it holds the
+    set's first (ITEM_1) expectation, and the reference's chunk 571 holds the ITEM_8 alternative.
+  - aapl-02: chunk 226 was called "an alternative"; it holds the first (ITEM_7) expectation, and the reference's chunk 241 holds the ITEM_8 alternative.
+    msft-13: chunk 524 was called "the alternative chunk"; msft-13 has one expectation, whose phrase chunk 524 also holds.
+  - nvda-01: the probe's answer offset 485 points at "215,938"; the matched phrase starts two tokens earlier ("Total", token 483) and runs to token 500, so the head
+    window kept its first 6 tokens and the phrase is at tokens 118 to 135 of the second window (218 to 235 of the 265 window at overlap 224). The loss within its
+    best window stays "inferred from the ranks", now naming the top three recorded for the miss (852, 873, 864 in 297 to 299) and adding "why was not determined".
+  - Against the head rows: "cut the NVDA top-5 loss by two thirds (...; none at overlap 224)" mixed a gross count with a net one. Replaced by NVDA questions lost
+    and gained per row, head rows included: 248 to 250 lose 3 and gain 0 (net -3); 296 to 298 lose 1 and gain 0 (net -1); 299 loses 1 and gains 1 (net 0).
+  - msft-10: "A gain in the matched chunk" now "A change in the matched chunk". Added the complete 297 to 299 comparison (four questions differ).

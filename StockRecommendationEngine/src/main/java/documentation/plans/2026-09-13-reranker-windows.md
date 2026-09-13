@@ -15,13 +15,18 @@ diagnosed on 2026-09-13 with the real tokenizer and model against every chunk in
   WordPiece lengths are somewhat lower but still well past the window: median 647 tokens, 90th percentile 849, longest
   1,214 (corrected 2026-09-13 after Milestone 2 Scrutiny; this line first said exact lengths were higher than the
   estimate, which the probe does not show). The model's window is 512 tokens
-  including the question and three special tokens, so a chunk keeps about 475 to 495 tokens: 371 of 569 chunks (65%)
-  are longer than that, and on average the model sees 78% of a chunk.
+  including the question and three special tokens, so a chunk keeps about 475 to 495 tokens beside the set's
+  questions. The probe counted 371 of 569 chunks (65%) longer than 469 tokens, the room beside a 40-token question,
+  and on average the model sees 78% of a chunk (corrected after Milestone 2 remediation 1: this line first attached
+  the 65% to the 475 to 495 range).
 - The scorer keeps the head of the chunk (longest-first truncation), so an answer in the tail is invisible. For 11 of
   the 39 questions with a matched chunk the expected phrase starts past the kept tokens, and nvda-01's phrase begins
-  at token 485 of 489 kept. Every top-5 loss in the measurement is such a question: nvda-11 (answer at token 596,
-  477 kept), nvda-14 (820 of 996, 477 kept), msft-12 (544, 490 kept), nvda-01. Rescoring the same question with the
-  window placed on the answer flips the logit: nvda-11 2.6 to 5.3, nvda-14 -0.3 to 4.8, msft-12 -1.8 to 5.1,
+  at token 485 of 489 kept. Every top-5 loss in the measurement but one is such a question: nvda-11 (answer at token
+  596, 477 kept), nvda-14 (820 of 996, 477 kept), msft-12 (544, 490 kept), msft-04 (606, 480 kept), nvda-01. The
+  exception is msft-05, which left the top 5 at 20 and 40 candidates with its answer at token 121, inside the kept
+  head (corrected after Milestone 2 remediation 1: this line first said every loss was a truncation case). Rescoring
+  the same question on the chunk text starting 200 characters before the answer (about 40 to 60 tokens in, not a
+  production window position) flips the logit: nvda-11 2.6 to 5.3, nvda-14 -0.3 to 4.8, msft-12 -1.8 to 5.1,
   nvda-01 -1.7 to 5.0, msft-04 -10.7 to 0.2, msft-10 -9.5 to 9.9, msft-13 -1.7 to 7.7, aapl-05 -6.6 to 5.1.
 - Not addressed here: nvda-02, nvda-04, and nvda-09 are never in the candidate list (a recall problem no reranker can
   fix); the reranked order discards the fusion figure leg entirely; short chunks that fit the window gain an edge.

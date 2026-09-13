@@ -165,3 +165,23 @@ Both validators must pass before the next milestone; at most two remediation rou
 see the Worker's report or each other's output and run one at a time (shared `target/`). Scrutiny recomputes from stored
 evidence and constructs the regression scenario for every guard. For documentation claims, validators use the evidence
 report, not the prose.
+
+## Amendment 1 (2026-09-13, after Milestone 1 Scrutiny PASS on remediation round 1)
+
+Milestone 1 (1f57c75, remediated in 39d9394) passed Scrutiny; its first attempt failed C5 because the reproduction test
+stopped at a fallback assertion before naming the differing questions. Changes to the plan:
+
+- **Interface, as built.** `FilingReranker.rerankScored` has a default that calls `rerank` once and reports no scores, and
+  `FilingRetrievalService` calls `rerankScored` on both `retrieve` and `retrieveTraced`; the untraced path discards the
+  scores. This replaces Milestone 1's "default: not supported" and "a traced path used only by evaluation" wording: the
+  trace itself is still built and stored only for evaluation runs with `trace=true`, and no trace reaches
+  `/api/rag/retrieve`, the recommendation tools, or a prompt. Scrutiny verified identical responses and logs against the
+  pre-milestone service over 500 random scenarios and every constructed reranker, one reranker call per retrieval, and
+  about 3 KB of extra allocation per 40-candidate, 4-window call.
+- **Folded into Milestone 2** (non-blocking Scrutiny findings): `TraceReproductionCheck` must not throw when a question
+  that fell back without an error has a null trace (filter by id, then map; add a unit case); RAG.md's Traces `rerank`
+  bullet about `noCandidates` needs its in-place dated correction marker.
+- **Timeouts in Milestone 4.** A traced run at snapshot 297's settings fell back on two questions once at the default
+  2,000 ms (calls of 2,039 and 2,448 ms) and passed on rerun. Milestone 4 applies the earlier plan's rule: only
+  fallback-free runs count, a run with fallbacks is rerun once, and a run that still falls back is reported and excluded,
+  never compared as if it reproduced its counterpart.

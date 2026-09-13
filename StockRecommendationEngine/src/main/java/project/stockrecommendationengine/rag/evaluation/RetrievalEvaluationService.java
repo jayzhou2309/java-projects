@@ -64,7 +64,9 @@ public class RetrievalEvaluationService {
      * {@code rerank} is passed and recorded ({@code properties.rerank}) the same way, with {@code properties.reranker} the
      * reranker's simple class name (null when none), {@code properties.rerankerVersion} (the reranker's model version, the
      * first 12 hex characters of the model's SHA-256 for the cross-encoder; null when there is no reranker or it reports none),
-     * and {@code properties.rerankCandidates}. Each question result records the strategy retrieval reported for it;
+     * {@code properties.rerankerScoring} (the reranker's {@link project.stockrecommendationengine.rag.retrieval.FilingReranker#scoring()},
+     * for the cross-encoder {@code head} or {@code max-window/overlap=64/maxWindows=4}; null when there is no reranker or it
+     * reports none), and {@code properties.rerankCandidates}. Each question result records the strategy retrieval reported for it;
      * {@code properties.rerankedQuestions} counts questions whose strategy ends {@code _RERANKED}, and
      * {@code properties.rerankFallbackQuestions} counts, when reranking resolved on for the run ({@code rerank}, else
      * {@code rag.retrieval.reranking-enabled}), questions retrieved without error whose strategy is not reranked (a timeout,
@@ -223,6 +225,7 @@ public class RetrievalEvaluationService {
         out.put("rerankCandidates", retrievalProperties.getRerankCandidates());
         out.put("reranker", reranker);
         out.put("rerankerVersion", retrieval.rerankerVersion().orElse(null));
+        out.put("rerankerScoring", retrieval.rerankerScoring().orElse(null));
         out.put("rerankedQuestions", (int) rerankedQuestions);
         out.put("rerankFallbackQuestions", (int) fallbackQuestions);
         return out;

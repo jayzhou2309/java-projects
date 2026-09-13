@@ -180,6 +180,50 @@ class CrossEncoderRerankerTests {
     }
 
     @Test
+    void theCompletionLogLineReportsTheWindowsTheScorerRan(CapturedOutput output) {
+        var candidates = List.of(chunk(1, "a"), chunk(2, "b"), chunk(3, "c"));
+        // A scorer reporting one row per passage (the default of scoreWithWindows) logs windows equal to the candidate count.
+        new CrossEncoderReranker(new TableScorer(Map.of("a", 1f, "b", 2f, "c", 3f)), null).rerank("q", candidates, 3);
+        assertThat(output.getOut()).contains("Cross-encoder scoring completed: candidates=3, windows=3, topK=3, elapsedMs=");
+        // A windowed scorer reports its row count and the scores it reduced to.
+        PairScorer windowed = new PairScorer() {
+            @Override
+            public float[] score(String query, List<String> passages) {
+                return scoreWithWindows(query, passages).scores();
+            }
+
+            @Override
+            public Scored scoreWithWindows(String query, List<String> passages) {
+                return new Scored(new float[] {0.5f, 4f, -1f}, 7);
+            }
+
+            @Override
+            public String scoring() {
+                return "max-window/overlap=64/maxWindows=4";
+            }
+        };
+        var reranker = new CrossEncoderReranker(windowed, "5d3e70fd0c9f");
+        assertThat(reranker.rerank("q", candidates, 2)).extracting(RetrievedFilingChunk::chunkId).containsExactly(2L, 1L);
+        assertThat(output.getOut()).contains("Cross-encoder scoring completed: candidates=3, windows=7, topK=2, elapsedMs=");
+        assertThat(reranker.scoring()).isEqualTo("max-window/overlap=64/maxWindows=4");
+        assertThat(new CrossEncoderReranker(new TableScorer(Map.of()), null).scoring()).isNull();
+        // A null result from a scorer is a RuntimeException like a null score array, so retrieval falls back.
+        PairScorer nullResult = new PairScorer() {
+            @Override
+            public float[] score(String query, List<String> passages) {
+                return null;
+            }
+
+            @Override
+            public Scored scoreWithWindows(String query, List<String> passages) {
+                return null;
+            }
+        };
+        assertThatThrownBy(() -> new CrossEncoderReranker(nullResult, null).rerank("q", candidates, 2))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("no scores");
+    }
+
+    @Test
     void theRerankerNameUsesTheUserClassAndTheVersionComesFromTheReranker() {
         var ranking = List.of(chunk(1, "a"));
         ProxyFactory factory = new ProxyFactory(new CrossEncoderReranker(new TableScorer(Map.of()), "5d3e70fd0c9f"));
@@ -189,7 +233,21 @@ class CrossEncoderRerankerTests {
         var service = service(ranking, proxied, 2000);
         assertThat(service.rerankerName()).contains("CrossEncoderReranker");
         assertThat(service.rerankerVersion()).contains("5d3e70fd0c9f");
+        assertThat(service.rerankerScoring()).as("a scorer without a scoring description").isEmpty();
         assertThat(service(ranking, new ReversingFilingReranker(), 2000).rerankerVersion()).isEmpty();
+        assertThat(service(ranking, new ReversingFilingReranker(), 2000).rerankerScoring()).isEmpty();
+        PairScorer describing = new PairScorer() {
+            @Override
+            public float[] score(String query, List<String> passages) {
+                return new float[passages.size()];
+            }
+
+            @Override
+            public String scoring() {
+                return "head";
+            }
+        };
+        assertThat(service(ranking, new CrossEncoderReranker(describing, null), 2000).rerankerScoring()).contains("head");
     }
 
     private static FilingRetrievalService service(List<RetrievedFilingChunk> ranking, FilingReranker reranker, long timeoutMs) {

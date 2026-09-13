@@ -102,6 +102,17 @@ rag:
       # pairs' attention size (rows x longest pair squared). The value still affects peak memory; measured figures and evidence are
       # in RAG.md, Cross-encoder reranker (Properties, Latency).
       batch-size: 20
+      # How a chunk longer than one window (max-length - 3 - the question's tokens, about 480 tokens; 65% of stored chunks are longer) is
+      # scored. head: its first window only, the behaviour before 2026-09-13's windowed scoring, which never saw an answer in the tail.
+      # max-window: the maximum logit over sliding windows that cover the whole chunk, built in Java from the same token ids (RAG.md,
+      # Cross-encoder reranker, Windows). A chunk that fits one window scores the same either way.
+      passage-scoring: ${RAG_CROSS_ENCODER_PASSAGE_SCORING:max-window}
+      # Tokens shared by consecutive windows, so a sentence cut by a window edge is whole in the next; 0 to 256.
+      window-overlap-tokens: 64
+      # Most windows scored per chunk, taken from its head; 1 to 16. With the defaults 4 windows cover chunks of about 1,740 tokens and
+      # the longest stored chunk (1,214 tokens) takes 3. Windows are rows under the same per-call attention cap as before, so peak
+      # memory per ONNX Runtime call is unchanged and the work per call is at most max-windows times the head figure.
+      max-windows: 4
     # Fuse full-text keyword candidates with the vector candidates (reciprocal rank fusion). On by default since the 2026-09-12
     # measurement (RAG.md, Hybrid Retrieval: snapshots 35 and 34, hit@5 0.600000 to 0.633333, no ticker lower); a request's
     # "hybrid" field overrides per call.

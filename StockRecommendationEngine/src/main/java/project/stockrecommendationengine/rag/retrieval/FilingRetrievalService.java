@@ -93,6 +93,11 @@ public class FilingRetrievalService {
         return filingReranker.map(FilingReranker::version);
     }
 
+    /** The configured reranker's {@link FilingReranker#scoring()}, or empty when there is no reranker or it reports none. */
+    public Optional<String> rerankerScoring() {
+        return filingReranker.map(FilingReranker::scoring);
+    }
+
     /**
      * Embeds the query, retrieves the vector candidates and, when hybrid retrieval resolves on (the request's
      * {@code hybrid} field when present, else {@code rag.retrieval.hybrid-enabled}) and the query yields at least

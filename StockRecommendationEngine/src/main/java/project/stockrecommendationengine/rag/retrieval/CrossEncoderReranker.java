@@ -13,6 +13,8 @@ import java.util.stream.IntStream;
  * first topK are returned as the same record instances, never altered. The scorer reads a chunk only as text to score, so a
  * chunk has no instruction channel here. A scorer exception, a score count that does not match the candidates, or a NaN
  * score is thrown as a {@link RuntimeException}, which {@link FilingRetrievalService} turns into the fused-order fallback.
+ * The completion log line carries {@code windows=}, the model rows the scorer ran for the call (the candidate count under
+ * head scoring, more under windowed scoring).
  */
 @Slf4j
 public class CrossEncoderReranker implements FilingReranker {
@@ -30,7 +32,8 @@ public class CrossEncoderReranker implements FilingReranker {
         if (candidates.isEmpty() || topK <= 0) return List.of();
         long started = System.nanoTime();
         List<String> passages = candidates.stream().map(c -> c.content() == null ? "" : c.content()).toList();
-        float[] scores = scorer.score(query, passages);
+        PairScorer.Scored scored = scorer.scoreWithWindows(query, passages);
+        float[] scores = scored == null ? null : scored.scores();
         if (scores == null || scores.length != candidates.size()) {
             throw new IllegalStateException("Cross-encoder returned " + (scores == null ? "no" : scores.length)
                     + " scores for " + candidates.size() + " candidates");
@@ -44,13 +47,19 @@ public class CrossEncoderReranker implements FilingReranker {
                 .limit(topK)
                 .map(candidates::get)
                 .toList();
-        log.info("Cross-encoder scoring completed: candidates={}, topK={}, elapsedMs={}",
-                candidates.size(), ordered.size(), (System.nanoTime() - started) / 1_000_000);
+        log.info("Cross-encoder scoring completed: candidates={}, windows={}, topK={}, elapsedMs={}",
+                candidates.size(), scored.windows(), ordered.size(), (System.nanoTime() - started) / 1_000_000);
         return ordered;
     }
 
     @Override
     public String version() {
         return version;
+    }
+
+    /** The scorer's {@link PairScorer#scoring()}. */
+    @Override
+    public String scoring() {
+        return scorer.scoring();
     }
 }

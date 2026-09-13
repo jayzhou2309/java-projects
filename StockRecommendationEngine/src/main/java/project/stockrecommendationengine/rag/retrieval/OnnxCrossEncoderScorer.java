@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +46,20 @@ import java.util.stream.Collectors;
  * UTF-16 units each, unpaired surrogates replaced). A query cut by characters or tokens in any pair is logged at INFO with
  * lengths only.
  * <p>
- * Work per call. Passages are tokenized {@code batchSize} at a time, and each batch runs as one or more ONNX Runtime calls whose
- * rows times longest-pair width squared stays within {@link CrossEncoderPairAssembler#MAX_ATTENTION_CELLS_PER_RUN} (eight
- * 512-token pairs), because attention memory, about 88 MB per 512-token row, would otherwise reach 3.9 GB at batch size 64.
+ * Windows. A stored chunk is often longer than the passage budget beside the query (about 480 tokens at {@code maxLength} 512:
+ * 65% of the 569 stored chunks were longer on 2026-09-13, and an answer past the budget was invisible to the head-only cut).
+ * Under {@link PassageScoring#MAX_WINDOW} (the default) {@link CrossEncoderPairAssembler#windows} splits each passage's ids
+ * into sliding windows of that budget (overlap {@code windowOverlapTokens}, at most {@code maxWindows} from the head), each
+ * window is one model row, and the passage's score is the maximum logit over its rows; under {@link PassageScoring#HEAD} the
+ * first window alone is scored, exactly as before windowing. The query keeps what the longest-first cut gives it against the
+ * whole passage in both modes. {@link #scoreWithWindows} also reports the rows scored, which the reranker logs as
+ * {@code windows=}.
+ * <p>
+ * Work per call. Passages are tokenized {@code batchSize} at a time, and each batch's windows run as one or more ONNX Runtime
+ * calls whose rows times longest-row width squared stays within {@link CrossEncoderPairAssembler#MAX_ATTENTION_CELLS_PER_RUN}
+ * (eight 512-token pairs), because attention memory, about 88 MB per 512-token row, would otherwise reach 3.9 GB at batch size
+ * 64. Windowing adds rows, never wider ones, so peak memory per call is unchanged and the work per call is at most
+ * {@code maxWindows} times the head figure.
  * Measured latency and memory (per call, per batch size, and for the two calls the retrieval pool runs at once), with
  * the evidence behind each figure, are kept in one place: RAG.md, Cross-encoder reranker, Latency and Shutdown
  * (live-runs/2026-09-13-reranker/). In short, about 1 GB per call and about 1.7 GB for two concurrent calls, as measured.
@@ -76,6 +88,9 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
     private final HuggingFaceTokenizer tokenizer;
     private final CrossEncoderPairAssembler assembler;
     private final int batchSize;
+    private final PassageScoring passageScoring;
+    private final int windowOverlapTokens;
+    private final int maxWindows;
     private final String outputName;
     private final boolean usesTokenTypeIds;
     /** Read-held by every scoring call, write-held by close. */
@@ -89,8 +104,20 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
         DjlRuntimeDefaults.apply();
     }
 
-    public OnnxCrossEncoderScorer(Path modelPath, Path tokenizerPath, int maxLength, int batchSize) {
+    /**
+     * {@code passageScoring}, {@code windowOverlapTokens} (0 or more) and {@code maxWindows} (1 or more) are the
+     * {@code rag.retrieval.cross-encoder} window settings (Windows above); {@code windowOverlapTokens} and {@code maxWindows}
+     * are read only under {@link PassageScoring#MAX_WINDOW}.
+     */
+    public OnnxCrossEncoderScorer(Path modelPath, Path tokenizerPath, int maxLength, int batchSize, PassageScoring passageScoring,
+            int windowOverlapTokens, int maxWindows) {
+        if (passageScoring == null) throw new IllegalArgumentException("passageScoring is required");
+        if (windowOverlapTokens < 0) throw new IllegalArgumentException("windowOverlapTokens must not be negative: " + windowOverlapTokens);
+        if (maxWindows < 1) throw new IllegalArgumentException("maxWindows must be at least 1: " + maxWindows);
         this.batchSize = batchSize;
+        this.passageScoring = passageScoring;
+        this.windowOverlapTokens = windowOverlapTokens;
+        this.maxWindows = maxWindows;
         requireBundledTokenizerLibrary();
         this.environment = OrtEnvironment.getEnvironment();
         OrtSession createdSession = null;
@@ -111,7 +138,15 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
             throw new IllegalStateException("Cannot load the cross-encoder from " + modelPath + " and " + tokenizerPath + ": "
                     + failure.getClass().getSimpleName(), failure);
         }
-        log.info("Cross-encoder loaded: model={}, maxLength={}, batchSize={}, {}", modelPath, maxLength, batchSize, describe(session));
+        log.info("Cross-encoder loaded: model={}, maxLength={}, batchSize={}, scoring={}, {}", modelPath, maxLength, batchSize, scoring(),
+                describe(session));
+    }
+
+    /** {@code head}, or {@code max-window/overlap=<windowOverlapTokens>/maxWindows=<maxWindows>}. */
+    @Override
+    public String scoring() {
+        if (passageScoring == PassageScoring.HEAD) return PassageScoring.HEAD.label();
+        return PassageScoring.MAX_WINDOW.label() + "/overlap=" + windowOverlapTokens + "/maxWindows=" + maxWindows;
     }
 
     /** The session's input and output names with their declared types and shapes, as reported by ONNX Runtime. */
@@ -133,6 +168,16 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
 
     @Override
     public float[] score(String query, List<String> passages) {
+        return scoreWithWindows(query, passages).scores();
+    }
+
+    /**
+     * One score per passage: the maximum logit over the passage's windows ({@link CrossEncoderPairAssembler#windows}; one
+     * window, so its own logit, under {@link PassageScoring#HEAD}), and the total windows scored. Every window of a group is a
+     * row under the per-call attention cap, so a call's memory is unchanged by windowing.
+     */
+    @Override
+    public Scored scoreWithWindows(String query, List<String> passages) {
         lifecycle.readLock().lock();
         try {
             if (closed) throw new IllegalStateException("Cross-encoder is closed");
@@ -140,21 +185,31 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
             long[] queryIds = tokenIds(boundedQuery);
             float[] scores = new float[passages.size()];
             int queryTokensKept = Integer.MAX_VALUE;
+            int windowsScored = 0;
             for (int start = 0; start < passages.size(); start += batchSize) {
                 List<String> batch = passages.subList(start, Math.min(passages.size(), start + batchSize));
                 List<long[]> passageIds = new ArrayList<>(batch.size());
                 for (String passage : batch) passageIds.add(tokenIds(CrossEncoderInputBounds.bound(passage)));
-                for (int from = 0; from < passageIds.size(); ) {
-                    int end = assembler.runEnd(queryIds.length, passageIds, from);
-                    CrossEncoderPairAssembler.Batch tensors = assembler.assemble(queryIds, passageIds.subList(from, end));
+                List<CrossEncoderPairAssembler.Window> windows =
+                        assembler.windows(queryIds.length, passageIds, passageScoring, windowOverlapTokens, maxWindows);
+                float[] best = new float[batch.size()];
+                Arrays.fill(best, Float.NEGATIVE_INFINITY);
+                for (int from = 0; from < windows.size(); ) {
+                    int end = assembler.runEnd(windows, from);
+                    CrossEncoderPairAssembler.Batch tensors = assembler.assemble(queryIds, passageIds, windows.subList(from, end));
                     queryTokensKept = Math.min(queryTokensKept, tensors.queryTokensKept());
                     float[] runScores = run(tensors);
-                    System.arraycopy(runScores, 0, scores, start + from, runScores.length);
+                    for (int row = 0; row < runScores.length; row++) {
+                        int passage = windows.get(from + row).passage();
+                        best[passage] = Math.max(best[passage], runScores[row]);
+                    }
                     from = end;
                 }
+                windowsScored += windows.size();
+                System.arraycopy(best, 0, scores, start, best.length);
             }
             logQueryTruncation(query, boundedQuery, queryIds.length, queryTokensKept);
-            return scores;
+            return new Scored(scores, windowsScored);
         } finally {
             lifecycle.readLock().unlock();
         }

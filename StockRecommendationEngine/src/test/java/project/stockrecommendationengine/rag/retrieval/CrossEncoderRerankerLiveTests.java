@@ -23,7 +23,8 @@ import static org.mockito.Mockito.*;
  * Opt-in check of the real cross-encoder (the model files are not in git): loads model.onnx and tokenizer.json from the
  * default paths under models/ (override with -Drag.rerank.model-dir=<dir>), verifies the model's SHA-256 against the
  * application.yaml value passed as -Drag.rerank.model-sha256 when given, and checks ranking, determinism, latency for 20
- * candidates, and the timeout fallback. No database, no Spring context, no network. Run with -Drag.rerank.live=true.
+ * candidates, and the timeout fallback, all under head scoring (one window per chunk; windowed scoring is covered by
+ * {@link CrossEncoderWindowedScoringLiveTests}). No database, no Spring context, no network. Run with -Drag.rerank.live=true.
  */
 @EnabledIfSystemProperty(named = "rag.rerank.live", matches = "true")
 class CrossEncoderRerankerLiveTests {
@@ -42,7 +43,9 @@ class CrossEncoderRerankerLiveTests {
         properties.setModelSha256(System.getProperty("rag.rerank.model-sha256", EXPECTED_MODEL_SHA256));
         files = CrossEncoderModelFiles.verify(properties);
         long started = System.nanoTime();
-        scorer = new OnnxCrossEncoderScorer(files.modelPath(), files.tokenizerPath(), properties.getMaxLength(), properties.getBatchSize());
+        // Head scoring: this class records the single-window figures; CrossEncoderWindowedScoringLiveTests covers max-window.
+        scorer = new OnnxCrossEncoderScorer(files.modelPath(), files.tokenizerPath(), properties.getMaxLength(), properties.getBatchSize(),
+                PassageScoring.HEAD, 0, 1);
         System.out.println("CROSS_ENCODER load elapsedMs=" + (System.nanoTime() - started) / 1_000_000 + " version=" + files.version());
         System.out.println("CROSS_ENCODER metadata " + scorer.describe());
         reranker = new CrossEncoderReranker(scorer, files.version());

@@ -24,7 +24,8 @@ public class CrossEncoderConfiguration {
 
     @Bean(destroyMethod = "close")
     PairScorer crossEncoderScorer(CrossEncoderModelFiles files, CrossEncoderProperties properties) {
-        return new OnnxCrossEncoderScorer(files.modelPath(), files.tokenizerPath(), properties.getMaxLength(), properties.getBatchSize());
+        return new OnnxCrossEncoderScorer(files.modelPath(), files.tokenizerPath(), properties.getMaxLength(), properties.getBatchSize(),
+                properties.getPassageScoring(), properties.getWindowOverlapTokens(), properties.getMaxWindows());
     }
 
     @Bean

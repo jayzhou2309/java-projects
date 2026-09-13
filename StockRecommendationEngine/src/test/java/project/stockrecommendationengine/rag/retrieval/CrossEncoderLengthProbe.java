@@ -40,7 +40,9 @@ final class CrossEncoderLengthProbe {
                 + " ai.djl.offline=" + System.getProperty("ai.djl.offline") + " RUST_FLAVOR=" + System.getProperty("RUST_FLAVOR"));
         System.out.println("PROBE phase=scorer-build-start");
         long started = System.nanoTime();
-        OnnxCrossEncoderScorer scorer = new OnnxCrossEncoderScorer(modelDir.resolve("model.onnx"), modelDir.resolve("tokenizer.json"), 512, 20);
+        // Head scoring, so the boundary and sweep cases keep the single-row shape their recorded figures were measured on.
+        OnnxCrossEncoderScorer scorer = new OnnxCrossEncoderScorer(modelDir.resolve("model.onnx"), modelDir.resolve("tokenizer.json"), 512, 20,
+                PassageScoring.HEAD, 0, 1);
         System.out.println("PROBE phase=scorer-built elapsedMs=" + ms(started));
         System.out.println("PROBE properties after OPT_OUT_TRACKING=" + System.getProperty("OPT_OUT_TRACKING")
                 + " ai.djl.offline=" + System.getProperty("ai.djl.offline") + " RUST_FLAVOR=" + System.getProperty("RUST_FLAVOR"));

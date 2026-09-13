@@ -92,6 +92,7 @@ class RetrievalEvaluationServiceTests {
                 .containsKey("hybrid").containsEntry("hybrid", null)
                 .containsKey("rerank").containsEntry("rerank", null).containsEntry("rerankingEnabled", false)
                 .containsEntry("rerankCandidates", 20).containsKey("reranker").containsEntry("reranker", null)
+                .containsKey("rerankerScoring").containsEntry("rerankerScoring", null)
                 .containsEntry("rerankedQuestions", 0).containsEntry("rerankFallbackQuestions", 0);
         assertThat(evaluation.results()).extracting(QuestionResult::retrievalStrategy).containsExactly("FILTERED_VECTOR", "FILTERED_VECTOR", "FILTERED_VECTOR", "FILTERED_VECTOR");
 
@@ -324,6 +325,7 @@ class RetrievalEvaluationServiceTests {
         });
         when(retrieval.rerankerName()).thenReturn(java.util.Optional.of("CrossEncoderReranker"));
         when(retrieval.rerankerVersion()).thenReturn(java.util.Optional.of("5d3e70fd0c9f"));
+        when(retrieval.rerankerScoring()).thenReturn(java.util.Optional.of("max-window/overlap=64/maxWindows=4"));
         when(repository.save(any())).thenAnswer(invocation -> ((RetrievalEvaluation) invocation.getArgument(0)).withId(5L));
 
         var reranked = service.evaluate(null, true);
@@ -331,7 +333,8 @@ class RetrievalEvaluationServiceTests {
                 .containsExactly("HYBRID_RRF_RERANKED", "HYBRID_RRF", null, "HYBRID_RRF_RERANKED");
         assertThat(reranked.retrievalStrategy()).isEqualTo("HYBRID_RRF_RERANKED");
         assertThat(reranked.properties()).containsEntry("rerankedQuestions", 2).containsEntry("rerankFallbackQuestions", 1)
-                .containsEntry("reranker", "CrossEncoderReranker").containsEntry("rerankerVersion", "5d3e70fd0c9f");
+                .containsEntry("reranker", "CrossEncoderReranker").containsEntry("rerankerVersion", "5d3e70fd0c9f")
+                .containsEntry("rerankerScoring", "max-window/overlap=64/maxWindows=4");
 
         // Reranking resolved off (override false): nothing is a fallback, whatever the strategies say.
         var off = service.evaluate(null, false);

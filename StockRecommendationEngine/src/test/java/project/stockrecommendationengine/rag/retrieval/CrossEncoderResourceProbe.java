@@ -31,8 +31,9 @@ final class CrossEncoderResourceProbe {
             String query = unit.equals("filing") ? "What drove the increase in data center revenue?" : text;
             List<String> passages = new ArrayList<>(Collections.nCopies(count, text));
             long loadStarted = System.nanoTime();
+            // Head scoring: the probe measures the pre-window row shape; windowed scoring adds rows under the same per-call cap.
             try (OnnxCrossEncoderScorer scorer = new OnnxCrossEncoderScorer(modelDir.resolve("model.onnx"), modelDir.resolve("tokenizer.json"),
-                    maxLength, batchSize)) {
+                    maxLength, batchSize, PassageScoring.HEAD, 0, 1)) {
                 System.out.println("PROBE loaded elapsedMs=" + ms(loadStarted));
                 ExecutorService pool = Executors.newFixedThreadPool(threads);
                 try {

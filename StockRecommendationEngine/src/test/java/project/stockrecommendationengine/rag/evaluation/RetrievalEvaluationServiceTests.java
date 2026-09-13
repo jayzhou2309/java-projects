@@ -11,6 +11,7 @@ import project.stockrecommendationengine.rag.dto.RetrievalRequest;
 import project.stockrecommendationengine.rag.dto.RetrievalResponse;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionResult;
+import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.RankedQuestion;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.SliceMetrics;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationQuestion.Kind;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalProperties;
@@ -75,7 +76,7 @@ class RetrievalEvaluationServiceTests {
         assertThat(miss.top().get(0).similarity()).isEqualByComparingTo("0.9");
         // No question text here carries a figure: the figure slice is empty (null metrics) and the non-figure slice is the aggregate.
         assertThat(evaluation.slices()).containsOnlyKeys("figure", "nonFigure");
-        assertThat(evaluation.slices().get("figure")).isEqualTo(new SliceMetrics(0, null, null, null, null, List.of()));
+        assertThat(evaluation.slices().get("figure")).isEqualTo(new SliceMetrics(0, null, null, null, null, List.of(), List.of()));
         var nonFigure = evaluation.slices().get("nonFigure");
         assertThat(nonFigure.questionCount()).isEqualTo(4);
         assertThat(nonFigure.hitAt1()).isEqualTo(evaluation.hitAt1());
@@ -83,6 +84,7 @@ class RetrievalEvaluationServiceTests {
         assertThat(nonFigure.hitAt5()).isEqualTo(evaluation.hitAt5());
         assertThat(nonFigure.mrr()).isEqualTo(evaluation.mrr());
         assertThat(nonFigure.missIds()).containsExactly("q3");
+        assertThat(nonFigure.notInTop5()).containsExactly(new RankedQuestion("q3", null));
         assertThat(evaluation.properties()).containsEntry("set", "evaluation/retrieval-set-v2.json").containsEntry("setCreatedOn", "2026-09-12")
                 .containsEntry("window", 10).containsEntry("latestFilingsOnly", true)
                 .containsEntry("hybridEnabled", true).containsEntry("keywordCandidateCount", 40).containsEntry("rrfK", 60)
@@ -165,9 +167,14 @@ class RetrievalEvaluationServiceTests {
 
         assertThat(evaluation.slices()).containsOnlyKeys(RetrievalEvaluation.FIGURE_SLICE, RetrievalEvaluation.NON_FIGURE_SLICE);
         assertThat(evaluation.slices().get("nonFigure")).isEqualTo(new SliceMetrics(3, new BigDecimal("0.333333"), new BigDecimal("0.333333"),
-                new BigDecimal("0.666667"), new BigDecimal("0.416667"), List.of("n2")));
+                new BigDecimal("0.666667"), new BigDecimal("0.416667"), List.of("n2"), List.of(new RankedQuestion("n2", null))));
         assertThat(evaluation.slices().get("figure")).isEqualTo(new SliceMetrics(2, new BigDecimal("0.000000"), new BigDecimal("0.500000"),
-                new BigDecimal("0.500000"), new BigDecimal("0.321429"), List.of()));
+                new BigDecimal("0.500000"), new BigDecimal("0.321429"), List.of(), List.of(new RankedQuestion("f2", 7))));
+        // Not in top 5: the non-figure slice holds only the no-match question (n1 rank 1 and n3 rank 4 count); the figure slice
+        // holds the rank-7 question, which is in the window but not in the top 5, so it is not a miss.
+        assertThat(evaluation.slices().get("nonFigure").notInTop5()).containsExactly(new RankedQuestion("n2", null));
+        assertThat(evaluation.slices().get("figure").notInTop5()).containsExactly(new RankedQuestion("f2", 7));
+        assertThat(evaluation.slices().get("figure").missIds()).isEmpty();
         verify(repository).save(argThat(saved -> saved.slices() != null && saved.slices().get("figure").questionCount() == 2));
     }
 
@@ -183,26 +190,52 @@ class RetrievalEvaluationServiceTests {
         var evaluation = service.evaluate();
 
         assertThat(evaluation.slices().get("figure")).isEqualTo(new SliceMetrics(1, new BigDecimal("0.000000"), new BigDecimal("0.000000"),
-                new BigDecimal("0.000000"), new BigDecimal("0.000000"), List.of("f1")));
+                new BigDecimal("0.000000"), new BigDecimal("0.000000"), List.of("f1"), List.of(new RankedQuestion("f1", null))));
         assertThat(evaluation.slices().get("nonFigure")).isEqualTo(new SliceMetrics(1, new BigDecimal("1.000000"), new BigDecimal("1.000000"),
-                new BigDecimal("1.000000"), new BigDecimal("1.000000"), List.of()));
+                new BigDecimal("1.000000"), new BigDecimal("1.000000"), List.of(), List.of()));
     }
 
-    @Test void theNonFigureFloorAssertionPassesAtTheFloorAndFailsBelowItNamingValueFloorAndMisses() {
+    @Test void theNonFigureFloorAssertionPassesAtTheFloorAndFailsBelowItNamingEveryQuestionNotInTheTop5WithItsRank() {
         var evaluation = scripted(new SliceMetrics(30, new BigDecimal("0.433333"), new BigDecimal("0.633333"), new BigDecimal("0.700000"),
-                new BigDecimal("0.560595"), List.of("msft-08", "nvda-02")));
+                new BigDecimal("0.560595"), List.of("msft-08", "nvda-02"),
+                List.of(new RankedQuestion("aapl-09", 8), new RankedQuestion("msft-01", 6), new RankedQuestion("msft-08", null),
+                        new RankedQuestion("nvda-02", null), new RankedQuestion("nvda-05", 10), new RankedQuestion("x-1", 7),
+                        new RankedQuestion("x-2", 9), new RankedQuestion("x-3", null), new RankedQuestion("x-4", 6))));
         assertThatCode(() -> RetrievalEvaluationFloors.assertAggregateFloor(evaluation, new BigDecimal("0.65"))).doesNotThrowAnyException();
         assertThatCode(() -> RetrievalEvaluationFloors.assertNonFigureFloor(evaluation, new BigDecimal("0.60"), "evaluation/retrieval-set-v2.json"))
                 .doesNotThrowAnyException();
         assertThatCode(() -> RetrievalEvaluationFloors.assertNonFigureFloor(evaluation, new BigDecimal("0.700000"), "evaluation/retrieval-set-v2.json"))
                 .doesNotThrowAnyException();
         assertThatThrownBy(() -> RetrievalEvaluationFloors.assertNonFigureFloor(evaluation, new BigDecimal("0.95"), "evaluation/retrieval-set-v2.json"))
-                .isInstanceOf(AssertionError.class).hasMessageContaining("non-figure hit@5 0.700000").hasMessageContaining("floor 0.95")
-                .hasMessageContaining("rag.evaluation.min-non-figure-hit-at-5").hasMessageContaining("[msft-08, nvda-02]");
+                .isInstanceOf(AssertionError.class).hasMessageContaining("non-figure hit@5 0.700000 (21 of 30)").hasMessageContaining("floor 0.95")
+                .hasMessageContaining("rag.evaluation.min-non-figure-hit-at-5")
+                .hasMessageContaining("not in top 5: aapl-09 (rank 8), msft-01 (rank 6), msft-08 (no match in window), nvda-02 (no match in window), "
+                        + "nvda-05 (rank 10), x-1 (rank 7), x-2 (rank 9), x-3 (no match in window), x-4 (rank 6)");
+        assertThat(RetrievalEvaluationFloors.minimumHits(new BigDecimal("0.60"), 30)).isEqualTo(18);
+        assertThat(RetrievalEvaluationFloors.minimumHits(new BigDecimal("0.65"), 42)).as("27.3 rounds up").isEqualTo(28);
+        assertThat(RetrievalEvaluationFloors.minimumHits(new BigDecimal("0.95"), 30)).as("28.5 rounds up").isEqualTo(29);
+    }
+
+    @Test void theAggregateFloorFailureNamesEveryQuestionNotInTheTop5WithItsRankAndTheHitCount() {
+        var results = List.of(new QuestionResult("aapl-01", "AAPL", Kind.FIGURE, 1, 1L, null),
+                new QuestionResult("aapl-09", "AAPL", Kind.NARRATIVE, 8, 2L, null),
+                new QuestionResult("msft-03", "MSFT", Kind.NARRATIVE, 5, 3L, null),
+                new QuestionResult("msft-08", "MSFT", Kind.NARRATIVE, null, null, null),
+                new QuestionResult("nvda-05", "NVDA", Kind.NARRATIVE, 6, 4L, null));
+        var evaluation = new RetrievalEvaluation(1L, Instant.now(), "v2", 5, new BigDecimal("0.200000"), new BigDecimal("0.200000"),
+                new BigDecimal("0.400000"), new BigDecimal("0.354167"), 10, "HYBRID_RRF", Map.of(), results, Map.of(), List.of(), null);
+        assertThatCode(() -> RetrievalEvaluationFloors.assertAggregateFloor(evaluation, new BigDecimal("0.40"))).doesNotThrowAnyException();
+        assertThatThrownBy(() -> RetrievalEvaluationFloors.assertAggregateFloor(evaluation, new BigDecimal("0.65")))
+                .isInstanceOf(AssertionError.class).hasMessageContaining("hit@5 0.400000 (2 of 5)").hasMessageContaining("floor 0.65")
+                .hasMessageContaining("rag.evaluation.min-hit-at-5")
+                .hasMessageContaining("not in top 5: aapl-09 (rank 8), msft-08 (no match in window), nvda-05 (rank 6)")
+                .hasMessageNotContaining("msft-03").hasMessageNotContaining("aapl-01");
+        assertThat(RetrievalEvaluationFloors.describe(List.of())).isEqualTo("none");
+        assertThat(RetrievalEvaluationFloors.describe(null)).isEqualTo("not recorded");
     }
 
     @Test void anEmptyOrAbsentNonFigureSliceFailsNamingTheSetInsteadOfPassingVacuously() {
-        var empty = scripted(new SliceMetrics(0, null, null, null, null, List.of()));
+        var empty = scripted(new SliceMetrics(0, null, null, null, null, List.of(), List.of()));
         assertThatThrownBy(() -> RetrievalEvaluationFloors.assertNonFigureFloor(empty, new BigDecimal("0.0"), "evaluation/only-figures.json"))
                 .isInstanceOf(AssertionError.class).hasMessageContaining("evaluation/only-figures.json").hasMessageContaining("no non-figure questions");
         var withoutSlices = new RetrievalEvaluation(1L, Instant.now(), "v1", 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, 10,
@@ -271,7 +304,7 @@ class RetrievalEvaluationServiceTests {
 
     /** A scripted evaluation with aggregate hit@5 0.785714 and the given non-figure slice. */
     private static RetrievalEvaluation scripted(SliceMetrics nonFigure) {
-        var figure = new SliceMetrics(12, new BigDecimal("0.833333"), new BigDecimal("0.916667"), new BigDecimal("1.000000"), new BigDecimal("0.891667"), List.of());
+        var figure = new SliceMetrics(12, new BigDecimal("0.833333"), new BigDecimal("0.916667"), new BigDecimal("1.000000"), new BigDecimal("0.891667"), List.of(), List.of());
         return new RetrievalEvaluation(1L, Instant.now(), "v2", 42, new BigDecimal("0.547619"), new BigDecimal("0.714286"), new BigDecimal("0.785714"),
                 new BigDecimal("0.655187"), 10, "HYBRID_RRF", Map.of(), List.of(), Map.of(), List.of(),
                 Map.of(RetrievalEvaluation.FIGURE_SLICE, figure, RetrievalEvaluation.NON_FIGURE_SLICE, nonFigure));

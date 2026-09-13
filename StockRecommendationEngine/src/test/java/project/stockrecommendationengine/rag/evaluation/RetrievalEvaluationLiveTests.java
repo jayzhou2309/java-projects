@@ -15,8 +15,9 @@ import static org.assertj.core.api.Assertions.*;
  * Opt-in regression floor: the bundled set through the real retrieval path against the local store (one embedding call per
  * question, no chat model), asserting aggregate hit@5 at or above rag.evaluation.min-hit-at-5 and then the non-figure slice's
  * hit@5 at or above rag.evaluation.min-non-figure-hit-at-5 (an empty non-figure slice fails). Runs inside a transaction so the
- * snapshot the service saves is rolled back; the metrics and miss ids are printed so a failure is diagnosable from the
- * build output alone. Run with -Drag.evaluation.live=true; raise the floors with -Drag.evaluation.min-hit-at-5=<fraction> and
+ * snapshot the service saves is rolled back; the metrics, miss ids, every question not in the top 5 with its rank, and the
+ * margin in hits above each floor are printed so a failure is diagnosable from the build output alone. Run with
+ * -Drag.evaluation.live=true; raise the floors with -Drag.evaluation.min-hit-at-5=<fraction> and
  * -Drag.evaluation.min-non-figure-hit-at-5=<fraction>.
  */
 @SpringBootTest
@@ -39,6 +40,26 @@ class RetrievalEvaluationLiveTests {
         if (evaluation.slices() != null) {
             evaluation.slices().forEach((name, s) -> System.out.println("RETRIEVAL_EVAL slice=" + name + " questions=" + s.questionCount()
                     + " hitAt1=" + s.hitAt1() + " hitAt3=" + s.hitAt3() + " hitAt5=" + s.hitAt5() + " mrr=" + s.mrr() + " misses=" + s.missIds()));
+        }
+        // Every question not counting toward hit@5 with its rank, and the margin in hits above each floor, so a passing run
+        // also shows how close it is: margin = hits - ceiling(floor x question count).
+        var aggregateNotInTop5 = RetrievalEvaluationService.notInTop(evaluation.results(), 5);
+        int aggregateHits = evaluation.results().size() - aggregateNotInTop5.size();
+        System.out.println("RETRIEVAL_EVAL notInTop5 aggregate hits=" + aggregateHits + "/" + evaluation.questionCount()
+                + " minHits=" + RetrievalEvaluationFloors.minimumHits(floor, evaluation.questionCount())
+                + " margin=" + (aggregateHits - RetrievalEvaluationFloors.minimumHits(floor, evaluation.questionCount()))
+                + " questions=" + RetrievalEvaluationFloors.describe(aggregateNotInTop5));
+        if (evaluation.slices() != null) {
+            evaluation.slices().forEach((name, s) -> {
+                String margin = "";
+                if (RetrievalEvaluation.NON_FIGURE_SLICE.equals(name) && s.notInTop5() != null) {
+                    int hits = s.questionCount() - s.notInTop5().size();
+                    int minHits = RetrievalEvaluationFloors.minimumHits(nonFigureFloor, s.questionCount());
+                    margin = " minHits=" + minHits + " margin=" + (hits - minHits);
+                }
+                System.out.println("RETRIEVAL_EVAL notInTop5 slice=" + name + " hits=" + RetrievalEvaluationFloors.hitsAt5(s) + "/" + s.questionCount()
+                        + margin + " questions=" + RetrievalEvaluationFloors.describe(s.notInTop5()));
+            });
         }
         System.out.println("RETRIEVAL_EVAL tickerHitAt5=" + evaluation.tickerHitAt5());
         System.out.println("RETRIEVAL_EVAL misses=" + missIds);

@@ -19,6 +19,7 @@ import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 import project.stockrecommendationengine.rag.repository.FilingRetrievalRepository;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.Miss;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionResult;
+import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.RankedQuestion;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.SliceMetrics;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.TopChunk;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalProperties;
@@ -130,8 +131,14 @@ public class RetrievalEvaluationService {
     /** The aggregate metric computation over one slice; an empty slice has null metrics rather than zeros. */
     private static SliceMetrics slice(List<QuestionResult> results) {
         List<String> missIds = results.stream().filter(r -> r.rank() == null).map(QuestionResult::id).toList();
-        if (results.isEmpty()) return new SliceMetrics(0, null, null, null, null, missIds);
-        return new SliceMetrics(results.size(), hitAt(results, 1), hitAt(results, 3), hitAt(results, 5), mrr(results), missIds);
+        List<RankedQuestion> notInTop5 = notInTop(results, 5);
+        if (results.isEmpty()) return new SliceMetrics(0, null, null, null, null, missIds, notInTop5);
+        return new SliceMetrics(results.size(), hitAt(results, 1), hitAt(results, 3), hitAt(results, 5), mrr(results), missIds, notInTop5);
+    }
+
+    /** In input order, every result that does not count toward hit@k (rank null or greater than k), with its rank. */
+    static List<RankedQuestion> notInTop(List<QuestionResult> results, int k) {
+        return results.stream().filter(r -> r.rank() == null || r.rank() > k).map(r -> new RankedQuestion(r.id(), r.rank())).toList();
     }
 
     private static BigDecimal hitAt(List<QuestionResult> results, int k) {

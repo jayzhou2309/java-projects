@@ -35,9 +35,16 @@ public record RetrievalEvaluation(Long id, Instant evaluatedAt, String setVersio
     /**
      * Metrics over one slice of the questions, with the same definitions and scale as the aggregate. An empty slice has
      * question count 0 and null metrics. {@code missIds} lists, in set order, the slice's questions with no matching chunk
-     * in the window (a retrieval error included), matching the aggregate {@code misses}.
+     * in the window (a retrieval error included), matching the aggregate {@code misses}. {@code notInTop5} lists, in set
+     * order, every question of the slice that does not count toward its hit@5 (rank null or greater than 5) with its rank, so
+     * a floor failure can name the questions ranked 6 to 10 as well as those with no match; snapshots stored before this
+     * field was added read back with it null.
      */
-    public record SliceMetrics(int questionCount, BigDecimal hitAt1, BigDecimal hitAt3, BigDecimal hitAt5, BigDecimal mrr, List<String> missIds) { }
+    public record SliceMetrics(int questionCount, BigDecimal hitAt1, BigDecimal hitAt3, BigDecimal hitAt5, BigDecimal mrr, List<String> missIds,
+            List<RankedQuestion> notInTop5) { }
+
+    /** A question id with its rank within the window; rank null means no match in the window or a retrieval error. */
+    public record RankedQuestion(String id, Integer rank) { }
 
     public RetrievalEvaluation withId(Long newId) {
         return new RetrievalEvaluation(newId, evaluatedAt, setVersion, questionCount, hitAt1, hitAt3, hitAt5, mrr, window,

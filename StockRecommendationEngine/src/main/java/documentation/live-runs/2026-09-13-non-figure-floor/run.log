@@ -35,8 +35,17 @@ Floor derivation (BigDecimal, jshell): 0.700000 - 0.1 = 0.600000; / 0.05 = 12; F
   Aggregate floor unchanged at 0.65: 28 of 42 needed; snapshot 91 has 33, so at most 5 can be lost in total. With both floors, a loss of up to 5 hits passes
   when no more than 3 of them are non-figure; the figure slice alone is guarded only by the aggregate (up to 5 of its 12 hits if the non-figure slice holds).
 
-Live test (RetrievalEvaluationLiveTests), both runs in a shell with no RAG_* overrides:
+Live test (RetrievalEvaluationLiveTests), both runs in a shell with no RAG_* overrides (env | grep -c ^RAG_ -> 0):
+  Re-run 2026-09-13 after the Scrutiny remediation (the first failure message named only the five no-match questions, not those ranked 6 to 10).
+  Code under test: SliceMetrics.notInTop5 ({id, rank} for rank null or > 5), RetrievalEvaluationFloors messages naming every question not in the
+  top 5 with its rank and the hit count, and RETRIEVAL_EVAL notInTop5 lines with minHits = ceiling(floor x count) and margin = hits - minHits.
   -Drag.evaluation.live=true                                                   -> exit 0; rows 22|91 before and after     (live-test-pass.log)
+    RETRIEVAL_EVAL notInTop5 aggregate hits=33/42 minHits=28 margin=5 questions=<the nine below>
+    RETRIEVAL_EVAL notInTop5 slice=figure hits=12/12 questions=none
+    RETRIEVAL_EVAL notInTop5 slice=nonFigure hits=21/30 minHits=18 margin=3 questions=aapl-09 (rank 8), msft-01 (rank 6), msft-07 (rank 7), msft-08 (no match in window), nvda-02 (no match in window), nvda-04 (no match in window), nvda-05 (rank 10), nvda-07 (no match in window), nvda-09 (no match in window)
   -Drag.evaluation.live=true -Drag.evaluation.min-non-figure-hit-at-5=0.95     -> exit 1; rows 22|91 before and after     (live-test-non-figure-floor-0.95.log)
-    message: [non-figure hit@5 0.700000 (30 questions) is below the floor 0.95 (rag.evaluation.min-non-figure-hit-at-5); non-figure misses [msft-08, nvda-02, nvda-04, nvda-07, nvda-09]]
-    failing line 55 (assertNonFigureFloor); the aggregate assertion on line 54 ran first and passed (0.785714 >= 0.65).
+    message: [non-figure hit@5 0.700000 (21 of 30) is below the floor 0.95 (rag.evaluation.min-non-figure-hit-at-5); not in top 5: aapl-09 (rank 8), msft-01 (rank 6), msft-07 (rank 7), msft-08 (no match in window), nvda-02 (no match in window), nvda-04 (no match in window), nvda-05 (rank 10), nvda-07 (no match in window), nvda-09 (no match in window)]
+    failing line 75 (assertNonFigureFloor); the aggregate assertion on line 74 ran first and passed (0.785714 >= 0.65). The forced run prints nonFigure minHits=29 margin=-8.
+  Check against snapshot 91 (python over snapshot-91.json, questions with rank null or > 5): aapl-09 8, msft-01 6, msft-07 7, msft-08 null, nvda-02 null,
+  nvda-04 null, nvda-05 10, nvda-07 null, nvda-09 null -> the message names all nine, in set order, with matching ranks. All nine are non-figure, so the
+  aggregate list is the same nine. No application start and no POST /api/rag/evaluate in the re-run; no chat model; 84 embeddings (42 per run).

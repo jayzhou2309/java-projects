@@ -185,3 +185,22 @@ stopped at a fallback assertion before naming the differing questions. Changes t
   2,000 ms (calls of 2,039 and 2,448 ms) and passed on rerun. Milestone 4 applies the earlier plan's rule: only
   fallback-free runs count, a run with fallbacks is rerun once, and a run that still falls back is reported and excluded,
   never compared as if it reproduced its counterpart.
+
+## Amendment 2 (2026-09-13, after Milestone 2 Scrutiny PASS)
+
+Milestone 2 (79e8480) passed Scrutiny on the first round with no correctness finding. Folded into Milestone 3:
+
+- **verify must not need ingested filings.** `RetrievalEvidenceDatabaseTests` asserts every set-v2 phrase is held by a
+  stored chunk, so `verify` now fails on a freshly migrated database. Make that assertion opt-in (live) or assert only
+  against rows the test inserts itself.
+- **A reason must not state a cause it did not read.** The evidence service reports "no trace for this question (its
+  retrieval failed)" for any null trace without reading the question's error; say "retrieval failed" only when the
+  result records an error, otherwise "no trace recorded for this question".
+- **Window fields when nothing was scored.** For reranking off, fallback, untraced questions, or chunks outside the
+  rerank input, window starts and holding windows are the rows the recorded scoring would score, not rows that were
+  scored; the rule text, the markdown legend, and RAG.md must say so, so a write-up cannot cite them as scored.
+- **Legend and rule text.** A non-input chunk's `rerankInput` source must match its `false` value; W's rule must say
+  max-length comes from current configuration.
+- **Evidence size.** Committed evidence reports are stored as compact JSON only (one line per file); markdown is not
+  committed, since the endpoint regenerates it from the JSON. Milestone 3 converts the two Milestone 2 reports
+  (evidence-459 and evidence-297) accordingly and notes the change in run.log; the claims check reads the JSON.

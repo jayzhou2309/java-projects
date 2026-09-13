@@ -81,3 +81,11 @@ one-line fix, a typo, or a question, just do it directly.
   leaves the top 5); the evaluation set carries no figure tokens, so the figure leg
   is evidenced by live queries only; plan in
   `documentation/plans/2026-09-12-fusion-tuning.md`.
+- 2026-09-13, evaluation set v2 (RAG-11): two milestones, each FAILED Scrutiny once
+  and PASSED after one remediation round. M1: three alternative expectations
+  answered only part of their question, and the plan's own premise about nvda-07 was
+  wrong (corrected by a plan amendment, not by relaxing the check). M2: the numbers
+  were right but the docs let a rising floor read as tighter protection. Lessons: have
+  Scrutiny read full chunk content for every alternative expectation, and require any
+  headline metric on a new set to be decomposed by question slice. Plan in
+  `documentation/plans/2026-09-13-evaluation-set-v2.md`.

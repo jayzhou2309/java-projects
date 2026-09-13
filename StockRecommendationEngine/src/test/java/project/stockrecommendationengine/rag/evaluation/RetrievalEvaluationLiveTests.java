@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 class RetrievalEvaluationLiveTests {
     @Autowired RetrievalEvaluationService service;
     @Autowired RetrievalEvaluationProperties properties;
+    @Autowired RetrievalEvaluationSetLoader loader;
 
     @Test void hitAt5StaysAtOrAboveTheConfiguredFloor() {
         BigDecimal floor = properties.getMinHitAt5();
@@ -36,7 +37,8 @@ class RetrievalEvaluationLiveTests {
         for (Miss miss : evaluation.misses()) {
             System.out.println("RETRIEVAL_EVAL miss " + miss.id() + " top=" + miss.top() + (miss.error() == null ? "" : " error=" + miss.error()));
         }
-        assertThat(evaluation.questionCount()).isBetween(24, 30);
+        assertThat(evaluation.questionCount()).isEqualTo(loader.load().questions().size());
+        assertThat(evaluation.properties()).containsEntry("set", properties.getSet());
         assertThat(evaluation.results()).noneMatch(r -> r.error() != null);
         assertThat(evaluation.hitAt5())
                 .as("hit@5 %s is below the floor %s (rag.evaluation.min-hit-at-5); misses %s", evaluation.hitAt5(), floor, missIds)

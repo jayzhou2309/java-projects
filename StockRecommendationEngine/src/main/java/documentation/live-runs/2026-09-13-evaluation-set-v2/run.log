@@ -1,0 +1,74 @@
+Evaluation set v2: re-baseline, figure-leg measurement, decision (Follow_Ups RAG-11 and RAG-12; Milestone 2 of plans/2026-09-13-evaluation-set-v2.md), 2026-09-13
+Branch evaluation-set-v2 from d6bc2f9 (Milestone 1: rag.evaluation.set, set v2 with 42 questions, 12 new FIGURE questions; plan Amendment 1 applied).
+Defaults under test (unchanged since snapshot 51): hybrid-enabled true, rrf-k 60, rrf-vector-weight 1.0, rrf-keyword-weight 0.5, rrf-figure-weight 1.0; rag.evaluation.min-hit-at-5 0.50 before this run.
+
+Harness (one application start per configuration, one POST, stop, port free; the application enable flags never exported; .env holds only POSTGRES_*, SEC_USER_AGENT, OPENAI_API_KEY):
+  set -a && source .env && set +a && export INTEGRATION_ACCESS_TOKEN=<32+ chars> SERVER_PORT=8081 <overrides> && nohup ./mvnw -q -o spring-boot:run > worker-app.log 2>&1 &
+  wait for "Started StockRecommendationEngineApplication"
+  curl -X POST -H "Authorization: Bearer $INTEGRATION_ACCESS_TOKEN" http://localhost:8081/api/rag/evaluate     (no hybrid parameter: properties.hybrid null, hybridEnabled true)
+  response properties checked for set, rrfK, and the three weights before stopping
+  psql: select row_to_json(r) from retrieval_evaluations r where id=<id>  -> snapshot-<id>-<set>-<configuration>.json
+  pkill -f spring-boot:run; pkill -f StockRecommendationEngineApplication; lsof -nP -iTCP:8081 -sTCP:LISTEN (empty: "port 8081 free" after every run)
+  RAG_RETRIEVAL_RRF_K and RAG_RETRIEVAL_RRF_VECTOR_WEIGHT never overridden (60 and 1.0 throughout). No chat model; one embedding per question.
+
+Rows before the runs: 14 stored (7,12,13,30,31,34,35,48..54), id sequence at 68.
+
+Runs (7 evaluation runs: 6 x 42 + 1 x 30 = 282 embeddings):
+  1. v2 BASELINE, no overrides                                                                   -> id 69  set evaluation/retrieval-set-v2.json  kw 0.5 fig 1.0  hit@1 0.547619 hit@3 0.714286 hit@5 0.785714 MRR 0.655187  AAPL 0.928571 MSFT 0.785714 NVDA 0.642857
+  2. v1 CHECK, RAG_EVALUATION_SET=evaluation/retrieval-set-v1.json                                -> id 70  set evaluation/retrieval-set-v1.json  kw 0.5 fig 1.0  hit@1 0.333333 hit@3 0.533333 hit@5 0.633333 MRR 0.463373  AAPL 0.9 MSFT 0.7 NVDA 0.3   (reproduces snapshot 51 question by question)
+  3. RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=0.5 RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=0.0                     -> id 71  set v2  kw 0.5 fig 0.0  hit@1 0.380952 hit@3 0.619048 hit@5 0.738095 MRR 0.533362  AAPL 0.928571 MSFT 0.714286 NVDA 0.571429
+  4. RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=0.5 RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=0.5                     -> id 72  set v2  kw 0.5 fig 0.5  hit@1 0.547619 hit@3 0.714286 hit@5 0.761905 MRR 0.650425  AAPL 0.928571 MSFT 0.785714 NVDA 0.571429
+  5. RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=0.5 RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=2.0                     -> id 73  set v2  kw 0.5 fig 2.0  hit@1 0.523810 hit@3 0.714286 hit@5 0.785714 MRR 0.644473  AAPL 0.928571 MSFT 0.785714 NVDA 0.642857
+  6. RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=1.0 RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=1.0                     -> id 74  set v2  kw 1.0 fig 1.0  hit@1 0.500000 hit@3 0.690476 hit@5 0.785714 MRR 0.619444  AAPL 0.928571 MSFT 0.785714 NVDA 0.642857
+  7. RAG_RETRIEVAL_RRF_KEYWORD_WEIGHT=0.5 RAG_RETRIEVAL_RRF_FIGURE_WEIGHT=1.5  (added)             -> id 75  set v2  kw 0.5 fig 1.5  hit@1 0.523810 hit@3 0.714286 hit@5 0.785714 MRR 0.644473  AAPL 0.928571 MSFT 0.785714 NVDA 0.642857   (identical ranks to 73)
+     Why added: after runs 1 to 6 two rows qualified (69 at fig 1.0, 73 at fig 2.0), tied on hit@5 and separated only by MRR, so a weight between them was the one point that could still win on MRR. It did not (MRR 0.644473, as 73). One of the two allowed extra configurations used.
+
+psql check of the claimed configurations:
+  select id, set_version, question_count, hit_at_1, hit_at_3, hit_at_5, mrr, properties->>'set', properties->>'rrfK', properties->>'rrfVectorWeight', properties->>'rrfKeywordWeight', properties->>'rrfFigureWeight', properties->>'hybrid', properties->>'hybridEnabled', retrieval_strategy from retrieval_evaluations where id between 69 and 75 order by id
+  69|v2|42|0.547619|0.714286|0.785714|0.655187|evaluation/retrieval-set-v2.json|60|1.0|0.5|1.0||true|HYBRID_RRF
+  70|v1|30|0.333333|0.533333|0.633333|0.463373|evaluation/retrieval-set-v1.json|60|1.0|0.5|1.0||true|HYBRID_RRF
+  71|v2|42|0.380952|0.619048|0.738095|0.533362|evaluation/retrieval-set-v2.json|60|1.0|0.5|0.0||true|HYBRID_RRF
+  72|v2|42|0.547619|0.714286|0.761905|0.650425|evaluation/retrieval-set-v2.json|60|1.0|0.5|0.5||true|HYBRID_RRF
+  73|v2|42|0.523810|0.714286|0.785714|0.644473|evaluation/retrieval-set-v2.json|60|1.0|0.5|2.0||true|HYBRID_RRF
+  74|v2|42|0.500000|0.690476|0.785714|0.619444|evaluation/retrieval-set-v2.json|60|1.0|1.0|1.0||true|HYBRID_RRF
+  75|v2|42|0.523810|0.714286|0.785714|0.644473|evaluation/retrieval-set-v2.json|60|1.0|0.5|1.5||true|HYBRID_RRF
+
+Figure leg per run (application log line counts: "Figure search completed" / "Skipping figure search: reason=noFigureTerms"):
+  id 69: 12 / 30
+  id 70: 0 / 30
+  id 71: 0 / 0
+  id 72: 12 / 30
+  id 73: 12 / 30
+  id 74: 12 / 30
+  id 75: 12 / 30
+  (id 71 logs neither: with rrf-figure-weight 0 searchFigures returns before the term check. id 70: no v1 question carries a figure token (years only), 0 / 30 as in 2026-09-12.)
+  id 69 figure-leg candidate counts in log order (tickers AAPL x4, MSFT x4, NVDA x4, consistent with the set order aapl-11..14, msft-11..14, nvda-11..14): 3,1,2,1,1,27,2,19,2,9,4,4
+
+Rule (plan Milestone 2, restated by the Orchestrator; applied to the v2 rows 69, 71, 72, 73, 74, 75):
+  among the v2 configurations, the highest hit@5 such that, compared with the v2 BASELINE (69): no ticker's hit@5 decreases; no FIGURE question in the top 5
+  under 69 leaves the top 5. Ties: MRR, then the smaller change from the current defaults (sum of absolute weight differences). 69 always qualifies.
+  Protected FIGURE questions (22 of 28 in the top 5 under 69): aapl-01 aapl-02 aapl-06 aapl-07 aapl-11 aapl-12 aapl-13 aapl-14 msft-02 msft-04 msft-10 msft-11
+  msft-12 msft-13 msft-14 nvda-01 nvda-03 nvda-08 nvda-11 nvda-12 nvda-13 nvda-14
+  69 (kw 0.5 fig 1.0) QUALIFIES (baseline)
+  71 (kw 0.5 fig 0.0) out: MSFT 0.714286 < 0.785714; NVDA 0.571429 < 0.642857; msft-13 1 -> not in window; nvda-12 5 -> not in window
+  72 (kw 0.5 fig 0.5) out: NVDA 0.571429 < 0.642857; nvda-12 5 -> not in window
+  73 (kw 0.5 fig 2.0) QUALIFIES: hit@5 0.785714, MRR 0.644473, change 1.0
+  74 (kw 1.0 fig 1.0) out: msft-04 4 -> 8 (MSFT stays 0.785714 because msft-07 7 -> 4)
+  75 (kw 0.5 fig 1.5) QUALIFIES: hit@5 0.785714, MRR 0.644473, change 0.5
+  Order: 69 (0.785714, 0.655187, 0.0) > 75 (0.785714, 0.644473, 0.5) > 73 (0.785714, 0.644473, 1.0)
+  => Winner id 69, the current defaults: rrf-k 60, rrf-vector-weight 1.0, rrf-keyword-weight 0.5, rrf-figure-weight 1.0. No weight default changes.
+  The figure weight survived measurement: turning the leg off (71) costs hit@5 0.785714 -> 0.738095, hit@1 0.547619 -> 0.380952, MRR 0.655187 -> 0.533362.
+
+Floor: 0.785714 - 0.1 = 0.685714, rounded down to a multiple of 0.05 = 0.65. rag.evaluation.min-hit-at-5 0.50 -> 0.65 (application.yaml, RetrievalEvaluationProperties
+  default and javadoc); the v1-derived 0.50 is superseded because the set changed (the value happens to rise, so nothing is lowered).
+  Tests: RetrievalEvaluationSetTests.theBoundHitAt5FloorIsTheSetV2Derivation (bound yaml value) and RetrievalEvaluationSetLoaderTests (class default) assert 0.65.
+
+Full per-question ranks and the rule output: rule-table.txt (python over the snapshot JSONs in this directory).
+
+Live floor test with the final defaults and the default set v2 (fresh shell, only .env exported):
+  set -a && source .env && set +a && ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true   -> exit 0
+  rows before: count 21, max id 75; rows after: count 21, max id 75; id sequence 75 -> 76 (the run stored id 76 inside the transaction, rolled back)
+  printed: RETRIEVAL_EVAL set=v2 questions=42 window=10 strategy=HYBRID_RRF hitAt1=0.547619 hitAt3=0.714286 hitAt5=0.785714 mrr=0.655187 floor=0.65  (identical to snapshot 69)
+  surefire: RetrievalEvaluationLiveTests tests=1 errors=0 skipped=0 failures=0. Log: live-test.log.
+
+Build: set -a && source .env && set +a && ./mvnw -q -o verify  -> exit 0 twice (after the code and test edits, and again after the documentation edits): 259 tests, 0 failures, 0 errors, 6 skipped (the opt-in live tests).

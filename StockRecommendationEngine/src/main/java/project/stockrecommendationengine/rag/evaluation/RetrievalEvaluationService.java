@@ -140,6 +140,7 @@ public class RetrievalEvaluationService {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("window", window);
         out.put("latestFilingsOnly", true);
+        out.put("set", properties.getSet());
         out.put("setCreatedOn", set.createdOn().toString());
         out.put("candidateCount", retrievalProperties.getCandidateCount());
         out.put("rerankingEnabled", retrievalProperties.isRerankingEnabled());

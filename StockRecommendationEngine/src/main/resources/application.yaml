@@ -84,16 +84,22 @@ rag:
     # Weight of the keyword ranking in reciprocal rank fusion; 0 to 10. 0.5 since the 2026-09-12 fusion tuning (RAG.md, Fusion
     # tuning: snapshot 51 keeps hit@5 0.633333, lifts MRR 0.436667 to 0.463373, and brings msft-04 back into the top 5).
     rrf-keyword-weight: 0.5
-    # Weight of the figure ranking (chunks holding every number in the query); 0 to 10, 0 leaves the leg off. 1.0 since 2026-09-12:
-    # the leg runs only for queries that carry a figure (none of the evaluation set's questions do), fusion-tuning snapshot 51.
+    # Weight of the figure ranking (chunks holding every number in the query); 0 to 10, 0 leaves the leg off. 1.0 since 2026-09-12
+    # (fusion-tuning snapshot 51, where set v1 never ran the leg); kept on 2026-09-13 after measuring it on set v2 (RAG.md, Set v2
+    # baseline and figure-leg measurement): snapshot 69 hit@5 0.785714 MRR 0.655187 beats fig 0.0 (71: 0.738095 / 0.533362), 0.5, 1.5, 2.0.
     rrf-figure-weight: 1.0
-  # Chunks retrieved per question when the bundled evaluation set is run (POST /api/rag/evaluate); 5 to 20.
   evaluation:
+    # Classpath resource of the evaluation set to run (recorded as properties.set in every snapshot). v2 is the default;
+    # evaluation/retrieval-set-v1.json stays bundled for comparison. Metrics are only comparable within one set.
+    set: evaluation/retrieval-set-v2.json
+    # Chunks retrieved per question when the evaluation set is run (POST /api/rag/evaluate); 5 to 20.
     window: 10
     # hit@5 floor asserted by the opt-in RetrievalEvaluationLiveTests (-Drag.evaluation.live=true): the current baseline's hit@5
-    # minus 0.1, rounded down to a multiple of 0.05, never lowered. Vector-only baseline 0.6 gave 0.50; the hybrid baseline
-    # 0.633333 (snapshot 34) gives 0.533 -> 0.50, so the floor stays. Override with -Drag.evaluation.min-hit-at-5=<fraction>.
-    min-hit-at-5: 0.50
+    # minus 0.1, rounded down to a multiple of 0.05. Derived on set v2 (2026-09-13): the v2 winner, snapshot 69 (current weights),
+    # has hit@5 0.785714 -> 0.685714 -> 0.65. This supersedes the set v1 floor of 0.50 (v1 baseline 0.6 / snapshot 34 0.633333);
+    # v1 and v2 numbers are not comparable. The rise does not tighten protection for the 30 carried v1 questions: 0.65 needs 28 of 42
+    # hits, so with the 12 figure-literal questions hitting only 16 of 30 carried must hit (about 0.53, like v1's 0.50). Override with -Drag.evaluation.min-hit-at-5=<fraction>.
+    min-hit-at-5: 0.65
 
 # Opt-in single-owner integration. The configured account never comes from model arguments.
 integration:

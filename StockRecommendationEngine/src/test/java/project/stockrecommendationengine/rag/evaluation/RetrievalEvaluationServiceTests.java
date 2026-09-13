@@ -69,7 +69,8 @@ class RetrievalEvaluationServiceTests {
         assertThat(miss.top().get(2).accessionNo()).isEqualTo(OTHER);
         assertThat(miss.top().get(2).sectionKey()).isEqualTo("ITEM_2");
         assertThat(miss.top().get(0).similarity()).isEqualByComparingTo("0.9");
-        assertThat(evaluation.properties()).containsEntry("window", 10).containsEntry("latestFilingsOnly", true)
+        assertThat(evaluation.properties()).containsEntry("set", "evaluation/retrieval-set-v2.json").containsEntry("setCreatedOn", "2026-09-12")
+                .containsEntry("window", 10).containsEntry("latestFilingsOnly", true)
                 .containsEntry("hybridEnabled", true).containsEntry("keywordCandidateCount", 40).containsEntry("rrfK", 60)
                 .containsEntry("rrfVectorWeight", 1.0).containsEntry("rrfKeywordWeight", 0.5).containsEntry("rrfFigureWeight", 1.0)
                 .containsKey("hybrid").containsEntry("hybrid", null);
@@ -134,7 +135,9 @@ class RetrievalEvaluationServiceTests {
         assertThat(requests.getAllValues().subList(2, 4)).extracting(RetrievalRequest::hybrid).containsExactly(false, false);
 
         clearInvocations(retrieval);
+        properties.setSet("evaluation/retrieval-set-v1.json");
         var byProperty = service.evaluate(null);
+        assertThat(byProperty.properties()).containsEntry("set", "evaluation/retrieval-set-v1.json");
         assertThat(byProperty.properties()).containsKey("hybrid").containsEntry("hybrid", null);
         verify(retrieval, times(2)).retrieve(requests.capture());
         assertThat(requests.getAllValues().subList(4, 6)).extracting(RetrievalRequest::hybrid).containsOnlyNulls();

@@ -17,13 +17,14 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Reads the retrieval evaluation set from the classpath and validates its shape. Every violation is reported as an
+ * Reads the retrieval evaluation set named by {@code rag.evaluation.set} from the classpath and validates its shape. Every violation is reported as an
  * IllegalStateException that names the offending question id, so a broken set fails fast at load time rather than
  * silently skewing a metric. Nothing loaded here reaches a model prompt.
  */
 @Component
 public class RetrievalEvaluationSetLoader {
-    public static final String RESOURCE = "evaluation/retrieval-set-v1.json";
+    public static final String DEFAULT_RESOURCE = "evaluation/retrieval-set-v2.json";
+    public static final String V1_RESOURCE = "evaluation/retrieval-set-v1.json";
     static final int MAX_QUESTION_LENGTH = 4000;
     static final int MAX_SECTION_KEY_LENGTH = 64;
     static final int MIN_PHRASE_LENGTH = 12;
@@ -31,13 +32,31 @@ public class RetrievalEvaluationSetLoader {
     private static final Pattern TICKER = Pattern.compile("[A-Z0-9.-]{1,16}");
     private static final Pattern ACCESSION_NO = Pattern.compile("\\d{10}-\\d{2}-\\d{6}");
     private final JsonMapper json = JsonMapper.builder().build();
+    private final RetrievalEvaluationProperties properties;
 
-    /** Loads and validates the bundled set. */
+    public RetrievalEvaluationSetLoader(RetrievalEvaluationProperties properties) {
+        this.properties = properties;
+    }
+
+    /** Loads and validates the set selected by {@code rag.evaluation.set}. */
     public RetrievalEvaluationSet load() {
-        try (InputStream in = new ClassPathResource(RESOURCE).getInputStream()) {
+        return load(properties.getSet());
+    }
+
+    /**
+     * Loads and validates the set at the given classpath resource. A blank name or a resource that is not on the
+     * classpath fails with an IllegalStateException naming it.
+     */
+    public RetrievalEvaluationSet load(String resource) {
+        if (resource == null || resource.isBlank())
+            throw new IllegalStateException("Retrieval evaluation set resource (rag.evaluation.set) is blank");
+        ClassPathResource classPathResource = new ClassPathResource(resource);
+        if (!classPathResource.exists())
+            throw new IllegalStateException("Retrieval evaluation set resource not found on the classpath: " + resource + " (rag.evaluation.set)");
+        try (InputStream in = classPathResource.getInputStream()) {
             return parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         } catch (IOException e) {
-            throw new IllegalStateException("Cannot read retrieval evaluation set " + RESOURCE, e);
+            throw new IllegalStateException("Cannot read retrieval evaluation set " + resource, e);
         }
     }
 

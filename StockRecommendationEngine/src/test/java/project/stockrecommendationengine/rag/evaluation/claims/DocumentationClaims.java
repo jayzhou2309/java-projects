@@ -11,7 +11,8 @@ import java.util.stream.Stream;
 /**
  * The repository-wide claims check and generator (RAG.md, Claims): every {@code claims.json} under
  * {@code src/main/java/documentation/live-runs}, every claims file a generated block references, and every markdown file under
- * {@code src/main/java} plus {@code CLAUDE.md}. Reads committed files only; never the database.
+ * {@code src/main/java} plus {@code CLAUDE.md}. Every file a claim reads, and every claims file a block names, must resolve inside
+ * {@code live-runs} (the evidence root). Reads files as they are on disk (whether they are committed is a review item); never the database.
  */
 final class DocumentationClaims {
     static final Path LIVE_RUNS = Path.of("src/main/java/documentation/live-runs");
@@ -21,20 +22,26 @@ final class DocumentationClaims {
     private DocumentationClaims() {
     }
 
+    /** The generator's outcome over the repository: the documentation files it rewrote and every file or block it left unwritten, with why. */
+    record Generated(List<Path> changed, List<String> problems) {
+    }
+
     /** Every problem of every claims file and documentation file under {@code root}, claims files first, each in path order. */
     static List<String> check(Path root) {
+        Path evidenceRoot = root.resolve(LIVE_RUNS);
         List<Path> claimsFiles = new ArrayList<>(claimsFiles(root));
         List<Path> documents = documents(root);
         for (Path document : documents) {
             for (Path referenced : GeneratedBlocks.referencedClaimsFiles(document)) {
-                if (Files.isRegularFile(referenced) && claimsFiles.stream().noneMatch(p -> p.toAbsolutePath().normalize().equals(referenced))) {
+                if (Files.isRegularFile(referenced) && ClaimsCheck.outside(referenced, evidenceRoot) == null
+                        && claimsFiles.stream().noneMatch(p -> p.toAbsolutePath().normalize().equals(referenced))) {
                     claimsFiles.add(referenced);
                 }
             }
         }
         List<String> problems = new ArrayList<>();
-        for (Path claims : claimsFiles) problems.addAll(ClaimsCheck.check(claims));
-        for (Path document : documents) problems.addAll(GeneratedBlocks.check(document));
+        for (Path claims : claimsFiles) problems.addAll(ClaimsCheck.check(claims, evidenceRoot));
+        for (Path document : documents) problems.addAll(GeneratedBlocks.check(document, evidenceRoot));
         return problems;
     }
 
@@ -45,13 +52,22 @@ final class DocumentationClaims {
                 + String.join("\n", problems);
     }
 
-    /** Rewrites the generated blocks of every documentation file under {@code root} that has markers; returns the files changed. */
-    static List<Path> generate(Path root) {
+    /**
+     * Rewrites the generated blocks of every documentation file under {@code root} that has markers. A file or block that cannot be generated
+     * (unbalanced markers, an unreadable claims file, a claim without a rendered sentence) is reported and left as it is; the others are
+     * still written.
+     */
+    static Generated generate(Path root) {
+        Path evidenceRoot = root.resolve(LIVE_RUNS);
         List<Path> changed = new ArrayList<>();
+        List<String> problems = new ArrayList<>();
         for (Path document : documents(root)) {
-            if (GeneratedBlocks.hasMarkers(document) && GeneratedBlocks.write(document)) changed.add(document);
+            if (!GeneratedBlocks.hasMarkers(document)) continue;
+            GeneratedBlocks.Generation generation = GeneratedBlocks.write(document, evidenceRoot);
+            if (generation.changed()) changed.add(document);
+            problems.addAll(generation.problems());
         }
-        return changed;
+        return new Generated(changed, problems);
     }
 
     static List<Path> claimsFiles(Path root) {

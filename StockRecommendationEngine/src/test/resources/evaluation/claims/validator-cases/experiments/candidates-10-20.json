@@ -1,0 +1,8 @@
+{
+  "description": "Validator case 6: snapshots 296 and 297 differ, among their recorded properties, only in rerankCandidates (10 against 20).",
+  "experiment": {
+    "factor": "rerankCandidates",
+    "settings": [10, 20],
+    "snapshots": ["../../../2026-09-13-reranker-windows/measurement/snapshot-296-rerank-candidates-10.json", "../../../2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json"]
+  }
+}

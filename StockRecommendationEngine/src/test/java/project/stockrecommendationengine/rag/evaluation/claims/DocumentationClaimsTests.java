@@ -18,8 +18,9 @@ class DocumentationClaimsTests {
     void everyClaimsFileAndGeneratedBlockInTheRepositoryChecks() {
         Path root = Path.of("");
         if (Boolean.getBoolean(GENERATE)) {
-            List<Path> changed = DocumentationClaims.generate(root);
-            System.out.println("CLAIMS_GENERATE changed=" + changed.size() + " " + changed);
+            DocumentationClaims.Generated generated = DocumentationClaims.generate(root);
+            System.out.println("CLAIMS_GENERATE changed=" + generated.changed().size() + " " + generated.changed() + " notGenerated=" + generated.problems().size());
+            generated.problems().forEach(problem -> System.out.println("CLAIMS_GENERATE_PROBLEM " + problem));
         }
         List<String> problems = DocumentationClaims.check(root);
         System.out.println("CLAIMS_CHECK claimsFiles=" + DocumentationClaims.claimsFiles(root).size() + " documents=" + DocumentationClaims.documents(root).size()

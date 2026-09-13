@@ -9,7 +9,7 @@
   "mrr": 0.583333,
   "window": 10,
   "retrievalStrategy": "HYBRID_RRF_RERANKED",
-  "properties": {"rerank": true},
+  "properties": {"rerank": true, "trace": true, "rerankCandidates": 20, "rerankerScoring": "max-window/overlap=224/maxWindows=4"},
   "results": [
     {"id": "aapl-01", "ticker": "AAPL", "kind": "FIGURE", "rank": 1, "matchedChunkId": 11, "error": null, "retrievalStrategy": "HYBRID_RRF_RERANKED"},
     {"id": "msft-04", "ticker": "MSFT", "kind": "FIGURE", "rank": 1, "matchedChunkId": 21, "error": null, "retrievalStrategy": "HYBRID_RRF_RERANKED"},

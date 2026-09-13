@@ -12,19 +12,21 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import project.stockrecommendationengine.rag.evaluation.claims.ClaimsCheck.Claim;
-import project.stockrecommendationengine.rag.evaluation.claims.ClaimsCheck.Parsed;
+import project.stockrecommendationengine.rag.evaluation.claims.ClaimsCheck.Result;
 
 /**
  * Generated documentation blocks (RAG.md, Claims, Generated blocks). A block is the lines between a start marker and its end marker, each
  * alone on its line: {@code <!-- generated:<claims path> start -->} and {@code <!-- generated:<claims path> end -->}, where the claims path
  * is relative to the documentation file's directory and may end in {@code #<block>} to select the claims whose {@code block} equals it
  * (without it, every claim of the file). The generator writes one bullet per selected claim in file order, at the start marker's
- * indentation: {@code * <text> (<id>, <basis>)}.
+ * indentation: {@code * <sentence> (<id>, <basis>)}, where the sentence is the one {@link ClaimsCheck#evaluate} renders (from the check for
+ * observed and derived claims; the free text with its premises, reason, or experiment otherwise). The claims path must resolve inside the
+ * evidence root.
  * <p>
  * {@link #check} reports, with file and line, every line of a block that differs from what {@link #write} would write, an unbalanced or nested
- * marker, a claims file that cannot be read, a selection matching no claim, and every citation — an opening parenthesis followed by
- * {@code C-} and digits, anywhere in the file — whose id no claims file referenced by the file's markers defines, or whose stated basis
- * differs from the claim's.
+ * marker, a claims file that cannot be read or lies outside the evidence root, a selection matching no claim, a selected claim whose sentence
+ * cannot be rendered, and every citation — an opening parenthesis followed by {@code C-} and digits, anywhere in the file — whose id no
+ * claims file referenced by the file's markers defines, or whose stated basis differs from the claim's.
  */
 final class GeneratedBlocks {
     static final Pattern MARKER = Pattern.compile("^([ \\t]*)<!-- generated:([^\\s#]+)(?:#([A-Za-z0-9_-]+))? (start|end) -->[ \\t]*$");
@@ -37,22 +39,26 @@ final class GeneratedBlocks {
         }
     }
 
+    /** What the generator did to one documentation file: whether it rewrote the file, and what kept the file or a block from being written. */
+    record Generation(boolean changed, List<String> problems) {
+    }
+
     private GeneratedBlocks() {
     }
 
     /** Every problem of the documentation file; empty when its blocks are as generated and its citations resolve. */
-    static List<String> check(Path document) {
+    static List<String> check(Path document, Path evidenceRoot) {
         List<String> lines = lines(document);
         String name = ClaimsCheck.display(document);
         List<String> problems = new ArrayList<>();
         List<Block> blocks = scan(lines, name, problems);
-        Map<String, Parsed> claims = new LinkedHashMap<>();
+        Map<String, Result> claims = new LinkedHashMap<>();
         for (Block block : blocks) {
-            Parsed parsed = claims.computeIfAbsent(block.path(), path -> parse(document, path));
-            List<String> expected = render(block, parsed, name, problems);
+            Result parsed = claims.computeIfAbsent(block.path(), path -> evaluate(document, path, evidenceRoot));
+            List<Expected> expected = render(block, parsed, name, problems);
             if (expected == null) continue;
             List<String> found = lines.subList(block.start(), block.end() - 1);
-            for (Difference difference : differences(expected, found)) {
+            for (Difference difference : compare(expected, found)) {
                 problems.add(name + ":" + (block.start() + 1 + difference.foundIndex()) + " block " + block.label() + " (lines " + block.start() + " to "
                         + block.end() + ") differs from the generator's output: " + difference.text());
             }
@@ -71,61 +77,95 @@ final class GeneratedBlocks {
      * {@code expected "..", found ".."}, a missing line {@code expected "..", found no line}, an extra line {@code expected no line, found ".."}.
      */
     static List<Difference> differences(List<String> expected, List<String> found) {
+        return compare(expected.stream().map(Expected::exactly).toList(), found);
+    }
+
+    /**
+     * One line the generator expects: the exact line, or, for a selected claim whose sentence could not be rendered, any bullet at the block's
+     * indentation ending with that claim's {@code (C-nnn, basis)}, so the block's other lines are still compared.
+     */
+    record Expected(String text, String prefix, String suffix) {
+        static Expected exactly(String text) {
+            return new Expected(text, null, null);
+        }
+
+        boolean matches(String line) {
+            return text != null ? text.equals(line) : line.startsWith(prefix) && line.endsWith(suffix);
+        }
+
+        String describe() {
+            return text != null ? "\"" + text + "\"" : "a line \"" + prefix + "...\" ending \"" + suffix + "\" (its sentence was not rendered)";
+        }
+    }
+
+    /** {@link #differences} over expected lines that may be placeholders for claims without a rendered sentence. */
+    static List<Difference> compare(List<Expected> expected, List<String> found) {
         int[][] common = new int[expected.size() + 1][found.size() + 1];
         for (int i = expected.size() - 1; i >= 0; i--) {
             for (int j = found.size() - 1; j >= 0; j--) {
-                common[i][j] = expected.get(i).equals(found.get(j)) ? common[i + 1][j + 1] + 1 : Math.max(common[i + 1][j], common[i][j + 1]);
+                common[i][j] = expected.get(i).matches(found.get(j)) ? common[i + 1][j + 1] + 1 : Math.max(common[i + 1][j], common[i][j + 1]);
             }
         }
         List<Difference> differences = new ArrayList<>();
         int i = 0;
         int j = 0;
         while (i < expected.size() || j < found.size()) {
-            if (i < expected.size() && j < found.size() && expected.get(i).equals(found.get(j))) {
+            if (i < expected.size() && j < found.size() && expected.get(i).matches(found.get(j))) {
                 i++;
                 j++;
                 continue;
             }
-            List<String> missing = new ArrayList<>();
+            List<Expected> missing = new ArrayList<>();
             List<Integer> extra = new ArrayList<>();
-            while ((i < expected.size() || j < found.size()) && !(i < expected.size() && j < found.size() && expected.get(i).equals(found.get(j)))) {
+            while ((i < expected.size() || j < found.size()) && !(i < expected.size() && j < found.size() && expected.get(i).matches(found.get(j)))) {
                 if (j >= found.size() || (i < expected.size() && common[i + 1][j] >= common[i][j + 1])) missing.add(expected.get(i++));
                 else extra.add(j++);
             }
             int paired = Math.min(missing.size(), extra.size());
             for (int k = 0; k < paired; k++) {
-                differences.add(new Difference(extra.get(k), "expected \"" + missing.get(k) + "\", found \"" + found.get(extra.get(k)) + "\""));
+                differences.add(new Difference(extra.get(k), "expected " + missing.get(k).describe() + ", found \"" + found.get(extra.get(k)) + "\""));
             }
-            for (int k = paired; k < missing.size(); k++) differences.add(new Difference(j, "expected \"" + missing.get(k) + "\", found no line"));
+            for (int k = paired; k < missing.size(); k++) differences.add(new Difference(j, "expected " + missing.get(k).describe() + ", found no line"));
             for (int k = paired; k < extra.size(); k++) differences.add(new Difference(extra.get(k), "expected no line, found \"" + found.get(extra.get(k)) + "\""));
         }
         return differences;
     }
 
-    /** Rewrites every block of the file from its claims; true when the file changed. Throws when a marker or claims file problem prevents it. */
-    static boolean write(Path document) {
+    /**
+     * Rewrites every block of the file from its claims. A file with an unbalanced, nested, or mismatched marker is not written at all, and a
+     * block whose claims file cannot be read, selects no claim, or has a claim that cannot be rendered keeps its lines; each is reported in
+     * the returned problems, and the caller goes on with its other files.
+     */
+    static Generation write(Path document, Path evidenceRoot) {
         List<String> lines = lines(document);
         String name = ClaimsCheck.display(document);
         List<String> problems = new ArrayList<>();
         List<Block> blocks = scan(lines, name, problems);
+        if (!problems.isEmpty()) {
+            List<String> reported = new ArrayList<>();
+            problems.forEach(problem -> reported.add(problem + " (file not generated)"));
+            return new Generation(false, reported);
+        }
         List<String> output = new ArrayList<>();
         int next = 0;
-        Map<String, Parsed> claims = new HashMap<>();
+        Map<String, Result> claims = new HashMap<>();
         for (Block block : blocks) {
-            List<String> rendered = render(block, claims.computeIfAbsent(block.path(), path -> parse(document, path)), name, problems);
+            List<Expected> rendered = render(block, claims.computeIfAbsent(block.path(), path -> evaluate(document, path, evidenceRoot)), name, problems);
             output.addAll(lines.subList(next, block.start()));
-            if (rendered != null) output.addAll(rendered);
+            if (rendered != null && rendered.stream().allMatch(line -> line.text() != null)) rendered.forEach(line -> output.add(line.text()));
+            else output.addAll(lines.subList(block.start(), block.end() - 1));
             next = block.end() - 1;
         }
-        if (!problems.isEmpty()) throw new IllegalStateException("not generating " + name + ":\n" + String.join("\n", problems));
+        List<String> reported = new ArrayList<>();
+        problems.forEach(problem -> reported.add(problem + " (block not generated)"));
         output.addAll(lines.subList(next, lines.size()));
-        if (output.equals(lines)) return false;
+        if (output.equals(lines)) return new Generation(false, reported);
         try {
             Files.writeString(document, String.join("\n", output));
         } catch (IOException failure) {
             throw new UncheckedIOException(failure);
         }
-        return true;
+        return new Generation(true, reported);
     }
 
     /** Whether the file has any marker line (balanced or not). */
@@ -168,16 +208,33 @@ final class GeneratedBlocks {
         return blocks;
     }
 
-    /** The lines the generator writes for a block; null (with a problem) when its claims cannot be read or select nothing. */
-    static List<String> render(Block block, Parsed parsed, String name, List<String> problems) {
+    /**
+     * The lines the generator writes for a block; null (with a problem) when its claims cannot be read or select nothing. A selected claim
+     * whose sentence cannot be rendered is a problem and a placeholder line: the check still compares the block's other lines, and the
+     * generator leaves the block as it is.
+     */
+    static List<Expected> render(Block block, Result parsed, String name, List<String> problems) {
         if (parsed.claims() == null) {
             problems.add(name + ":" + block.start() + " block " + block.label() + ": claims file cannot be read: " + String.join("; ", parsed.problems()));
             return null;
         }
-        List<String> rendered = new ArrayList<>();
+        List<Expected> rendered = new ArrayList<>();
+        List<String> unrendered = new ArrayList<>();
         for (Claim claim : parsed.claims()) {
             if (block.name() != null && !block.name().equals(claim.block())) continue;
-            rendered.add(block.indent() + "* " + claim.text() + " (" + claim.label() + ", " + claim.basis() + ")");
+            String sentence = parsed.sentences().get(claim.index());
+            String suffix = " (" + claim.label() + ", " + claim.basis() + ")";
+            if (sentence == null) {
+                unrendered.add(claim.label());
+                rendered.add(new Expected(null, block.indent() + "* ", suffix));
+            } else {
+                rendered.add(Expected.exactly(block.indent() + "* " + sentence + suffix));
+            }
+        }
+        if (!unrendered.isEmpty()) {
+            problems.add(name + ":" + block.start() + " block " + block.label() + ": " + ClaimsCheck.joinAnd(unrendered) + (unrendered.size() == 1 ? " has" : " have")
+                    + " no rendered sentence (the problems of " + ClaimsCheck.display(parsed.file()) + " say why), so " + (unrendered.size() == 1 ? "its line is" : "their lines are")
+                    + " compared by citation only and the block is not generated");
         }
         if (rendered.isEmpty()) {
             problems.add(name + ":" + block.start() + " block " + block.label() + ": expected at least one claim, found none"
@@ -187,14 +244,14 @@ final class GeneratedBlocks {
         return rendered;
     }
 
-    private static void citations(List<String> lines, String name, List<Block> blocks, Map<String, Parsed> claims, List<String> problems) {
+    private static void citations(List<String> lines, String name, List<Block> blocks, Map<String, Result> claims, List<String> problems) {
         for (int index = 0; index < lines.size(); index++) {
             Matcher citation = CITATION.matcher(lines.get(index));
             while (citation.find()) {
                 String id = citation.group(1);
                 List<Claim> defined = new ArrayList<>();
                 List<String> files = new ArrayList<>();
-                for (Map.Entry<String, Parsed> entry : claims.entrySet()) {
+                for (Map.Entry<String, Result> entry : claims.entrySet()) {
                     if (entry.getValue().claims() == null) continue;
                     for (Claim claim : entry.getValue().claims()) {
                         if (id.equals(claim.id())) {
@@ -216,10 +273,12 @@ final class GeneratedBlocks {
         }
     }
 
-    private static Parsed parse(Path document, String path) {
+    private static Result evaluate(Path document, String path, Path evidenceRoot) {
         Path claimsFile = document.toAbsolutePath().getParent().resolve(path).normalize();
-        if (!Files.isRegularFile(claimsFile)) return new Parsed(claimsFile, null, List.of("not found at " + ClaimsCheck.display(claimsFile)));
-        return ClaimsCheck.parse(claimsFile);
+        String outside = ClaimsCheck.outside(claimsFile, evidenceRoot);
+        if (outside != null) return new Result(claimsFile, null, List.of(outside), Map.of());
+        if (!Files.isRegularFile(claimsFile)) return new Result(claimsFile, null, List.of("not found at " + ClaimsCheck.display(claimsFile)), Map.of());
+        return ClaimsCheck.evaluate(claimsFile, evidenceRoot);
     }
 
     /** The file's lines; a final line break yields a last empty line, so writing the lines back joined by line breaks keeps it. */

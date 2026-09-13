@@ -199,3 +199,145 @@ M3-5. Rollback and generator. claims.json copied back from the copy taken before
 M3-6. Final: ./mvnw -q -o verify, run after every code, fixture, claims, and documentation edit except this line -> exit 0 (56 test classes, 425 tests,
       0 failures, 0 errors, 27 skipped; counted from this run's target/surefire-reports); DocumentationClaimsTests printed
       "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".
+
+Milestone 3 remediation round 1, 2026-09-13: claim sentences rendered from their checks (plans/2026-09-13-evaluation-evidence.md, Milestone 3 with Amendment 4)
+Branch evaluation-evidence at 2b9e13f (Amendment 4 on top of 811ca14) with the remediation in the working tree (committed with this section). Same machine and
+shell rules as Milestone 3: set -a && source .env && set +a before every command; `env | grep` for RAG_* and the application enable flags: 0 lines. No chat
+model, no embedding, no /api/recommendations call, no evaluation snapshot created, no database read by the claims check.
+
+Validation of 811ca14 failed because the checker never compared a claim's text with its check (RAG.md said a sentence could not drift from its check) and
+because a metric with more than six decimal places threw an uncaught ArithmeticException (ClaimsCheck.java:391) that ended the whole check. Amendment 4 is the
+specification; every bullet is implemented: observed and derived claims carry no text and their sentences are rendered from the check's parameters and the
+values found (a fixed template per check type, RAG.md Claims, Sentences), with optional digit-free labels; inferred, unknown, and experiment claims keep free
+text, printed with premises, the report's reason, or the experiment and its checked outcome, and screened for causal stems (experiment only) and absolute or
+predictive words (always refused); experiment files name the factor, two settings, and two snapshot files, and the check fails unless those snapshots'
+recorded properties differ in exactly the factor and the claim's check reads only them or their reports; every path must resolve inside
+src/main/java/documentation/live-runs (the evidence root; symbolic links resolved); unknown keys are refused at every level, topK rows included, and a
+repeated key is a read error; a ruleRow criterion with absent data fails; any exception in one claim is that claim's problem; the generator reports a file
+with unbalanced markers and continues; a block holding a claim without a rendered sentence still compares its other lines; RAG.md Claims rewritten to match
+the code (templates, wording stems and limits, experiments, path rule, what the check proves and what people read, dated corrections of the Why, check, and
+generator bullets); claims.json (13 claims) and its RAG.md block regenerated in the new format.
+
+MR-1. The validator's cases, each a claim of src/test/resources/evaluation/claims/validator-cases/claims.json checked against copies of the committed
+      evidence (ClaimsCheckValidatorCasesTests; <tmp> is the JUnit temporary directory holding the copied live-runs tree). Case to claim: 1 C-001; 2 C-002 (C-003: the same rows without text pass); 3 C-004 (derived), C-005 (inferred); 4 C-006 (derived), C-007 (inferred); 5 C-008 (text; C-009 and C-010 render the rows); 6 C-011 bare, C-012 two properties, C-013 snapshot 249 (C-014: a valid experiment passes); 8 C-015; 9 C-016; 10 C-017; 11 C-018.
+      ./mvnw -o test -Dtest='ClaimsCheckTests,ClaimsCheckValidatorCasesTests,GeneratedBlocksTests' -> exit 0, 85 tests, 0 failures. Captured problems:
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-001 [format]: text expected none on basis observed (its sentence is rendered from its check), found "Snapshot 297 ranks msft-05 first."
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-002 [format]: text expected none on basis derived (its sentence is rendered from its check), found "msft-04 is outside the top 5 in every row of the windowed measurement (296 to 299)."
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-002 [absolute wording]: "every" expected no absolute or predictive wording in free text, found in "msft-04 is outside the top 5 in every row of the windowed measurement (296 to 299)."
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-004 [format]: text expected none on basis derived (its sentence is rendered from its check), found "The cross-encoder never scored chunk 467 in snapshot 297"
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-004 [absolute wording]: "never" expected no absolute or predictive wording in free text, found in "The cross-encoder never scored chunk 467 in snapshot 297"
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-005 [absolute wording]: "never" expected no absolute or predictive wording in free text, found in "The cross-encoder never scored chunk 467 in snapshot 297."
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-006 [format]: text expected none on basis derived (its sentence is rendered from its check), found "With 40 candidates msft-04 will always rank first."
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-006 [absolute wording]: "will", "always" expected no absolute or predictive wording in free text, found in "With 40 candidates msft-04 will always rank first."
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-007 [absolute wording]: "will", "always" expected no absolute or predictive wording in free text, found in "With 40 candidates msft-04 will always rank first."
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-008 [format]: text expected none on basis derived (its sentence is rendered from its check), found "In snapshot 297 row 2 of chunk 515 was scored and holds msft-05's ITEM_7 phrase wholly."
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-011 [experiment]: experiments/bare.json snapshots expected two committed snapshot files, one per setting, found none
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-012 [experiment]: experiments/candidates-and-overlap.json snapshots ../../../2026-09-13-reranker-windows/measurement/snapshot-296-rerank-candidates-10.json and ../../../2026-09-13-reranker-windows/measurement/snapshot-299-rerank-candidates-20-overlap-224.json expected to differ only in rerankCandidates, found 1 other recorded property differing: rerankerScoring max-window/overlap=64/maxWindows=4 against max-window/overlap=224/maxWindows=4
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-013 [experiment]: the check reads ../../2026-09-13-reranker/measurement/snapshot-249-rerank-candidates-20.json, expected one of the snapshots of experiments/candidates-10-20.json (snapshots 296 and 297) or an evidence report of one of them
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-015 [metric]: check.expected must be a number with at most six decimal places, found 0.7857142
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-016 [rank] question msft-05 in ../../../../../../../../../../../../../../../../../../../../../../../../private/tmp/claims-outside.json: file ../../../../../../../../../../../../../../../../../../../../../../../../private/tmp/claims-outside.json resolves to /private/tmp/claims-outside.json, outside the evidence root <tmp>/src/main/java/documentation/live-runs
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-017 [topK]: unknown key "rank" in row 1
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-018 [ruleRow] ../../2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json against ../../2026-09-13-reranker-windows/measurement/reference-without-kind-and-tickers.json: tickerHitAt5 expected pass, found fail (the reference records no tickerHitAt5); figureKindTop5 expected pass, found fail (the reference records no kind for aapl-01, aapl-02, aapl-03, aapl-04, aapl-05, aapl-06, aapl-07, aapl-08, aapl-09, aapl-10, aapl-11, aapl-12, aapl-13, aapl-14, msft-01, msft-02, msft-03, msft-04, msft-05, msft-06, msft-07, msft-08, msft-09, msft-10, msft-11, msft-12, msft-13, msft-14, nvda-01, nvda-02, nvda-03, nvda-04, nvda-05, nvda-06, nvda-07, nvda-08, nvda-09, nvda-10, nvda-11, nvda-12, nvda-13, nvda-14)
+        <tmp>/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/validator-cases/claims.json C-020 [rank] question msft-05 in ../../2026-09-13-reranker-windows/measurement/snapshot-299-rerank-candidates-20-overlap-224.json: rank expected 1, found 10
+      Rendered sentences asserted by the same test: case 1 "Snapshot 297 ranks msft-05 10th."; case 2 "msft-04 is outside the top 5 in snapshot 296 (rank 8)
+      and snapshot 297 (no matching chunk in the window)." (no "every", no 298 or 299); case 5 on evidence-297 "... lies outside the head window, and of the 2 rows
+      the recorded scoring would score for this chunk (not rows that were scored: rerank outcome unknown, no trace), row 2 holds it wholly." and on evidence-459
+      "... and of the 2 rows scored for this chunk, row 2 holds it wholly."; C-020 after cases 8 to 11 is still checked (rank expected 1, found 10).
+      The same kinds of case over the scripted fixtures, false-claims.json C-111 to C-126 (ClaimsCheckTests, exact text; C-125 is a snapshot rank "fourth"
+      that makes Jackson throw, C-126 the claim after it):
+        src/test/resources/evaluation/claims/false-claims.json C-111 [format]: text expected none on basis derived (its sentence is rendered from its check), found "Reranking caused msft-04 to leave the top 5 in row A."
+        src/test/resources/evaluation/claims/false-claims.json C-111 [causal wording]: "caused" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found derived
+        src/test/resources/evaluation/claims/false-claims.json C-112 [experiment]: experiments/three-settings.json settings expected exactly two different settings of the factor, found ["max-window/overlap=0/maxWindows=4","max-window/overlap=64/maxWindows=4","max-window/overlap=224/maxWindows=4"]
+        src/test/resources/evaluation/claims/false-claims.json C-112 [experiment]: experiments/three-settings.json snapshots expected two committed snapshot files, one per setting, found none
+        src/test/resources/evaluation/claims/false-claims.json C-113 [rank] question aapl-01 in snapshots/row-d.json: file snapshots/row-d.json not found (resolved to src/test/resources/evaluation/claims/snapshots/row-d.json)
+        src/test/resources/evaluation/claims/false-claims.json C-114 [rank]: basis unknown expected check type notRecorded, found rank
+        src/test/resources/evaluation/claims/false-claims.json C-115 [format]: text expected none on basis observed (its sentence is rendered from its check), found "The reference row ranks msft-04 first."
+        src/test/resources/evaluation/claims/false-claims.json C-116 [absolute wording]: "will", "always" expected no absolute or predictive wording in free text, found in "The window overlap will always keep msft-04 in the top 5."
+        src/test/resources/evaluation/claims/false-claims.json C-116 [inferred]: premise C-115 expected to pass, found 1 problem (listed under C-115)
+        src/test/resources/evaluation/claims/false-claims.json C-117 [experiment]: experiments/two-factors.json snapshots ../snapshots/row-a.json and ../snapshots/row-c.json expected to differ only in rerankCandidates, found 1 other recorded property differing: rerankerScoring max-window/overlap=64/maxWindows=4 against max-window/overlap=224/maxWindows=4
+        src/test/resources/evaluation/claims/false-claims.json C-118 [experiment]: experiments/bare.json snapshots expected two committed snapshot files, one per setting, found none
+        src/test/resources/evaluation/claims/false-claims.json C-119 [experiment]: the check reads snapshots/reference.json, expected one of the snapshots of experiments/overlap-64-224.json (snapshots 3 and 4) or an evidence report of one of them
+        src/test/resources/evaluation/claims/false-claims.json C-120 [topK]: unknown key "rank" in row 1
+        src/test/resources/evaluation/claims/false-claims.json C-121 [metric]: check.expected must be a number with at most six decimal places, found 0.7857142
+        src/test/resources/evaluation/claims/false-claims.json C-122 [metric] hitAt5 in snapshots/seven-decimals.json: stored hitAt5 expected at most six decimal places, found 0.7857142
+        src/test/resources/evaluation/claims/false-claims.json C-123 [ruleRow] snapshots/row-c.json against snapshots/no-kind-no-tickers.json: tickerHitAt5 expected pass, found fail (the reference records no tickerHitAt5); figureKindTop5 expected pass, found fail (the reference records no kind for aapl-01, msft-04, nvda-01, nvda-02)
+        src/test/resources/evaluation/claims/false-claims.json C-124 [rank] question aapl-01 in ../../../../../../../../../../../../../../../../private/tmp/claims-outside.json: file ../../../../../../../../../../../../../../../../private/tmp/claims-outside.json resolves to /private/tmp/claims-outside.json, outside the evidence root src/test/resources/evaluation
+        src/test/resources/evaluation/claims/false-claims.json C-125 [error]: evaluating the claim threw JsonNodeException: 'StringNode' method `intValue()` cannot coerce value "fourth" to `int`: value type not numeric
+        src/test/resources/evaluation/claims/false-claims.json C-126 [rank] question nvda-02 in snapshots/reference.json: rank expected 2, found null
+      Case 7, one parameterised case per phrasing on an inferred claim (ClaimsCheckTests.causalWordingInFreeTextIsRejectedWithoutAnExperiment, 33 cases;
+      the first 20 are Amendment 4's list, the next 12 the first version's list, the last two stems added beyond both):
+        C-001 [causal wording]: "resulting" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "results" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "leading" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "led" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "leads" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "drives" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "lifting" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "why" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "thus" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "consequently" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "responsible" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "accounts for" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "contributed" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "stems from" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "pushed" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "made" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "improved" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "boosted" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "triggered" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "reason" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "because" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "caused" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "due to" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "Owing to" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "explains" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "result" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "drove" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "attributable" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "Hence" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "Therefore" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "Thanks to" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "so that" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        C-001 [causal wording]: "effect", "helped" state a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+      Case 12 (GeneratedBlocksTests.theGeneratorReportsADocumentWithAnUnbalancedMarkerAndStillGeneratesTheNextDocument): a.md has a start marker without its
+      end marker, b.md a hand-edited block:
+        CASE_12_GENERATE changed=[b.md]
+        CASE_12_GENERATE_PROBLEM <tmp>/repository/src/main/java/documentation/a.md:2 start marker generated:live-runs/2026-09-13-fixture/claims.json has no end marker (file not generated)
+      a.md was left byte for byte as written; b.md was regenerated.
+
+MR-2. claims.json rewritten in the new format (the 13 claims keep their ids, checks, and bases; C-004's inferred text reworded to "In snapshot 459 the
+      cross-encoder received msft-05's ITEM_7 phrase whole in chunk 515 only in row 2." and C-009's unknown text lost its hand-written "(reason: no trace)",
+      which the generator now prints from the report; label "the traced reproduction run" for traced-snapshot-297-settings.json).
+        ./mvnw -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> "CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md]
+        notGenerated=0", "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0". The regenerated bullets are in RAG.md, Claims.
+
+MR-3. Deliberate breakage of the real claims.json and its block (copies of both taken first). claims.json: C-001 expected rerankedPosition 11; C-004's text
+      given "always"; C-010 given the text "Snapshot 297 ranks msft-05 first."; C-011's snapshot path sent through ../ to /private/tmp; C-012 extended with
+      snapshot 298 expected outside (it ranks msft-04 1); C-013 expected "0.7857142". RAG.md: C-005's bullet edited by hand ("reranked 11th" to "reranked
+      10th", line 707). ./mvnw -q -o verify -> exit 1, 491 tests, 1 failure (DocumentationClaimsTests), one message:
+        Claims check failed: 11 problems (after an intended change regenerate blocks with -Dclaims.generate=true on DocumentationClaimsTests; format in RAG.md, Claims)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-001 [candidate] question msft-05, chunk 515 in evidence-459.json: rerankedPosition expected 11, found 12 (observed)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-004 [absolute wording]: "always" expected no absolute or predictive wording in free text, found in "In snapshot 459 the cross-encoder always received msft-05's ITEM_7 phrase whole in chunk 515 only in row 2."
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-004 [inferred]: premise C-001 expected to pass, found 1 problem (listed under C-001)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-010 [format]: text expected none on basis observed (its sentence is rendered from its check), found "Snapshot 297 ranks msft-05 first."
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-011 [rank] question msft-05 in ../../../../../../../../../../../../../../../../../../../../private/tmp/traced-snapshot-297-settings.json: file ../../../../../../../../../../../../../../../../../../../../private/tmp/traced-snapshot-297-settings.json resolves to /private/tmp/traced-snapshot-297-settings.json, outside the evidence root src/main/java/documentation/live-runs
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-012 [topK] question msft-04, k 5: ../2026-09-13-reranker-windows/measurement/snapshot-298-rerank-candidates-40-timeout-4000.json expected outside, found inside (rank 1)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-013 [metric]: check.expected must be a number with at most six decimal places, found "0.7857142"
+        src/main/java/documentation/RAG.md:702 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json: C-011 and C-013 have no rendered sentence (the problems of src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json say why), so their lines are compared by citation only and the block is not generated
+        src/main/java/documentation/RAG.md:706 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (lines 702 to 716) differs from the generator's output: expected "            * In snapshot 459 the cross-encoder always received msft-05's ITEM_7 phrase whole in chunk 515 only in row 2. (inferred from C-001 and C-003) (C-004, inferred)", found "            * In snapshot 459 the cross-encoder received msft-05's ITEM_7 phrase whole in chunk 515 only in row 2. (inferred from C-001 and C-003) (C-004, inferred)"
+        src/main/java/documentation/RAG.md:707 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (lines 702 to 716) differs from the generator's output: expected "            * In the evidence report of snapshot 459, chunk 466, which holds an accepted phrase of msft-04, was at fused position 4, was a rerank input, and was reranked 11th. (C-005, observed)", found "            * In the evidence report of snapshot 459, chunk 466, which holds an accepted phrase of msft-04, was at fused position 4, was a rerank input, and was reranked 10th. (C-005, observed)"
+        src/main/java/documentation/RAG.md:714 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (lines 702 to 716) differs from the generator's output: expected "            * msft-04 is outside the top 5 in snapshot 297 (no matching chunk in the window) and the traced reproduction run (snapshot 410, no matching chunk in the window), and inside the top 5 in snapshot 298 (rank 1). (C-012, derived)", found "            * msft-04 is outside the top 5 in snapshot 297 (no matching chunk in the window) and the traced reproduction run (snapshot 410, no matching chunk in the window). (C-012, derived)"
+      Every change is named: the six claim edits as seven problems (C-004 twice: its wording and its failing premise), the two claims left without a
+      sentence in one block problem, the two block
+      lines whose rendering changed (C-004, C-012), and the hand edit (C-005); C-010's text changes no bullet because the sentence comes from the check.
+
+MR-4. Rollback. claims.json copied back: cmp identical to the copy. With only the RAG.md hand edit left, ./mvnw -o test -Dtest=DocumentationClaimsTests ->
+      exit 1, "Claims check failed: 1 problem", the line-707 problem above alone. ./mvnw -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true ->
+      exit 0, "CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md] notGenerated=0", "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0"; RAG.md
+      cmp identical to the copy taken before MR-3 (the generator restored the bullet). Written after this: RAG.md's remediation Verified bullet and change-log
+      bullet (both below the block) and this section.
+
+MR-5. Final, after every code, fixture, claims, and documentation edit except this line:
+        ./mvnw -q -o verify -> exit 0 (57 test classes, 491 tests, 0 failures, 0 errors, 27 skipped; counted from this run's target/surefire-reports,
+        emptied before the run); DocumentationClaimsTests printed "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".
+        ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 0, 1 test, "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".

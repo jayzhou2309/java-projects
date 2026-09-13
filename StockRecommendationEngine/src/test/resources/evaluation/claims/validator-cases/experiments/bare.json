@@ -1,0 +1,4 @@
+{
+  "description": "Validator case 6 (plan amendment 4): a bare declaration of a factor and two settings, naming no snapshots.",
+  "experiment": {"factor": "rerankCandidates", "settings": [20, 40]}
+}

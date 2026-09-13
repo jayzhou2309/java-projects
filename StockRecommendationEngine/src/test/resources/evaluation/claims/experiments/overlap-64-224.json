@@ -1,4 +1,8 @@
 {
-  "experiment": {"factor": "rag.retrieval.cross-encoder.window-overlap-tokens", "settings": [64, 224]},
-  "note": "Claims check fixture: declares one factor and its two settings; the runs are snapshots/row-b.json (64) and snapshots/row-c.json (224)."
+  "description": "Claims check fixture: one factor (the recorded rerankerScoring, whose overlap is 64 in row B and 224 in row C), two settings, and the two snapshots recording them; every other recorded property is equal (row C's properties.trace is not compared).",
+  "experiment": {
+    "factor": "rerankerScoring",
+    "settings": ["max-window/overlap=64/maxWindows=4", "max-window/overlap=224/maxWindows=4"],
+    "snapshots": ["../snapshots/row-b.json", "../snapshots/row-c.json"]
+  }
 }

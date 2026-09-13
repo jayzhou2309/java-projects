@@ -1,0 +1,8 @@
+{
+  "description": "Validator case 6: snapshots 296 and 299 differ in rerankCandidates (10 against 20) and in rerankerScoring (overlap 64 against 224).",
+  "experiment": {
+    "factor": "rerankCandidates",
+    "settings": [10, 20],
+    "snapshots": ["../../../2026-09-13-reranker-windows/measurement/snapshot-296-rerank-candidates-10.json", "../../../2026-09-13-reranker-windows/measurement/snapshot-299-rerank-candidates-20-overlap-224.json"]
+  }
+}

@@ -68,6 +68,8 @@ one-line fix, a typo, or a question, just do it directly.
 - Evidence rule (RAG-14): conclude only from committed evidence; label each claim observed, derived,
   inferred, unknown, or experiment; a cause needs an experiment isolating that factor. Measurement
   write-ups are generated from `claims.json` and checked in `verify` (format: `RAG.md`, "Claims").
+  Observed and derived sentences are rendered from their checks; inferred, unknown, and experiment
+  text is screened for causal and absolute wording but not proven, so reviewers read it.
 
 ## Loop history
 

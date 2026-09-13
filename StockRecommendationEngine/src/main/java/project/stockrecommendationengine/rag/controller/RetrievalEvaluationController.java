@@ -26,10 +26,13 @@ public class RetrievalEvaluationController {
      * the keyword plus vector path on or off for every question; absent, each request follows
      * {@code rag.retrieval.hybrid-enabled}. The optional {@code rerank} parameter does the same for reranking against
      * {@code rag.retrieval.reranking-enabled}; {@code rerank=true} with no reranker configured is a 400 before any question runs.
+     * The optional {@code trace} parameter, when true, stores each question's retrieval trace in the snapshot ({@code traces},
+     * {@code properties.trace} true); absent or false stores none. Tracing never changes a question's results.
      */
     @PostMapping
-    public RetrievalEvaluation evaluate(@RequestParam(required = false) Boolean hybrid, @RequestParam(required = false) Boolean rerank) {
-        return service.evaluate(hybrid, rerank);
+    public RetrievalEvaluation evaluate(@RequestParam(required = false) Boolean hybrid, @RequestParam(required = false) Boolean rerank,
+            @RequestParam(required = false) Boolean trace) {
+        return service.evaluate(hybrid, rerank, trace);
     }
 
     /** The newest stored snapshot; 404 until one has been run. */

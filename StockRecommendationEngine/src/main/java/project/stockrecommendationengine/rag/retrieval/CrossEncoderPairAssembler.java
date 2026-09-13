@@ -216,6 +216,17 @@ final class CrossEncoderPairAssembler {
         return out;
     }
 
+    /**
+     * A passage's score from its row logits, as the scorer reduces them: {@link Math#max} over the rows in window order starting
+     * from negative infinity, so a NaN logit yields NaN (which fails the reranker's call) and a single row (every passage under
+     * {@link PassageScoring#HEAD}) yields its own logit. {@link #windows} gives every passage at least one row.
+     */
+    static float maxOverWindows(float[] rowScores) {
+        float best = Float.NEGATIVE_INFINITY;
+        for (float rowScore : rowScores) best = Math.max(best, rowScore);
+        return best;
+    }
+
     /** {@link #windows} under {@link PassageScoring#HEAD}: the one row per passage that the longest-first cut alone produces. */
     List<Window> headWindows(int queryTokens, List<long[]> passages) {
         return windows(queryTokens, passages, PassageScoring.HEAD, 0, 1);

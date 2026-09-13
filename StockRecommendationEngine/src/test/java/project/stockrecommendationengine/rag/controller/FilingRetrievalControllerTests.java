@@ -95,4 +95,19 @@ class FilingRetrievalControllerTests {
                 .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("no FilingReranker is configured")));
         verifyNoInteractions(loader, snapshots);
     }
+
+    // Evaluation evidence Milestone 1, C4: ?trace= reaches the service; absent is null (no traces stored).
+
+    @Test
+    void evaluatePassesTheTraceParameterToTheService() throws Exception {
+        var evaluation = mock(RetrievalEvaluationService.class);
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(new RetrievalEvaluationController(evaluation, mock(RetrievalEvaluationRepository.class))).build();
+        mvc.perform(post("/api/rag/evaluate").param("rerank", "true").param("trace", "true")).andExpect(status().isOk());
+        verify(evaluation).evaluate(null, true, true);
+        mvc.perform(post("/api/rag/evaluate").param("trace", "false")).andExpect(status().isOk());
+        verify(evaluation).evaluate(null, null, false);
+        mvc.perform(post("/api/rag/evaluate")).andExpect(status().isOk());
+        verify(evaluation).evaluate(null, null, null);
+        verifyNoMoreInteractions(evaluation);
+    }
 }

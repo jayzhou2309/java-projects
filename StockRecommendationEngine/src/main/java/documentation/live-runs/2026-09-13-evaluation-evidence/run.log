@@ -1,0 +1,46 @@
+Per-question retrieval traces in evaluation snapshots (Follow_Ups RAG-14; plans/2026-09-13-evaluation-evidence.md, Milestone 1), 2026-09-13
+Branch evaluation-evidence from 600da9d, with the Milestone 1 code in the working tree (committed with this directory). Development Mac, CPU.
+Shell for every command: set -a && source .env && set +a; no RAG_* variable and no application enable flag exported (checked with env | grep: 0 lines).
+No chat model. Embeddings: 43 (42 questions + 1 warm-up) in the reproduction test; none in the cross-encoder live tests.
+
+1. ./mvnw -q -o verify -> exit 0 (358 tests, 0 failures, 0 errors, 22 skipped: the opt-in live tests, RetrievalEvaluationTraceLiveTests and the new
+   CrossEncoderWindowedScoringLiveTests method included; counted from target/surefire-reports).
+
+2. C3 on the real model: ./mvnw -o test -Dtest='CrossEncoderRerankerLiveTests,CrossEncoderWindowedScoringLiveTests' -Drag.rerank.live=true -> exit 0,
+   11 tests, 0 skipped (live-test-cross-encoder-scored.log).
+   - theScoredMethodMatchesRerankAndItsWindowScoresReduceToTheScoreOn20Chunks: 20 chunks (18 of about 1,000 tokens, the late-answer chunk 19, the short
+     unrelated chunk 20); rerankScored top 10 equal to rerank under both modes; every score equal (float ==) to OnnxCrossEncoderScorer.score's; max of the
+     window scores equal to the score; under head one window per chunk equal to the score; window counts summing to the rows scored: 57 under
+     max-window/overlap=64/maxWindows=4, 20 under head (lines "CROSS_ENCODER_WINDOWS scored").
+   - Scores unchanged by the scorer refactor (scoreWithWindows now keeps each row's logit and reduces with CrossEncoderPairAssembler.maxOverWindows):
+     against live-runs/2026-09-13-reranker-windows/live-test-windows.log, equal as printed: handwritten 11.371214, 5.7503047, 5.5065556; lateAnswer
+     head=-11.257737 maxWindow=-10.085627; earlyAnswer 3.92034 under both; the determinism scores of 20 chunks; the position sweep line and the
+     lateAnswer candidates line (diffed).
+
+3. C5 reproduction: ./mvnw -o test -Dtest='RetrievalEvaluationTraceLiveTests' -Drag.evaluation.live=true
+       -Drag.evaluation.trace-out=$PWD/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/traced-snapshot-297-settings.json
+   -> exit 0, 1 test, 69.4 s (live-test-trace-reproduction.log).
+   - Settings only in the test's Spring context (@SpringBootTest properties): rag.retrieval.cross-encoder.enabled=true, rerank-candidates=20,
+     passage-scoring=max-window, window-overlap-tokens=64, max-windows=4, rag.evaluation.set=evaluation/retrieval-set-v2.json, window=10; rerank-timeout-ms
+     at its default 2,000 (297's run used the default). The run's properties were asserted equal to 297's for set, setCreatedOn, window, latestFilingsOnly,
+     candidateCount, hybrid, hybridEnabled, keywordCandidateCount, rrfK, the three weights, rerank, rerankCandidates, reranker, rerankerVersion,
+     rerankerScoring (0 differences). Startup line: "Cross-encoder loaded ... scoring=max-window/overlap=64/maxWindows=4".
+   - Warm-up retrieval (NVDA, "What was NVIDIA gross margin in fiscal 2026?", rerank true, topK 5), as in 297's harness: HYBRID_RRF_RERANKED, 5 results,
+     scoring call candidates=20 windows=44 topK=5 1,478 ms (297's warm-up line also has windows=44).
+   - service.evaluate(hybrid null, rerank true, trace true): 60,092 ms; row id 410 inside the transaction (rolled back).
+     hit@1 0.500000, hit@3 0.761905, hit@5 0.785714, MRR 0.633135 (297: the same); rerankedQuestions 42, rerankFallbackQuestions 0, trace true.
+   - "RETRIEVAL_TRACE reproduction questions=42 differences=0 []": every question's rank and matched chunk equal 297's.
+   - Scoring calls during the evaluation: 42 (one per question), all candidates=20 topK=10; windows 35 to 48 (median 43); elapsedMs 867 to 1,460
+     (median 1,083.5); no "Reranking failed" line. The 42 windows= values equal, in order, the 42 evaluation calls of
+     live-runs/2026-09-13-reranker-windows/measurement/latency-297.txt, and equal each question's sum of windowCount in the stored traces
+     (checked with a script over the two logs and traced-snapshot-297-settings.json).
+   - Traces: 42, one per question in set order, every outcome RERANKED with scoresNotRecorded null; fused lists 45 to 72 chunks; inputCount 20 for every
+     question; 1,746 window scores in total. Invariants asserted on every question: fused positions 1..n, distinct chunk ids, each fused chunk ranked by at
+     least one leg; rerankedPosition 1..20; fusedPosition of the candidates a permutation of 1..20 matching the fused list; windowScores non-empty, of size
+     windowCount, maximum equal to score; first 10 candidates equal to returnedChunkIds; returnedChunkIds[rank-1] equal to the matched chunk; each miss's
+     top chunks equal to the first returned ids. repository.findById read the traces and results back equal.
+   - Size of the stored results document (query inside the transaction): octet_length(results::text) 361,073 bytes; without traces 9,561; traces alone
+     351,500; pg_column_size(results) 71,276. For comparison, snapshot 297 as stored: octet_length(results::text) 9,561, pg_column_size 1,596 (psql, same
+     day). The test also prints reference297ResultsBytes=8671: the committed file's results re-serialised compactly by Jackson, a different rendering, not
+     a stored size. traced-snapshot-297-settings.json (row_to_json of row 410 before the rollback) is 361,886 bytes.
+   - retrieval_evaluations before and after: 31 rows, max id 299 (rows-before-after.txt).

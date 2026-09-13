@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationQuestion.Kind;
+import project.stockrecommendationengine.rag.retrieval.RetrievalTrace;
 
 /**
  * One evaluation snapshot: every question of the bundled set run through retrieval, with the rank of the first
@@ -15,13 +16,33 @@ import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationQuest
  * whether retrieval's figure leg runs ({@code FilingRetrievalRepository.figureTerms} non-empty): keys {@link #FIGURE_SLICE}
  * and {@link #NON_FIGURE_SLICE}, always both present on a snapshot taken since slices were added. Snapshots stored before
  * that carry no slices and read back with {@code slices} null; nothing is backfilled.
+ *
+ * <p>{@code traces} holds one {@link QuestionTrace} per question, in set order, only on a snapshot evaluated with
+ * {@code trace=true} ({@code properties.trace} true); it is null on an untraced snapshot and on every snapshot stored before
+ * traces existed. Nothing is backfilled.
  */
 public record RetrievalEvaluation(Long id, Instant evaluatedAt, String setVersion, int questionCount, BigDecimal hitAt1,
         BigDecimal hitAt3, BigDecimal hitAt5, BigDecimal mrr, int window, String retrievalStrategy,
         Map<String, Object> properties, List<QuestionResult> results, Map<String, BigDecimal> tickerHitAt5, List<Miss> misses,
-        Map<String, SliceMetrics> slices) {
+        Map<String, SliceMetrics> slices, List<QuestionTrace> traces) {
     public static final String FIGURE_SLICE = "figure";
     public static final String NON_FIGURE_SLICE = "nonFigure";
+
+    /** A snapshot without traces. */
+    public RetrievalEvaluation(Long id, Instant evaluatedAt, String setVersion, int questionCount, BigDecimal hitAt1,
+            BigDecimal hitAt3, BigDecimal hitAt5, BigDecimal mrr, int window, String retrievalStrategy,
+            Map<String, Object> properties, List<QuestionResult> results, Map<String, BigDecimal> tickerHitAt5, List<Miss> misses,
+            Map<String, SliceMetrics> slices) {
+        this(id, evaluatedAt, setVersion, questionCount, hitAt1, hitAt3, hitAt5, mrr, window, retrievalStrategy, properties, results,
+                tickerHitAt5, misses, slices, null);
+    }
+
+    /**
+     * One question's retrieval trace ({@link RetrievalTrace}: the fused candidates with their leg ranks, the rerank outcome with
+     * every rerank input's position, score, and window scores when reranking ran, and the returned chunk ids); {@code trace} is
+     * null when the question's retrieval threw (its error is in {@code results}).
+     */
+    public record QuestionTrace(String id, RetrievalTrace trace) { }
 
     /**
      * One question's outcome: the 1-based rank of the first matching chunk within the window, null on a miss or an error.
@@ -54,6 +75,6 @@ public record RetrievalEvaluation(Long id, Instant evaluatedAt, String setVersio
 
     public RetrievalEvaluation withId(Long newId) {
         return new RetrievalEvaluation(newId, evaluatedAt, setVersion, questionCount, hitAt1, hitAt3, hitAt5, mrr, window,
-                retrievalStrategy, properties, results, tickerHitAt5, misses, slices);
+                retrievalStrategy, properties, results, tickerHitAt5, misses, slices, traces);
     }
 }

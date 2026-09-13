@@ -16,6 +16,7 @@ import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.Slic
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationQuestion.Kind;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalProperties;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
+import project.stockrecommendationengine.rag.retrieval.RetrievalTrace;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -359,6 +360,54 @@ class RetrievalEvaluationServiceTests {
 
     private static RetrievalResponse withStrategy(RetrievalRequest request, String strategy, RetrievedFilingChunk... chunks) {
         return new RetrievalResponse(request.ticker(), request.query(), strategy, true, request.topK(), chunks.length, List.of(chunks));
+    }
+
+    // Evaluation evidence Milestone 1, C4: trace=true stores one trace per question and properties.trace; otherwise none.
+
+    @Test void traceTrueStoresOneTracePerQuestionFromTheTracedPathAndTheSameRanksAsWithoutIt() {
+        var q1 = question("q1", "AAPL", "net sales were");
+        var q2 = question("q2", "NVDA", "data center revenue");
+        var q3 = question("q3", "MSFT", "cloud revenue");
+        when(loader.load()).thenReturn(new RetrievalEvaluationSet("v2", LocalDate.of(2026, 9, 13), List.of(q1, q2, q3)));
+        java.util.function.Function<RetrievalRequest, RetrievalResponse> scripted = request -> switch (request.query()) {
+            case "q1?" -> response(request, chunk(11, ACC, "ITEM_7", "other"), chunk(12, ACC, "ITEM_7", "Net sales were up"));
+            case "q2?" -> throw new IllegalStateException("embedding unavailable");
+            default -> response(request, chunk(31, ACC, "ITEM_7", "nothing"));
+        };
+        when(retrieval.retrieve(any())).thenAnswer(inv -> scripted.apply(inv.getArgument(0)));
+        when(retrieval.retrieveTraced(any())).thenAnswer(inv -> {
+            RetrievalResponse response = scripted.apply(inv.getArgument(0));
+            return new FilingRetrievalService.TracedRetrieval(response, new RetrievalTrace(response.results().size(), null, null, List.of(),
+                    new RetrievalTrace.Rerank(RetrievalTrace.Outcome.OFF, null, null, null, null),
+                    response.results().stream().map(RetrievedFilingChunk::chunkId).toList()));
+        });
+        when(repository.save(any())).thenAnswer(invocation -> ((RetrievalEvaluation) invocation.getArgument(0)).withId(8L));
+
+        var traced = service.evaluate(null, null, true);
+        verify(retrieval, times(3)).retrieveTraced(any());
+        verify(retrieval, never()).retrieve(any());
+        assertThat(traced.properties()).containsEntry("trace", true);
+        assertThat(traced.traces()).extracting(RetrievalEvaluation.QuestionTrace::id).containsExactly("q1", "q2", "q3");
+        assertThat(traced.traces().get(0).trace().returnedChunkIds()).containsExactly(11L, 12L);
+        assertThat(traced.traces().get(1).trace()).as("a question whose retrieval threw has no trace").isNull();
+        assertThat(traced.traces().get(2).trace().returnedChunkIds()).containsExactly(31L);
+        assertThat(traced.withId(9L).traces()).isEqualTo(traced.traces());
+
+        clearInvocations(retrieval);
+        var untraced = service.evaluate(null, null, false);
+        var absent = service.evaluate(null, null);
+        verify(retrieval, never()).retrieveTraced(any());
+        verify(retrieval, times(6)).retrieve(any());
+        for (var snapshot : List.of(untraced, absent, service.evaluate(null, null, null))) {
+            assertThat(snapshot.properties()).containsEntry("trace", false);
+            assertThat(snapshot.traces()).isNull();
+            assertThat(snapshot.results()).isEqualTo(traced.results());
+            assertThat(snapshot.misses()).isEqualTo(traced.misses());
+            assertThat(snapshot.slices()).isEqualTo(traced.slices());
+            assertThat(snapshot.hitAt1()).isEqualTo(traced.hitAt1());
+            assertThat(snapshot.mrr()).isEqualTo(traced.mrr());
+        }
+        assertThat(traced.results()).extracting(QuestionResult::rank).containsExactly(2, null, null);
     }
 
     @Test void rerankTrueWithoutARerankerFailsBeforeAnyQuestionRunsOrAnySnapshotIsStored() {

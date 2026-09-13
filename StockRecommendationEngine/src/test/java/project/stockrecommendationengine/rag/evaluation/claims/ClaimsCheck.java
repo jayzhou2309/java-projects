@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import tools.jackson.core.JacksonException;
@@ -34,7 +33,9 @@ import tools.jackson.databind.json.JsonMapper;
  * The sentence of an {@code observed} or {@code derived} claim is not written by hand: it is rendered by a fixed template per check type
  * from the check's parameters and the values found in the evidence ({@link #evaluate} returns it; the generator prints it). Only
  * {@code inferred}, {@code unknown}, and {@code experiment} claims carry free {@code text}, which is printed with its premises, the
- * report's reason, or the experiment and its checked outcome; it is screened for causal and absolute wording, never proven.
+ * report's reason, or the experiment and its checked outcome; it is screened for causal and absolute wording and citations ({@link Wording}),
+ * never proven. Labels are screened the same way and for digits and spelled-out numbers, and a file may have one label. Every branch of every
+ * template is listed in RAG.md, Claims, Sentences.
  * <p>
  * {@link #check} returns every problem of the file, one line each, naming the claim id, the check type, and what the claim expects beside
  * what the evidence holds; nothing stops at the first problem, and an exception inside one claim becomes a problem of that claim.
@@ -46,22 +47,6 @@ public final class ClaimsCheck {
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
-
-    /**
-     * Causal wording (RAG.md, Claims, Wording): word stems and inflections, matched from the start of a word in any case; a space matches any
-     * run of whitespace. A free-text sentence matching one needs basis {@code experiment}. The list matches words, not meaning.
-     */
-    static final List<String> CAUSAL_STEMS = List.of("caus\\w*", "because", "result\\w*", "lead", "leads", "leading", "led", "driv\\w*", "drove",
-            "lift\\w*", "push\\w*", "boost\\w*", "improv\\w*", "trigger\\w*", "contribut\\w*", "stem from", "stems from", "stemmed from",
-            "stemming from", "account for", "accounts for", "accounted for", "accounting for", "responsib\\w*", "reason\\w*", "why", "thus",
-            "therefore", "hence", "consequen\\w*", "due to", "thanks to", "owing to", "so that", "attribut\\w*", "explain\\w*", "make", "makes",
-            "made", "making", "affect\\w*", "effect\\w*", "impact\\w*", "help\\w*", "hurt\\w*", "enabl\\w*", "prevent\\w*", "forc\\w*",
-            "induc\\w*", "yield\\w*");
-    /** Absolute or predictive wording (RAG.md, Claims, Wording): free text matching one is rejected whatever its basis. */
-    static final List<String> ABSOLUTE_STEMS = List.of("always", "never", "will", "won't", "shall", "every\\w*", "all", "none", "nothing",
-            "no one", "guarantee\\w*", "invariabl\\w*", "forever", "certain\\w*");
-    static final Pattern CAUSAL = words(CAUSAL_STEMS);
-    static final Pattern ABSOLUTE = words(ABSOLUTE_STEMS);
 
     private static final Pattern METRIC = Pattern.compile("(hitAt1|hitAt3|hitAt5|mrr)|slices\\.(figure|nonFigure)\\.(hitAt1|hitAt3|hitAt5|mrr)"
             + "|tickerHitAt5\\.([A-Z0-9.-]{1,16})");
@@ -223,8 +208,9 @@ public final class ClaimsCheck {
             if (claim.id() != null && ID.matcher(claim.id()).matches() && byId.putIfAbsent(claim.id(), claim) != null) {
                 problems.add(name + " claim #" + index + ": id " + claim.id() + " is already used by claim #" + byId.get(claim.id()).index());
             }
+            String category = claim.check() != null && CHECK_TYPES.contains(claim.check().path("type").asString("")) ? claim.check().get("type").asString() : "format";
             for (String key : node.propertyNames()) {
-                if (!CLAIM_KEYS.contains(key)) problems.add(name + " " + claim.label() + ": unknown key \"" + key + "\"");
+                if (!CLAIM_KEYS.contains(key)) problems.add(name + " " + claim.label() + " [" + category + "]: unknown key \"" + key + "\"");
             }
         }
         return claims;
@@ -235,6 +221,7 @@ public final class ClaimsCheck {
             problems.add(name + ": labels expected an object mapping a file to its label, found " + abbreviate(node.toString()));
             return;
         }
+        Map<Path, String> labelled = new HashMap<>();
         for (Map.Entry<String, JsonNode> entry : node.properties()) {
             String where = name + " labels \"" + entry.getKey() + "\": ";
             if (!entry.getValue().isString()) {
@@ -244,16 +231,22 @@ public final class ClaimsCheck {
             String label = entry.getValue().stringValue();
             List<String> found = new ArrayList<>();
             if (!oneLine(label)) found.add("label expected one non-blank line without comment markers, found " + quote(label));
-            if (label.chars().anyMatch(Character::isDigit)) found.add("label expected no digits (numbers are rendered from the evidence), found " + quote(label));
-            List<String> causal = matches(CAUSAL, label);
-            if (!causal.isEmpty()) found.add("label expected no causal wording, found " + quoted(causal));
-            List<String> absolute = matches(ABSOLUTE, label);
-            if (!absolute.isEmpty()) found.add("label expected no absolute or predictive wording, found " + quoted(absolute));
+            Wording.Found numbers = Wording.numbers(label);
+            if (!numbers.isEmpty()) found.add("label expected no digits or spelled-out numbers (numbers are rendered from the evidence), found " + numbers.quoted() + " in " + quote(label));
+            Wording.Found causal = Wording.causal(label);
+            if (!causal.isEmpty()) found.add("label expected no causal wording, found " + causal.quoted());
+            Wording.Found absolute = Wording.absolute(label);
+            if (!absolute.isEmpty()) found.add("label expected no absolute or predictive wording, found " + absolute.quoted());
+            Wording.Found citations = Wording.citations(label);
+            if (!citations.isEmpty()) found.add("label expected no claim citation, found " + citations.quoted());
             Path resolved = null;
             try {
                 resolved = resolve(entry.getKey(), directory);
             } catch (Unreadable | IllegalArgumentException unreadable) {
                 found.add(unreadable.getMessage());
+            }
+            if (resolved != null && labelled.putIfAbsent(resolved, entry.getKey()) != null) {
+                found.add("expected one label per file, found a second label for " + display(resolved) + ", already labelled by \"" + labelled.get(resolved) + "\"");
             }
             found.forEach(problem -> problems.add(where + problem));
             if (found.isEmpty()) {
@@ -335,14 +328,19 @@ public final class ClaimsCheck {
             problems.add(prefix + " [format]: text expected none on basis " + claim.basis() + " (its sentence is rendered from its check), found " + quote(claim.text()));
         }
         if (claim.text() != null) {
-            List<String> causal = matches(CAUSAL, claim.text());
+            Wording.Found causal = Wording.causal(claim.text());
             if (!causal.isEmpty() && !claim.basis().equals("experiment")) {
-                problems.add(prefix + " [causal wording]: " + quoted(causal) + (causal.size() == 1 ? " states" : " state") + " a cause: basis expected experiment"
+                problems.add(prefix + " [causal wording]: " + causal.quoted() + (causal.words().size() == 1 ? " states" : " state") + " a cause: basis expected experiment"
                         + " (with an experiment file whose two snapshots differ only in that factor), found " + claim.basis());
             }
-            List<String> absolute = matches(ABSOLUTE, claim.text());
+            Wording.Found absolute = Wording.absolute(claim.text());
             if (!absolute.isEmpty()) {
-                problems.add(prefix + " [absolute wording]: " + quoted(absolute) + " expected no absolute or predictive wording in free text, found in " + quote(claim.text()));
+                problems.add(prefix + " [absolute wording]: " + absolute.quoted() + " expected no absolute or predictive wording in free text, found in " + quote(claim.text()));
+            }
+            Wording.Found citations = Wording.citations(claim.text());
+            if (!citations.isEmpty()) {
+                problems.add(prefix + " [format]: text expected no claim citation (an inferred claim lists its premises in \"from\"; the generator prints the claim's own), found "
+                        + citations.quoted() + " in " + quote(claim.text()));
             }
         }
         if (claim.block() != null && !BLOCK.matcher(claim.block()).matches()) {
@@ -552,7 +550,7 @@ public final class ClaimsCheck {
                 JsonNode value = recorded.get(i).get(factor);
                 if (value == null || !sameValue(settings.get(i), value)) {
                     found.add(experimentFile + " settings[" + i + "] expected the " + factor + " recorded by " + snapshotFiles.get(i).stringValue() + " ("
-                            + (value == null ? "not recorded" : render(value)) + "), found " + render(settings.get(i)));
+                            + (value == null ? "not recorded" : shown(value, settings.get(i))) + "), found " + shown(settings.get(i), value));
                 }
             }
             if (firstValue != null && secondValue != null && sameValue(firstValue, secondValue)) {
@@ -567,7 +565,7 @@ public final class ClaimsCheck {
             JsonNode a = recorded.get(0).get(key);
             JsonNode b = recorded.get(1).get(key);
             if (a == null || b == null || !sameValue(a, b)) {
-                others.add(key + " " + (a == null ? "not recorded" : render(a)) + " against " + (b == null ? "not recorded" : render(b)));
+                others.add(key + " " + (a == null ? "not recorded" : shown(a, b)) + " against " + (b == null ? "not recorded" : shown(b, a)));
             }
         }
         if (!others.isEmpty()) {
@@ -655,8 +653,9 @@ public final class ClaimsCheck {
         }
     }
 
-    // Template (RAG.md, Claims): "<Snapshot> ranks <question> <ordinal>." | "<Snapshot> ranks <question> outside its window of <n> results (no
-    // matching chunk)." | "<Snapshot> records a retrieval error for <question> and no rank."
+    // Template (RAG.md, Claims, Sentences): "<Snapshot> ranks <question> <ordinal>." | "<Snapshot> ranks <question> outside its window[ of <n>
+    // results] (no matching chunk)." (the window size only when the snapshot records it) | "<Snapshot> records a retrieval error for <question>
+    // and no rank."
     private String rank(Claim claim, JsonNode check, Evaluation evaluation) {
         String snapshotFile = requireText(check, "snapshot");
         String question = requireText(check, "question");
@@ -717,7 +716,7 @@ public final class ClaimsCheck {
         return question + " is " + (groups.size() == 2 ? groups.get(0) + ", and " + groups.get(1) : joinAnd(groups)) + ".";
     }
 
-    // Template: "The <metric name> of <Snapshot> is <value at six decimals>."
+    // Template: "The <metric name> of <Snapshot> is <value at six decimals>." | "The <metric name> of <Snapshot> is not recorded."
     private String metric(Claim claim, JsonNode check, Evaluation evaluation) {
         String snapshotFile = requireText(check, "snapshot");
         String metric = requireText(check, "metric");
@@ -821,9 +820,11 @@ public final class ClaimsCheck {
         return new Criterion(candidate.compareTo(reference) >= 0, label + " " + six(candidate, label) + " against " + six(reference, label));
     }
 
-    // Templates: "In <Report>, occurrence <n> of <total> of <question>'s accepted phrase "<phrase>" in chunk <chunk> spans tokens [a, b) and
-    // characters [c, d)." and, for membership, "... <lies wholly inside|lies partly inside|lies outside> the head window, and of the <m> rows
-    // <scored for this chunk|the recorded scoring would score for this chunk (not rows that were scored: <why>)>, <rows> hold(s) it wholly."
+    // Templates: "In <Report>, occurrence <n> of <total> of <question>'s accepted phrase "<phrase>" in chunk <chunk> spans <tokens [a, b)|tokens
+    // not recorded (<reason>)>[ and <characters [c, d)|characters not recorded (<reason>)>]." and, for membership, "... <head>, and <rows>."
+    // (head alone: "... <head>."; rows alone: "...: <rows>."), rows being "of the <1 row|m rows|rows> <scored for this chunk|the recorded
+    // scoring would score for this chunk (not rows that were scored: <why>)>, <no row holds|row r holds|rows r and s hold> it wholly" or "the
+    // rows holding it wholly are unknown (<reason>)". Every branch: RAG.md, Claims, Sentences.
     private String occurrence(Claim claim, JsonNode check, String type, Evaluation evaluation) {
         String reportFile = requireText(check, "report");
         String question = requireText(check, "question");
@@ -909,22 +910,27 @@ public final class ClaimsCheck {
         String value = outcome.path("value").asString("");
         if (value.equals("OFF")) return "reranking was off";
         if (value.equals("FALLBACK")) return "reranking fell back";
-        if (!value.equals("RERANKED") || !outcome.path("basis").asString("").equals("observed")) return "rerank outcome " + render(outcome.get("value"));
+        if (!value.equals("RERANKED")) return "rerank outcome " + render(outcome.get("value"));
+        if (!outcome.path("basis").asString("").equals("observed")) return "rerank outcome RERANKED is " + outcome.path("basis").asString("") + ", not observed";
         if (input == null || isUnknown(input)) return "rerank input unknown, " + (input == null ? "not in the report" : reason(input));
-        if (!input.path("value").asBoolean(false)) return "the chunk was not a rerank input";
-        if (!input.path("basis").asString("").equals("observed")) return "rerank input " + input.path("basis").asString("") + ", not observed";
+        JsonNode inputValue = input.get("value");
+        if (inputValue == null || !inputValue.isBoolean()) return "rerank input " + render(inputValue);
+        if (!inputValue.booleanValue()) return "the chunk was not a rerank input";
+        if (!input.path("basis").asString("").equals("observed")) return "rerank input true is " + input.path("basis").asString("") + ", not observed";
         JsonNode windowCount = chunkNode.get("windowCount");
         if (windowCount == null || isUnknown(windowCount) || !windowCount.path("value").isIntegralNumber()) {
             return "the trace records no window count, " + (windowCount == null ? "not in the report" : reason(windowCount));
         }
-        if (rowCount < 0 || windowCount.get("value").intValue() != rowCount) {
-            return "the trace records " + windowCount.get("value").intValue() + " scored rows, not the " + (rowCount < 0 ? "unknown" : String.valueOf(rowCount)) + " of this arithmetic";
-        }
+        int scored = windowCount.get("value").intValue();
+        String records = "the trace records " + scored + (scored == 1 ? " scored row" : " scored rows");
+        if (rowCount < 0) return records + ", and the row count of this arithmetic is unknown";
+        if (scored != rowCount) return records + ", not the " + rowCount + " of this arithmetic";
         return null;
     }
 
     // Template: "In <Report>, chunk <chunk>, which holds an accepted phrase of <question>, <was at fused position n|was not in the fused list>,
-    // <was|was not> a rerank input, and <was reranked <ordinal>|has no reranked position>." Only the expected fields, in that order.
+    // <was|was not> a rerank input, and <was reranked <ordinal>|has no reranked position>." Only the expected fields, in that order; a field
+    // the chunk lacks, an unknown value, and a value of another type have their own wordings (RAG.md, Claims, Sentences).
     private String candidate(Claim claim, JsonNode check, Evaluation evaluation) {
         String reportFile = requireText(check, "report");
         String question = requireText(check, "question");
@@ -986,13 +992,14 @@ public final class ClaimsCheck {
             }
             anyDerived |= basis.equals("derived");
             if (!sameValue(field.getValue(), value.get("value"))) {
-                evaluation.differs(field.getKey(), render(field.getValue()), render(value.get("value")) + " (" + basis + ")");
+                evaluation.differs(field.getKey(), shown(field.getValue(), value.get("value")), shown(value.get("value"), field.getValue()) + " (" + basis + ")");
             }
         }
         if (!anyUnknown) basis(claim, anyDerived ? "derived" : "observed", evaluation);
     }
 
-    // Printed after the unknown claim's text: "(not recorded in <Report>: <reason>)", or "(recorded in <Report> as <value>, <basis>)".
+    // Printed after the unknown claim's text: "(not recorded in <Report>: <reason or 'no reason given'>)", or "(recorded in <Report> as <value>,
+    // <basis>)".
     private String notRecorded(JsonNode check, Evaluation evaluation) {
         String reportFile = requireText(check, "report");
         String path = requireText(check, "path");
@@ -1012,7 +1019,7 @@ public final class ClaimsCheck {
         if (reason != null && !reason.stringValue().equals(value.path("reason").asString(""))) {
             evaluation.differs("reason", quote(reason.stringValue()), quote(value.path("reason").asString("")));
         }
-        return "(not recorded in " + reportReference(report) + ": " + value.path("reason").asString("") + ")";
+        return "(not recorded in " + reportReference(report) + ": " + reason(value) + ")";
     }
 
     private static void basis(Claim claim, String evidenceBasis, Evaluation evaluation) {
@@ -1076,6 +1083,20 @@ public final class ClaimsCheck {
             return "[" + String.join(", ", items) + "]";
         }
         return value.toString();
+    }
+
+    /**
+     * The value as {@link #render} writes it; when {@code other} renders the same but is a different JSON type (the number 20 against the
+     * string "20"), with its type, so a message never reads "expected 20, found 20".
+     */
+    static String shown(JsonNode value, JsonNode other) {
+        if (value == null || other == null || !render(value).equals(render(other)) || value.getNodeType() == other.getNodeType()) return render(value);
+        if (value.isString()) return "the string \"" + value.stringValue() + "\"";
+        if (value.isNumber()) return "the number " + value;
+        if (value.isBoolean()) return "the boolean " + value;
+        if (value.isArray()) return "the array " + render(value);
+        if (value.isObject()) return "the object " + render(value);
+        return render(value);
     }
 
     private static String span(JsonNode value) {
@@ -1194,19 +1215,6 @@ public final class ClaimsCheck {
         return String.join(", ", items.subList(0, items.size() - 1)) + ", and " + items.get(items.size() - 1);
     }
 
-    /** Every distinct match of the pattern in the text, as written, in order. */
-    static List<String> matches(Pattern pattern, String text) {
-        Set<String> found = new LinkedHashSet<>();
-        Matcher matcher = pattern.matcher(text);
-        while (matcher.find()) found.add(matcher.group());
-        return new ArrayList<>(found);
-    }
-
-    private static Pattern words(List<String> stems) {
-        return Pattern.compile("\\b(?:" + stems.stream().map(stem -> stem.replace(" ", "\\s+")).collect(Collectors.joining("|")) + ")\\b",
-                Pattern.CASE_INSENSITIVE);
-    }
-
     private static boolean oneLine(String text) {
         return !text.isBlank() && !text.contains("\n") && !text.contains("\r") && !text.contains("<!--") && !text.contains("-->");
     }
@@ -1243,10 +1251,6 @@ public final class ClaimsCheck {
 
     private static String quote(String text) {
         return text == null ? "none" : "\"" + text + "\"";
-    }
-
-    private static String quoted(List<String> words) {
-        return words.stream().map(word -> "\"" + word + "\"").collect(Collectors.joining(", "));
     }
 
     private static String abbreviate(String text) {

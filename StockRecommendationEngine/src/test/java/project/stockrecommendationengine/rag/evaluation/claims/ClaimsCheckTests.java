@@ -15,11 +15,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Evaluation evidence Milestone 3 with plan amendment 4, E1 and E2, over committed fixtures under
+ * Evaluation evidence Milestone 3 with plan amendments 4 and 6, E1 and E2, over committed fixtures under
  * {@code src/test/resources/evaluation/claims} (snapshots in both file shapes, the scripted evidence reports with and without traces,
  * experiment files; the evidence root is {@code src/test/resources/evaluation}): every check type passes on a true claim and fails on a false
- * one, each observed and derived sentence is rendered from its check by its template, free text is screened for causal and absolute
- * wording, experiments are checked against their two snapshots, and one message names every failing claim with its id, check type,
+ * one, each observed and derived sentence is rendered from its check by its template, free text and labels are screened for causal and absolute
+ * wording (after removing soft hyphens, invisible characters, and markdown and HTML marks), numbers in labels, and citations, experiments are checked against their two snapshots, and one message names every failing claim with its id, check type,
  * expected value, and the value found. The validator's cases over the committed evidence are in ClaimsCheckValidatorCasesTests.
  */
 class ClaimsCheckTests {
@@ -141,7 +141,7 @@ class ClaimsCheckTests {
                   {"id": "C-5", "text": "Line one\\nline two", "basis": "seen", "check": {"type": "rank"}},
                   {"id": "C-006", "basis": "observed", "from": ["C-001"], "note": "x", "check": {"type": "rank", "extra": 1}},
                   {"id": "C-007", "text": "An observed claim using notRecorded.", "basis": "observed", "check": {"type": "notRecorded", "report": "r.json", "path": "a"}},
-                  {"id": "C-008", "basis": "derived"},
+                  {"id": "C-008", "basis": "derived", "note": "x"},
                   {"id": "C-009", "basis": "derived", "check": {"type": "median"}},
                   {"id": "C-010", "text": "An experiment without its file.", "basis": "experiment", "check": {"type": "rank"}},
                   {"id": "C-011", "basis": "derived", "check": {"type": "topK", "question": "q", "k": 5, "rows": [{"snapshot": "s.json", "expected": "inside", "rank": 7}, 3]}},
@@ -157,7 +157,8 @@ class ClaimsCheckTests {
                 name + ": unknown top-level key \"extra\"",
                 name + ": description expected a string, found 3",
                 name + " claim #5: id C-001 is already used by claim #1",
-                name + " C-006: unknown key \"note\"",
+                name + " C-006 [rank]: unknown key \"note\"",
+                name + " C-008 [format]: unknown key \"note\"",
                 name + " C-001 [inferred]: premise C-002 expected to pass, found 1 problem (listed under C-002)",
                 name + " C-002 [inferred]: premise C-001 expected no cycle, found C-001 inferred from C-002 in turn",
                 name + " C-003 [inferred]: premise expected another claim, found the claim itself",
@@ -199,6 +200,8 @@ class ClaimsCheckTests {
                 {"experiment": {"factor": "rerankCandidates", "settings": [10, 20], "snapshots": ["../snapshots/row-b.json", "../snapshots/row-b.json"]}}""");
         Files.writeString(temp.resolve("experiments/wrong-settings.json"), """
                 {"experiment": {"factor": "rerankCandidates", "settings": [20, 10], "snapshots": ["../snapshots/row-a.json", "../snapshots/row-b.json"]}}""");
+        Files.writeString(temp.resolve("experiments/string-setting.json"), """
+                {"experiment": {"factor": "rerankCandidates", "settings": [10, "20"], "snapshots": ["../snapshots/row-a.json", "../snapshots/row-b.json"]}}""");
         Files.writeString(temp.resolve("experiments/unrecorded-factor.json"), """
                 {"experiment": {"factor": "rerankTimeoutMs", "settings": [2000, 4000], "snapshots": ["../snapshots/row-a.json", "../snapshots/row-b.json"]}}""");
         Files.createDirectories(temp.resolve("evidence"));
@@ -218,7 +221,7 @@ class ClaimsCheckTests {
                    "check": {"type": "rank", "snapshot": "snapshots/row-a.json", "question": "tsla-01", "expected": 1}},
                   {"id": "C-006", "text": "The value's recorded text differs.", "basis": "unknown",
                    "check": {"type": "notRecorded", "report": "evidence/scripted-report.json", "path": "questions[id=q3].rerankOutcome", "reason": "no trace"}},
-                  {"id": "C-007", "text": "A path naming no value.", "basis": "unknown",
+                  {"id": "C-007", "text": "A path naming a value the report lacks.", "basis": "unknown",
                    "check": {"type": "notRecorded", "report": "evidence/scripted-report.json", "path": "questions[id=q9].rerankOutcome"}},
                   {"id": "C-008", "basis": "derived",
                    "check": {"type": "phraseSpan", "report": "evidence/scripted-report.json", "question": "q1", "phrase": "w012 w013 w014 w015", "chunk": 201, "expected": {"tokenSpan": [0, 1]}}},
@@ -240,10 +243,17 @@ class ClaimsCheckTests {
                    "experiment": {"file": "experiments/unrecorded-factor.json", "factor": "rerankTimeoutMs"},
                    "check": {"type": "rank", "snapshot": "snapshots/row-b.json", "question": "msft-04", "expected": 8}},
                   {"id": "C-016", "basis": "observed",
-                   "check": {"type": "rank", "snapshot": "/etc/hosts", "question": "aapl-01", "expected": 1}}
+                   "check": {"type": "rank", "snapshot": "/etc/hosts", "question": "aapl-01", "expected": 1}},
+                  {"id": "C-017", "text": "Twenty candidates written as a string.", "basis": "experiment",
+                   "experiment": {"file": "experiments/string-setting.json", "factor": "rerankCandidates"},
+                   "check": {"type": "rank", "snapshot": "snapshots/row-b.json", "question": "msft-04", "expected": 8}},
+                  {"id": "C-018", "basis": "observed",
+                   "check": {"type": "candidate", "report": "evidence/scripted-report.json", "question": "q1", "chunk": 101, "expected": {"fusedPosition": "1", "rerankedPosition": 3}}}
                 ]}
                 """);
         String name = ClaimsCheck.display(claims);
+        ClaimsCheck.check(claims, temp).stream().filter(problem -> problem.contains(" C-017 ") || problem.contains(" C-018 "))
+                .forEach(problem -> System.out.println("AMENDMENT_6_TYPES " + problem.substring(name.length() + 1)));
         assertThat(ClaimsCheck.check(claims, temp)).containsExactly(
                 name + " C-001 [metric]: check.metric must be hitAt1, hitAt3, hitAt5, mrr, slices.<figure|nonFigure>.<metric>, or tickerHitAt5.<TICKER>, found properties.rerank",
                 name + " C-002 [metric]: check.expected must be a number with at most six decimal places, found 0.7500001",
@@ -264,7 +274,9 @@ class ClaimsCheckTests {
                 name + " C-014 [experiment]: experiments/wrong-settings.json settings[1] expected the rerankCandidates recorded by ../snapshots/row-b.json (20), found 10",
                 name + " C-015 [experiment]: experiments/unrecorded-factor.json factor rerankTimeoutMs expected a property both snapshots record, found neither recording it",
                 name + " C-015 [experiment]: experiments/unrecorded-factor.json snapshots ../snapshots/row-a.json and ../snapshots/row-b.json expected to differ only in rerankTimeoutMs, found 1 other recorded property differing: rerankCandidates 10 against 20",
-                name + " C-016 [rank] question aapl-01 in /etc/hosts: file /etc/hosts must be relative to the claims file");
+                name + " C-016 [rank] question aapl-01 in /etc/hosts: file /etc/hosts must be relative to the claims file",
+                name + " C-017 [experiment]: experiments/string-setting.json settings[1] expected the rerankCandidates recorded by ../snapshots/row-b.json (the number 20), found the string \"20\"",
+                name + " C-018 [candidate] question q1, chunk 101 in evidence/scripted-report.json: fusedPosition expected the string \"1\", found the number 1 (observed)");
     }
 
     static Stream<Arguments> causalPhrasings() {
@@ -302,7 +314,19 @@ class ClaimsCheckTests {
                 Arguments.of("Therefore it failed.", "\"Therefore\""),
                 Arguments.of("Thanks to overlap it passed.", "\"Thanks to\""),
                 Arguments.of("Set so that it passes.", "\"so that\""),
-                Arguments.of("Windowing had an effect on msft-04 and helped nvda-01.", "\"effect\", \"helped\""));
+                Arguments.of("Windowing had an effect on msft-04 and helped nvda-01.", "\"effect\", \"helped\""),
+                // Plan amendment 6: forms that passed at e44f4c1, then the further causal phrasings added with them.
+                Arguments.of("A wider overlap raises msft-04 into the top 5.", "\"raises\""),
+                Arguments.of("The head cut put msft-05 at rank 10.", "\"put\""),
+                Arguments.of("Windowing gives msft-04 rank 1.", "\"gives\""),
+                Arguments.of("The head cut is behind the miss.", "\"is behind\""),
+                Arguments.of("The head cut is the source of the miss.", "\"source of\""),
+                Arguments.of("The miss arises from the head cut.", "\"arises\""),
+                Arguments.of("The miss comes from the head cut.", "\"comes from\""),
+                Arguments.of("The head cut brought about the miss.", "\"brought about\""),
+                Arguments.of("It fell back on account of the timeout.", "\"on account of\""),
+                Arguments.of("It fell back in response to the timeout.", "\"in response to\""),
+                Arguments.of("The miss originates in the head cut.", "\"originates\""));
     }
 
     @ParameterizedTest
@@ -317,7 +341,9 @@ class ClaimsCheckTests {
     @ParameterizedTest
     @ValueSource(strings = {"Chunk 515 was a rerank input at fused position 14 in snapshot 459.", "msft-04 ranks outside the top 5 in snapshots 296 and 297.",
             "The ranks of nvda-01 differ between snapshots 297 and 299.", "Snapshot 297 records rank 10 for msft-05, as the traced run does.",
-            "The reranked order of snapshot 459 places chunk 466 11th."})
+            "The reranked order of snapshot 459 places chunk 466 11th.", "Snapshot 297's evidence report does not record whether chunk 515 was a rerank input.",
+            "Whether row 2 of chunk 515 was scored in snapshot 297 is not recorded, and its report records not a single window score.",
+            "In snapshot 459 the cross-encoder received msft-05's ITEM_7 phrase in full in chunk 515 only in row 2."})
     void sentencesWithoutCausalOrAbsoluteWordingPass(String sentence, @TempDir Path temp) throws IOException {
         Path claims = inferredClaim(temp, sentence);
         ClaimsCheck.Result result = ClaimsCheck.evaluate(claims, temp);
@@ -326,7 +352,10 @@ class ClaimsCheckTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"always", "never", "will", "won't", "every", "everything", "all", "none", "nothing", "guarantees", "guaranteed"})
+    @ValueSource(strings = {"always", "never", "will", "won't", "every", "everything", "all", "none", "nothing", "guarantees", "guaranteed",
+            // Plan amendment 6: words that passed at e44f4c1, then their inflections and near forms.
+            "each", "any", "anything", "whole", "entire", "entirely", "must", "consistently", "consistent", "it'll", "going to", "gonna", "expect",
+            "expected", "shall", "shan't", "nobody", "nowhere", "proves", "proven"})
     void absoluteOrPredictiveWordingInFreeTextIsRejected(String word, @TempDir Path temp) throws IOException {
         String sentence = "Chunk 515 " + word + " holds the phrase in snapshot 459.";
         Path claims = inferredClaim(temp, sentence);
@@ -334,10 +363,47 @@ class ClaimsCheckTests {
                 + "\" expected no absolute or predictive wording in free text, found in \"" + sentence + "\"");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"No row of chunk 515 holds the phrase in snapshot 459.", "Chunk 515 has no trace in snapshot 297.", "In snapshot 297 no-one ranks msft-04."})
+    void noFollowedByAWordIsAbsoluteWordingWhileNotIsNot(String sentence, @TempDir Path temp) throws IOException {
+        // Plan amendment 6: "no <noun>" generalises over every member of the noun; an unknown claim states a negative with "not" ("is not
+        // recorded", "does not record"), which passes (sentencesWithoutCausalOrAbsoluteWordingPass).
+        Path claims = inferredClaim(temp, sentence);
+        String matched = sentence.startsWith("No row") ? "No row" : sentence.contains("no trace") ? "no trace" : "no-one";
+        assertThat(ClaimsCheck.check(claims, temp)).containsExactly(ClaimsCheck.display(claims) + " C-001 [absolute wording]: \"" + matched
+                + "\" expected no absolute or predictive wording in free text, found in \"" + sentence + "\"");
+    }
+
+    @Test
+    void theScreenReadsTextWithSoftHyphensInvisibleCharactersAndMarkdownOrHtmlMarksRemoved(@TempDir Path temp) throws IOException {
+        // Plan amendment 6, finding 3: "cau\u00ADsed" (a soft hyphen) and "c**ause**d" (markdown emphasis) passed at e44f4c1.
+        String note = " (read with soft hyphens, invisible characters, and markdown and HTML marks removed)";
+        String causal = " states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred";
+        for (String sentence : List.of("The timeout cau\u00ADsed two fallbacks.", "The timeout c**ause**d two fallbacks.", "The timeout cau\u200Bsed two fallbacks.",
+                "The timeout cau&shy;sed two fallbacks.", "The timeout `caused` two fallbacks.", "The timeout cau<b></b>sed two fallbacks.")) {
+            Path claims = inferredClaim(temp, sentence);
+            String expectedNote = sentence.contains("`caused`") ? "" : note;
+            ClaimsCheck.check(claims, temp).forEach(problem -> System.out.println("AMENDMENT_6_NORMALISED " + problem.substring(problem.indexOf(" C-001 ") + 1)));
+            assertThat(ClaimsCheck.check(claims, temp)).as(sentence).containsExactly(ClaimsCheck.display(claims) + " C-001 [causal wording]: \"caused\"" + expectedNote + causal);
+        }
+        String hidden = "Chunk 515 n\u2060ever a_l_w_a_y_s holds the phrase in snapshot 459.";
+        Path claims = inferredClaim(temp, hidden);
+        assertThat(ClaimsCheck.check(claims, temp)).containsExactly(ClaimsCheck.display(claims) + " C-001 [absolute wording]: \"never\", \"always\"" + note
+                + " expected no absolute or predictive wording in free text, found in \"" + hidden + "\"");
+    }
+
+    @Test
+    void freeTextMayNotCiteAClaim(@TempDir Path temp) throws IOException {
+        String sentence = "Chunk 515 holds the phrase in snapshot 459 (C-002, unknown).";
+        Path claims = inferredClaim(temp, sentence);
+        assertThat(ClaimsCheck.check(claims, temp)).containsExactly(ClaimsCheck.display(claims) + " C-001 [format]: text expected no claim citation (an inferred claim"
+                + " lists its premises in \"from\"; the generator prints the claim's own), found \"(C-002\" in \"" + sentence + "\"");
+    }
+
     /** A claims file whose C-001 is an inferred claim with the sentence, following from C-002, an unknown claim that holds. */
     private static Path inferredClaim(Path temp, String sentence) throws IOException {
         Files.createDirectories(temp.resolve("evidence"));
-        Files.copy(ROOT.resolve("evidence/scripted-report.json"), temp.resolve("evidence/scripted-report.json"));
+        Files.copy(ROOT.resolve("evidence/scripted-report.json"), temp.resolve("evidence/scripted-report.json"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         Path claims = temp.resolve("claims.json");
         Files.writeString(claims, ClaimsCheck.JSON.writeValueAsString(java.util.Map.of("claims", List.of(
                 java.util.Map.of("id", "C-001", "text", sentence, "basis", "inferred", "from", List.of("C-002")),
@@ -353,7 +419,8 @@ class ClaimsCheckTests {
         Path claims = temp.resolve("claims.json");
         Files.writeString(claims, """
                 {"labels": {"snapshots/reference.json": "the run with 20 candidates", "snapshots/row-a.json": "the row that caused every miss",
-                            "snapshots/row-b.json": "row B", "snapshots/missing.json": "a missing file", "snapshots/row-b.json#": 3},
+                            "snapshots/row-b.json": "row B", "snapshots/missing.json": "a missing file", "snapshots/row-b.json#": 3,
+                            "./snapshots/row-b.json": "the forty-candidate row", "snapshots/../snapshots/reference.json": "the c**ause**d row (C-001, observed)"},
                  "claims": [
                   {"id": "C-001", "basis": "observed", "check": {"type": "rank", "snapshot": "snapshots/reference.json", "question": "aapl-01", "expected": 1}},
                   {"id": "C-002", "basis": "observed", "check": {"type": "rank", "snapshot": "snapshots/row-a.json", "question": "aapl-01", "expected": 1}}
@@ -361,12 +428,19 @@ class ClaimsCheckTests {
                 """);
         String name = ClaimsCheck.display(claims);
         ClaimsCheck.Result result = ClaimsCheck.evaluate(claims, temp);
+        result.problems().forEach(problem -> System.out.println("AMENDMENT_6_LABELS " + problem.substring(name.length() + 1)));
         assertThat(result.problems()).containsExactly(
-                name + " labels \"snapshots/reference.json\": label expected no digits (numbers are rendered from the evidence), found \"the run with 20 candidates\"",
+                name + " labels \"snapshots/reference.json\": label expected no digits or spelled-out numbers (numbers are rendered from the evidence), found \"20\" in \"the run with 20 candidates\"",
                 name + " labels \"snapshots/row-a.json\": label expected no causal wording, found \"caused\"",
                 name + " labels \"snapshots/row-a.json\": label expected no absolute or predictive wording, found \"every\"",
                 name + " labels \"snapshots/missing.json\": file snapshots/missing.json not found (resolved to " + ClaimsCheck.display(temp.resolve("snapshots/missing.json")) + ")",
                 name + " labels \"snapshots/row-b.json#\": label expected a string, found 3",
+                name + " labels \"./snapshots/row-b.json\": label expected no digits or spelled-out numbers (numbers are rendered from the evidence), found \"forty\" in \"the forty-candidate row\"",
+                name + " labels \"./snapshots/row-b.json\": expected one label per file, found a second label for " + ClaimsCheck.display(temp.resolve("snapshots/row-b.json")) + ", already labelled by \"snapshots/row-b.json\"",
+                name + " labels \"snapshots/../snapshots/reference.json\": label expected no digits or spelled-out numbers (numbers are rendered from the evidence), found \"001\" in \"the c**ause**d row (C-001, observed)\"",
+                name + " labels \"snapshots/../snapshots/reference.json\": label expected no causal wording, found \"caused\" (read with soft hyphens, invisible characters, and markdown and HTML marks removed)",
+                name + " labels \"snapshots/../snapshots/reference.json\": label expected no claim citation, found \"(C-001\"",
+                name + " labels \"snapshots/../snapshots/reference.json\": expected one label per file, found a second label for " + ClaimsCheck.display(temp.resolve("snapshots/reference.json")) + ", already labelled by \"snapshots/reference.json\"",
                 name + " labels \"snapshots/row-b.json\": expected a file a check reads, found no check reading it");
         assertThat(result.sentences().get(1)).isEqualTo("Snapshot 1 ranks aapl-01 1st.");
     }
@@ -421,6 +495,10 @@ class ClaimsCheckTests {
         assertThat(result.sentences().get(1)).isEqualTo("In the evidence report of snapshot 459, occurrence 1 of 1 of q1's accepted phrase \"w012 w013 w014 w015\" in chunk 101:"
                 + " of the 3 rows the recorded scoring would score for this chunk (not rows that were scored: the trace records 2 scored rows, not the 3 of this arithmetic),"
                 + " no row holds it wholly.");
+
+        // Plan amendment 6, finding 4: one scored row is singular ("the trace records 1 scored rows" at e44f4c1).
+        Files.writeString(temp.resolve("evidence/scripted-report.json"), report.replaceFirst("\"windowCount\" : \\{\\s*\"value\" : 3", "\"windowCount\" : { \"value\" : 1"));
+        assertThat(ClaimsCheck.evaluate(claims, temp).sentences().get(1)).contains("(not rows that were scored: the trace records 1 scored row, not the 3 of this arithmetic)");
     }
 
     @Test

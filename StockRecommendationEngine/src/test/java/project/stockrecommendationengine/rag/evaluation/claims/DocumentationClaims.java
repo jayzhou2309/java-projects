@@ -12,7 +12,8 @@ import java.util.stream.Stream;
  * The repository-wide claims check and generator (RAG.md, Claims): every {@code claims.json} under
  * {@code src/main/java/documentation/live-runs}, every claims file a generated block references, and every markdown file under
  * {@code src/main/java} plus {@code CLAUDE.md}. Every file a claim reads, and every claims file a block names, must resolve inside
- * {@code live-runs} (the evidence root). Reads files as they are on disk (whether they are committed is a review item); never the database.
+ * {@code live-runs} (the evidence root). Reads files as they are on disk and trusts their contents (whether they are committed, unaltered exports is a review item); never the
+ * database.
  */
 final class DocumentationClaims {
     static final Path LIVE_RUNS = Path.of("src/main/java/documentation/live-runs");

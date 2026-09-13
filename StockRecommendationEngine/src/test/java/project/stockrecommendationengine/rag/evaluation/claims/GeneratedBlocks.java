@@ -25,12 +25,18 @@ import project.stockrecommendationengine.rag.evaluation.claims.ClaimsCheck.Resul
  * <p>
  * {@link #check} reports, with file and line, every line of a block that differs from what {@link #write} would write, an unbalanced or nested
  * marker, a claims file that cannot be read or lies outside the evidence root, a selection matching no claim, a selected claim whose sentence
- * cannot be rendered, and every citation — an opening parenthesis followed by {@code C-} and digits, anywhere in the file — whose id no
- * claims file referenced by the file's markers defines, or whose stated basis differs from the claim's.
+ * cannot be rendered, the line introducing a block (the nearest line above its start marker that is not blank once normalised, unless that
+ * is a marker line) when it holds causal or absolute wording, digits, or spelled-out numbers ({@link Wording}), and every citation, an opening
+ * parenthesis, optional whitespace, {@code C} in either case, a hyphen or dash, and digits, in the line as written or normalised: outside a
+ * block every citation is a problem, since prose there is not checked and may not borrow a claim's authority; inside a block a citation must have the form {@code (C-nnn, <basis>)}, name a claim of a claims
+ * file the document's blocks reference, unambiguously, and state that claim's basis.
  */
 final class GeneratedBlocks {
     static final Pattern MARKER = Pattern.compile("^([ \\t]*)<!-- generated:([^\\s#]+)(?:#([A-Za-z0-9_-]+))? (start|end) -->[ \\t]*$");
-    static final Pattern CITATION = Pattern.compile("\\((C-\\d+)(?:, ([a-z]+)\\))?");
+    /** A citation as written: its opening ({@link Wording#CITATION}) and, when a closing parenthesis follows within 40 characters, up to it. */
+    static final Pattern CITATION = Pattern.compile("\\(\\s*([Cc]\\s*[-\u2010-\u2015\u2212]\\s*\\d+)(?:[^()\\n]{0,40}\\))?");
+    /** The one form a generated line writes. */
+    static final Pattern WELL_FORMED = Pattern.compile("\\((C-\\d+), (observed|derived|inferred|unknown|experiment)\\)");
 
     /** One balanced block: its marker lines (1-based), the start marker's indentation, the claims path, and the block name or null. */
     record Block(int start, int end, String indent, String path, String name) {
@@ -55,6 +61,7 @@ final class GeneratedBlocks {
         Map<String, Result> claims = new LinkedHashMap<>();
         for (Block block : blocks) {
             Result parsed = claims.computeIfAbsent(block.path(), path -> evaluate(document, path, evidenceRoot));
+            introduction(lines, name, block, problems);
             List<Expected> expected = render(block, parsed, name, problems);
             if (expected == null) continue;
             List<String> found = lines.subList(block.start(), block.end() - 1);
@@ -63,7 +70,7 @@ final class GeneratedBlocks {
                         + block.end() + ") differs from the generator's output: " + difference.text());
             }
         }
-        citations(lines, name, blocks, claims, problems);
+        citations(lines, name, claims, problems);
         return problems;
     }
 
@@ -244,30 +251,96 @@ final class GeneratedBlocks {
         return rendered;
     }
 
-    private static void citations(List<String> lines, String name, List<Block> blocks, Map<String, Result> claims, List<String> problems) {
-        for (int index = 0; index < lines.size(); index++) {
-            Matcher citation = CITATION.matcher(lines.get(index));
+    /**
+     * Screens the line introducing the block: the nearest line above its start marker that is not blank once normalised ({@link Wording}: a
+     * line holding only an HTML comment, an invisible character, or markdown marks is skipped), when there is one and it is not itself a
+     * marker line (a block directly after another block has no introducing line of its own).
+     */
+    private static void introduction(List<String> lines, String name, Block block, List<String> problems) {
+        int index = block.start() - 2;
+        while (index >= 0 && !MARKER.matcher(lines.get(index)).matches() && Wording.normalise(lines.get(index), "").isBlank()) index--;
+        if (index < 0 || MARKER.matcher(lines.get(index)).matches()) return;
+        String line = lines.get(index);
+        List<String> found = new ArrayList<>();
+        Wording.Found causal = Wording.causal(line);
+        if (!causal.isEmpty()) found.add("expected no causal wording, found " + causal.quoted());
+        Wording.Found absolute = Wording.absolute(line);
+        if (!absolute.isEmpty()) found.add("expected no absolute or predictive wording, found " + absolute.quoted());
+        Wording.Found numbers = Wording.numbers(line);
+        if (!numbers.isEmpty()) found.add("expected no digits or spelled-out numbers, found " + numbers.quoted());
+        if (!found.isEmpty()) {
+            problems.add(name + ":" + (index + 1) + " line introducing block " + block.label() + " (start marker at line " + block.start() + "): " + String.join("; ", found));
+        }
+    }
+
+    /**
+     * Whether the line lies inside a block: the nearest marker line above it is a start marker. For balanced markers these are exactly the
+     * blocks' lines; after a start marker without its end (already a problem) the lines up to the next marker count as the block's, so one
+     * missing end marker is not also reported as every citation below it.
+     */
+    private static boolean insideBlock(List<String> lines, int index) {
+        for (int above = index - 1; above >= 0; above--) {
+            Matcher marker = MARKER.matcher(lines.get(above));
+            if (marker.matches()) return marker.group(4).equals("start");
+        }
+        return false;
+    }
+
+    /** One citation of a line as written, and whether it appears only once the line is normalised ({@link Wording}). */
+    record Citation(String written, String id, boolean normalised) {
+    }
+
+    /**
+     * The line's citations as written (each distinct text once), then those that appear only after normalising, where a citation differing
+     * from an earlier one only in whitespace is the same citation.
+     */
+    static List<Citation> citationsOf(String line) {
+        List<Citation> found = new ArrayList<>();
+        java.util.Set<String> written = new java.util.HashSet<>();
+        java.util.Set<String> compact = new java.util.HashSet<>();
+        List<String> readings = List.of(line, Wording.normalise(line, ""), Wording.normalise(line, " "));
+        for (int reading = 0; reading < readings.size(); reading++) {
+            Matcher citation = CITATION.matcher(readings.get(reading));
             while (citation.find()) {
-                String id = citation.group(1);
+                String text = citation.group();
+                boolean added = reading == 0 ? written.add(text) : !compact.contains(text.replaceAll("\\s+", "")) && written.add(text);
+                compact.add(text.replaceAll("\\s+", ""));
+                if (added) found.add(new Citation(text, "C-" + citation.group(1).replaceAll("\\D", ""), reading > 0));
+            }
+        }
+        return found;
+    }
+
+    private static void citations(List<String> lines, String name, Map<String, Result> claims, List<String> problems) {
+        for (int index = 0; index < lines.size(); index++) {
+            for (Citation citation : citationsOf(lines.get(index))) {
+                String at = name + ":" + (index + 1) + " citation " + citation.written() + (citation.normalised() ? " (" + Wording.NORMALISED + ")" : "");
+                if (MARKER.matcher(lines.get(index)).matches() || !insideBlock(lines, index)) {
+                    problems.add(at + " is outside a generated block: expected claim citations only inside generated blocks"
+                            + " (prose outside a block is not checked, so it may not cite a claim)");
+                    continue;
+                }
+                Matcher form = WELL_FORMED.matcher(citation.written());
+                boolean wellFormed = !citation.normalised() && form.matches();
+                if (!wellFormed) problems.add(at + " expected the form (C-nnn, <basis>), with a comma, one space, and the basis in lower case");
                 List<Claim> defined = new ArrayList<>();
                 List<String> files = new ArrayList<>();
                 for (Map.Entry<String, Result> entry : claims.entrySet()) {
                     if (entry.getValue().claims() == null) continue;
                     for (Claim claim : entry.getValue().claims()) {
-                        if (id.equals(claim.id())) {
+                        if (citation.id().equals(claim.id())) {
                             defined.add(claim);
                             files.add(entry.getKey());
                         }
                     }
                 }
-                String where = name + ":" + (index + 1) + " citation (" + id;
+                String where = name + ":" + (index + 1) + " citation (" + citation.id();
                 if (defined.isEmpty()) {
-                    problems.add(where + " has no claim: " + (blocks.isEmpty() ? "no generated block in this file references a claims file"
-                            : "not defined in " + String.join(", ", claims.keySet())));
+                    problems.add(where + " has no claim: not defined in " + String.join(", ", claims.keySet()));
                 } else if (defined.size() > 1) {
                     problems.add(where + " is ambiguous: defined in " + String.join(", ", files));
-                } else if (citation.group(2) != null && ClaimsCheck.BASES.contains(citation.group(2)) && !citation.group(2).equals(defined.get(0).basis())) {
-                    problems.add(where + ", " + citation.group(2) + ") states basis " + citation.group(2) + ", but the claim's basis is " + defined.get(0).basis());
+                } else if (wellFormed && !form.group(2).equals(defined.get(0).basis())) {
+                    problems.add(where + ", " + form.group(2) + ") states basis " + form.group(2) + ", but the claim's basis is " + defined.get(0).basis());
                 }
             }
         }

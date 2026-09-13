@@ -7,7 +7,7 @@ Written by the generator from ../true-claims.json (GeneratedBlocksTests; regener
     * The reference row (snapshot 1) ranks aapl-01 1st. (C-001, observed)
     * Row A (snapshot 2) ranks msft-04 outside its window of 10 results (no matching chunk). (C-002, observed)
     <!-- generated:../true-claims.json#ranks end -->
-* Every claim
+* Claims without a block selection
     <!-- generated:../true-claims.json start -->
     * The reference row (snapshot 1) ranks aapl-01 1st. (C-001, observed)
     * Row A (snapshot 2) ranks msft-04 outside its window of 10 results (no matching chunk). (C-002, observed)
@@ -28,4 +28,4 @@ Written by the generator from ../true-claims.json (GeneratedBlocksTests; regener
     * In the traced scripted report (the evidence report of snapshot 459), occurrence 1 of 1 of q2's accepted phrase "w030 w031" in chunk 201: of the 3 rows the recorded scoring would score for this chunk (not rows that were scored: reranking fell back), row 3 holds it wholly. (C-017, derived)
     * Row B (snapshot 3) ranks msft-04 8th. (C-018, observed)
     <!-- generated:../true-claims.json end -->
-* A later sentence may cite a claim instead of restating it: row C drops a FIGURE question from the top 5 (C-007, derived).
+* Prose outside a block, such as this line, is not checked, so it may not cite a claim; a sentence stating a claim's fact again belongs in a block selecting that claim.

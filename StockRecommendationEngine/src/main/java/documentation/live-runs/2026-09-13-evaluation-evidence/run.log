@@ -341,3 +341,108 @@ MR-5. Final, after every code, fixture, claims, and documentation edit except th
         ./mvnw -q -o verify -> exit 0 (57 test classes, 491 tests, 0 failures, 0 errors, 27 skipped; counted from this run's target/surefire-reports,
         emptied before the run); DocumentationClaimsTests printed "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".
         ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 0, 1 test, "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".
+
+Milestone 3 remediation round 2, 2026-09-13: citations only inside generated blocks, screened introducing lines, complete review items (plans/2026-09-13-evaluation-evidence.md, Milestone 3 with Amendment 6)
+Branch evaluation-evidence at 38939c1 (Amendment 6 on top of the Milestone 4a merge) with the remediation in the working tree (committed with this section).
+Same machine and shell rules: set -a && source .env && set +a before every command; env | grep for RAG_* and the application enable flags printed
+0 lines. No chat model, no embedding, no /api/recommendations call, no evaluation snapshot created, no database read by the claims check.
+
+Validation of e44f4c1 passed every code item and every Amendment 4 bullet and failed on documentation. Amendment 6 is the specification; every
+bullet of its Milestone 3 list is implemented. Finding 1: a citation outside a generated block is a problem whatever its form (GeneratedBlocks),
+and the nearest line above each start marker that is not blank once normalised is screened for causal and absolute wording, digits, and
+spelled-out numbers; RAG.md's invitation for a later sentence to cite a claim is removed, RAG.md (What the check proves) and CLAUDE.md list
+every review item, and CLAUDE.md no longer says write-ups are generated without that limit. Finding 2: the absolute list gains each, any-,
+whole, entire-, "no" followed by a word ("not recorded" passes), must, consistent-, contractions of will, going to, gonna, expect-, prove
+forms, shan't, nobody, nowhere; the causal list gains rais-, put, giv-, is/was/are behind and inflections, source(s) of, arise-, come from,
+originat-, bring about, on account of, in response to; labels and introducing lines refuse spelled-out numbers; the remaining limits are
+documented. Finding 3: the new Wording class reads text as written, normalised with markdown marks removed, and normalised with marks as
+spaces (character references decoded, HTML tags and comments removed, link targets dropped, Unicode format characters such as U+00AD,
+U+200B to U+200D, U+2060, U+FEFF removed, curly apostrophes straightened, escapes dropped). Finding 4: RAG.md Sentences documents every
+template branch as rendered; "1 scored rows" is now "1 scored row"; a count-unknown reason, a non-observed outcome or input, and an unknown
+reason without text have clearer wordings, documented. Finding 5: two labels resolving to one file are a problem. Finding 6: values of
+different JSON types that print alike are named with their types; a claim-level unknown key names its check type or [format]; inside a
+block a citation must read (C-nnn, <basis>) exactly, so an upper-case basis or a semicolon is a problem, and C in either case and any dash
+are read as citations. Also: free text and labels may not contain a claim citation.
+
+MR2-1. The findings' cases as fixtures, each asserted as exact text (<tmp> is the JUnit temporary directory; <U+2013> is an en dash in the
+       output):
+       ./mvnw -o test -Dtest='ClaimsCheckTests,ClaimsCheckValidatorCasesTests,GeneratedBlocksTests' -> exit 0, 127 tests, 0 failures. Captured:
+        AMENDMENT_6_INSIDE <tmp>/claims/doc/measurement.md:7 citation (C-001, Observed) expected the form (C-nnn, <basis>), with a comma, one space, and the basis in lower case
+        AMENDMENT_6_INSIDE <tmp>/claims/doc/measurement.md:8 citation (C-002; observed) expected the form (C-nnn, <basis>), with a comma, one space, and the basis in lower case
+        AMENDMENT_6_INSIDE <tmp>/claims/doc/measurement.md:15 citation (C-004, derived) states basis derived, but the claim's basis is observed
+        AMENDMENT_6_FINDING_1 <tmp>/claims/doc/measurement.md:5 line introducing block generated:../true-claims.json#ranks (start marker at line 6): expected no causal wording, found "help"; expected no absolute or predictive wording, found "Every", "proves"; expected no digits or spelled-out numbers, found "04", "5", "001"
+        AMENDMENT_6_FINDING_1 <tmp>/claims/doc/measurement.md:5 citation (C-001, derived) is outside a generated block: expected claim citations only inside generated blocks (prose outside a block is not checked, so it may not cite a claim)
+        AMENDMENT_6_INTRODUCING <tmp>/claims/doc/measurement.md:5 line introducing block generated:../true-claims.json#ranks (start marker at line 7): expected no digits or spelled-out numbers, found "forty", "second" (read with soft hyphens, invisible characters, and markdown and HTML marks removed)
+        AMENDMENT_6_INTRODUCING <tmp>/claims/doc/measurement.md:9 line introducing block generated:../true-claims.json#ranks (start marker at line 10): expected no causal wording, found "caused" (read with soft hyphens, invisible characters, and markdown and HTML marks removed); expected no absolute or predictive wording, found "never" (read with soft hyphens, invisible characters, and markdown and HTML marks removed)
+        AMENDMENT_6_INTRODUCING <tmp>/claims/doc/measurement.md:15 line introducing block generated:../true-claims.json#ranks (start marker at line 18): expected no absolute or predictive wording, found "Every"
+        AMENDMENT_6_OUTSIDE <tmp>/claims/doc/measurement.md:32 citation (C-007, derived) is outside a generated block: expected claim citations only inside generated blocks (prose outside a block is not checked, so it may not cite a claim)
+        AMENDMENT_6_OUTSIDE <tmp>/claims/doc/measurement.md:32 citation (c-008) is outside a generated block: expected claim citations only inside generated blocks (prose outside a block is not checked, so it may not cite a claim)
+        AMENDMENT_6_OUTSIDE <tmp>/claims/doc/measurement.md:32 citation (C-404; observed) is outside a generated block: expected claim citations only inside generated blocks (prose outside a block is not checked, so it may not cite a claim)
+        AMENDMENT_6_OUTSIDE <tmp>/claims/doc/measurement.md:32 citation (C<U+2013>005, observed) is outside a generated block: expected claim citations only inside generated blocks (prose outside a block is not checked, so it may not cite a claim)
+        AMENDMENT_6_OUTSIDE <tmp>/claims/doc/measurement.md:32 citation (C-003, derived) (read with soft hyphens, invisible characters, and markdown and HTML marks removed) is outside a generated block: expected claim citations only inside generated blocks (prose outside a block is not checked, so it may not cite a claim)
+        AMENDMENT_6_OUTSIDE <tmp>/claims/doc/measurement.md:32 citation (C-004, observed) (read with soft hyphens, invisible characters, and markdown and HTML marks removed) is outside a generated block: expected claim citations only inside generated blocks (prose outside a block is not checked, so it may not cite a claim)
+        AMENDMENT_6_TYPES C-017 [experiment]: experiments/string-setting.json settings[1] expected the rerankCandidates recorded by ../snapshots/row-b.json (the number 20), found the string "20"
+        AMENDMENT_6_TYPES C-018 [candidate] question q1, chunk 101 in evidence/scripted-report.json: fusedPosition expected the string "1", found the number 1 (observed)
+        AMENDMENT_6_NORMALISED C-001 [causal wording]: "caused" (read with soft hyphens, invisible characters, and markdown and HTML marks removed) states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        AMENDMENT_6_NORMALISED C-001 [causal wording]: "caused" (read with soft hyphens, invisible characters, and markdown and HTML marks removed) states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        AMENDMENT_6_NORMALISED C-001 [causal wording]: "caused" (read with soft hyphens, invisible characters, and markdown and HTML marks removed) states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        AMENDMENT_6_NORMALISED C-001 [causal wording]: "caused" (read with soft hyphens, invisible characters, and markdown and HTML marks removed) states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        AMENDMENT_6_NORMALISED C-001 [causal wording]: "caused" states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        AMENDMENT_6_NORMALISED C-001 [causal wording]: "caused" (read with soft hyphens, invisible characters, and markdown and HTML marks removed) states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+        AMENDMENT_6_LABELS labels "snapshots/reference.json": label expected no digits or spelled-out numbers (numbers are rendered from the evidence), found "20" in "the run with 20 candidates"
+        AMENDMENT_6_LABELS labels "snapshots/row-a.json": label expected no causal wording, found "caused"
+        AMENDMENT_6_LABELS labels "snapshots/row-a.json": label expected no absolute or predictive wording, found "every"
+        AMENDMENT_6_LABELS labels "snapshots/missing.json": file snapshots/missing.json not found (resolved to <tmp>/snapshots/missing.json)
+        AMENDMENT_6_LABELS labels "snapshots/row-b.json#": label expected a string, found 3
+        AMENDMENT_6_LABELS labels "./snapshots/row-b.json": label expected no digits or spelled-out numbers (numbers are rendered from the evidence), found "forty" in "the forty-candidate row"
+        AMENDMENT_6_LABELS labels "./snapshots/row-b.json": expected one label per file, found a second label for <tmp>/snapshots/row-b.json, already labelled by "snapshots/row-b.json"
+        AMENDMENT_6_LABELS labels "snapshots/../snapshots/reference.json": label expected no digits or spelled-out numbers (numbers are rendered from the evidence), found "001" in "the c**ause**d row (C-001, observed)"
+        AMENDMENT_6_LABELS labels "snapshots/../snapshots/reference.json": label expected no causal wording, found "caused" (read with soft hyphens, invisible characters, and markdown and HTML marks removed)
+        AMENDMENT_6_LABELS labels "snapshots/../snapshots/reference.json": label expected no claim citation, found "(C-001"
+        AMENDMENT_6_LABELS labels "snapshots/../snapshots/reference.json": expected one label per file, found a second label for <tmp>/snapshots/reference.json, already labelled by "snapshots/reference.json"
+        AMENDMENT_6_LABELS labels "snapshots/row-b.json": expected a file a check reads, found no check reading it
+       Also asserted without printing: 44 causal phrasings (the 33 of round 1 plus raises, put, gives, is behind, source of, arises, comes
+       from, brought about, on account of, in response to, originates), 31 absolute words (each, any, anything, whole, entire, entirely, must,
+       consistently, consistent, it'll, going to, gonna, expect, expected, shall, shan't, nobody, nowhere, proves, proven added), "No row",
+       "no trace", and "no-one" refused while "does not record", "is not recorded", "not a single", and "in full" pass, a citation in free
+       text, a claim-level unknown key named [rank] and [format], and "the trace records 1 scored row, not the 3 of this arithmetic".
+
+MR2-2. The committed claims and RAG.md brought under the new rules. Before any change the repository check named six problems: C-004's
+       "whole" (absolute), the digits of RAG.md's introducing line 701 ("2026", "09", "13", "459", "297"), and four parentheses opening on
+       a claim id in the two earlier Verified bullets (lines 717 and 718). C-004 reworded to "phrase in full"; line 701 rewritten without
+       digits; the two bullets reworded ("the reranked position of C-001" and so on) with a dated note.
+         ./mvnw -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> "CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md]
+         notGenerated=0", "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0" (only C-004's bullet changed in the block).
+
+MR2-3. Deliberate combined breakage (copies of claims.json and RAG.md taken first). RAG.md: line 701, the block's introducing line, replaced
+       by the heading of finding 1, "* Every windowed configuration keeps msft-04 outside the top 5, which proves windowing cannot help FIGURE
+       questions" followed by a citation of C-001 as derived and a colon; " The traced reproduction run ranks msft-05 10th" with a citation of
+       C-011 as observed appended to line 718 (a citation outside a block); a copy of the block inserted after line 718, introduced by
+       "* The forty-candidate row, for comparison:". claims.json: C-004's text extended with ", which caused its rank of 10", "caused" written
+       with a soft hyphen after "cau" (U+00AD, shown below as <U+00AD>); a second label, "./traced-snapshot-297-settings.json": "the traced run".
+         ./mvnw -q -o verify -> exit 1 (534 tests, 1 failure: DocumentationClaimsTests), one message:
+          Claims check failed: 8 problems (after an intended change regenerate blocks with -Dclaims.generate=true on DocumentationClaimsTests; format in RAG.md, Claims)
+          src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json labels "./traced-snapshot-297-settings.json": expected one label per file, found a second label for src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/traced-snapshot-297-settings.json, already labelled by "traced-snapshot-297-settings.json"
+          src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-004 [causal wording]: "caused" (read with soft hyphens, invisible characters, and markdown and HTML marks removed) states a cause: basis expected experiment (with an experiment file whose two snapshots differ only in that factor), found inferred
+          src/main/java/documentation/RAG.md:701 line introducing block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (start marker at line 702): expected no causal wording, found "help"; expected no absolute or predictive wording, found "Every", "proves"; expected no digits or spelled-out numbers, found "04", "5", "001"
+          src/main/java/documentation/RAG.md:706 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (lines 702 to 716) differs from the generator's output: expected "            * In snapshot 459 the cross-encoder received msft-05's ITEM_7 phrase in full in chunk 515 only in row 2, which cau<U+00AD>sed its rank of 10. (inferred from C-001 and C-003) (C-004, inferred)", found "            * In snapshot 459 the cross-encoder received msft-05's ITEM_7 phrase in full in chunk 515 only in row 2. (inferred from C-001 and C-003) (C-004, inferred)"
+          src/main/java/documentation/RAG.md:719 line introducing block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (start marker at line 720): expected no digits or spelled-out numbers, found "forty"
+          src/main/java/documentation/RAG.md:724 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (lines 720 to 734) differs from the generator's output: expected "            * In snapshot 459 the cross-encoder received msft-05's ITEM_7 phrase in full in chunk 515 only in row 2, which cau<U+00AD>sed its rank of 10. (inferred from C-001 and C-003) (C-004, inferred)", found "            * In snapshot 459 the cross-encoder received msft-05's ITEM_7 phrase in full in chunk 515 only in row 2. (inferred from C-001 and C-003) (C-004, inferred)"
+          src/main/java/documentation/RAG.md:701 citation (C-001, derived) is outside a generated block: expected claim citations only inside generated blocks (prose outside a block is not checked, so it may not cite a claim)
+          src/main/java/documentation/RAG.md:718 citation (C-011, observed) is outside a generated block: expected claim citations only inside generated blocks (prose outside a block is not checked, so it may not cite a claim)
+       Every breakage is named: the second label; C-004's causal word, found only after normalising; line 701 with every screened word and
+       number; the C-004 bullets of both blocks (706, 724), whose re-rendered sentence carries the new text; line 719's "forty"; the
+       citations of lines 701 and 718, outside a block.
+
+MR2-4. Rollback. Both files copied back:
+         cmp claims.json claims.json.before-breakage -> identical; cmp RAG.md RAG.md.before-breakage -> identical.
+         ./mvnw -q -o verify -> exit 0 (58 test classes, 534 tests, 0 failures, 0 errors, 28 skipped; counted from this run's
+         target/surefire-reports, emptied before the run); "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".
+       Written after this: the printing lines of the new tests (MR2-1 was rerun after them), RAG.md's round 2 Verified and change-log
+       bullets (a first draft of the Verified bullet quoted two malformed citations and the check refused it: "RAG.md:719 citation
+       ... is outside a generated block", twice; reworded), and this section.
+
+MR2-5. Final, after every code, fixture, claims, and documentation edit except this line:
+         ./mvnw -q -o verify -> exit 0 (58 test classes, 534 tests, 0 failures, 0 errors, 28 skipped; counted from this run's
+         target/surefire-reports, emptied before the run); DocumentationClaimsTests printed "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".
+         ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 0, 1 test, "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".

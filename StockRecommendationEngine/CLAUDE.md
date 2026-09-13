@@ -66,10 +66,19 @@ one-line fix, a typo, or a question, just do it directly.
   (`RAG.md`, "Retrieval Evaluation"): run `POST /api/rag/evaluate` or the opt-in
   live test before and after, and cite the snapshot ids.
 - Evidence rule (RAG-14): conclude only from committed evidence; label each claim observed, derived,
-  inferred, unknown, or experiment; a cause needs an experiment isolating that factor. Measurement
-  write-ups are generated from `claims.json` and checked in `verify` (format: `RAG.md`, "Claims").
-  Observed and derived sentences are rendered from their checks; inferred, unknown, and experiment
-  text is screened for causal and absolute wording but not proven, so reviewers read it.
+  inferred, unknown, or experiment; a cause needs an experiment isolating that factor. Write a
+  measurement's conclusions in its `claims.json`; `verify` checks the claims and the generated
+  blocks written from them (format: `RAG.md`, "Claims"). Only block bullets are generated, and only
+  observed and derived bullets are rendered from their checks. Prose outside blocks may not cite a
+  claim; the one line introducing each block is screened for causal and absolute words and numbers.
+  The check does not prove, so reviewers and validators read all of: prose outside generated
+  blocks; labels; the free text of inferred, unknown, and experiment claims (screened for listed
+  words only), including numbers that contradict premises, inferences drawn from unknown claims,
+  and an experiment text's factor and cause; whether referenced JSON files are committed, unaltered
+  exports (a hand-edited copy with id 297 renders as snapshot 297); that window wording rests on
+  max-length from configuration at report time; and settings snapshots do not record (for example
+  rerank-timeout-ms). (Corrected 2026-09-13, plan amendment 6: this rule said write-ups are
+  generated from `claims.json` without saying that only block bullets are.)
 
 ## Loop history
 

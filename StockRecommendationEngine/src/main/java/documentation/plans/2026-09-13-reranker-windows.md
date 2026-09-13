@@ -21,7 +21,8 @@ diagnosed on 2026-09-13 with the real tokenizer and model against every chunk in
   the 65% to the 475 to 495 range).
 - The scorer keeps the head of the chunk (longest-first truncation), so an answer in the tail is invisible. For 11 of
   the 39 questions with a matched chunk the expected phrase starts past the kept tokens, and nvda-01's phrase begins
-  at token 485 of 489 kept. Every top-5 loss in the measurement but one is such a question: nvda-11 (answer at token
+  at token 483 of 489 kept, so 6 of its 17 tokens were seen (the probe's 485 is the offset of "215,938" inside
+  it; corrected after Milestone 2 remediation 2). Every top-5 loss in the measurement but one is such a question: nvda-11 (answer at token
   596, 477 kept), nvda-14 (820 of 996, 477 kept), msft-12 (544, 490 kept), msft-04 (606, 480 kept), nvda-01. The
   exception is msft-05, which left the top 5 at 20 and 40 candidates with its answer at token 121, inside the kept
   head (corrected after Milestone 2 remediation 1: this line first said every loss was a truncation case). Rescoring

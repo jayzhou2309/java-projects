@@ -135,7 +135,7 @@ answering sentence at +10.29 at a window's start, +5.91 at token 141, +2.56 at 1
     The chunk is 213 tokens longer than W and both strides (416, 256) overshoot its end, so both overlaps give the same windows (0 and 213); the 28-token phrase
     (tokens 606 to 634, counted with the real tokenizer) lies wholly inside the second window, at its tokens 393 to 421 of 480, so in the windowed rows it is not a
     truncation loss. That window's logit was not measured (the probe's text from 200 characters before the phrase, 39 tokens in, scored 0.20, below chunk 467's
-    3.04). Why chunk 466 ranks 8 at 10 candidates and outside the reranked top 10 at 20 and 40 was not determined. At 20 candidates the reranked order at the
+    3.04). Chunk 466 ranks 8 at 10 candidates and outside the reranked top 10 at 20; at 40 (298) its rank is not recorded, because 298 matched chunk 467, and outside the top 10 there is inferred from the ranks (297 scores it with the same settings over a subset of 298's candidates, and its score depends only on the query and the chunk). Why was not determined. At 20 candidates the reranked order at the
     defaults is 514, 516, 573, 637, 635, 642, 518, 645, 512, 641 (diagnostic-defaults.txt), chunks 466 and 467 absent. Chunk 467 (1,564 characters; 391 is the
     stored characters / 4 token_count, 282 WordPiece tokens with the real tokenizer, so one window at W 480, scored exactly as under head; the following chunk of
     the same section, holding the same sentence from character 96, at its tokens 20 to 48) is the matched chunk at rank 1 in 298 (and in head row 250). It is not
@@ -166,8 +166,7 @@ answering sentence at +10.29 at a window's start, +5.91 at token 141, +2.56 at 1
   nvda-07: no match -> 8, 9, 8 (chunk 770) at 20 candidates and above (head 6, 7); still outside the top 5. msft-08: no match -> 2 (chunk 547) at 20 and 40 candidates,
     as under head; still no match at 10. nvda-05: 10 -> no match at 20 candidates and above, as under head.
 Other movements (every windowed row unless stated): msft-05 2 -> 6, 10, 10, 10 (chunk 460, which holds the set's first, ITEM_1 expectation; the reference matched
-  chunk 571 through the ITEM_8 alternative; head 5, 8, 8). Its answer lies inside the first window under every setting (counted with the real tokenizer: chunk 571 at
-  tokens 121 to 132 of 655, W 492; chunk 460 at tokens 105 to 121 of 650), so it is not a truncation case. The probe ranked chunk 571 13th of 263 MSFT chunks under
+  chunk 571 through the ITEM_8 alternative; head 5, 8, 8). The phrases of both chunks it matched lie inside the first window under every setting (counted with the real tokenizer: chunk 571 at tokens 121 to 132 of 655, W 492; chunk 460 at tokens 105 to 121 of 650). Its third accepted phrase, the ITEM_7 alternative in chunk 515, is at tokens 614 to 625 of 700 (W 492): past the head cut, and inside the second window under both overlaps (starts 0 and 208). Whether chunk 515 was among the reranked candidates is not recorded, so whether truncation played a part in the head rows was not determined; in the windowed rows every accepted phrase is scored. The probe ranked chunk 571 13th of 263 MSFT chunks under
   head (1064 at 6.65 and 640 at 3.82 above it), and its rescoring from 200 characters before the phrase gave 2.90, not a production window. Which chunks rank above
   chunk 460 in the windowed rows, and why, was not determined.
   aapl-09 8 -> 8, miss, miss, 10 (chunk 280; head 4, 5, 5: the head rows had it in the top 5, windowed rows do not). Its 23-token answer (tokens 509 to 532 of 818,
@@ -258,3 +257,11 @@ Corrections (3), 2026-09-13, Orchestrator at the Milestone 2 remediation cap, ap
     starts at token 483 and the head window kept its first 6 tokens, as the same entry states.
   RAG.md change log: the Milestone 1 bullet claiming the diagnosis named the cause of the failed measurement now carries a dated correction; RAG.md's
     chunk 466 rank at 40 candidates (298) is marked as inferred from row 297.
+
+Corrections (4), 2026-09-13, Orchestrator, after the docs-only check of Corrections (3) (documentation only, no run; token positions counted with the real tokenizer alone):
+  msft-05: the set accepts three phrases. The two in the chunks it matched (571, 460) are inside the head window; the ITEM_7 alternative in chunk 515 is at
+    tokens 614 to 625 of 700 (W 492), past the head cut and inside the second window. The entry above no longer says msft-05 "is not a truncation case"; whether
+    chunk 515 was a reranked candidate is not recorded. RAG.md's Windows Why, Windowed rows, per-question, and change-log text say the same.
+  Chunk 466 at 40 candidates (298): marked as inferred from row 297 here too (Corrections (3) had marked it in RAG.md only).
+  RAG.md change log: the Corrections (3) note for the Milestone 1 cause bullet called nvda-01 and msft-04 misses in every windowed row; nvda-01 is 8 in 296 and
+    msft-04 is 8 in 296 and 1 in 298 (chunk 467). Rewritten.

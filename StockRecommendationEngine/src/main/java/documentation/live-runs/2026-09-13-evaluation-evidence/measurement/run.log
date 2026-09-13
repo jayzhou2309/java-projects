@@ -222,3 +222,573 @@ snapshot, no floor test, no chat model. Every shell below: set -a && source .env
     ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 0, CLAIMS_CHECK claimsFiles=2 documents=21 problems=0, 03:54:04.
     ./mvnw -q -o verify -> exit 0 (58 test classes, 534 tests, 0 failures, 0 errors, 28 skipped; counted from target/surefire-reports of this run, which
       was emptied first), CLAIMS_CHECK claimsFiles=2 documents=21 problems=0, 03:54:30 to 03:54:42.
+
+Milestone 4b remediation round 2 (validation of 43b1931 failed on one documentation finding, with five low findings and one checker bug), 2026-09-14 (times +08)
+Main checkout, branch evaluation-evidence from 43b1931. Documentation, claims, evidence text, and one checker change (finding 6): no application run, no
+evaluation snapshot, no floor test, no chat model. Every shell below: set -a && source .env && set +a; `env | grep -E '^(RAG_|RECOMMENDATION_ENABLED|
+OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)'` printed nothing, and `.env` defines none of those names. The previous RAG.md text
+of every reworded line can be read at commit 43b1931. Line numbers below are those of RAG.md as committed with this section.
+
+  Finding 7, matched chunk differing at an unchanged rank. A scratchpad script read the committed snapshot files (untraced 295 to 299 under
+  live-runs/2026-09-13-reranker-windows/measurement/, traced 598 to 641 here) and listed, per question, every row whose rank equals the reference's
+  (rank not null) while matchedChunkId differs; it also listed every question whose matched chunk differs at any rank, and the reproduction pairs.
+  Output (tuples: row, rank, reference chunk, row chunk):
+    == 295 vs untraced
+    msft-13 [(296, 1, 523, 524), (297, 1, 523, 524), (298, 1, 523, 524), (299, 1, 523, 524)]
+    nvda-03 [(296, 1, 797, 850), (297, 1, 797, 850), (298, 1, 797, 850), (299, 1, 797, 850)]
+    nvda-13 [(296, 1, 880, 879), (297, 1, 880, 879), (298, 1, 880, 879), (299, 1, 880, 879)]
+    == 598 vs traced
+    msft-13 [(599, 1, 523, 524), (613, 1, 523, 524), (627, 1, 523, 524), (641, 1, 523, 524)]
+    nvda-03 [(599, 1, 797, 850), (613, 1, 797, 850), (627, 1, 797, 850), (641, 1, 797, 850)]
+    nvda-13 [(599, 1, 880, 879), (613, 1, 880, 879), (627, 1, 880, 879), (641, 1, 880, 879)]
+    == questions whose matched chunk differs anywhere among 295 to 299 (row, rank, chunk)
+    aapl-02 [(295, 1, 241), (296, 3, 226), (297, 3, 226), (298, 3, 226), (299, 3, 226)]
+    aapl-05 [(295, 1, 190), (296, 2, 246), (297, 2, 246), (298, 2, 246), (299, 2, 246)]
+    msft-01 [(295, 6, 514), (296, 2, 573), (297, 2, 573), (298, 2, 573), (299, 2, 573)]
+    msft-04 [(295, 4, 466), (296, 8, 466), (297, None, None), (298, 1, 467), (299, None, None)]
+    msft-05 [(295, 2, 571), (296, 6, 460), (297, 10, 460), (298, 10, 460), (299, 10, 460)]
+    msft-07 [(295, 7, 495), (296, 4, 495), (297, 2, 680), (298, 2, 680), (299, 2, 680)]
+    msft-13 [(295, 1, 523), (296, 1, 524), (297, 1, 524), (298, 1, 524), (299, 1, 524)]
+    msft-14 [(295, 1, 644), (296, 2, 646), (297, 2, 646), (298, 2, 646), (299, 2, 646)]
+    nvda-03 [(295, 1, 797), (296, 1, 850), (297, 1, 850), (298, 1, 850), (299, 1, 850)]
+    nvda-10 [(295, 1, 895), (296, 2, 878), (297, 2, 878), (298, 2, 878), (299, 2, 895)]
+    nvda-13 [(295, 1, 880), (296, 1, 879), (297, 1, 879), (298, 1, 879), (299, 1, 879)]
+    == reproduction traced vs untraced
+    295 598 []
+    296 599 []
+    297 613 []
+    298 627 []
+    299 641 []
+  The same three questions differ against both references: msft-13, nvda-03, nvda-13, each at rank 1 in all ten rows. nvda-10 (rank 2 in 296 to 299)
+  differs from 295 in rank, not only in chunk, and its 297/299 chunk change is in the overlap block (C-333 to C-345). Accepted chunks of the three
+  questions in each evidence report, with the fused, rerank input, reranked, and returned positions the reports record (script output):
+    598 msft-13 rank 1 matched 523 outcome OFF best 523 phrases 1
+       phrase 'primarily due to an increase in cash received from customers' chunk 523 fused 1 input False reranked None returned 1 basis observed
+       phrase 'primarily due to an increase in cash received from customers' chunk 524 fused 2 input False reranked None returned 2 basis observed
+    598 nvda-03 rank 1 matched 797 outcome OFF best 797 phrases 3
+       phrase 'we repurchased 282 million shares of our common stock for $4' chunk 809 fused 42 input False reranked None returned None basis observed
+       phrase 'In fiscal year 2026, we repurchased 282 million shares of ou' chunk 797 fused 1 input False reranked None returned 1 basis observed
+       phrase 'we repurchased 282 million and 310 million shares of our com' chunk 850 fused 7 input False reranked None returned 7 basis observed
+    598 nvda-13 rank 1 matched 880 outcome OFF best 880 phrases 1
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 879 fused 2 input False reranked None returned 2 basis observed
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 880 fused 1 input False reranked None returned 1 basis observed
+    599 msft-13 rank 1 matched 524 outcome RERANKED best 524 phrases 1
+       phrase 'primarily due to an increase in cash received from customers' chunk 523 fused 1 input True reranked 3 returned 3 basis observed
+       phrase 'primarily due to an increase in cash received from customers' chunk 524 fused 2 input True reranked 1 returned 1 basis observed
+    599 nvda-03 rank 1 matched 850 outcome RERANKED best 850 phrases 3
+       phrase 'we repurchased 282 million shares of our common stock for $4' chunk 809 fused 42 input False reranked None returned None basis observed
+       phrase 'In fiscal year 2026, we repurchased 282 million shares of ou' chunk 797 fused 1 input True reranked 4 returned 4 basis observed
+       phrase 'we repurchased 282 million and 310 million shares of our com' chunk 850 fused 7 input True reranked 1 returned 1 basis observed
+    599 nvda-13 rank 1 matched 879 outcome RERANKED best 879 phrases 1
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 879 fused 2 input True reranked 1 returned 1 basis observed
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 880 fused 1 input True reranked 3 returned 3 basis observed
+    613 msft-13 rank 1 matched 524 outcome RERANKED best 524 phrases 1
+       phrase 'primarily due to an increase in cash received from customers' chunk 523 fused 1 input True reranked 4 returned 4 basis observed
+       phrase 'primarily due to an increase in cash received from customers' chunk 524 fused 2 input True reranked 1 returned 1 basis observed
+    613 nvda-03 rank 1 matched 850 outcome RERANKED best 850 phrases 3
+       phrase 'we repurchased 282 million shares of our common stock for $4' chunk 809 fused 42 input False reranked None returned None basis observed
+       phrase 'In fiscal year 2026, we repurchased 282 million shares of ou' chunk 797 fused 1 input True reranked 4 returned 4 basis observed
+       phrase 'we repurchased 282 million and 310 million shares of our com' chunk 850 fused 7 input True reranked 1 returned 1 basis observed
+    613 nvda-13 rank 1 matched 879 outcome RERANKED best 879 phrases 1
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 879 fused 2 input True reranked 1 returned 1 basis observed
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 880 fused 1 input True reranked 5 returned 5 basis observed
+    627 msft-13 rank 1 matched 524 outcome RERANKED best 524 phrases 1
+       phrase 'primarily due to an increase in cash received from customers' chunk 523 fused 1 input True reranked 4 returned 4 basis observed
+       phrase 'primarily due to an increase in cash received from customers' chunk 524 fused 2 input True reranked 1 returned 1 basis observed
+    627 nvda-03 rank 1 matched 850 outcome RERANKED best 850 phrases 3
+       phrase 'we repurchased 282 million shares of our common stock for $4' chunk 809 fused 42 input False reranked None returned None basis observed
+       phrase 'In fiscal year 2026, we repurchased 282 million shares of ou' chunk 797 fused 1 input True reranked 4 returned 4 basis observed
+       phrase 'we repurchased 282 million and 310 million shares of our com' chunk 850 fused 7 input True reranked 1 returned 1 basis observed
+    627 nvda-13 rank 1 matched 879 outcome RERANKED best 879 phrases 1
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 879 fused 2 input True reranked 1 returned 1 basis observed
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 880 fused 1 input True reranked 5 returned 5 basis observed
+    641 msft-13 rank 1 matched 524 outcome RERANKED best 524 phrases 1
+       phrase 'primarily due to an increase in cash received from customers' chunk 523 fused 1 input True reranked 4 returned 4 basis observed
+       phrase 'primarily due to an increase in cash received from customers' chunk 524 fused 2 input True reranked 1 returned 1 basis observed
+    641 nvda-03 rank 1 matched 850 outcome RERANKED best 850 phrases 3
+       phrase 'we repurchased 282 million shares of our common stock for $4' chunk 809 fused 42 input False reranked None returned None basis observed
+       phrase 'In fiscal year 2026, we repurchased 282 million shares of ou' chunk 797 fused 1 input True reranked 4 returned 4 basis observed
+       phrase 'we repurchased 282 million and 310 million shares of our com' chunk 850 fused 7 input True reranked 1 returned 1 basis observed
+    641 nvda-13 rank 1 matched 879 outcome RERANKED best 879 phrases 1
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 879 fused 2 input True reranked 1 returned 1 basis observed
+       phrase 'Edge Computing revenue was $7.2 billion, up 27% from a year ' chunk 880 fused 1 input True reranked 5 returned 5 basis observed
+  Claims C-346 to C-410 in block windowed-matched (65: 15 rank claims observed, 35 candidate claims observed, 15 inferred), numbered in file order after
+  C-178, expected values read from the files by the script. Per question and row: a rank claim (rank 1), a candidate claim on each accepted chunk of the
+  report (msft-13: 523, 524; nvda-03: 797, 850, 809; nvda-13: 880, 879; the script asserted these are every chunk listed under the question's phrases),
+  and an inferred claim "Snapshot <row> matches <question> through chunk <c> at rank 1." from those claims. Why the premises give the matched chunk and
+  rule out any other accepted chunk above it: rank 1 means the first returned chunk is an accepted chunk, so none is above it. In the reranked rows 599 to
+  641 the named chunk was reranked 1st and each other accepted chunk was reranked 3rd, 4th, or 5th or was not a rerank input, and the returned list is
+  the first topK of the reranked order (FilingRetrievalServiceTraceTests), so the chunk at position 1 is the named one (the same step as C-240). In 598 the
+  named chunk is at fused position 1 and not a rerank input and the others at fused positions 2, 7, or 42; a chunk at fused position 1 that is not a
+  rerank input means the question was not reranked (the rerank input is the first max(rerank-candidates, topK) fused chunks), and an unreranked retrieval
+  returns the fused order cut to topK, so position 1 is the named chunk. The reports' returnedPosition (not rendered by any check) agree: 1 for the named
+  chunk, 2 to 7 or null for the others. The block's introducing line: "Questions whose matched chunk differs between the traced reference and the traced
+  windowed rows at an unchanged rank" (no digit, no listed word).
+
+  Finding 6, blank lines of Unicode space separators. New test GeneratedBlocksTests.aLineHoldingOnlyUnicodeSpaceSeparatorsIsSkippedAndTheLeadInAboveItIsScreened:
+  three blocks whose introducing lines ("* Rows the overlap caused", "* Every row keeps its rank", "* Rows the window led to") sit above a line holding
+  only U+00A0, a line holding U+202F, a space, U+00A0, and a tab, and a line holding only U+2003. Run with Wording.blank added and GeneratedBlocks still
+  testing Wording.normalise(line, "").isBlank(): ./mvnw -o -q test -Dtest=GeneratedBlocksTests#aLineHoldingOnlyUnicodeSpaceSeparatorsIsSkippedAndTheLeadInAboveItIsScreened
+  -> exit 1, "Expecting actual: [...measurement.md:9 line introducing block generated:../true-claims.json#ranks (start marker at line 11): expected no
+  causal wording, found "led"] ... could not find the following elements: [...:1 ... found "caused"", "...:5 ... found "Every""]": the lead-ins above the
+  U+00A0 and U+202F lines were not screened, the one above U+2003 (Character.isWhitespace) was. Fix: Wording.blank(text) is true when every code point of
+  normalise(text, "") is Character.isWhitespace or Character.isSpaceChar (categories Zs, Zl, Zp), and GeneratedBlocks.introduction skips lines for which it
+  is true. The test then passes (three problems at lines 1, 5, 9; Wording.blank true for "\u00A0" and "\u202F&nbsp;\u2007", false for "\u00A0x").
+  Wording.normalise is unchanged, so no screen message changes. RAG.md Claims, Generated blocks (line 996) and Tests (line 1001) say so with dated notes.
+
+  Findings 2 to 5. (2) Windows, Why (line 253) calls the probe "the truncation probe", with a dated note quoting the windows plan's correction. (3) The
+  overlap lead-in (line 658) reads "Questions whose rank or matched chunk differs between the default overlap and the wider overlap at the same candidate
+  count". (4) The top-k lead-in (line 457) adds "(k is stated below the block)", and a prose bullet after the block (line 471) states k as the `k`
+  parameter, 5, of the block's eleven topK claims, with no citation. (5) Latency (lines 279, 280): the overlapping calls are stated as the four logged
+  lines with their files and line numbers (live-test.log 39 and 40, live-test-network-blocked.log 58 and 59, checked against the logs), and the
+  windowed synthetic run as its medians and ratios (1,527/540 = 2.8, 3,090/1,053 = 2.9; live-test-windows.log lines 89, 94, 99, 104), limited to the
+  two synthetic sizes; the evaluation-set scoring times it repeated now point to Windowed rows, Scoring time. What enabling would take (line 714), which
+  quoted the Latency wording, is reworded to the same four lines.
+
+  Finding 1, script. Source (scratchpad hits.py, run from the project root):
+    # Lists every RAG.md line outside generated blocks that mentions a measurement term (Milestone 4b remediation 2, finding 1).
+    import re, sys
+    path = sys.argv[1] if len(sys.argv) > 1 else 'src/main/java/documentation/RAG.md'
+    marker = re.compile(r'^[ \t]*<!-- generated:\S+ (start|end) -->[ \t]*$')
+    ids = list(range(247, 251)) + list(range(295, 300)) + list(range(598, 642))
+    terms = [
+        ('hit@1', re.compile(r'hit@1', re.I)), ('hit@3', re.compile(r'hit@3|hit@1/3', re.I)), ('hit@5', re.compile(r'hit@5|hit@1/3/5', re.I)),
+        ('MRR', re.compile(r'\bMRR\b', re.I)),
+        ('snapshot id', re.compile(r'(?<![\d.,])(?:' + '|'.join(map(str, ids)) + r')(?![\d]|,\d{3})')),
+        ('qualif', re.compile(r'qualif', re.I)), ('figure slice', re.compile(r'figure slice', re.I)),
+        ('non-figure', re.compile(r'non-figure', re.I)), ('NVDA 8', re.compile(r'NVDA 8')), ('NVDA 9', re.compile(r'NVDA 9')),
+        ('question id', re.compile(r'\b(?:aapl|msft|nvda)-\d{2}\b', re.I)),
+    ]
+    inside = False
+    count = 0
+    for n, line in enumerate(open(path, encoding='utf-8').read().split('\n'), 1):
+        m = marker.match(line)
+        if m:
+            inside = m.group(1) == 'start'
+            continue
+        if inside:
+            continue
+        found = []
+        for name, rx in terms:
+            hits = sorted(set(x.group(0) for x in rx.finditer(line)))
+            if hits:
+                found.append(name + (' ' + ','.join(hits) if name in ('snapshot id', 'question id') else ''))
+        if found:
+            count += 1
+            print(f'{n}: [{"; ".join(found)}] {line.strip()[:60]}')
+    print(f'lines with hits: {count}')
+  Before this round's edits (RAG.md at 43b1931): "lines with hits: 265". After (RAG.md as committed), output in full:
+    215: [snapshot id 248,250,296,299] * Reranking is off by default (`rag.retrieval.reranking-enab
+    243: [snapshot id 600] * The problem: the tokenizer's native layer turns any tokeni
+    253: [snapshot id 605,606,614,625; qualif; question id msft-04,msft-05,msft-10,msft-12,nvda-01,nvda-11,nvda-14] * Why: after the 2026-09-13 head-scoring measurement (Rerank
+    257: [snapshot id 599,641; question id nvda-09,nvda-11] * Position sensitivity (observed on the handwritten live chu
+    275: [qualif] * To rerank retrieval calls that do not set `rerank`, also s
+    279: [snapshot id 299] * Live test on the development Mac (Apple silicon, CPU): 20 
+    280: [snapshot id 296,299] * Windowed scoring (2026-09-13, `CrossEncoderWindowedScoring
+    282: [snapshot id 630] * Worst cases, one child JVM each with -Xmx1g under `/usr/bi
+    287: [snapshot id 248,250] * Since windowed scoring (2026-09-13) snapshot `properties` 
+    288: [snapshot id 297] * Since 2026-09-13 an evaluation run with `trace=true` also 
+    294: [snapshot id 600] * CrossEncoderWindowedScoringLiveTests (opt-in, same flag, n
+    295: [snapshot id 600] * CrossEncoderForkedLiveTests (opt-in, same flag): runs Cros
+    302: [hit@1; hit@3; hit@5; MRR; snapshot id 247] * Reference: snapshot 247 reproduces snapshot 91 question by
+    303: [snapshot id 247,248,249,250; figure slice] * Scoring time is the reranker's `Cross-encoder scoring comp
+    305: [hit@1; hit@3; hit@5; MRR; non-figure] | Snapshot | rerank | Candidates | hit@1 | hit@3 | hit@5 | M
+    307: [snapshot id 247] | 247 (reference) | false | 20 (unused) | 0.547619 | 0.71428
+    308: [snapshot id 248] | 248 | true | 10 | 0.500000 | 0.690476 | 0.761905 | 0.61698
+    309: [snapshot id 249,629] | 249 | true | 20 | 0.500000 | 0.690476 | 0.738095 | 0.60734
+    310: [snapshot id 250] | 250 | true | 40 | 0.523810 | 0.714286 | 0.761905 | 0.63058
+    313: [hit@5; MRR; snapshot id 247; qualif; figure slice; non-figure] * Rule, applied to each rerank row against 247: a row qualif
+    314: [snapshot id 248; question id msft-04,nvda-01,nvda-11,nvda-14] * 248 (10 candidates) FAILS: (1) 32/42 below 33/42; (2) pass
+    315: [snapshot id 249; question id msft-04,msft-12,nvda-01,nvda-11,nvda-14] * 249 (20 candidates) FAILS: (1) 31/42 below 33/42; (2) pass
+    316: [snapshot id 250; question id msft-12,nvda-01,nvda-11,nvda-14] * 250 (40 candidates) FAILS: (1) 32/42 below 33/42; (2) pass
+    317: [qualif; figure slice; question id msft-12,nvda-01,nvda-11,nvda-14] * Outcome: no row qualifies. Every configuration's aggregate
+    318: [figure slice; non-figure; question id aapl-09,msft-01,msft-04,msft-05,msft-07,msft-08,nvda-01] * The non-figure slice shows a net change of plus one or two
+    319: [snapshot id 247; question id aapl-09,msft-01,msft-04,msft-05,msft-07,msft-08,msft-12] * Per ticker, top-5 hits against 247 (13/14 AAPL, 11/14 MSFT
+    320: [MRR; snapshot id 247,250; qualif] * Per-question changes, reference 247 against the best-MRR r
+    322: [snapshot id 247,250] | Question | Kind | Slice | 247 | 250 | Top 5 |
+    324: [non-figure; question id aapl-02] | aapl-02 | FIGURE | non-figure | 1 (241) | 2 (227) | |
+    325: [non-figure; question id aapl-03] | aapl-03 | NARRATIVE | non-figure | 2 (226) | 1 (226) | |
+    326: [non-figure; question id aapl-05] | aapl-05 | NARRATIVE | non-figure | 1 (190) | 2 (246) | |
+    327: [non-figure; question id aapl-06] | aapl-06 | FIGURE | non-figure | 2 (269) | 1 (269) | |
+    328: [non-figure; question id aapl-09] | aapl-09 | FIGURE | non-figure | 8 (280) | 5 (280) | gained
+    329: [question id aapl-11] | aapl-11 | FIGURE | figure | 1 (225) | 1 (226) | |
+    330: [non-figure; question id msft-01] | msft-01 | FIGURE | non-figure | 6 (514) | 2 (573) | gained
+    331: [non-figure; question id msft-02] | msft-02 | FIGURE | non-figure | 2 (514) | 1 (514) | |
+    332: [non-figure; question id msft-03] | msft-03 | NARRATIVE | non-figure | 2 (517) | 1 (517) | |
+    333: [non-figure; question id msft-04] | msft-04 | FIGURE | non-figure | 4 (466) | 1 (467) | |
+    334: [non-figure; question id msft-05] | msft-05 | NARRATIVE | non-figure | 2 (571) | 8 (460) | los
+    335: [non-figure; question id msft-07] | msft-07 | NARRATIVE | non-figure | 7 (495) | 3 (680) | gai
+    336: [non-figure; question id msft-08] | msft-08 | FIGURE | non-figure | no match | 2 (547) | gaine
+    337: [snapshot id 635,637; non-figure; question id msft-10] | msft-10 | FIGURE | non-figure | 1 (637) | 1 (635) | |
+    338: [question id msft-11] | msft-11 | FIGURE | figure | 1 (519) | 3 (519) | |
+    339: [question id msft-12] | msft-12 | FIGURE | figure | 2 (519) | 6 (519) | lost |
+    340: [question id msft-13] | msft-13 | FIGURE | figure | 1 (523) | 1 (524) | |
+    341: [question id msft-14] | msft-14 | FIGURE | figure | 1 (644) | 1 (646) | |
+    342: [non-figure; question id nvda-01] | nvda-01 | FIGURE | non-figure | 3 (805) | no match | lost 
+    343: [non-figure; question id nvda-03] | nvda-03 | FIGURE | non-figure | 1 (797) | 2 (850) | |
+    344: [non-figure; question id nvda-05] | nvda-05 | NARRATIVE | non-figure | 10 (749) | no match | |
+    345: [non-figure; question id nvda-07] | nvda-07 | NARRATIVE | non-figure | no match | 7 (770) | |
+    346: [non-figure; question id nvda-08] | nvda-08 | FIGURE | non-figure | 5 (852) | 1 (852) | |
+    347: [non-figure; question id nvda-10] | nvda-10 | NARRATIVE | non-figure | 1 (895) | 1 (878) | |
+    348: [question id nvda-11] | nvda-11 | FIGURE | figure | 1 (805) | 10 (805) | lost |
+    349: [question id nvda-12] | nvda-12 | FIGURE | figure | 5 (802) | 3 (802) | |
+    350: [question id nvda-13] | nvda-13 | FIGURE | figure | 1 (880) | 4 (880) | |
+    351: [question id nvda-14] | nvda-14 | FIGURE | figure | 1 (872) | no match | lost |
+    353: [snapshot id 248,249,250; figure slice; non-figure; question id aapl-09,msft-01,msft-04,msft-05,msft-07,msft-08,msft-12,nvda-01,nvda-11,nvda-14] * The other 14 questions keep rank and chunk. Top-5 balance 
+    354: [question id msft-08,nvda-02,nvda-04,nvda-07,nvda-09,nvda-12] * The five long-standing misses: nvda-02, nvda-04, and nvda-
+    355: [snapshot id 247,249; question id nvda-02] * Retrieval check for nvda-02 (cross-encoder enabled, `reran
+    356: [qualif] * Recommendation: do not enable reranking. `rag.retrieval.re
+    357: [hit@5; MRR; snapshot id 250; figure slice; non-figure] * What enabling would take if Jay chose to anyway (against t
+    358: [hit@5; snapshot id 250; non-figure] * Floors with the final configuration (defaults unchanged, r
+    359: [snapshot id 247,248,249,250; question id nvda-02] * Evidence: `documentation/live-runs/2026-09-13-reranker/mea
+    362: [snapshot id 295,296,297,298,299] * What was run (`live-runs/2026-09-13-reranker-windows/measu
+    363: [snapshot id 295,296,297,298,299,598,599,613,627,641] * Traced runs (`live-runs/2026-09-13-evaluation-evidence/mea
+    364: [snapshot id 296,297,298,299,599,623,641] * Scoring time (`live-runs/2026-09-13-reranker-windows/measu
+    365: [snapshot id 248,250,295,299,598,641; question id msft-04,nvda-01,nvda-11] * Reading the blocks: rank, top-k, metric, and rule bullets 
+    471: [hit@5] * In the block above k is 5: its eleven claims are `topK` ch
+    714: [snapshot id 298,299] * What enabling would take if Jay chose to anyway (settings 
+    715: [hit@5; snapshot id 299; non-figure] * Floors with the final configuration (defaults unchanged, r
+    716: [snapshot id 295,296,297,298,299,598,613,641] * Evidence: `documentation/live-runs/2026-09-13-reranker-win
+    825: [hit@1; hit@3; hit@5; MRR; snapshot id 247,248,250,295,296,299] * The evaluation sets (Retrieval Evaluation below; v1 has 30
+    827: [snapshot id 248,250,296,299] * No approximate vector index (exact search over a few hundr
+    903: [question id aapl-01,aapl-02,aapl-05,aapl-06,aapl-11,aapl-14,msft-01,msft-02,msft-05,msft-07,msft-10,msft-11,msft-14,nvda-01,nvda-03,nvda-06,nvda-07,nvda-11,nvda-14] * `src/main/resources/evaluation/retrieval-set-v2.json` (Fol
+    909: [question id msft-11,msft-12,msft-14,nvda-01,nvda-03,nvda-07,nvda-13] * `RetrievalEvaluationSetTests` (database-backed, read-only)
+    913: [question id nvda-11] * Add the question with the next id for its ticker (`nvda-11
+    920: [hit@5; MRR] * MRR: the mean over all questions of 1/rank, counting a nul
+    921: [hit@5] * Per-ticker hit@5: hit@5 over each ticker's questions, the 
+    922: [MRR] * Window: `rag.evaluation.window` (default 10, 5 to 20); a p
+    924: [hit@5; MRR; non-figure; question id nvda-10] * Slices (since 2026-09-13): each question is also counted i
+    933: [hit@5; non-figure] | rag.evaluation.min-non-figure-hit-at-5 | 0.60 | Second flo
+    941: [MRR; snapshot id 299] * A snapshot carries `hitAt1`, `hitAt3`, `hitAt5`, `mrr`, `t
+    951: [snapshot id 297] * Storage: `traces` sits in the `results` JSONB document (no
+    952: [snapshot id 297] * Tests (no live run): FilingRetrievalServiceTraceTests (ide
+    953: [snapshot id 297] * Reproduction check (`RetrievalEvaluationTraceLiveTests`, o
+    954: [hit@1; hit@3; hit@5; MRR; snapshot id 297,299] * Verified 2026-09-13: exit 0; 42 questions, 0 differing fro
+    968: [snapshot id 297; question id msft-04,msft-05] * Live checks (opt-in): CrossEncoderPassageTokenizerLiveTest
+    969: [snapshot id 297,614,625; question id msft-04,msft-05] * Verified 2026-09-13: `./mvnw -q -o verify` exit 0; both li
+    971: [snapshot id 297; question id msft-05] * Why: the windowed reranker write-up failed validation on s
+    972: [snapshot id 297] * Claims file: `documentation/live-runs/<date>-<feature>/cla
+    975: [snapshot id 297; question id msft-05] * `rank`: "<Snapshot> ranks <question> <ordinal rank>." (for
+    977: [hit@1; hit@3; hit@5; MRR; non-figure] * `metric`: "The <name> of <Snapshot> is <value>." When the 
+    978: [hit@5; non-figure] * `ruleRow`: "Against <reference Snapshot>, <candidate Snaps
+    982: [hit@5; snapshot id 296] * Free-text claims: `inferred` prints "<text> (inferred from
+    984: [snapshot id 298] * Experiments (since 2026-09-13, plan amendment 4). An `expe
+    985: [MRR; snapshot id 297] * Files: every file a check, a label, or an experiment file 
+    989: [MRR] * `metric` `{snapshot, metric, expected}`: `metric` is `hitA
+    990: [hit@5] * `ruleRow` `{reference, candidate, criteria}`: the reranker
+    994: [question id msft-05] * `notRecorded` `{report, path, reason}`: true when `path` n
+    997: [snapshot id 298; question id msft-04] * Citations (changed 2026-09-13, remediation round 2, plan a
+    1000: [snapshot id 297] * What the check proves, and what people read (since 2026-09
+    1001: [snapshot id 249,295,297,299; question id msft-04] * Tests (no live run, no database): ClaimsCheckTests (E1, E2
+    1018: [snapshot id 295; question id msft-04] * Verified 2026-09-13: `./mvnw -q -o verify` exit 0 (56 test
+    1019: [snapshot id 249,296,297,298,299; question id msft-05] * Verified 2026-09-13, remediation round 1 (plan amendment 4
+    1020: [snapshot id 297] * Verified 2026-09-13, remediation round 2 (plan amendment 6
+    1022: [hit@5] * `RetrievalEvaluationLiveTests` (opt-in, `@EnabledIfSystemP
+    1023: [hit@5; non-figure] * Second floor (since 2026-09-13, Follow_Ups RAG-13): after 
+    1024: [non-figure] * What each floor protects, in hits against snapshot 91 (the
+    1025: [hit@5; figure slice; non-figure] * No figure-slice floor: the slice has 12 questions, so one 
+    1026: [non-figure] * Run: `set -a && source .env && set +a && ./mvnw -q -o test
+    1027: [hit@5] * Verified 2026-09-12: the default floor passes (exit 0, hit
+    1028: [hit@5; non-figure; question id aapl-09,msft-01,msft-07,msft-08,nvda-02,nvda-04,nvda-05,nvda-07,nvda-09] * Verified 2026-09-13 (both floors, set v2, no overrides): e
+    1029: [non-figure] * Raise a floor after a retrieval improvement lands and its 
+    1037: [hit@1] | hit@1 | 0.300000 |
+    1038: [hit@3] | hit@3 | 0.533333 |
+    1039: [hit@5] | hit@5 | 0.600000 |
+    1040: [MRR] | MRR | 0.435833 |
+    1041: [hit@5] | Per-ticker hit@5 | AAPL 0.900000, MSFT 0.600000, NVDA 0.30
+    1049: [question id msft-07] | msft-07 (NARRATIVE, 2030 sustainability goals) | 10-K ITEM
+    1050: [question id msft-08] | msft-08 (FIGURE, OpenAI commercial revenue) | 10-K ITEM_8 
+    1051: [question id nvda-01] | nvda-01 (FIGURE, fiscal 2026 revenue and growth) | 10-K IT
+    1052: [snapshot id 248,250; question id nvda-02] | nvda-02 (FIGURE, Data Center growth) | 10-K ITEM_7 | 10-K 
+    1053: [question id nvda-03] | nvda-03 (FIGURE, share repurchases) | 10-K ITEM_7 | 10-K I
+    1054: [question id nvda-04] | nvda-04 (FIGURE, employees and R&D headcount) | 10-K ITEM_
+    1055: [snapshot id 247,250,295,299; question id nvda-05] | nvda-05 (NARRATIVE, fabless manufacturing) | 10-K ITEM_1 |
+    1056: [snapshot id 247,250,295,299; question id nvda-07] | nvda-07 (NARRATIVE, manufacturing concentration and geopol
+    1057: [question id nvda-09] | nvda-09 (FIGURE, Q2 fiscal 2027 Data Center revenue) | 10-
+    1060: [hit@5] * Seven of nine are NVDA questions (NVDA hit@5 0.3 against A
+    1063: [hit@5; question id msft-07,nvda-01,nvda-03] * Three misses (msft-07, nvda-01, nvda-03) are expectation n
+    1085: [hit@1] | hit@1 | 0.300000 | 0.300000 |
+    1086: [hit@3] | hit@3 | 0.533333 | 0.533333 |
+    1087: [hit@5] | hit@5 | 0.600000 | 0.633333 |
+    1088: [MRR] | MRR | 0.435833 | 0.436667 |
+    1089: [hit@5] | Per-ticker hit@5 | AAPL 0.900000, MSFT 0.600000, NVDA 0.30
+    1090: [question id msft-07,msft-08,nvda-01,nvda-02,nvda-03,nvda-04,nvda-05,nvda-07,nvda-09] | Misses (no matching chunk in the window) | 9: msft-07, msf
+    1097: [hit@5; question id msft-07] | msft-07 (2030 sustainability goals) | NARRATIVE | miss | 4
+    1098: [hit@5; MRR; question id nvda-09] | nvda-09 (Q2 fiscal 2027 Data Center revenue, "$89.0 billio
+    1099: [question id msft-05] | msft-05 (three reportable segments) | NARRATIVE | 6 | 2 | 
+    1100: [question id msft-06] | msft-06 (power and energy constraints) | NARRATIVE | 2 | 1
+    1101: [question id msft-03] | msft-03 (Microsoft Cloud gross margin decline) | NARRATIVE
+    1102: [question id aapl-06] | aapl-06 (total deferred revenue, "$13.7 billion") | FIGURE
+    1103: [question id msft-02] | msft-02 (commercial remaining performance obligation) | FI
+    1104: [hit@5; question id msft-10] | msft-10 (Q3 fiscal 2026 Microsoft Cloud revenue) | FIGURE 
+    1105: [question id aapl-09] | aapl-09 (Q3 fiscal 2026 buyback, "$25.8 billion") | FIGURE
+    1106: [question id msft-01] | msft-01 (Microsoft Cloud revenue growth) | FIGURE | 6 | 10
+    1107: [question id msft-04] | msft-04 (employee count and U.S. split) | FIGURE | 1 (chun
+    1110: [hit@5] * Rule (plan, Milestone 3): enable `rag.retrieval.hybrid-ena
+    1111: [hit@1; hit@3; hit@5; MRR] * Numbers: hit@5 0.600000 (35) to 0.633333 (34) improves; pe
+    1112: [question id msft-01,msft-04] * What the rule does not see: msft-04 and msft-01 moved out 
+    1115: [hit@5] * Rule: `rag.evaluation.min-hit-at-5` = the new hit@5 minus 
+    1116: [hit@5] * Verified 2026-09-12 with the final default: `./mvnw -q -o 
+    1118: [question id aapl-02,aapl-06,msft-02] * With two legs of equal weight and k = 60, a chunk at keywo
+    1127: [hit@1; hit@3; hit@5; MRR] | Configuration (k / vector / keyword / figure) | Snapshot |
+    1129: [question id aapl-01,aapl-02,aapl-06,aapl-07,msft-02,msft-04,msft-10,nvda-08] | reference: vector only | 35 | 0.300000 | 0.533333 | 0.6000
+    1130: [question id msft-04] | reference: 60 / 1.0 / 1.0 / off (RAG-2 hybrid) | 34 | 0.30
+    1131: [question id msft-08,nvda-01,nvda-02,nvda-03,nvda-04,nvda-05,nvda-07] | 60 / 1.0 / 1.0 / 0.0 (current defaults, harness check) | 4
+    1134: [question id aapl-01,aapl-02,aapl-06,aapl-07,msft-02,msft-04,msft-08,msft-10,nvda-01,nvda-02,nvda-03,nvda-04,nvda-07,nvda-08,nvda-09] | 60 / 1.0 / 0.5 / 1.0 | 51 | 0.333333 | 0.533333 | 0.633333
+    1135: [question id aapl-09,msft-08,nvda-01,nvda-02,nvda-03,nvda-04,nvda-05,nvda-07] | 30 / 1.0 / 1.0 / 1.0 | 52 | 0.300000 | 0.533333 | 0.633333
+    1137: [question id msft-04,msft-07] | 60 / 1.0 / 0.75 / 1.0 (added: 0.5 and 1.0 swap msft-04 and
+    1139: [hit@5; MRR; qualif] * Rule (supersedes the RAG-2 flip rule, which was ticker-lev
+    1142: [hit@5] | Snapshot | (a) tickers vs 35 and 34 | (b) FIGURE top 5 kep
+    1144: [question id msft-04] | 48 (60 / 1.0 / 1.0 / 0.0) | holds | fails: msft-04 rank 8 
+    1145: [question id msft-04] | 49 (60 / 1.0 / 1.0 / 1.0) | holds | fails: msft-04 rank 8 
+    1146: [question id msft-04] | 50 (60 / 1.0 / 1.0 / 2.0) | holds | fails: msft-04 rank 8 
+    1147: [qualif; question id aapl-01,aapl-02,aapl-06,aapl-07,msft-02,msft-04,msft-10,nvda-08] | 51 (60 / 1.0 / 0.5 / 1.0) | holds: 0.9 / 0.7 / 0.3 against
+    1148: [question id msft-04] | 52 (30 / 1.0 / 1.0 / 1.0) | holds | fails: msft-04 rank 7 
+    1149: [hit@5; MRR; qualif] | 53 (60 / 1.0 / 0.5 / 2.0) | holds | holds (the same rankin
+    1150: [question id msft-04] | 54 (60 / 1.0 / 0.75 / 1.0) | fails: MSFT 0.6 against 0.7 u
+    1152: [hit@1; hit@5; MRR] * Chosen: snapshot 51, `rrf-k` 60, `rrf-vector-weight` 1.0, 
+    1153: [question id aapl-09,msft-01,msft-02,msft-04,msft-05,msft-06,msft-07,msft-10] * Why the keyword weight, and why 0.5: with equal legs a key
+    1158: [question id msft-04] | msft-04 (employee count and U.S. split) | FIGURE | 1 | 4 |
+    1159: [snapshot id 637; question id msft-10] | msft-10 (Q3 fiscal 2026 Microsoft Cloud revenue) | FIGURE 
+    1160: [question id msft-03] | msft-03 (Microsoft Cloud gross margin decline) | NARRATIVE
+    1161: [question id msft-05] | msft-05 (three reportable segments) | NARRATIVE | 6 | 3 | 
+    1162: [question id msft-06] | msft-06 (power and energy constraints) | NARRATIVE | 2 | 1
+    1163: [question id msft-07] | msft-07 (2030 sustainability goals) | NARRATIVE | miss | 7
+    1164: [question id nvda-05] | nvda-05 (fabless manufacturing) | NARRATIVE | miss | 10 | 
+    1170: [question id msft-04,msft-07] | msft-04 (employee count and U.S. split) | FIGURE | 8 | 4 |
+    1171: [snapshot id 637; question id msft-10] | msft-10 (Q3 fiscal 2026 Microsoft Cloud revenue) | FIGURE 
+    1172: [question id msft-02] | msft-02 (commercial remaining performance obligation) | FI
+    1173: [question id msft-01] | msft-01 (Microsoft Cloud revenue growth) | FIGURE | 10 | 6
+    1174: [question id aapl-09] | aapl-09 (Q3 fiscal 2026 buyback) | FIGURE | 10 | 8 | 280 |
+    1175: [hit@5; question id aapl-06] | aapl-06 (total deferred revenue) | FIGURE | 3 | 4 | 236 (s
+    1176: [question id msft-05] | msft-05 (three reportable segments) | NARRATIVE | 2 | 3 | 
+    1177: [question id msft-07] | msft-07 (2030 sustainability goals) | NARRATIVE | 4 | 7 | 
+    1178: [question id nvda-05] | nvda-05 (fabless manufacturing) | NARRATIVE | miss | 10 | 
+    1179: [hit@5; question id nvda-09] | nvda-09 (Q2 fiscal 2027 Data Center revenue) | FIGURE | 8 
+    1181: [question id nvda-01] * nvda-01 (fiscal 2026 revenue "215,938") is a miss under 35
+    1182: [question id msft-04] * The figure leg on the NVDA figure query, checked against t
+    1184: [hit@5] * Rule unchanged: winner's hit@5 minus 0.1, rounded down to 
+    1185: [hit@5; MRR] * Verified 2026-09-12 with the final defaults: `./mvnw -q -o
+    1187: [question id msft-04] * `documentation/live-runs/2026-09-12-fusion-tuning/`: `snap
+    1189: [hit@5; MRR; qualif; question id msft-12,msft-14,nvda-12] * Read this first: the v2 headline number is not a retrieval
+    1190: [hit@5; question id aapl-02,aapl-06,msft-05,nvda-01,nvda-03,nvda-06] * v1 and v2 numbers are not comparable. Set v2 adds 12 quest
+    1192: [hit@1; hit@3; hit@5; MRR] * v1 check: snapshot 70 (current defaults, `rag.evaluation.s
+    1195: [hit@1; hit@3; hit@5; MRR] | Configuration (k / vector / keyword / figure) | Snapshot |
+    1198: [question id msft-13,nvda-12] | 60 / 1.0 / 0.5 / 0.0 (figure leg off) | 71 | evaluation/re
+    1199: [question id nvda-12] | 60 / 1.0 / 0.5 / 0.5 | 72 | evaluation/retrieval-set-v2.js
+    1200: [hit@5; MRR] | 60 / 1.0 / 0.5 / 1.5 (added: 69 and 73 tied on hit@5, so t
+    1202: [question id msft-04] | 60 / 1.0 / 1.0 / 1.0 (keyword cross-check) | 74 | evaluati
+    1205: [question id aapl-09,msft-01,msft-04,msft-07,msft-08,msft-13,nvda-02,nvda-04,nvda-05,nvda-07,nvda-09,nvda-12] * Questions outside the top 5 under 69: aapl-09 (8), msft-01
+    1206: [hit@5; MRR; qualif; question id aapl-01,aapl-02,aapl-06,aapl-07,aapl-11,aapl-14,msft-02,msft-04,msft-10,msft-11,msft-14,nvda-01,nvda-03,nvda-08,nvda-11,nvda-14] * Rule (restated for v2): among the v2 configurations, the h
+    1209: [hit@5; MRR] | Snapshot | (a) tickers vs 69 | (b) protected FIGURE questi
+    1211: [qualif] | 69 (60 / 1.0 / 0.5 / 1.0) | baseline | baseline | 0.785714
+    1212: [question id msft-13,nvda-12] | 71 (60 / 1.0 / 0.5 / 0.0) | fails: MSFT 0.714286, NVDA 0.5
+    1213: [question id nvda-12] | 72 (60 / 1.0 / 0.5 / 0.5) | fails: NVDA 0.571429 | fails: 
+    1214: [hit@5; MRR; qualif] | 75 (60 / 1.0 / 0.5 / 1.5) | holds | holds (every rank as 7
+    1215: [hit@5; MRR; qualif] | 73 (60 / 1.0 / 0.5 / 2.0) | holds | holds | 0.785714 / 0.6
+    1216: [question id msft-04,msft-07] | 74 (60 / 1.0 / 1.0 / 1.0) | holds (MSFT stays 0.785714: ms
+    1218: [MRR; qualif] * Chosen: snapshot 69, the current defaults (`rrf-k` 60, `rr
+    1219: [hit@1; hit@5; MRR; question id nvda-11,nvda-12] * The figure weight survived measurement. With the leg off (
+    1220: [question id nvda-07] * Former narrow misses under v2 (the two questions that gain
+    1224: [question id nvda-01] | nvda-01 (fiscal 2026 revenue and growth) | not in the wind
+    1225: [question id nvda-03] | nvda-03 (fiscal 2026 share repurchases) | not in the windo
+    1231: [question id aapl-11] | aapl-11 | 14%, $109,158 million | 1 (225) | 1 (225) | no |
+    1232: [question id aapl-12] | aapl-12 | 75.4%, 73.9% | 1 (226) | 2 (226) | yes, up one w
+    1233: [question id aapl-13] | aapl-13 | $54,252 million | 1 (278) | 1 (278) | no |
+    1234: [question id aapl-14] | aapl-14 | 32%, $11,729 million | 1 (279) | 1 (279) | no |
+    1235: [question id msft-11] | msft-11 | $31.0 billion, 31% | 1 (519) | 4 (519) | yes |
+    1236: [question id msft-12] | msft-12 | 29% | 2 (519) | 4 (519) | yes |
+    1237: [question id msft-13] | msft-13 | $182.9 billion, $46.8 billion | 1 (523) | not in
+    1238: [question id msft-14] | msft-14 | 40% | 1 (644) | 2 (644) | yes |
+    1239: [question id nvda-11] | nvda-11 | $193,479 million | 1 (805) | 2 (805) | yes |
+    1240: [question id nvda-12] | nvda-12 | 70% | 5 (802) | not in the window | yes, into th
+    1241: [question id nvda-13] | nvda-13 | $7.2 billion | 1 (880) | 4 (880) | yes |
+    1242: [question id nvda-14] | nvda-14 | $96,221 million | 1 (872) | 3 (872) | yes |
+    1246: [hit@5] * Rule: the v2 winner's hit@5 minus 0.1, rounded down to a m
+    1247: [non-figure] * What 0.65 protects: 0.65 of 42 questions is 27.3, so the t
+    1248: [MRR] * Verified 2026-09-13 with the final defaults and set v2: `.
+    1250: [question id msft-14] * msft-14's phrase ("Azure and other cloud services revenue 
+    1251: [question id msft-11,msft-12,msft-14,nvda-13] * The phrase-echo test in `RetrievalEvaluationSetLoaderTests
+    1254: [non-figure] * Non-figure floor (2026-09-13, Follow_Ups RAG-13)
+    1255: [hit@1; hit@3; hit@5; MRR] * Measurement: one `POST /api/rag/evaluate` with the current
+    1256: [hit@1; hit@3; hit@5; MRR; non-figure; question id aapl-09,msft-01,msft-07,msft-08,nvda-02,nvda-04,nvda-05,nvda-07,nvda-09] * Slices of snapshot 91: `figure` 12 questions, hit@1 0.8333
+    1257: [non-figure] * Rule, with decimal arithmetic: 0.700000 minus 0.1 = 0.6000
+    1258: [non-figure] * Evidence: `documentation/live-runs/2026-09-13-non-figure-f
+    1351: [hit@5; MRR; question id msft-04,msft-07,nvda-09] * Measured on set v1 against the same store: vector-only sna
+    1353: [hit@5] * Live verification — 2026-09-12, 22:24 SGT: `RetrievalEvalu
+    1357: [hit@1; hit@5; MRR; question id msft-04,msft-07,msft-10,nvda-09] * Measured on set v1 (Fusion tuning above): seven configurat
+    1358: [hit@5] * Live verification — 2026-09-12: `RetrievalEvaluationLiveTe
+    1361: [hit@1; hit@3; hit@5; MRR] * Measured the current defaults on set v2 (Set v2 baseline a
+    1362: [hit@5; MRR; question id msft-04,nvda-12] * Figure-weight grid on v2 (snapshots 71 to 75, plus a keywo
+    1364: [hit@5] * Live verification — 2026-09-13: `RetrievalEvaluationLiveTe
+    1367: [MRR] * `RetrievalEvaluation` gains `slices` (`figure` and `nonFig
+    1368: [hit@5; figure slice; non-figure] * `rag.evaluation.min-non-figure-hit-at-5` (0.60, 0 to 1) is
+    1369: [non-figure] * Live verification — 2026-09-13: `RetrievalEvaluationLiveTe
+    1379: [snapshot id 299] * Live verification — 2026-09-13: `CrossEncoderForkedLiveTes
+    1385: [snapshot id 247,248,249,250] * Measured the cross-encoder on set v2 at 10, 20, and 40 can
+    1387: [hit@5; snapshot id 247,248,249,250; non-figure] * Live verification — 2026-09-13: `RetrievalEvaluationLiveTe
+    1390: [question id msft-04,msft-05,nvda-01] * Corrected — 2026-09-13, after Milestone 2 re-validation (O
+    1392: [snapshot id 622] * Live verification — 2026-09-13: `./mvnw -q -o test -Dtest=
+    1394: [snapshot id 295,296,297,298,299] * Measured `max-window` scoring on set v2 at 10, 20, and 40 
+    1396: [hit@5; snapshot id 295,296,297,298,299; non-figure] * Live verification — 2026-09-13: `RetrievalEvaluationLiveTe
+    1397: [hit@1; snapshot id 295,298,299; qualif; question id msft-04,msft-05,nvda-01,nvda-11] * Documentation corrected — 2026-09-13, after Milestone 2 Sc
+    1398: [snapshot id 296,297,298,299; question id aapl-02,aapl-09,msft-04,msft-05,msft-13,nvda-01,nvda-02,nvda-04,nvda-09,nvda-11,nvda-14] * Documentation corrected again — 2026-09-13, after Mileston
+    1400: [snapshot id 299] * Added `POST /api/rag/evaluate?trace=true`: each question's
+    1401: [snapshot id 297,299] * Live verification — 2026-09-13: `RetrievalEvaluationTraceL
+    1402: [snapshot id 297,299; question id aapl-08,msft-10] * Remediation 1 — 2026-09-13 (validation of commit 1f57c75 f
+    1406: [snapshot id 297] * Live verification — 2026-09-13: `CrossEncoderPassageTokeni
+    1409: [snapshot id 297] * Amendments 2 and 3 (evidence report, Evidence report bulle
+    1415: [snapshot id 248,250,295,299,598,599,613,627,641; question id msft-05,nvda-02] * Added `live-runs/2026-09-13-evaluation-evidence/measuremen
+    1417: [hit@5; snapshot id 613,641; non-figure] * Live verification — 2026-09-14: `RetrievalEvaluationLiveTe
+    1418: [hit@1; hit@3; MRR; snapshot id 248,250,295,297,299,598,599,613,627,641; question id msft-04,nvda-10,nvda-11,nvda-14] * Remediation 1 — 2026-09-14 (validation of 95a3f63 and 1832
+    1419: [hit@1; hit@3; hit@5; MRR; snapshot id 247,250,295,296,299,598,599,613,627,641; qualif; figure slice; non-figure; NVDA 8; NVDA 9; question id nvda-02,nvda-05,nvda-07] * Remediation 2 — 2026-09-14 (validation of 43b1931 failed o
+    lines with hits: 264
+  Resolution of every hit line (RAG.md as committed):
+    Reworded this round: 215 FilingReranker Configuration, rule outcome -> pointer; 253 Windows Why, head rule outcome, "pushed ... out of the top 5",
+      msft-05's head ranks and matched rows -> pointers (remaining hits: token offsets 605, 606, 614, 625, question ids beside probe figures, "qualif"
+      quoted in the dated note); 275 Enabling, row-by-row rule outcome -> pointer ("qualif" in the dated note); 279 and 280 Latency (finding 5; 299 is
+      a time in ms, 296 and 299 are latency file names); 471 new k line (hit@5 as a definition); 714 What enabling would take (298 and 299 name
+      configurations; Latency wording updated); 825 How it is measured, head-row metrics with "lowered", "rose" and the 247/91 reproduction -> pointer
+      (remaining values are snapshots 34, 35, 51, 69, 71 of the fusion and set v2 measurements and the windowed pointer); 827 What is deliberately not
+      done, both measurements' metrics, the two questions leaving the top 5, and the rule outcome with "lowered ... while raising" -> pointer; 1052,
+      1055, 1056 Misses in the baseline notes on nvda-02, nvda-05, nvda-07, ranks -> pointers; 1385 head measurement change log, metrics and rule outcome
+      with "fell", "rose" -> pointer; 1390 correction note, head and windowed ranks, matched chunks, rule outcome -> description (question ids remain as
+      subjects); 1397 and 1398 correction notes, the count of questions keeping rank and chunk, NVDA's share, aapl-09's top-5 status, nvda-11's rank,
+      msft-05's matched chunk, the Outcome's count -> removed (remaining ids, token positions, and descriptions of corrections); 1415 Milestone 4b change
+      log, its "Still hand-written" sentence marked superseded; 1418 Remediation 1, hit@1 counts, nvda-10's matched chunks, the 613/641 question list and
+      the untraced 297/299 statement -> removed; 1419 this round's change-log bullet (quotes the search terms). Also reworded, no longer hits: 223 What it
+      is, 778 Baseline limitations, 821 After fusion (rule outcome -> pointer); 1389 marked as the history text its correction refers to.
+    Head-row subsection of Reranker measurement, the pointer target named by the finding, kept: 302, 303, 305, 307 to 310, 313 to 320, 322, 324 to 351,
+      353 to 359.
+    Windowed rows prose, kept: run records naming their files, no rank, metric, or rule outcome of the rows: 362 What was run (ids name the runs), 363
+      Traced runs (ids, problems=0 of the named reproduction files), 364 Scoring time (latency and scoring files; 623 is a time), 365 Reading the blocks
+      (which files the blocks read; nvda-01, nvda-11, msft-04 name the rankedAbove lists in this run.log), 715 Floors (floor live-test records, named
+      logs), 716 Evidence (file names).
+    Numbers that are not snapshot ids, kept: 243 and 295 (600 words), 282 (630 ms), 294 (600 tokens), 1379 (299 ms), 1392 (token 622).
+    Field or setting descriptions naming rows without a measured value of them, kept: 257 Position sensitivity (evidence file names 599 to 641; nvda-09
+      and nvda-11 named in the note on replaced text), 287 (rerankerScoring distinguishes 248 to 250), 288 (trace size of the Milestone 1 reproduction
+      run at 297's settings, a run record naming its query file).
+    Retrieval Evaluation documentation, kept (set content, metric definitions, properties, traces, evidence report, claims format, and the verification
+      records of Milestones 1 to 3, which name their evidence): 903, 909, 913, 920, 921, 922, 924, 933, 941, 951, 952, 953, 954, 968, 969, 971, 972, 975,
+      977, 978, 982, 984, 985, 989, 990, 994, 997, 1000, 1001, 1018, 1019, 1020, 1022 to 1029. Three state a value of a windowed row: 954 (the
+      Milestone 1 reproduction run's metrics, "297's values", the values C-119 to C-122 state), 975 (the rank template's example "Snapshot 297 ranks
+      msft-05 10th.", the rank C-161 states), 997 ("snapshot 298 ranks msft-04 1st" in a test case, the rank C-160 states); kept as run records or format
+      examples that state no value the claims do not state.
+    Other measurements, kept (set v1 baseline and its misses table, hybrid comparison, fusion tuning, set v2 baseline, non-figure floor): 1037 to 1041,
+      1049, 1050, 1051, 1053, 1054, 1057, 1060, 1063, 1085 to 1258 as listed, and their change logs 1351, 1353, 1357, 1358, 1361, 1362, 1364, 1367, 1368,
+      1369.
+    Change-log records kept: 1387, 1396, 1417 (floor live verifications with their logs; ids are evidence links), 1394 (the Milestone 2 bullet whose
+      statement this finding makes true; ids name the runs), 1400 to 1402 (traces: the reproduction run at 297's settings, snapshots up to 299 read back,
+      two fallbacks of a failed live run by question), 1406, 1409 (evidence report 297).
+
+  Wording screen. A scratchpad class (Screen.java) loads project.stockrecommendationengine.rag.evaluation.claims.Wording from target/test-classes by
+  reflection and prints Wording.causal(line).words() and Wording.absolute(line).words() for every non-blank RAG.md line outside generated blocks in the
+  given ranges: java -cp target/test-classes:<scratchpad> Screen src/main/java/documentation/RAG.md 214-219 221-225 252-257 273-275 278-283 360-365 471
+  713-716 775-779 806-828 1045-1058 1384-1398 1414-1419 (FilingReranker Configuration; What it is; Windows; Enabling; Latency; Windowed rows prose;
+  Baseline limitations; Retrieval Methods; Misses in the baseline; the head, windowed Milestone 1, and windowed Milestone 2 change logs; this change log).
+  36 lines had no match. Lines with a match:
+    215: causal [enabled]; absolute []
+    216: causal [Enabling]; absolute []
+    217: causal []; absolute [no FilingReranker]
+    218: causal [result]; absolute [never]
+    219: causal []; absolute [never]
+    223: causal []; absolute [No model, no provider, no rate]
+    224: causal [result]; absolute [No instruction, no prompt, anything]
+    253: causal [Why, gave, cause, pushed]; absolute [no trace, every, expected, no qualifying]
+    254: causal [gives, yields]; absolute [no re, whole, never, Each]
+    255: causal []; absolute [never]
+    256: causal [yields]; absolute [all, never]
+    257: causal [effect]; absolute [guarantees, every, no check]
+    273: causal [Enabling]; absolute []
+    274: causal [ENABLED]; absolute []
+    275: causal [enabled]; absolute []
+    281: causal [therefore]; absolute [Each, no measured, all, no time]
+    282: causal []; absolute [each, whole, Every]
+    283: causal [because, therefore]; absolute [no application]
+    361: causal [enabling]; absolute [Every, each, no claim]
+    362: causal [effect, ENABLED]; absolute [each, no row, No chat, all]
+    363: causal []; absolute [each, no fallback]
+    364: causal []; absolute [each]
+    365: causal []; absolute [No check, each]
+    713: causal [force, enable, enabled]; absolute [no default]
+    714: causal [enabling, enabled, ENABLED]; absolute [anyway, any]
+    715: causal [enable]; absolute [no application, no RAG, no  RAG]
+    716: causal []; absolute [any, proves]
+    776: causal [Results]; absolute [guarantee]
+    808: causal [Given, reasons, therefore]; absolute []
+    809: causal []; absolute [every]
+    810: causal [given]; absolute [each, Every, never]
+    812: causal [why]; absolute [Each]
+    814: causal [why]; absolute [never]
+    816: causal []; absolute [must, every, any]
+    818: causal [yields, makes]; absolute [Each, no calibration]
+    819: causal [because]; absolute [Every, never]
+    821: causal [enabled]; absolute []
+    825: causal [makes, improvement, reasons, causal, enabled]; absolute [no figure, all]
+    827: causal [causal]; absolute [No approximate, no reranking, no query, no cross, never]
+    1045: causal []; absolute [no matching]
+    1047: causal []; absolute [Expected]
+    1049: causal []; absolute [expectation]
+    1051: causal []; absolute [expectation]
+    1052: causal [boost]; absolute []
+    1053: causal []; absolute [expectation]
+    1054: causal [help]; absolute []
+    1056: causal [because, causal]; absolute [expectation]
+    1384: causal [enabled]; absolute []
+    1386: causal [enabled]; absolute [No default, No code]
+    1389: causal [Cause]; absolute [never]
+    1390: causal [cause, contributing, made, Why]; absolute [no longer, every, no record]
+    1391: causal [enabled]; absolute [Every, no measurement]
+    1392: causal [gave, lifting]; absolute []
+    1393: causal [enabled]; absolute []
+    1394: causal [results, causes]; absolute [never]
+    1395: causal [enabled]; absolute [No default, No code]
+    1397: causal [enabling, results, put, Enabling, Why, cause]; absolute [no new, every, each, no row]
+    1398: causal [cause, lifted, put, Why, results]; absolute [no run, whole, no longer, none, expectation]
+    1415: causal [lead, Why, cause, Enabling, results]; absolute [No code]
+    1418: causal [makes, lead, Why, causal, make, enabling, cause]; absolute [no code, every, each, all, no claim, no dated, no-flip, no commit]
+    1419: causal [results, Why, Enabling, causal]; absolute []
+  Resolution of the matches (each line's measured values checked against the claims or the named files):
+    Reworded in the edits of this round, before this final output: 279 ("made", "gave", "no run"), 471 ("lead", "no line"), 714 ("gave"), 215 and 827
+      ("results"), 1385 ("results"), 1419 ("raised", "lead", "gives", "each", "every", "no application").
+    Section names, identifiers, and set vocabulary, not wording: "Why" (the Windows heading: 253, 1390, 1397, 1398, 1415, 1418, 1419); "Enabling",
+      "enabling" (the Enabling and What enabling would take headings: 216, 273, 361, 714, 1397, 1415, 1418, 1419); "enabled", "ENABLED", "enable" in
+      property and variable names and "application enable flag" (215, 274, 275, 713, 714, 715, 821, 825, 1384, 1386, 1391, 1393, 1395); "proves" in
+      "What the check proves" (716); "no-flip" (1418, a rule name); "force" in "keeps in force" (713); "Expected", "expectation" (the misses table's
+      column and the set's term: 1047, 1049, 1051, 1053, 1056, 1398); "anyway" (714, heading).
+    Old wording quoted or reported in dated notes, kept as history: 253 ("gave", "cause", "pushed", "every", "expected", "no qualifying", and "no trace"
+      in the 2026-09-14 limitation note); "causal" in "with causal wording" (825, 827, 1056, 1418, 1419); 1389 (the 2026-09-13 wording, now marked as
+      history under its correction: "Cause", "never"); 1390 ("cause", "contributing", "made", "every" in the quoted "with every accepted phrase scored",
+      "no record", "no longer"); 1394 ("results" in "The results are stated once", "causes", "never validated"); 1397, 1398, 1415, 1418 (correction and
+      change-log history); 1419 ("results" quoted).
+    Code, configuration, design, or process descriptions stating no measured value, kept: 217 to 219 (FilingReranker startup and fallback behaviour); 223,
+      224 (what the model is: "No model tokens", "No instruction channel", "result"); 254 to 256 (Windows Arithmetic, Modes, Bounds); 257 ("guarantees
+      every token is seen", the windowing arithmetic tested in CrossEncoderPairAssemblerTests; "effect" in its history note; "no check type renders");
+      361 to 365 (subsection structure and run records: "each start", "no row was rerun", "No chat model", "267 embeddings in all", "no fallback", as
+      the named run logs record); 713 ("no default flip", the plan rule; "do not enable", the decision); 714 ("any machine without the model files",
+      CrossEncoderModelFiles at startup); 715 (shell setup: "no RAG_* variable and no application enable flag"); 776 ("Results are nearest passages, not
+      a guarantee"); 808 to 819 (Retrieval Methods' method descriptions); 827 ("No approximate vector index", "no query rewriting", "no cross-ticker
+      search", "never in the store": design scope).
+    Statements of other measurements or earlier records, kept: 825 ("makes the figure method measurable" and "no figure-bearing questions" describe the
+      sets' content; "not a retrieval improvement" is a negation validated in RAG-11; "reasons recorded in RAG-7 and RAG-1" points to those items; "all"
+      is inside the dated note quoting the replaced "all hit", now "12 of 12 are in the top 5 under snapshot 69", checked against the Set v2 table);
+      1052 "boost" and 1054 "help" (the 2026-09-10 baseline's suggestions); 1056 "because" (plan Amendment 1's reason for rejecting an expectation);
+      1392 "gave", "lifting" (the windows Milestone 1 live-test record, naming its log).
+    Kept unchanged and raised for the Orchestrator: Latency 281 to 283 (Memory, Worst cases, Concurrency: resource-probe measurements outside the seven
+      findings) keep "therefore" (281, 283), "because" (283, "because it passes at most 40 chunks", a code fact), "Each call is therefore limited",
+      "changed no measured score", "cost no time", "Every case exited 0", and "For the two calls the pool allows, measured peak memory is therefore about
+      1.7 GB"; rewording measured resource statements was not part of this round. The head-row subsection (300 to 359, not edited) screened for
+      information: 301 ("every", "each", "all", "none", "No chat", "no tokens", identifiers), 302 ("all"), 303 ("Every", "each"), 307 ("none"), 312
+      ("Every", "every", "whole"), 313 ("each", "no ticker", "none"), 317 ("no row", "Every", "none", "every"), 318 ("effect", "each", "any"), 319 ("no
+      question", "any"), 356 ("gives", "reason", "no row", "no reason"), 357 ("because", "Expect", "Each", "any", "anyway", identifiers), 359 ("each",
+      "every", "all"); kept as the pointer target, raised for the Orchestrator.
+
+  Commands (each in a shell with .env exported and the env grep above printing nothing):
+    ./mvnw -o test -Dtest='ClaimsCheckTests,ClaimsCheckValidatorCasesTests,GeneratedBlocksTests' -> exit 0 (128 tests: GeneratedBlocksTests 18, ClaimsCheckTests
+      101, ClaimsCheckValidatorCasesTests 9; 0 failures), 04:37:58 to 04:38:01.
+    ./mvnw -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> exit 0, CLAIMS_GENERATE changed=0 [] notGenerated=0 (the earlier generations of
+      this round wrote the windowed-matched block), CLAIMS_CHECK claimsFiles=2 documents=21 problems=0, 04:41:14.
+    ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 0, CLAIMS_CHECK claimsFiles=2 documents=21 problems=0, 04:41:17.
+    ./mvnw -q -o verify -> exit 0 (58 test classes, 535 tests, 0 failures, 0 errors, 28 skipped; counted from target/surefire-reports of this run, which was
+      emptied first; one test more than round 1, the finding 6 case), CLAIMS_CHECK claimsFiles=2 documents=21 problems=0, 04:41:33 to 04:41:46.
+  claims.json: C-101 to C-410 (310 claims: 194 observed, 92 derived, 21 inferred, 3 experiment), ids unique.

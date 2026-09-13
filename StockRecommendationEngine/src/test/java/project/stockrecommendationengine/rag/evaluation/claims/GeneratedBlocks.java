@@ -252,13 +252,14 @@ final class GeneratedBlocks {
     }
 
     /**
-     * Screens the line introducing the block: the nearest line above its start marker that is not blank once normalised ({@link Wording}: a
-     * line holding only an HTML comment, an invisible character, or markdown marks is skipped), when there is one and it is not itself a
-     * marker line (a block directly after another block has no introducing line of its own).
+     * Screens the line introducing the block: the nearest line above its start marker that is not blank once normalised ({@link Wording#blank}:
+     * a line holding only an HTML comment, an invisible character, markdown marks, or Unicode space separators such as the no-break space
+     * U+00A0 is skipped), when there is one and it is not itself a marker line (a block directly after another block has no introducing line of
+     * its own).
      */
     private static void introduction(List<String> lines, String name, Block block, List<String> problems) {
         int index = block.start() - 2;
-        while (index >= 0 && !MARKER.matcher(lines.get(index)).matches() && Wording.normalise(lines.get(index), "").isBlank()) index--;
+        while (index >= 0 && !MARKER.matcher(lines.get(index)).matches() && Wording.blank(lines.get(index))) index--;
         if (index < 0 || MARKER.matcher(lines.get(index)).matches()) return;
         String line = lines.get(index);
         List<String> found = new ArrayList<>();

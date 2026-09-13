@@ -98,6 +98,15 @@ final class Wording {
         return screen(CITATION, text);
     }
 
+    /**
+     * Whether the text is blank once normalised with markdown marks removed: every code point left is whitespace or a Unicode space separator
+     * (category Zs, among them the no-break space U+00A0, the figure space U+2007, and the narrow no-break space U+202F, which
+     * {@link String#isBlank} does not count as blank), a line separator, or a paragraph separator.
+     */
+    static boolean blank(String text) {
+        return normalise(text, "").codePoints().allMatch(codePoint -> Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint));
+    }
+
     /** The text normalised as described on the class, with markdown marks removed ({@code marks} "") or read as spaces ({@code marks} " "). */
     static String normalise(String text, String marks) {
         Matcher reference = REFERENCE.matcher(text);

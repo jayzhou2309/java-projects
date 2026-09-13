@@ -190,7 +190,7 @@ class GeneratedBlocksTests {
 
     @Test
     void theLineIntroducingEachBlockIsScreenedForWordingAndNumbersAfterNormalising() throws IOException {
-        // The nearest line above a start marker that is not blank once normalised is screened (an HTML comment or a non-breaking space alone
+        // The nearest line above a start marker that is not blank once normalised is screened (an HTML comment or an &nbsp; reference alone
         // is skipped); a block directly after another block's end marker has no line of its own, and a start marker on the first line has none.
         Files.writeString(document, """
                 <!-- generated:../true-claims.json#ranks start -->
@@ -220,6 +220,35 @@ class GeneratedBlocksTests {
                 display + ":9 line introducing block generated:../true-claims.json#ranks (start marker at line 10): expected no causal wording, found \"caused\"" + NORMALISED
                         + "; expected no absolute or predictive wording, found \"never\"" + NORMALISED,
                 display + ":15 line introducing block generated:../true-claims.json#ranks (start marker at line 18): expected no absolute or predictive wording, found \"Every\"");
+    }
+
+    @Test
+    void aLineHoldingOnlyUnicodeSpaceSeparatorsIsSkippedAndTheLeadInAboveItIsScreened() throws IOException {
+        // Milestone 4b remediation round 2, finding 6: a raw no-break space (U+00A0) is not whitespace to String.isBlank, so a line holding only
+        // it was taken as the introducing line and the causal lead-in above it was never screened. The same held for the narrow no-break space
+        // (U+202F), another space separator (category Zs); a line holding only an em space (U+2003) was already skipped.
+        Files.writeString(document, String.join("\n",
+                "* Rows the overlap caused",
+                " ",
+                "<!-- generated:../true-claims.json#ranks start -->",
+                "<!-- generated:../true-claims.json#ranks end -->",
+                "* Every row keeps its rank",
+                "   \t",
+                "<!-- generated:../true-claims.json#ranks start -->",
+                "<!-- generated:../true-claims.json#ranks end -->",
+                "* Rows the window led to",
+                " ",
+                "<!-- generated:../true-claims.json#ranks start -->",
+                "<!-- generated:../true-claims.json#ranks end -->",
+                ""));
+        String display = ClaimsCheck.display(document);
+        assertThat(GeneratedBlocks.check(document, temp)).filteredOn(problem -> problem.contains(" line introducing ")).containsExactly(
+                display + ":1 line introducing block generated:../true-claims.json#ranks (start marker at line 3): expected no causal wording, found \"caused\"",
+                display + ":5 line introducing block generated:../true-claims.json#ranks (start marker at line 7): expected no absolute or predictive wording, found \"Every\"",
+                display + ":9 line introducing block generated:../true-claims.json#ranks (start marker at line 11): expected no causal wording, found \"led\"");
+        assertThat(Wording.blank(" ")).isTrue();
+        assertThat(Wording.blank(" &nbsp; ")).isTrue();
+        assertThat(Wording.blank(" x")).isFalse();
     }
 
     @Test

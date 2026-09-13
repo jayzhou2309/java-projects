@@ -28,8 +28,10 @@ diagnosed on 2026-09-13 with the real tokenizer and model against every chunk in
   the same question on the chunk text starting 200 characters before the answer (about 40 to 60 tokens in, not a
   production window position) flips the logit: nvda-11 2.6 to 5.3, nvda-14 -0.3 to 4.8, msft-12 -1.8 to 5.1,
   nvda-01 -1.7 to 5.0, msft-04 -10.7 to 0.2, msft-10 -9.5 to 9.9, msft-13 -1.7 to 7.7, aapl-05 -6.6 to 5.1.
-- Not addressed here: nvda-02, nvda-04, and nvda-09 are never in the candidate list (a recall problem no reranker can
-  fix); the reranked order discards the fusion figure leg entirely; short chunks that fit the window gain an edge.
+- Not addressed here: nvda-02, nvda-04, and nvda-09 miss under every head row (for nvda-02 a check found its answer
+  outside the first 20 fused candidates; nvda-04 was not checked, and nvda-09 turned out to be within the first 20 in
+  Milestone 2's row 299, so "never in the candidate list" was not established; corrected after Milestone 2
+  remediation 1); the reranked order discards the fusion figure leg entirely; short chunks that fit the window gain an edge.
 
 ## Decision (Orchestrator, 2026-09-13, for Jay's approval): score each chunk over sliding windows
 
@@ -167,3 +169,12 @@ snapshots and the database; it failed on documentation counts and claims the com
 round 1 is documentation only, with no new runs. The Why section's claim that exact WordPiece lengths exceed the stored
 characters / 4 estimate was wrong (estimate median 780, exact median 647) and is corrected above; the conclusion that 65%
 of chunks exceed the window is unaffected.
+
+## Amendment 3 (2026-09-13, after Milestone 2 re-validation FAIL)
+
+Scrutiny re-validated Milestone 2 after remediation 1 (da0394c): metrics, rule, defaults, floors, and build pass again;
+it failed on per-question explanations the window arithmetic or the max-window scoring rule contradicts (nvda-09,
+aapl-09, msft-04) and on claims no committed evidence supports. Remediation round 2, the last before escalating to Jay,
+is documentation only. Rule for it: a per-question cause is written only when the committed evidence establishes it;
+otherwise the text states the observed rank change and says the cause was not determined. The Why section's grouping
+of nvda-09 with the never-retrieved questions is corrected above.

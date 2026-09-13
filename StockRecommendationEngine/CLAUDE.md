@@ -89,3 +89,11 @@ one-line fix, a typo, or a question, just do it directly.
   Scrutiny read full chunk content for every alternative expectation, and require any
   headline metric on a new set to be decomposed by question slice. Plan in
   `documentation/plans/2026-09-13-evaluation-set-v2.md`.
+- 2026-09-13, non-figure regression floor (RAG-13): one milestone; Scrutiny FAILED
+  once because the floor's failure message named only questions with no match in
+  the window, omitting those ranked 6 to 10 that also fail hit@5, so a real breach
+  would have pointed at the wrong questions. Passed after one remediation round;
+  UT passed. Lesson: a guard's failure output must name every item that makes the
+  guarded metric fall short, and Scrutiny should construct the regression scenario
+  and check the message would identify it. Plan in
+  `documentation/plans/2026-09-13-non-figure-floor.md`.

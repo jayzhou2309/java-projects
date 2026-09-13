@@ -49,3 +49,9 @@ Live test (RetrievalEvaluationLiveTests), both runs in a shell with no RAG_* ove
   Check against snapshot 91 (python over snapshot-91.json, questions with rank null or > 5): aapl-09 8, msft-01 6, msft-07 7, msft-08 null, nvda-02 null,
   nvda-04 null, nvda-05 10, nvda-07 null, nvda-09 null -> the message names all nine, in set order, with matching ranks. All nine are non-figure, so the
   aggregate list is the same nine. No application start and no POST /api/rag/evaluate in the re-run; no chat model; 84 embeddings (42 per run).
+
+Note added 2026-09-13 after validation: the two live-test logs in this directory were produced one commit-tree line
+before the final HEAD (a comment-only Javadoc edit landed afterwards), so they cite RetrievalEvaluationLiveTests.java
+lines 74 (aggregate) and 75 (non-figure). At commit 2c6966b those assertions are on lines 75 and 76; the Scrutiny
+Validator's own forced runs at 2c6966b failed at :75 for the aggregate floor and :76 for the non-figure floor with
+message text identical to these logs. The logs are left unedited as raw output.

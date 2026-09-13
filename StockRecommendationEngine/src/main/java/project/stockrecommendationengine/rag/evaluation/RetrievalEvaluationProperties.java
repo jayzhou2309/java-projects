@@ -33,7 +33,9 @@ public class RetrievalEvaluationProperties {
     /**
      * Regression floor for hit@5 asserted by the opt-in live test (RetrievalEvaluationLiveTests): the baseline's hit@5
      * minus 0.1, rounded down to a multiple of 0.05. Derived on set v2 (snapshot 69, hit@5 0.785714, gives 0.65); this
-     * supersedes the set v1 floor of 0.50 (snapshot 13, hit@5 0.6), since metrics are not comparable across sets. A value
+     * supersedes the set v1 floor of 0.50 (snapshot 13, hit@5 0.6), since metrics are not comparable across sets. The higher value is not stricter
+     * for the 30 questions carried from v1: 0.65 needs 28 of 42 hits, so if the 12 figure-literal questions hit, 16 of the
+     * 30 carried questions suffice (about 0.53, roughly v1's 0.50). A value
      * above 1 can never be met, which is how the assertion is proven live.
      */
     @NotNull @DecimalMin("0.0")

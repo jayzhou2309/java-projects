@@ -97,7 +97,8 @@ rag:
     # hit@5 floor asserted by the opt-in RetrievalEvaluationLiveTests (-Drag.evaluation.live=true): the current baseline's hit@5
     # minus 0.1, rounded down to a multiple of 0.05. Derived on set v2 (2026-09-13): the v2 winner, snapshot 69 (current weights),
     # has hit@5 0.785714 -> 0.685714 -> 0.65. This supersedes the set v1 floor of 0.50 (v1 baseline 0.6 / snapshot 34 0.633333);
-    # v1 and v2 numbers are not comparable. Override with -Drag.evaluation.min-hit-at-5=<fraction>.
+    # v1 and v2 numbers are not comparable. The rise does not tighten protection for the 30 carried v1 questions: 0.65 needs 28 of 42
+    # hits, so with the 12 figure-literal questions hitting only 16 of 30 carried must hit (about 0.53, like v1's 0.50). Override with -Drag.evaluation.min-hit-at-5=<fraction>.
     min-hit-at-5: 0.65
 
 # Opt-in single-owner integration. The configured account never comes from model arguments.

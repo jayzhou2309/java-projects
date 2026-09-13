@@ -52,8 +52,9 @@ import java.util.stream.Collectors;
  * passages of 20,000 characters take at most about 2.1 s per call with a peak process footprint of about 1.0 GB at max-length 512
  * (CJK or {@code "a "}), and at most 1.1 s and 0.38 GB at max-length 16; 20 passages of 2,000 characters at the defaults take
  * about 0.3 s. The cap bounds memory at about 1.0 GB per call (1,008 MiB for 64 passages of 181-token pairs at batch size 64,
- * the worst shape found), but below that ceiling a larger batch size still raises it (303 MiB at batch size 1, 880 MiB at 20).
- * Memory adds up per concurrent call: up to 1.65 GB measured for the two calls the retrieval pool allows at once.
+ * the worst shape found); below that ceiling batch size still matters, not monotonically (303 MiB at batch size 1 against
+ * 880 MiB at 20 and 856 MiB at 64 for the same input). Memory adds up per concurrent call: up to 1,651 MiB (about 1.7 GB)
+ * measured for the two calls the retrieval pool allows at once. Evidence: live-runs/2026-09-13-reranker/scrutiny-probes/.
  * <p>
  * Network. The static initializer applies {@link DjlRuntimeDefaults} (system properties {@code OPT_OUT_TRACKING=true} and
  * {@code ai.djl.offline=true} when absent) before any DJL class is initialised, so {@code Ec2Utils.callHome} in

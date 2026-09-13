@@ -121,7 +121,8 @@ final class TraceReproductionCheck {
 
     private static String rerankOutcome(List<QuestionTrace> traces, String id) {
         if (traces == null) return "no traces recorded";
-        RetrievalTrace trace = traces.stream().filter(t -> t.id().equals(id)).map(QuestionTrace::trace).findFirst().orElse(null);
+        // Filter by id, then map: a question that fell back without an error can carry a null trace, which Stream.map then findFirst rejects.
+        RetrievalTrace trace = traces.stream().filter(t -> t.id().equals(id)).findFirst().map(QuestionTrace::trace).orElse(null);
         if (trace == null) return "no trace recorded for the question";
         return "trace outcome " + trace.rerank().outcome() + " reason " + trace.rerank().fallbackReason();
     }

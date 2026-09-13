@@ -8,7 +8,8 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Creates the cross-encoder reranker only when {@code rag.retrieval.cross-encoder.enabled} is true: the files are verified
  * (missing file or checksum mismatch fails startup naming the path), then the ONNX Runtime session and tokenizer load once and
- * are closed on shutdown. The bean methods return project interfaces, so with the property off no ONNX Runtime or tokenizer
+ * are closed on shutdown (with a separately loaded tokenizer that only the evaluation evidence report reads). The bean methods return
+ * project interfaces, so with the property off no ONNX Runtime or tokenizer
  * class is loaded and the application starts exactly as without this class.
  */
 @Configuration
@@ -31,5 +32,15 @@ public class CrossEncoderConfiguration {
     @Bean
     FilingReranker crossEncoderReranker(PairScorer crossEncoderScorer, CrossEncoderModelFiles files) {
         return new CrossEncoderReranker(crossEncoderScorer, files.version());
+    }
+
+    /**
+     * The cross-encoder's tokenizer for token positions in the evaluation evidence report only (RAG.md, Retrieval Evaluation, Evidence
+     * report): the verified {@code tokenizer.json} loaded the way the scorer loads it, with the model's version. Takes the scorer so it
+     * is created after the scorer's native-library checks; never used by retrieval or scoring.
+     */
+    @Bean(destroyMethod = "close")
+    PassageTokenizer crossEncoderPassageTokenizer(PairScorer crossEncoderScorer, CrossEncoderModelFiles files) throws java.io.IOException {
+        return new CrossEncoderPassageTokenizer(files.tokenizerPath(), files.version());
     }
 }

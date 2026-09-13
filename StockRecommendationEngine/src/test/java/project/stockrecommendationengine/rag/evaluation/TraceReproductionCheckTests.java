@@ -67,6 +67,22 @@ class TraceReproductionCheckTests {
     }
 
     @Test
+    void aFallbackWithoutAnErrorWhoseTraceIsNullIsNamedWithoutThrowing() {
+        // Plan amendment 1: the fallback message looked the trace up with map then findFirst, which throws on a null trace.
+        RetrievalEvaluation base = run(results -> replace(results, "nvda-11", r -> result(r, 5, 805L, "HYBRID_RRF", null)), Map.of());
+        List<QuestionTrace> traces = base.traces().stream().map(t -> t.id().equals("nvda-11") ? new QuestionTrace(t.id(), null) : t).toList();
+        RetrievalEvaluation run = new RetrievalEvaluation(base.id(), base.evaluatedAt(), base.setVersion(), base.questionCount(), base.hitAt1(),
+                base.hitAt3(), base.hitAt5(), base.mrr(), base.window(), base.retrievalStrategy(), base.properties(), base.results(), base.tickerHitAt5(),
+                base.misses(), base.slices(), traces);
+        assertThat(run.results()).filteredOn(r -> r.id().equals("nvda-11")).singleElement().satisfies(r -> assertThat(r.error()).isNull());
+        assertThatCode(() -> TraceReproductionCheck.problems(reference, run)).doesNotThrowAnyException();
+        assertThat(failure(run)).isEqualTo(message(3,
+                "question nvda-11 fell back: strategy HYBRID_RRF (not _RERANKED), no trace recorded for the question",
+                "property rerankedQuestions: snapshot 297 42, run 41",
+                "property rerankFallbackQuestions: snapshot 297 0, run 1"));
+    }
+
+    @Test
     void anErroredQuestionIsNamedWithItsError() {
         RetrievalEvaluation run = run(results -> replace(results, "aapl-04",
                 r -> result(r, null, null, null, "IllegalStateException: Embedding request failed")), Map.of());

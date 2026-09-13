@@ -34,6 +34,8 @@ class IntegrationWiringTests {
             .withBean(FilingRetrievalService.class, () -> mock(FilingRetrievalService.class))
             .withBean(RetrievalEvaluationService.class, () -> mock(RetrievalEvaluationService.class))
             .withBean(RetrievalEvaluationRepository.class, () -> mock(RetrievalEvaluationRepository.class))
+            .withBean(project.stockrecommendationengine.rag.evaluation.RetrievalEvidenceService.class,
+                    () -> mock(project.stockrecommendationengine.rag.evaluation.RetrievalEvidenceService.class))
             .withBean(project.stockrecommendationengine.rag.freshness.FilingFreshnessService.class,
                     () -> mock(project.stockrecommendationengine.rag.freshness.FilingFreshnessService.class))
             .withBean(PriceBarRepository.class, () -> mock(PriceBarRepository.class))
@@ -53,7 +55,8 @@ class IntegrationWiringTests {
     @Test void retrievalEvaluationEndpointsWireByDefaultAndAreListedAsTokenGated() {
         runner.run(context -> {
             assertThat(context).hasNotFailed().hasSingleBean(RetrievalEvaluationController.class).hasSingleBean(IntegrationAccessConfiguration.class);
-            verifyNoInteractions(context.getBean(RetrievalEvaluationService.class), context.getBean(RetrievalEvaluationRepository.class));
+            verifyNoInteractions(context.getBean(RetrievalEvaluationService.class), context.getBean(RetrievalEvaluationRepository.class),
+                    context.getBean(project.stockrecommendationengine.rag.evaluation.RetrievalEvidenceService.class));
         });
     }
 

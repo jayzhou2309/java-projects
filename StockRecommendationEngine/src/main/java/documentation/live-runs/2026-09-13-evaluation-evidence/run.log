@@ -94,3 +94,49 @@ R5. C5 attempt 2, the same command with -Drag.evaluation.trace-out=<scratch file
 R6. ./mvnw -o test -Dtest='CrossEncoderRerankerLiveTests,CrossEncoderWindowedScoringLiveTests' -Drag.rerank.live=true -> exit 0, 11 tests, 0 skipped
     (remediation-1-live-test-cross-encoder-scored.log). Its 16 CROSS_ENCODER lines without latency figures are identical (diff) to those of
     live-test-cross-encoder-scored.log above.
+
+Milestone 2, 2026-09-13: per-question evidence report (plans/2026-09-13-evaluation-evidence.md, Milestone 2 with Amendment 1)
+Branch evaluation-evidence at 576f8ba with the Milestone 2 code in the working tree (committed with these files). Same machine. Shell for every build
+and test: set -a && source .env && set +a; `env | grep` and `.env` checked for RAG_* and the application enable flags: 0 lines. No chat model, no
+embedding, no /api/recommendations call; the evidence endpoint and the live tests read the database only.
+Snapshots used (shared database, not created here): 459 traced at snapshot 297's settings, 297 without traces, 461 traced with reranking off.
+
+M2-1. ./mvnw -q -o verify -> exit 0 (53 test classes, 401 tests, 0 failures, 0 errors, 26 skipped: the opt-in live tests, the two new live classes
+      included; counted from target/surefire-reports written by this run). Run last, after the evidence below and the final test edit.
+M2-2. ./mvnw -o test -Dtest=CrossEncoderPassageTokenizerLiveTests -Drag.rerank.live=true -> exit 0, 2 tests (milestone-2-live-test-passage-tokenizer.log).
+      - The native tokenizer's character spans are code point offsets: in "a <emoji> revenue", "revenue" is 4-11 natively and 5-12 after conversion
+        (EVIDENCE_TOKENIZER lines); every non-[UNK] token's converted span selects its own characters (lower-cased, accents removed) over five texts
+        with a table row, emoji, curly quotes and non-breaking spaces, CJK, and a line break; token counts equal the scorer's tokenizer's.
+      - For 6 passages of 0 to 2,601 tokens, under head, max-window overlap 64 / 4 windows, overlap 224 / 4, overlap 0 / 16, at max-length 512 and 64,
+        the window arithmetic's row count equals the rows the real scorer ran for every passage (EVIDENCE_WINDOWS lines), and Scoring.parse of each
+        scorer's label returns its settings.
+M2-3. ./mvnw -o test -Dtest=RetrievalEvidenceLiveTests -Drag.evaluation.live=true -> exit 0, 2 tests (milestone-2-live-test-evidence.log).
+      - Snapshot 459: for all 840 rerank inputs (42 questions x 20), the window arithmetic on the stored chunk text beside the question, at the current
+        max-length 512 and the recorded max-window/overlap=64/maxWindows=4, equals the trace's windowCount; 61 reported holding chunks carry an observed
+        windowCount and each has that many derived window starts.
+      - msft-05: chunks 460 (650 tokens, W 492, phrase tokens [105, 121), wholly in the head, row 1; fused 3, reranked 10, score 1.2978278), 515 (700
+        tokens, W 492, phrase tokens [614, 625), not in the head, row 2 of starts 0 and 208; rerank input observed true, fused 14, reranked 12, score
+        0.81250834), 571 (655 tokens, phrase tokens [121, 132), wholly in the head; fused 2, reranked 14). msft-04 chunk 466: reranked 11 (observed),
+        score -5.90612.
+      - Snapshot 297: 42 questions, 66 holding-chunk rows, every candidate field unknown "no trace", token fields derived.
+M2-4. App run for the user-facing flow: SERVER_PORT=8081, a 44-character INTEGRATION_ACCESS_TOKEN, RAG_CROSS_ENCODER_ENABLED=true exported in the run
+      shell only, ./mvnw -q -o spring-boot:run; "Started StockRecommendationEngineApplication in 3.441 seconds" with "Cross-encoder loaded". (A first
+      launch with a 31-character token was stopped before any request.) Commands, T the token, B=http://localhost:8081/api/rag/evaluate:
+        curl -s -o evidence-459.json -H "Authorization: Bearer $T" "$B/459/evidence"                  -> 200 application/json 430,321 bytes
+        curl -s -o evidence-459.md -H "Authorization: Bearer $T" "$B/459/evidence?format=markdown"    -> 200 text/markdown;charset=UTF-8 109,853 bytes
+        curl -s -o evidence-297.json -H "Authorization: Bearer $T" "$B/297/evidence"                  -> 200 application/json 309,576 bytes
+        curl -s -o evidence-297.md -H "Authorization: Bearer $T" "$B/297/evidence?format=markdown"    -> 200 text/markdown;charset=UTF-8 87,746 bytes
+        curl -s -H "Authorization: Bearer $T" "$B/461/evidence"                                        -> 200 450,882 bytes (not committed)
+        curl -s "$B/459/evidence" (no token) -> 401; "$B/999999/evidence" -> 404; "$B/459/evidence?format=html" -> 400
+      The app log gained only the three DispatcherServlet initialisation lines during these requests (no scoring, embedding, or retrieval line).
+      Stopped with pkill -f spring-boot:run; lsof on port 8081: 0 listeners.
+      - evidence-459.json: 42 questions, 57 accepted phrases, 0 held by no stored chunk, 66 holding-chunk rows with 66 occurrences (head: 44 wholly,
+        3 partly, 19 not); 42 RERANKED, ranking "reranked order" for all; values 1,649 observed, 507 derived, 0 unknown; the text "inferred" absent.
+        msft-05 and msft-04 as in M2-3; msft-05's rankedAbove lists 9 chunks (1064, 640, 635, 637, 573, 516, 518, 514, 574) above chunk 460 at 10;
+        msft-04's best accepted chunk is 466 at 11 with 10 above it; chunk 467 (holds the phrase, fused 21) is not a rerank input (observed).
+      - evidence-297.json: the same phrases, chunks, and token fields (507 derived); 840 values unknown, every one with reason "no trace"; 277 observed.
+      - 461 (reranking off, traced): 42 OFF, ranking "fused order" for all, 0 unknown.
+      - Markdown from JSON on the fetched files: a scratch program called EvidenceMarkdownRenderer.render on the parsed evidence-459.json and
+        evidence-297.json; the output equalled the fetched markdown exactly (109,853 and 87,746 characters, equal=true).
+M2-5. retrieval_evaluations after every run: 34 rows, max id 461 (459 to 461 were the newest rows before this milestone; the DB-backed unit test's
+      snapshot was rolled back).

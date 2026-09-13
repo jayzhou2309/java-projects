@@ -144,8 +144,17 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
     /** {@code head}, or {@code max-window/overlap=<windowOverlapTokens>/maxWindows=<maxWindows>}. */
     @Override
     public String scoring() {
-        if (passageScoring == PassageScoring.HEAD) return PassageScoring.HEAD.label();
-        return PassageScoring.MAX_WINDOW.label() + "/overlap=" + windowOverlapTokens + "/maxWindows=" + maxWindows;
+        return scoring(passageScoring, windowOverlapTokens, maxWindows);
+    }
+
+    /**
+     * The recorded scoring label for these settings ({@link CrossEncoderTokenPositions.Scoring#label()}, which the evidence report
+     * parses back): {@code head}, or {@code max-window/overlap=<windowOverlapTokens>/maxWindows=<maxWindows>}.
+     */
+    static String scoring(PassageScoring passageScoring, int windowOverlapTokens, int maxWindows) {
+        CrossEncoderTokenPositions.Scoring scoring = passageScoring == PassageScoring.HEAD ? CrossEncoderTokenPositions.Scoring.head()
+                : CrossEncoderTokenPositions.Scoring.maxWindow(windowOverlapTokens, maxWindows);
+        return scoring.label();
     }
 
     /** The session's input and output names with their declared types and shapes, as reported by ONNX Runtime. */

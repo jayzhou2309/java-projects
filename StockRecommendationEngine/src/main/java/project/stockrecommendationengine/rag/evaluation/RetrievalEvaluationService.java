@@ -39,6 +39,7 @@ import project.stockrecommendationengine.rag.retrieval.RerankerUnavailableExcept
 @Slf4j
 public class RetrievalEvaluationService {
     static final int MISS_CHUNKS = 3;
+    private static final String RERANKED_SUFFIX = "_RERANKED";
     private static final int SCALE = 6;
     private final RetrievalEvaluationSetLoader loader;
     private final FilingRetrievalService retrieval;
@@ -61,7 +62,14 @@ public class RetrievalEvaluationService {
      * every retrieval request (true or false forces the keyword plus vector path on or off for the whole run; null lets
      * each request follow {@code rag.retrieval.hybrid-enabled}) and recorded as {@code properties.hybrid}, null when absent.
      * {@code rerank} is passed and recorded ({@code properties.rerank}) the same way, with {@code properties.reranker} the
-     * reranker's simple class name (null when none) and {@code properties.rerankCandidates}. {@code rerank} true with no
+     * reranker's simple class name (null when none), {@code properties.rerankerVersion} (the reranker's model version, the
+     * first 12 hex characters of the model's SHA-256 for the cross-encoder; null when there is no reranker or it reports none),
+     * and {@code properties.rerankCandidates}. Each question result records the strategy retrieval reported for it;
+     * {@code properties.rerankedQuestions} counts questions whose strategy ends {@code _RERANKED}, and
+     * {@code properties.rerankFallbackQuestions} counts, when reranking resolved on for the run ({@code rerank}, else
+     * {@code rag.retrieval.reranking-enabled}), questions retrieved without error whose strategy is not reranked (a timeout,
+     * reranker failure, or invalid result fell back to the fused order, or there were no candidates to rerank); it is 0 when
+     * reranking resolved off. The snapshot's own {@code retrievalStrategy} stays the first question's. {@code rerank} true with no
      * reranker bean throws {@link RerankerUnavailableException} before any question runs or any snapshot is stored.
      */
     public RetrievalEvaluation evaluate(Boolean hybrid, Boolean rerank) {
@@ -83,7 +91,7 @@ public class RetrievalEvaluationService {
             } catch (RuntimeException failure) {
                 String error = failure.getClass().getSimpleName() + ": " + failure.getMessage();
                 log.warn("Retrieval failed for evaluation question {}: {}", question.id(), error);
-                QuestionResult failed = new QuestionResult(question.id(), question.ticker(), question.kind(), null, null, error);
+                QuestionResult failed = new QuestionResult(question.id(), question.ticker(), question.kind(), null, null, error, null);
                 results.add(failed);
                 slice.add(failed);
                 misses.add(new Miss(question.id(), List.of(), error));
@@ -92,18 +100,20 @@ public class RetrievalEvaluationService {
             if (strategy == null) strategy = response.retrievalStrategy();
             RetrievedFilingChunk matched = firstMatch(question, response.results(), window);
             Integer rank = matched == null ? null : response.results().indexOf(matched) + 1;
-            QuestionResult result = new QuestionResult(question.id(), question.ticker(), question.kind(), rank, matched == null ? null : matched.chunkId(), null);
+            QuestionResult result = new QuestionResult(question.id(), question.ticker(), question.kind(), rank, matched == null ? null : matched.chunkId(), null,
+                    response.retrievalStrategy());
             results.add(result);
             slice.add(result);
             if (matched == null) misses.add(new Miss(question.id(), response.results().stream().limit(MISS_CHUNKS).map(RetrievalEvaluationService::top).toList(), null));
         }
         RetrievalEvaluation evaluation = new RetrievalEvaluation(null, Instant.now(), set.version(), results.size(),
                 hitAt(results, 1), hitAt(results, 3), hitAt(results, 5), mrr(results), window, strategy == null ? "UNAVAILABLE" : strategy,
-                runProperties(set, window, hybrid, rerank, reranker), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses),
+                runProperties(set, window, hybrid, rerank, reranker, results), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses),
                 slices(figure, nonFigure));
         RetrievalEvaluation stored = repository.save(evaluation);
-        log.info("Retrieval evaluation stored: id={}, hitAt1={}, hitAt3={}, hitAt5={}, mrr={}, misses={}",
-                stored.id(), stored.hitAt1(), stored.hitAt3(), stored.hitAt5(), stored.mrr(), stored.misses().size());
+        log.info("Retrieval evaluation stored: id={}, hitAt1={}, hitAt3={}, hitAt5={}, mrr={}, misses={}, rerankedQuestions={}, rerankFallbackQuestions={}",
+                stored.id(), stored.hitAt1(), stored.hitAt3(), stored.hitAt5(), stored.mrr(), stored.misses().size(),
+                stored.properties().get("rerankedQuestions"), stored.properties().get("rerankFallbackQuestions"));
         return stored;
     }
 
@@ -184,7 +194,17 @@ public class RetrievalEvaluationService {
                 BigDecimal.valueOf(chunk.similarityScore()).setScale(SCALE, RoundingMode.HALF_UP));
     }
 
-    private Map<String, Object> runProperties(RetrievalEvaluationSet set, int window, Boolean hybrid, Boolean rerank, String reranker) {
+    /** True when the strategy retrieval reported carries the reranked suffix. */
+    static boolean reranked(QuestionResult result) {
+        return result.retrievalStrategy() != null && result.retrievalStrategy().endsWith(RERANKED_SUFFIX);
+    }
+
+    private Map<String, Object> runProperties(RetrievalEvaluationSet set, int window, Boolean hybrid, Boolean rerank, String reranker,
+            List<QuestionResult> results) {
+        boolean rerankResolved = rerank != null ? rerank : retrievalProperties.isRerankingEnabled();
+        long rerankedQuestions = results.stream().filter(RetrievalEvaluationService::reranked).count();
+        long fallbackQuestions = rerankResolved
+                ? results.stream().filter(r -> r.error() == null && !reranked(r)).count() : 0;
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("window", window);
         out.put("latestFilingsOnly", true);
@@ -202,6 +222,9 @@ public class RetrievalEvaluationService {
         out.put("rerank", rerank);
         out.put("rerankCandidates", retrievalProperties.getRerankCandidates());
         out.put("reranker", reranker);
+        out.put("rerankerVersion", retrieval.rerankerVersion().orElse(null));
+        out.put("rerankedQuestions", (int) rerankedQuestions);
+        out.put("rerankFallbackQuestions", (int) fallbackQuestions);
         return out;
     }
 }

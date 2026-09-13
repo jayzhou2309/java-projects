@@ -36,7 +36,14 @@ class RetrievalEvaluationLiveTests {
         System.out.println("RETRIEVAL_EVAL set=" + evaluation.setVersion() + " questions=" + evaluation.questionCount()
                 + " window=" + evaluation.window() + " strategy=" + evaluation.retrievalStrategy()
                 + " hitAt1=" + evaluation.hitAt1() + " hitAt3=" + evaluation.hitAt3() + " hitAt5=" + evaluation.hitAt5()
-                + " mrr=" + evaluation.mrr() + " floor=" + floor + " nonFigureFloor=" + nonFigureFloor);
+                + " mrr=" + evaluation.mrr() + " floor=" + floor + " nonFigureFloor=" + nonFigureFloor
+                + " reranker=" + evaluation.properties().get("reranker") + " rerankerVersion=" + evaluation.properties().get("rerankerVersion")
+                + " rerankedQuestions=" + evaluation.properties().get("rerankedQuestions")
+                + " rerankFallbackQuestions=" + evaluation.properties().get("rerankFallbackQuestions"));
+        // Any question whose retrieval fell back from reranking (or ran with a different strategy) is named here.
+        System.out.println("RETRIEVAL_EVAL strategies=" + evaluation.results().stream()
+                .collect(java.util.stream.Collectors.groupingBy(r -> String.valueOf(r.retrievalStrategy()), java.util.TreeMap::new,
+                        java.util.stream.Collectors.mapping(RetrievalEvaluation.QuestionResult::id, java.util.stream.Collectors.toList()))));
         if (evaluation.slices() != null) {
             evaluation.slices().forEach((name, s) -> System.out.println("RETRIEVAL_EVAL slice=" + name + " questions=" + s.questionCount()
                     + " hitAt1=" + s.hitAt1() + " hitAt3=" + s.hitAt3() + " hitAt5=" + s.hitAt5() + " mrr=" + s.mrr() + " misses=" + s.missIds()));

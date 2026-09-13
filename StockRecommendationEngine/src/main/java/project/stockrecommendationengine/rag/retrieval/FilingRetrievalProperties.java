@@ -26,8 +26,9 @@ public class FilingRetrievalProperties {
     private boolean rerankingEnabled = false;
 
     /**
-     * How many of the fused, diversified candidates the reranker receives when reranking runs (the first N); the rest are
-     * dropped. With reranking off the topK cut is taken from the full fused list as before.
+     * How many of the fused, diversified candidates the reranker receives when reranking runs: the first
+     * max(rerankCandidates, topK), so a topK above this value is never cut short; the rest are dropped. With reranking off the
+     * topK cut is taken from the full fused list as before.
      */
     @Min(5) @Max(40)
     private int rerankCandidates = 20;

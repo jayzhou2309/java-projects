@@ -3,6 +3,7 @@ package project.stockrecommendationengine.rag.retrieval;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ClassUtils;
 import project.stockrecommendationengine.rag.dto.RetrievalRequest;
 import project.stockrecommendationengine.rag.dto.RetrievalResponse;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
@@ -79,9 +80,17 @@ public class FilingRetrievalService {
         if (rerankExecutor != null) rerankExecutor.shutdownNow();
     }
 
-    /** The configured reranker's simple class name, or empty when no {@link FilingReranker} bean exists. */
+    /**
+     * The configured reranker's simple class name, taken from the user class so a CGLIB or other proxy suffix never appears,
+     * or empty when no {@link FilingReranker} bean exists.
+     */
     public Optional<String> rerankerName() {
-        return filingReranker.map(reranker -> reranker.getClass().getSimpleName());
+        return filingReranker.map(reranker -> ClassUtils.getUserClass(reranker).getSimpleName());
+    }
+
+    /** The configured reranker's {@link FilingReranker#version()}, or empty when there is no reranker or it reports none. */
+    public Optional<String> rerankerVersion() {
+        return filingReranker.map(FilingReranker::version);
     }
 
     /**
@@ -100,10 +109,13 @@ public class FilingRetrievalService {
      * Reranking runs when the request's {@code rerank} field is true, or it is absent and
      * {@code rag.retrieval.reranking-enabled} is on; {@code rerank: true} with no reranker bean throws
      * {@link RerankerUnavailableException} before any search (HTTP 400). The reranker receives the first
-     * {@code rerank-candidates} of the fused, diversified list and waits at most {@code rerank-timeout-ms}; its result is
-     * validated against that input (topK at most, no duplicate, altered, or invented chunk). A timeout, a reranker
-     * exception, or a result failing validation is logged at WARN with the exception class only, and retrieval returns the
-     * fused order cut to topK with the strategy not suffixed {@code _RERANKED}; retrieval never fails because of the reranker.
+     * max({@code rerank-candidates}, topK) of the fused, diversified list, so a reranked response never holds fewer chunks
+     * than the fused one would, and waits at most {@code rerank-timeout-ms}; its result is validated against that input (topK
+     * at most, no duplicate, altered, or invented chunk). A timeout, a reranker {@link RuntimeException} (including a
+     * rejected submission), an interruption, or a result failing validation is logged at WARN with the exception class only,
+     * and retrieval returns the fused order cut to topK with the strategy not suffixed {@code _RERANKED}. An {@link Error}
+     * thrown by the reranker (for example {@link OutOfMemoryError} or a native library {@link LinkageError}) is not a
+     * fallback case: it propagates and fails the retrieval.
      */
     public RetrievalResponse retrieve(RetrievalRequest request) {
         long retrievalStarted = System.nanoTime();
@@ -171,7 +183,8 @@ public class FilingRetrievalService {
             String retrievalStrategy = keywordContributed ? "HYBRID_RRF" : "FILTERED_VECTOR";
             if (rerankRequested && !diverseCandidates.isEmpty()) {
                 List<RetrievedFilingChunk> rerankInput = List.copyOf(diverseCandidates.subList(
-                        0, Math.min(diverseCandidates.size(), retrievalProperties.getRerankCandidates())));
+                        0, Math.min(diverseCandidates.size(),
+                                Math.max(retrievalProperties.getRerankCandidates(), requestedResultCount))));
                 selectedEvidence = rerank(normalizedTicker, normalizedQuery, rerankInput, requestedResultCount);
                 if (selectedEvidence != null) retrievalStrategy = retrievalStrategy + "_RERANKED";
             }

@@ -26,9 +26,9 @@ class RetrievalEvaluationRepositoryTests {
     @Test void snapshotsRoundTripAndTheNewestIsReturned() {
         // Real snapshots may exist in the shared database; timestamps in the future keep these rows the newest.
         Instant base = Instant.now().plusSeconds(3600);
-        var results = List.of(new QuestionResult("aapl-1", "AAPL", Kind.FIGURE, 1, 101L, null),
-                new QuestionResult("aapl-2", "AAPL", Kind.NARRATIVE, null, null, null),
-                new QuestionResult("msft-1", "MSFT", Kind.NARRATIVE, null, null, "IllegalStateException: embedding unavailable"));
+        var results = List.of(new QuestionResult("aapl-1", "AAPL", Kind.FIGURE, 1, 101L, null, "HYBRID_RRF_RERANKED"),
+                new QuestionResult("aapl-2", "AAPL", Kind.NARRATIVE, null, null, null, "HYBRID_RRF"),
+                new QuestionResult("msft-1", "MSFT", Kind.NARRATIVE, null, null, "IllegalStateException: embedding unavailable", null));
         var misses = List.of(new Miss("aapl-2", List.of(new TopChunk(5L, "0000320193-25-000079", "ITEM_8", new BigDecimal("0.812345")),
                         new TopChunk(6L, "0000320193-26-000020", "ITEM_2", new BigDecimal("0.700000"))), null),
                 new Miss("msft-1", List.of(), "IllegalStateException: embedding unavailable"));
@@ -57,6 +57,8 @@ class RetrievalEvaluationRepositoryTests {
         assertThat(stored.properties()).containsEntry("window", 10).containsEntry("latestFilingsOnly", true);
         assertThat(stored.results()).extracting(QuestionResult::id).containsExactly("aapl-1", "aapl-2", "msft-1");
         assertThat(stored.results()).extracting(QuestionResult::rank).containsExactly(1, null, null);
+        // Reranker milestone 2 (Amendment 1): the per-question strategy round-trips, null on an errored question.
+        assertThat(stored.results()).extracting(QuestionResult::retrievalStrategy).containsExactly("HYBRID_RRF_RERANKED", "HYBRID_RRF", null);
         assertThat(stored.results().get(0).matchedChunkId()).isEqualTo(101L);
         assertThat(stored.results().get(0).kind()).isEqualTo(Kind.FIGURE);
         assertThat(stored.results().get(2).error()).contains("embedding unavailable");
@@ -72,8 +74,8 @@ class RetrievalEvaluationRepositoryTests {
 
     @Test void slicesRoundTripAndARowWrittenBeforeSlicesReadsBackWithNullSlices() {
         Instant base = Instant.now().plusSeconds(7200);
-        var results = List.of(new QuestionResult("aapl-1", "AAPL", Kind.FIGURE, 1, 101L, null),
-                new QuestionResult("aapl-2", "AAPL", Kind.NARRATIVE, null, null, null));
+        var results = List.of(new QuestionResult("aapl-1", "AAPL", Kind.FIGURE, 1, 101L, null, null),
+                new QuestionResult("aapl-2", "AAPL", Kind.NARRATIVE, null, null, null, null));
         var slices = new java.util.LinkedHashMap<String, SliceMetrics>();
         slices.put("figure", new SliceMetrics(1, new BigDecimal("1.000000"), new BigDecimal("1.000000"), new BigDecimal("1.000000"), new BigDecimal("1.000000"), List.of(),
                 List.of(new RankedQuestion("aapl-3", 7))));
@@ -111,6 +113,8 @@ class RetrievalEvaluationRepositoryTests {
         // Reranker milestone 1, C4: a snapshot stored before rerank existed reads back with its properties unchanged.
         assertThat(legacy.properties()).containsExactly(Map.entry("window", 10));
         assertThat(legacy.results()).extracting(QuestionResult::rank).containsExactly(1);
+        // Reranker milestone 2: a question stored before the per-question strategy existed reads back with it null.
+        assertThat(legacy.results()).extracting(QuestionResult::retrievalStrategy).containsOnlyNulls();
         assertThat(repository.latest().orElseThrow().id()).isEqualTo(legacyId);
         assertThat(repository.latest().orElseThrow().slices()).isNull();
     }

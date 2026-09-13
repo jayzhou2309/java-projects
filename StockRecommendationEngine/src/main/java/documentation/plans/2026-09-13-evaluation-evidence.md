@@ -304,8 +304,10 @@ above a multi-line comment pass). Jay chose to close it by rewording: the Orches
 (the limits and a claim-id uniqueness rule), confirmed by a documentation-only Scrutiny check before Milestone 4b.
 
 Milestone 4b (F2, F3, F4 on Milestone 4a's merged evidence), constraints added:
-- Its claims file lives in `live-runs/2026-09-13-evaluation-evidence/measurement/claims.json` and uses the id prefix
-  `W-` so no id repeats the existing `C-` claims in RAG.md.
+- Its claims file lives in `live-runs/2026-09-13-evaluation-evidence/measurement/claims.json` and numbers its ids from
+  `C-101` upward, so no id repeats the existing `C-001` to `C-013` claims in RAG.md. (Corrected 2026-09-14: this bullet
+  said to use the prefix `W-`, which the id format `C-` followed by at least three digits refuses, so `verify` would
+  have failed.)
 - Every lead-in above a generated block is a single short line with no causal or absolute word and no number, never a
   wrapped line or setext heading; the rest of each regenerated section is block bullets.
 - Cite Milestone 4a's run records with their limits (Amendment 6): run 627's 4,000 ms timeout as a run record whose

@@ -1,6 +1,6 @@
 # Retrieval evidence report: snapshot 459
 
-Each value is followed by its basis: observed (read from the numbered source), derived (computed by the numbered rule), or unknown with the reason. Sources and rules are listed at the end. Offsets are [start, end), end exclusive; window numbers start at 1.
+Each value is followed by its basis: observed (read from the numbered source), derived (computed by the numbered rule), or unknown with the reason. Sources and rules are listed at the end. Offsets are [start, end), end exclusive; window numbers start at 1. windowStarts and windowsHoldingWholly are arithmetic on the snapshot's recorded scoring: they are rows that were scored only for a chunk that is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored. W uses max-length from the current configuration, which snapshots do not record.
 
 ## Snapshot
 
@@ -189,14 +189,14 @@ rankedAbove: unknown: no trace for this question (its retrieval failed)
 22. observed: bundled set evaluation/scripted-set.json
 23. observed: sec_filing_chunks at report time: chunks of the phrase's accession and section whose text contains the phrase (RetrievalEvaluationService.matches)
 24. derived: tokens of the stored chunk text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer
-25. derived: W = max-length - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)
-26. derived: start token of each scored row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows)
+25. derived: W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)
+26. derived: start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored
 27. derived: occurrence of the normalised phrase in the normalised chunk text (whitespace runs collapsed, trimmed, lower-cased), mapped to UTF-16 offsets of the stored text, end exclusive
 28. derived: tokens of the whole-chunk tokenization whose character span overlaps the occurrence, end exclusive
 29. derived: wholly: token span end <= W; partly: start < W < end; not: start >= W
-30. derived: 1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly)
+30. derived: 1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored
 31. observed: trace fused (null: not in the fused list)
-32. observed: trace rerank candidates (null: not a rerank input)
+32. observed: trace rerank candidates (true: a rerank input; false: not a rerank input)
 33. observed: trace rerank candidates rerankedPosition
 34. observed: trace rerank candidates score
 35. observed: trace rerank candidates windowCount

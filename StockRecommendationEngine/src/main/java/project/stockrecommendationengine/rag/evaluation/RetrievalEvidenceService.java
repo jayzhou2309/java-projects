@@ -45,18 +45,23 @@ import static project.stockrecommendationengine.rag.evaluation.EvidenceValue.unk
  * Rules that decide a basis:
  * <ul>
  * <li>Candidate and score fields come only from the question's trace; without one they are unknown ({@value #NO_TRACE} on a snapshot
- * stored without traces), never filled from a default or another snapshot.</li>
+ * stored without traces; {@value #NO_TRACE_FOR_QUESTION} only when the question's result records an error, otherwise
+ * {@value #NO_TRACE_RECORDED}), never filled from a default or another snapshot.</li>
  * <li>Token fields need the tokenizer bean (else {@value #TOKENIZER_UNAVAILABLE}) and a snapshot {@code rerankerVersion} equal to the
  * loaded model's version (else unknown with the recorded and loaded versions), so they are never computed with another tokenizer.</li>
  * <li>{@code max-length} is not recorded in snapshots: it is observed from the current configuration and named as such.</li>
- * <li>Window starts and window membership also need a recorded, recognised {@code rerankerScoring}; head membership does not.</li>
+ * <li>Window starts and window membership also need a recorded, recognised {@code rerankerScoring}; head membership does not. They are
+ * arithmetic on that scoring: rows that were scored only for a rerank input of a RERANKED trace, otherwise the rows the scoring would
+ * score.</li>
  * </ul>
  */
 @Service
 public class RetrievalEvidenceService {
     static final String NO_TRACE = "no trace";
     static final String NO_TRACE_FOR_QUESTION = "no trace for this question (its retrieval failed)";
+    static final String NO_TRACE_RECORDED = "no trace recorded for this question";
     static final String TOKENIZER_UNAVAILABLE = "tokenizer unavailable";
+    static final String CROSS_ENCODER_NOT_LOADED = "cross-encoder not loaded (no PassageTokenizer bean: rag.retrieval.cross-encoder.enabled is not true)";
     static final String NO_RERANKER_VERSION = "snapshot records no rerankerVersion";
     static final String NO_RERANKER_SCORING = "snapshot records no rerankerScoring";
     static final String PHRASE_NOT_MAPPED = "phrase position not mappable: the per-character normalisation differs from RetrievalEvaluationService.normalise";
@@ -66,6 +71,7 @@ public class RetrievalEvidenceService {
     static final String SOURCE_FUSED = "trace fused (null: not in the fused list)";
     static final String SOURCE_RETURNED = "trace returnedChunkIds (null: not returned)";
     static final String SOURCE_CANDIDATES = "trace rerank candidates (null: not a rerank input)";
+    static final String SOURCE_RERANK_INPUT = "trace rerank candidates (true: a rerank input; false: not a rerank input)";
     static final String SOURCE_OFF = "trace rerank outcome OFF (not reranked)";
     static final String SOURCE_HOLDING = "sec_filing_chunks at report time: chunks of the phrase's accession and section whose text contains the phrase"
             + " (RetrievalEvaluationService.matches)";
@@ -76,16 +82,20 @@ public class RetrievalEvidenceService {
     static final String RULE_SCORING_HEAD = "parsed from snapshot properties.rerankerScoring (head scoring has no overlap or window count)";
     static final String RULE_QUERY_TOKENS = "tokens of the question text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer";
     static final String RULE_CHUNK_TOKENS = "tokens of the stored chunk text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer";
-    static final String RULE_WINDOW_LENGTH = "W = max-length - 3 - the query tokens kept against the whole chunk, longest first"
-            + " (CrossEncoderPairAssembler.windowLength)";
-    static final String RULE_WINDOW_STARTS = "start token of each scored row under the snapshot's rerankerScoring: head one row at 0; max-window"
-            + " CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows)";
+    static final String RULE_WINDOW_LENGTH = "W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens"
+            + " kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)";
+    /** Said of both window fields: they are arithmetic on the recorded scoring, and only the trace shows whether the chunk was scored. */
+    static final String ROWS_NOT_NECESSARILY_SCORED = "; these are the rows the recorded scoring scores for this chunk beside this question only when the"
+            + " chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace,"
+            + " or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored";
+    static final String RULE_WINDOW_STARTS = "start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window"
+            + " CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows)" + ROWS_NOT_NECESSARILY_SCORED;
     static final String RULE_CHARACTER_SPAN = "occurrence of the normalised phrase in the normalised chunk text (whitespace runs collapsed, trimmed,"
             + " lower-cased), mapped to UTF-16 offsets of the stored text, end exclusive";
     static final String RULE_TOKEN_SPAN = "tokens of the whole-chunk tokenization whose character span overlaps the occurrence, end exclusive";
     static final String RULE_HEAD = "wholly: token span end <= W; partly: start < W < end; not: start >= W";
     static final String RULE_WINDOWS_HOLDING = "1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span"
-            + " (empty: no row holds it wholly)";
+            + " (empty: no row holds it wholly)" + ROWS_NOT_NECESSARILY_SCORED;
     static final String RULE_FALLBACK_INPUT = "fused position <= trace rerank inputCount (the reranker receives the first inputCount fused chunks)";
     static final String RULE_SET_BY_VERSION = "the bundled set whose version equals the snapshot's set_version (the snapshot records no properties.set)";
 
@@ -226,7 +236,7 @@ public class RetrievalEvidenceService {
             }
             return new Settings(property("rerank", Boolean.class), property("rerankCandidates", Integer.class), property("reranker", String.class),
                     property("rerankerVersion", String.class),
-                    tokenizer.isPresent() ? observed(loadedVersion, SOURCE_LOADED_MODEL) : unknown(TOKENIZER_UNAVAILABLE),
+                    tokenizer.isPresent() ? observed(loadedVersion, SOURCE_LOADED_MODEL) : unknown(CROSS_ENCODER_NOT_LOADED),
                     property("rerankerScoring", String.class), passageScoring, overlap, maxWindows, observed(maxLength, SOURCE_MAX_LENGTH));
         }
 
@@ -244,7 +254,7 @@ public class RetrievalEvidenceService {
             RetrievalEvaluationQuestion question = set == null ? null : set.questions().stream().filter(q -> q.id().equals(result.id())).findFirst().orElse(null);
             String phraseReason = set == null ? setReason : question == null ? "question " + result.id() + " is not in the " + setSource : null;
             String traceReason = snapshot.traces() == null ? NO_TRACE
-                    : !traces.containsKey(result.id()) ? "no trace recorded for this question" : traces.get(result.id()) == null ? NO_TRACE_FOR_QUESTION : null;
+                    : traces.get(result.id()) != null ? null : result.error() != null ? NO_TRACE_FOR_QUESTION : NO_TRACE_RECORDED;
             RetrievalTrace trace = traceReason == null ? traces.get(result.id()) : null;
             String rerankReason = trace != null && trace.rerank() == null ? "trace records no rerank step" : traceReason;
 
@@ -388,11 +398,11 @@ public class RetrievalEvidenceService {
                     yield new Candidate(fused, unknown(missing), unknown(missing), unknown(missing), unknown(missing), unknown(missing), returnedPosition);
                 }
                 if (reranked == null) {
-                    yield new Candidate(fused, observed(false, SOURCE_CANDIDATES), observed(null, SOURCE_CANDIDATES), observed(null, SOURCE_CANDIDATES),
+                    yield new Candidate(fused, observed(false, SOURCE_RERANK_INPUT), observed(null, SOURCE_CANDIDATES), observed(null, SOURCE_CANDIDATES),
                             observed(null, SOURCE_CANDIDATES), observed(null, SOURCE_CANDIDATES), returnedPosition);
                 }
                 String notRecorded = rerank.scoresNotRecorded() == null ? "not recorded in the trace" : rerank.scoresNotRecorded();
-                yield new Candidate(fused, observed(true, SOURCE_CANDIDATES), orUnknown(reranked.rerankedPosition(), "trace rerank candidates rerankedPosition", notRecorded),
+                yield new Candidate(fused, observed(true, SOURCE_RERANK_INPUT), orUnknown(reranked.rerankedPosition(), "trace rerank candidates rerankedPosition", notRecorded),
                         orUnknown(reranked.score(), "trace rerank candidates score", notRecorded),
                         orUnknown(reranked.windowCount(), "trace rerank candidates windowCount", notRecorded),
                         orUnknown(reranked.windowScores(), "trace rerank candidates windowScores", notRecorded), returnedPosition);

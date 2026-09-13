@@ -35,6 +35,8 @@ import static org.assertj.core.api.Assertions.*;
  * membership is observed; chunk 466 for msft-04 has an observed reranked position;</li>
  * <li>on the untraced snapshot every candidate field is unknown with reason "no trace" while token fields are derived.</li>
  * </ul>
+ * With {@code -Drag.evidence.write-dir=<directory>} both reports are also written there as compact JSON, {@code evidence-<id>.json}, the form
+ * committed as evidence (plan amendment 2).
  */
 @SpringBootTest(properties = "rag.retrieval.cross-encoder.enabled=true")
 @EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")
@@ -73,6 +75,7 @@ class RetrievalEvidenceLiveTests {
         assertThat(inputs).isEqualTo(snapshot.traces().stream().mapToInt(t -> t.trace().rerank().inputCount()).sum());
 
         RetrievalEvidenceReport report = evidence.report(id).orElseThrow();
+        write(id, report);
         int reported = 0;
         for (QuestionEvidence question : report.questions()) {
             for (PhraseEvidence phrase : question.phrases()) {
@@ -112,6 +115,7 @@ class RetrievalEvidenceLiveTests {
         long id = Long.getLong("rag.evidence.untraced-snapshot", 297L);
         RetrievalEvidenceReport report = evidence.report(id).orElseThrow(() -> new AssertionError("snapshot " + id + " is not stored"));
         assertThat(report.traced().value()).isFalse();
+        write(id, report);
         int chunks = 0;
         for (QuestionEvidence question : report.questions()) {
             assertThat(List.of(question.rerankOutcome(), question.fusedCount(), question.ranking(), question.bestAcceptedChunk(), question.rankedAbove()))
@@ -127,5 +131,20 @@ class RetrievalEvidenceLiveTests {
         }
         System.out.println("EVIDENCE_LIVE untraced snapshot=" + id + " questions=" + report.questions().size() + " chunks=" + chunks);
         assertThat(chunks).isPositive();
+    }
+
+    /** With -Drag.evidence.write-dir=<directory>, the report as committed evidence: compact JSON on one line (plan amendment 2), evidence-<id>.json. */
+    private void write(long id, RetrievalEvidenceReport report) {
+        String directory = System.getProperty("rag.evidence.write-dir");
+        if (directory == null) return;
+        String json = evidence.json(report);
+        assertThat(json).doesNotContain("\n");
+        try {
+            java.nio.file.Path file = java.nio.file.Path.of(directory, "evidence-" + id + ".json");
+            java.nio.file.Files.writeString(file, json + "\n");
+            System.out.println("EVIDENCE_LIVE wrote " + file + " bytes=" + java.nio.file.Files.size(file));
+        } catch (java.io.IOException failure) {
+            throw new java.io.UncheckedIOException(failure);
+        }
     }
 }

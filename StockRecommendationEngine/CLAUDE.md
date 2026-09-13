@@ -65,6 +65,9 @@ one-line fix, a typo, or a question, just do it directly.
 - Retrieval changes must be measured against the evaluation set
   (`RAG.md`, "Retrieval Evaluation"): run `POST /api/rag/evaluate` or the opt-in
   live test before and after, and cite the snapshot ids.
+- Evidence rule (RAG-14): conclude only from committed evidence; label each claim observed, derived,
+  inferred, unknown, or experiment; a cause needs an experiment isolating that factor. Measurement
+  write-ups are generated from `claims.json` and checked in `verify` (format: `RAG.md`, "Claims").
 
 ## Loop history
 

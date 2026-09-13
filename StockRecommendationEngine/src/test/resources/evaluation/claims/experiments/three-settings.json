@@ -1,0 +1,4 @@
+{
+  "experiment": {"factor": "rag.retrieval.cross-encoder.window-overlap-tokens", "settings": [0, 64, 224]},
+  "note": "Claims check fixture: three settings, so it is not an experiment varying one factor between two settings."
+}

@@ -1,0 +1,4 @@
+{
+  "experiment": {"factor": "rag.retrieval.cross-encoder.window-overlap-tokens", "settings": [64, 224]},
+  "note": "Claims check fixture: declares one factor and its two settings; the runs are snapshots/row-b.json (64) and snapshots/row-c.json (224)."
+}

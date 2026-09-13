@@ -43,6 +43,8 @@ final class ScriptedEvidence {
     static final String VERSION = "5d3e70fd0c9f";
     static final Path FIXTURE_JSON = Path.of("src/test/resources/evaluation/evidence/scripted-report.json");
     static final Path FIXTURE_MARKDOWN = Path.of("src/test/resources/evaluation/evidence/scripted-report.md");
+    /** The untraced snapshot's report, read by the claims check tests (ClaimsCheckTests) as a report without traces. */
+    static final Path FIXTURE_UNTRACED_JSON = Path.of("src/test/resources/evaluation/evidence/scripted-report-untraced.json");
 
     final RetrievalEvaluationRepository snapshots = mock(RetrievalEvaluationRepository.class);
     final RetrievalEvaluationSetLoader loader = mock(RetrievalEvaluationSetLoader.class);

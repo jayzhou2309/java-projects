@@ -59,7 +59,7 @@ class RetrievalEvidenceEndpointTests {
         when(scripted.snapshots.findById(459L)).thenReturn(Optional.of(ScriptedEvidence.tracedSnapshot()));
         MockMvc mvc = mvc(scripted.service(Optional.empty()));
         mvc.perform(get("/api/rag/evaluate/459/evidence")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.settings.loadedModelVersion.reason").value("tokenizer unavailable"))
+                .andExpect(jsonPath("$.settings.loadedModelVersion.reason").value("cross-encoder not loaded (no PassageTokenizer bean: rag.retrieval.cross-encoder.enabled is not true)"))
                 .andExpect(jsonPath("$.questions[0].phrases[0].chunks[0].chunkTokens.basis").value("unknown"))
                 .andExpect(jsonPath("$.questions[0].phrases[0].chunks[0].chunkTokens.reason").value("tokenizer unavailable"))
                 .andExpect(jsonPath("$.questions[0].phrases[0].chunks[0].rerankedPosition.value").value(3));

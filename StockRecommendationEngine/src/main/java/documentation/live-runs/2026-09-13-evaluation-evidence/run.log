@@ -140,3 +140,62 @@ M2-4. App run for the user-facing flow: SERVER_PORT=8081, a 44-character INTEGRA
         evidence-297.json; the output equalled the fetched markdown exactly (109,853 and 87,746 characters, equal=true).
 M2-5. retrieval_evaluations after every run: 34 rows, max id 461 (459 to 461 were the newest rows before this milestone; the DB-backed unit test's
       snapshot was rolled back).
+
+Milestone 3, 2026-09-13: claims file, claims check, and generated documentation blocks (plans/2026-09-13-evaluation-evidence.md, Milestone 3 with Amendments 2 and 3)
+Branch evaluation-evidence at 3191d7f with the Milestone 3 changes in the working tree (committed with this section). Same machine. Shell for every build and test:
+set -a && source .env && set +a; `env | grep` for RAG_* and the application enable flags: 0 lines before every command. No chat model, no embedding, no
+/api/recommendations call, no evaluation snapshot created; the live tests read the database only (their stored rows are rolled back).
+
+M3-1. Evidence reports as compact JSON (amendment 2), after the wording changes (reason "its retrieval failed" only with a recorded error; window rules and
+      legend; rerankInput source; W's rule; loadedModelVersion "cross-encoder not loaded"):
+        ./mvnw -o test -Dtest='RetrievalEvidenceLiveTests,RetrievalEvidenceDatabaseTests' -Drag.evaluation.live=true -Drag.evidence.write-dir=<scratch dir>
+      -> exit 0, 5 tests, 0 skipped (milestone-3-live-test-evidence.log). RetrievalEvidenceLiveTests as in M2-3 (840 rerank inputs of snapshot 459 checked
+      at max-length 512; msft-05 chunks 460, 515, 571 and msft-04 chunk 466 printed with the same values as M2-3; snapshot 297: 42 questions, 66 chunks, all
+      candidate fields unknown "no trace") and wrote evidence-459.json (347,987 bytes) and evidence-297.json (260,278 bytes), each one line of compact JSON
+      (RetrievalEvidenceService.json). RetrievalEvidenceDatabaseTests: the inserted-rows test, the selected-set SQL comparison, and the opt-in every-phrase-held
+      method (every accepted phrase of set v2 held by at least one stored chunk) passed.
+      The two files replace the committed pretty-printed ones; evidence-459.md and evidence-297.md are removed (git rm), since the endpoint renders markdown
+      from the JSON. Parsed (numbers as written) against the Milestone 2 files: evidence-459.json differs in 264 values, all of them rule or source text
+      (66 each of windowsHoldingWholly.rule, windowStarts.rule, windowLength.rule, rerankInput.source); evidence-297.json in 198 (the three rules, 66 each;
+      its rerankInput values are unknown, so no source); every value, basis, reason, and other field is equal (milestone-3-evidence-json-comparison.txt).
+      retrieval_evaluations after: 34 rows, max id 461.
+
+M3-2. ./mvnw -q -o verify -> exit 0 (56 test classes, 424 tests, 0 failures, 27 skipped; counted from this run's target/surefire-reports, two stale
+      report files of classes not in the source tree excluded). claims.json (13 claims) and the RAG.md block generated from it: 0 problems.
+
+M3-3. Deliberate breakage, attempt 1. claims.json: C-001's expected rerankedPosition 12 changed to 11; C-012's text and rows extended to claim msft-04
+      outside the top 5 in snapshot 295 as well (snapshot-295-reference-rerank-off.json ranks it 4). RAG.md: C-013's generated bullet edited by hand
+      ("0.785714" to "0.80", line 703). ./mvnw -q -o verify -> exit 1, 424 tests, 1 failure, DocumentationClaimsTests:
+        Claims check failed: 4 problems (after an intended change regenerate blocks with -Dclaims.generate=true on DocumentationClaimsTests; format in RAG.md, Claims)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-001 [candidate] question msft-05, chunk 515 in evidence-459.json: rerankedPosition expected 11, found 12 (observed)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-004 [inferred]: premise C-001 expected to pass, found 1 problem (listed under C-001)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-012 [topK] question msft-04, k 5: ../2026-09-13-reranker-windows/measurement/snapshot-295-reference-rerank-off.json expected outside, found inside (rank 4)
+        src/main/java/documentation/RAG.md:702 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (lines 690 to 704) differs from the generator's output: expected "            * msft-04 is outside the top 5 in snapshot 295, snapshot 297, and the traced reproduction run. (C-012, derived)", found "            * msft-04 is outside the top 5 in snapshot 297 and in the traced reproduction run. (C-012, derived)"
+      The hand edit at line 703 was not named: the block comparison stopped at the block's first differing line. Fixed before going on: GeneratedBlocks
+      aligns the generator's lines with the block's (longest common subsequence) and reports every changed, missing, or extra line;
+      GeneratedBlocksTests.everyEditedLineOfABlockIsNamedNotOnlyTheFirst added (two edits in one block both named; unit cases for a changed plus an extra
+      line and two missing lines), and aBlockWithALineRemovedOrAddedFails now also covers an added line.
+
+M3-4. The same breakage, attempt 2 (after the fix): ./mvnw -q -o verify -> exit 1, 425 tests, 1 failure, DocumentationClaimsTests:
+        Claims check failed: 5 problems (after an intended change regenerate blocks with -Dclaims.generate=true on DocumentationClaimsTests; format in RAG.md, Claims)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-001 [candidate] question msft-05, chunk 515 in evidence-459.json: rerankedPosition expected 11, found 12 (observed)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-004 [inferred]: premise C-001 expected to pass, found 1 problem (listed under C-001)
+        src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/claims.json C-012 [topK] question msft-04, k 5: ../2026-09-13-reranker-windows/measurement/snapshot-295-reference-rerank-off.json expected outside, found inside (rank 4)
+        src/main/java/documentation/RAG.md:702 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (lines 690 to 704) differs from the generator's output: expected "            * msft-04 is outside the top 5 in snapshot 295, snapshot 297, and the traced reproduction run. (C-012, derived)", found "            * msft-04 is outside the top 5 in snapshot 297 and in the traced reproduction run. (C-012, derived)"
+        src/main/java/documentation/RAG.md:703 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (lines 690 to 704) differs from the generator's output: expected "            * Snapshot 297's hit@5 is 0.785714. (C-013, observed)", found "            * Snapshot 297's hit@5 is 0.80. (C-013, observed)"
+
+M3-5. Rollback and generator. claims.json copied back from the copy taken before M3-3 (cmp identical). With only the RAG.md hand edit left:
+        ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 1, "Claims check failed: 1 problem", the line-703 problem above alone.
+        ./mvnw -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> exit 0, "CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md]",
+        "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0"; RAG.md cmp identical to the copy taken before M3-3 (the generator restored the block).
+      Citations: C-013's bullet changed to cite C-099 and a citation of C-001 with basis derived added at line 689; ./mvnw -o test -Dtest=DocumentationClaimsTests
+      -> exit 1, 3 problems:
+        src/main/java/documentation/RAG.md:703 block generated:live-runs/2026-09-13-evaluation-evidence/claims.json (lines 690 to 704) differs from the generator's output: expected "            * Snapshot 297's hit@5 is 0.785714. (C-013, observed)", found "            * Snapshot 297's hit@5 is 0.785714. (C-099, observed)"
+        src/main/java/documentation/RAG.md:689 citation (C-001, derived) states basis derived, but the claim's basis is observed
+        src/main/java/documentation/RAG.md:703 citation (C-099 has no claim: not defined in live-runs/2026-09-13-evaluation-evidence/claims.json
+      RAG.md copied back (cmp identical). Written after this: RAG.md's Claims "Verified" bullet and change-log bullet (below the block) and
+      wording within two Tests bullets (no line added above the block, which still spans lines 690 to 704).
+
+M3-6. Final: ./mvnw -q -o verify, run after every code, fixture, claims, and documentation edit except this line -> exit 0 (56 test classes, 425 tests,
+      0 failures, 0 errors, 27 skipped; counted from this run's target/surefire-reports); DocumentationClaimsTests printed
+      "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".

@@ -42,12 +42,16 @@ class RetrievalEvidenceServiceTests {
     void theScriptedReportSerialisesToTheCommittedFixture() throws Exception {
         RetrievalEvidenceService service = scripted.service();
         String json = service.json(service.report(ScriptedEvidence.tracedSnapshot()));
+        String untraced = service.json(service.report(ScriptedEvidence.untracedSnapshot()));
         if (Boolean.getBoolean("rag.evidence.fixture.write")) {
             Files.writeString(ScriptedEvidence.FIXTURE_JSON, service.parse(json).toPrettyString() + "\n");
             Files.writeString(ScriptedEvidence.FIXTURE_MARKDOWN, EvidenceMarkdownRenderer.render(service.parse(json)));
+            Files.writeString(ScriptedEvidence.FIXTURE_UNTRACED_JSON, service.parse(untraced).toPrettyString() + "\n");
         }
         assertThat(service.parse(json)).as("regenerate with -Drag.evidence.fixture.write=true after an intended change")
                 .isEqualTo(service.parse(Files.readString(ScriptedEvidence.FIXTURE_JSON)));
+        assertThat(service.parse(untraced)).as("regenerate with -Drag.evidence.fixture.write=true after an intended change")
+                .isEqualTo(service.parse(Files.readString(ScriptedEvidence.FIXTURE_UNTRACED_JSON)));
     }
 
     @Test
@@ -133,7 +137,7 @@ class RetrievalEvidenceServiceTests {
         assertThat(q1.fusedCount().value()).isEqualTo(4);
         ChunkEvidence c101 = chunk(q1, 0, 101);
         assertThat(c101.fusedPosition()).isEqualTo(EvidenceValue.observed(1, RetrievalEvidenceService.SOURCE_FUSED));
-        assertThat(c101.rerankInput()).isEqualTo(EvidenceValue.observed(true, RetrievalEvidenceService.SOURCE_CANDIDATES));
+        assertThat(c101.rerankInput()).isEqualTo(EvidenceValue.observed(true, RetrievalEvidenceService.SOURCE_RERANK_INPUT));
         assertThat(c101.rerankedPosition()).isEqualTo(EvidenceValue.observed(3, "trace rerank candidates rerankedPosition"));
         assertThat(c101.score()).isEqualTo(EvidenceValue.observed(-0.5f, "trace rerank candidates score"));
         assertThat(c101.windowCount().value()).isEqualTo(3);
@@ -209,11 +213,45 @@ class RetrievalEvidenceServiceTests {
     }
 
     @Test
+    void aNullTraceSaysRetrievalFailedOnlyWhenTheResultRecordsAnError() {
+        // Amendment 2: q3's result records an error, so its reason names the failure; q2 with a null trace and no error does not.
+        RetrievalEvaluation traced = ScriptedEvidence.tracedSnapshot();
+        RetrievalEvidenceReport report = scripted.service().report(ScriptedEvidence.with(traced, traced.properties(),
+                List.of(traced.traces().get(0), new QuestionTrace("q2", null), traced.traces().get(2))));
+        QuestionEvidence q2 = question(report, "q2");
+        assertThat(q2.error().value()).isNull();
+        assertThat(q2.rerankOutcome()).isEqualTo(EvidenceValue.unknown(RetrievalEvidenceService.NO_TRACE_RECORDED));
+        assertThat(chunk(q2, 0, 201).rerankInput()).isEqualTo(EvidenceValue.unknown(RetrievalEvidenceService.NO_TRACE_RECORDED));
+        assertThat(q2.rankedAbove()).isEqualTo(EvidenceValue.unknown("no trace recorded for this question"));
+        QuestionEvidence q3 = question(report, "q3");
+        assertThat(q3.error().value()).isNotNull();
+        assertThat(q3.rerankOutcome()).isEqualTo(EvidenceValue.unknown("no trace for this question (its retrieval failed)"));
+    }
+
+    @Test
+    void aNonInputChunksRerankInputSourceDescribesItsFalseValueAndWindowRulesSayTheRowsMayNotHaveBeenScored() {
+        // Amendment 2: chunk 101 beside a trace whose rerank input is only 301 and 102.
+        RetrievalTrace narrow = new RetrievalTrace(4, 4, null,
+                List.of(new FusedCandidate(301, 1, 1, 1, null), new FusedCandidate(102, 2, 2, 2, null), new FusedCandidate(101, 3, 3, 3, null)),
+                new RetrievalTrace.Rerank(Outcome.RERANKED, null, 2, null, List.of(new RerankedCandidate(102, 2, 1, 1.0f, 1, List.of(1.0f)),
+                        new RerankedCandidate(301, 1, 2, 0.5f, 1, List.of(0.5f)))), List.of(102L, 301L));
+        RetrievalEvaluation traced = ScriptedEvidence.tracedSnapshot();
+        RetrievalEvidenceReport report = scripted.service().report(ScriptedEvidence.with(traced, traced.properties(),
+                List.of(new QuestionTrace("q1", narrow), traced.traces().get(1), traced.traces().get(2))));
+        ChunkEvidence c101 = chunk(question(report, "q1"), 0, 101);
+        assertThat(c101.rerankInput()).isEqualTo(EvidenceValue.observed(false, "trace rerank candidates (true: a rerank input; false: not a rerank input)"));
+        assertThat(c101.rerankedPosition()).isEqualTo(EvidenceValue.observed(null, RetrievalEvidenceService.SOURCE_CANDIDATES));
+        assertThat(c101.windowStarts().rule()).contains("not rows that were scored").contains("a chunk outside the rerank input");
+        assertThat(c101.occurrences().get(0).windowsHoldingWholly().rule()).contains("not rows that were scored");
+        assertThat(c101.windowLength().rule()).contains("max-length (from the current configuration, not recorded in the snapshot)");
+    }
+
+    @Test
     void withoutTheTokenizerTokenFieldsAreUnknownTokenizerUnavailableAndTheReportIsStillBuilt() {
         RetrievalEvidenceService service = scripted.service(Optional.empty());
         RetrievalEvidenceReport built = service.report(ScriptedEvidence.tracedSnapshot());
         JsonNode report = service.parse(service.json(built));
-        assertUnknown(report.at("/settings/loadedModelVersion"), RetrievalEvidenceService.TOKENIZER_UNAVAILABLE, "loadedModelVersion");
+        assertUnknown(report.at("/settings/loadedModelVersion"), RetrievalEvidenceService.CROSS_ENCODER_NOT_LOADED, "loadedModelVersion");
         int chunks = 0;
         for (JsonNode question : report.get("questions")) {
             assertUnknown(question.get("queryTokens"), RetrievalEvidenceService.TOKENIZER_UNAVAILABLE, "queryTokens");

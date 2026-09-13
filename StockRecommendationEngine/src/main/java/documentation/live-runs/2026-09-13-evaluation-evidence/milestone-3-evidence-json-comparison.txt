@@ -1,0 +1,23 @@
+evidence-459.json: 264 differing values, 4 distinct (path, old, new); new file lines=1
+    66 x .questions[].phrases[].chunks[].occurrences[].windowsHoldingWholly.rule
+        old: 1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly)
+        new: 1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored
+    66 x .questions[].phrases[].chunks[].rerankInput.source
+        old: trace rerank candidates (null: not a rerank input)
+        new: trace rerank candidates (true: a rerank input; false: not a rerank input)
+    66 x .questions[].phrases[].chunks[].windowLength.rule
+        old: W = max-length - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)
+        new: W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)
+    66 x .questions[].phrases[].chunks[].windowStarts.rule
+        old: start token of each scored row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows)
+        new: start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored
+evidence-297.json: 198 differing values, 3 distinct (path, old, new); new file lines=1
+    66 x .questions[].phrases[].chunks[].occurrences[].windowsHoldingWholly.rule
+        old: 1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly)
+        new: 1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored
+    66 x .questions[].phrases[].chunks[].windowLength.rule
+        old: W = max-length - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)
+        new: W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)
+    66 x .questions[].phrases[].chunks[].windowStarts.rule
+        old: start token of each scored row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows)
+        new: start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored

@@ -11,9 +11,9 @@
     "source" : "snapshot properties.set"
   },
   "traced" : {
-    "value" : true,
+    "value" : false,
     "basis" : "observed",
-    "source" : "snapshot traces (properties.trace true)"
+    "source" : "snapshot traces (properties.trace false)"
   },
   "settings" : {
     "rerank" : {
@@ -93,29 +93,29 @@
       "source" : "snapshot results error (null: none)"
     },
     "rerankOutcome" : {
-      "value" : "RERANKED",
-      "basis" : "observed",
-      "source" : "trace rerank outcome"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "fallbackReason" : {
       "value" : null,
-      "basis" : "observed",
-      "source" : "trace rerank fallbackReason (null: not a fallback)"
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "scoresNotRecorded" : {
       "value" : null,
-      "basis" : "observed",
-      "source" : "trace rerank scoresNotRecorded (null: every rerank input carries its position and score, or not reranked)"
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "fusedCount" : {
-      "value" : 4,
-      "basis" : "observed",
-      "source" : "trace fused"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "rerankInputCount" : {
-      "value" : 3,
-      "basis" : "observed",
-      "source" : "trace rerank inputCount (null: reranking off)"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "queryTokens" : {
       "value" : 3,
@@ -182,39 +182,39 @@
           }
         } ],
         "fusedPosition" : {
-          "value" : 1,
-          "basis" : "observed",
-          "source" : "trace fused (null: not in the fused list)"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "rerankInput" : {
-          "value" : true,
-          "basis" : "observed",
-          "source" : "trace rerank candidates (true: a rerank input; false: not a rerank input)"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "rerankedPosition" : {
-          "value" : 3,
-          "basis" : "observed",
-          "source" : "trace rerank candidates rerankedPosition"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "score" : {
-          "value" : -0.5,
-          "basis" : "observed",
-          "source" : "trace rerank candidates score"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "windowCount" : {
-          "value" : 3,
-          "basis" : "observed",
-          "source" : "trace rerank candidates windowCount"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "windowScores" : {
-          "value" : [ -0.5, -3.0, -2.0 ],
-          "basis" : "observed",
-          "source" : "trace rerank candidates windowScores"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "returnedPosition" : {
           "value" : null,
-          "basis" : "observed",
-          "source" : "trace returnedChunkIds (null: not returned)"
+          "basis" : "unknown",
+          "reason" : "no trace"
         }
       }, {
         "chunkId" : 102,
@@ -262,39 +262,39 @@
           }
         } ],
         "fusedPosition" : {
-          "value" : 3,
-          "basis" : "observed",
-          "source" : "trace fused (null: not in the fused list)"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "rerankInput" : {
-          "value" : true,
-          "basis" : "observed",
-          "source" : "trace rerank candidates (true: a rerank input; false: not a rerank input)"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "rerankedPosition" : {
-          "value" : 2,
-          "basis" : "observed",
-          "source" : "trace rerank candidates rerankedPosition"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "score" : {
-          "value" : 1.25,
-          "basis" : "observed",
-          "source" : "trace rerank candidates score"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "windowCount" : {
-          "value" : 1,
-          "basis" : "observed",
-          "source" : "trace rerank candidates windowCount"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "windowScores" : {
-          "value" : [ 1.25 ],
-          "basis" : "observed",
-          "source" : "trace rerank candidates windowScores"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "returnedPosition" : {
-          "value" : 2,
-          "basis" : "observed",
-          "source" : "trace returnedChunkIds (null: not returned)"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         }
       } ]
     }, {
@@ -309,46 +309,24 @@
       "chunks" : [ ]
     } ],
     "ranking" : {
-      "value" : "reranked order",
-      "basis" : "observed",
-      "source" : "trace rerank outcome RERANKED"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "bestAcceptedChunk" : {
-      "value" : 102,
-      "basis" : "observed",
-      "source" : "trace reranked order: first chunk holding an accepted phrase"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "bestAcceptedPosition" : {
-      "value" : 2,
-      "basis" : "observed",
-      "source" : "trace rerank candidates rerankedPosition"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "rankedAbove" : {
-      "value" : [ {
-        "chunkId" : 301,
-        "position" : {
-          "value" : 1,
-          "basis" : "observed",
-          "source" : "trace rerank candidates rerankedPosition"
-        },
-        "fusedPosition" : {
-          "value" : 2,
-          "basis" : "observed",
-          "source" : "trace rerank candidates fusedPosition"
-        },
-        "score" : {
-          "value" : 2.5,
-          "basis" : "observed",
-          "source" : "trace rerank candidates score"
-        },
-        "windowScores" : {
-          "value" : [ 2.5, -1.0 ],
-          "basis" : "observed",
-          "source" : "trace rerank candidates windowScores"
-        }
-      } ],
-      "basis" : "observed",
-      "source" : "trace reranked order: every chunk ranked above the best accepted chunk"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     }
   }, {
     "id" : "q2",
@@ -376,29 +354,29 @@
       "source" : "snapshot results error (null: none)"
     },
     "rerankOutcome" : {
-      "value" : "FALLBACK",
-      "basis" : "observed",
-      "source" : "trace rerank outcome"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "fallbackReason" : {
-      "value" : "timeout",
-      "basis" : "observed",
-      "source" : "trace rerank fallbackReason (null: not a fallback)"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "scoresNotRecorded" : {
       "value" : null,
-      "basis" : "observed",
-      "source" : "trace rerank scoresNotRecorded (null: every rerank input carries its position and score, or not reranked)"
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "fusedCount" : {
-      "value" : 2,
-      "basis" : "observed",
-      "source" : "trace fused"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "rerankInputCount" : {
-      "value" : 2,
-      "basis" : "observed",
-      "source" : "trace rerank inputCount (null: reranking off)"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "queryTokens" : {
       "value" : 2,
@@ -466,104 +444,60 @@
         } ],
         "fusedPosition" : {
           "value" : null,
-          "basis" : "observed",
-          "source" : "trace fused (null: not in the fused list)"
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "rerankInput" : {
-          "value" : false,
-          "basis" : "derived",
-          "rule" : "fused position <= trace rerank inputCount (the reranker receives the first inputCount fused chunks)"
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         },
         "rerankedPosition" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+          "reason" : "no trace"
         },
         "score" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+          "reason" : "no trace"
         },
         "windowCount" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+          "reason" : "no trace"
         },
         "windowScores" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+          "reason" : "no trace"
         },
         "returnedPosition" : {
           "value" : null,
-          "basis" : "observed",
-          "source" : "trace returnedChunkIds (null: not returned)"
+          "basis" : "unknown",
+          "reason" : "no trace"
         }
       } ]
     } ],
     "ranking" : {
-      "value" : "fused order",
-      "basis" : "observed",
-      "source" : "trace rerank outcome FALLBACK"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "bestAcceptedChunk" : {
       "value" : null,
-      "basis" : "observed",
-      "source" : "trace fused order: no chunk holding an accepted phrase is in it"
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "bestAcceptedPosition" : {
       "value" : null,
-      "basis" : "observed",
-      "source" : "trace fused order: no chunk holding an accepted phrase is in it"
+      "basis" : "unknown",
+      "reason" : "no trace"
     },
     "rankedAbove" : {
-      "value" : [ {
-        "chunkId" : 202,
-        "position" : {
-          "value" : 1,
-          "basis" : "observed",
-          "source" : "trace fused fusedPosition"
-        },
-        "fusedPosition" : {
-          "value" : 1,
-          "basis" : "observed",
-          "source" : "trace fused"
-        },
-        "score" : {
-          "value" : null,
-          "basis" : "unknown",
-          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
-        },
-        "windowScores" : {
-          "value" : null,
-          "basis" : "unknown",
-          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
-        }
-      }, {
-        "chunkId" : 203,
-        "position" : {
-          "value" : 2,
-          "basis" : "observed",
-          "source" : "trace fused fusedPosition"
-        },
-        "fusedPosition" : {
-          "value" : 2,
-          "basis" : "observed",
-          "source" : "trace fused"
-        },
-        "score" : {
-          "value" : null,
-          "basis" : "unknown",
-          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
-        },
-        "windowScores" : {
-          "value" : null,
-          "basis" : "unknown",
-          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
-        }
-      } ],
-      "basis" : "observed",
-      "source" : "trace fused order: every chunk (no chunk holding an accepted phrase is in it)"
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
     }
   }, {
     "id" : "q3",
@@ -593,27 +527,27 @@
     "rerankOutcome" : {
       "value" : null,
       "basis" : "unknown",
-      "reason" : "no trace for this question (its retrieval failed)"
+      "reason" : "no trace"
     },
     "fallbackReason" : {
       "value" : null,
       "basis" : "unknown",
-      "reason" : "no trace for this question (its retrieval failed)"
+      "reason" : "no trace"
     },
     "scoresNotRecorded" : {
       "value" : null,
       "basis" : "unknown",
-      "reason" : "no trace for this question (its retrieval failed)"
+      "reason" : "no trace"
     },
     "fusedCount" : {
       "value" : null,
       "basis" : "unknown",
-      "reason" : "no trace for this question (its retrieval failed)"
+      "reason" : "no trace"
     },
     "rerankInputCount" : {
       "value" : null,
       "basis" : "unknown",
-      "reason" : "no trace for this question (its retrieval failed)"
+      "reason" : "no trace"
     },
     "queryTokens" : {
       "value" : 3,
@@ -682,59 +616,59 @@
         "fusedPosition" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "no trace for this question (its retrieval failed)"
+          "reason" : "no trace"
         },
         "rerankInput" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "no trace for this question (its retrieval failed)"
+          "reason" : "no trace"
         },
         "rerankedPosition" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "no trace for this question (its retrieval failed)"
+          "reason" : "no trace"
         },
         "score" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "no trace for this question (its retrieval failed)"
+          "reason" : "no trace"
         },
         "windowCount" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "no trace for this question (its retrieval failed)"
+          "reason" : "no trace"
         },
         "windowScores" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "no trace for this question (its retrieval failed)"
+          "reason" : "no trace"
         },
         "returnedPosition" : {
           "value" : null,
           "basis" : "unknown",
-          "reason" : "no trace for this question (its retrieval failed)"
+          "reason" : "no trace"
         }
       } ]
     } ],
     "ranking" : {
       "value" : null,
       "basis" : "unknown",
-      "reason" : "no trace for this question (its retrieval failed)"
+      "reason" : "no trace"
     },
     "bestAcceptedChunk" : {
       "value" : null,
       "basis" : "unknown",
-      "reason" : "no trace for this question (its retrieval failed)"
+      "reason" : "no trace"
     },
     "bestAcceptedPosition" : {
       "value" : null,
       "basis" : "unknown",
-      "reason" : "no trace for this question (its retrieval failed)"
+      "reason" : "no trace"
     },
     "rankedAbove" : {
       "value" : null,
       "basis" : "unknown",
-      "reason" : "no trace for this question (its retrieval failed)"
+      "reason" : "no trace"
     }
   } ]
 }

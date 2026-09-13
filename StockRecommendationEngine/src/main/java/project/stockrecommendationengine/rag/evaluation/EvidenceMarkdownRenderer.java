@@ -39,7 +39,10 @@ final class EvidenceMarkdownRenderer {
         line("");
         line("Each value is followed by its basis: observed (read from the numbered source), derived (computed by the numbered rule), or"
                 + " unknown with the reason. Sources and rules are listed at the end. Offsets are [start, end), end exclusive; window numbers"
-                + " start at 1.");
+                + " start at 1. windowStarts and windowsHoldingWholly are arithmetic on the snapshot's recorded scoring: they are rows that"
+                + " were scored only for a chunk that is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a"
+                + " fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would"
+                + " score, not rows that were scored. W uses max-length from the current configuration, which snapshots do not record.");
         line("");
         line("## Snapshot");
         line("");

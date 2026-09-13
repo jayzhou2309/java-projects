@@ -1,0 +1,38 @@
+{
+  "description": "Claims check fixture (ClaimsCheckTests): every claim fails, each for the reason its text gives; the check names each one.",
+  "claims": [
+    {"id": "C-101", "text": "msft-04 is outside the top 5 in rows A, B, and C.", "basis": "derived",
+     "check": {"type": "topK", "question": "msft-04", "k": 5, "rows": [
+       {"snapshot": "snapshots/row-a.json", "expected": "outside"}, {"snapshot": "snapshots/row-b.json", "expected": "outside"},
+       {"snapshot": "snapshots/row-c.json", "expected": "outside"}]}},
+    {"id": "C-102", "text": "The reference row ranks nvda-01 first.", "basis": "observed",
+     "check": {"type": "rank", "snapshot": "snapshots/reference.json", "question": "nvda-01", "expected": 1}},
+    {"id": "C-103", "text": "The reference row's MRR is 0.400000.", "basis": "observed",
+     "check": {"type": "metric", "snapshot": "snapshots/reference.json", "metric": "mrr", "expected": "0.400000"}},
+    {"id": "C-104", "text": "Row B meets every criterion against the reference.", "basis": "derived",
+     "check": {"type": "ruleRow", "reference": "snapshots/reference.json", "candidate": "snapshots/row-b.json",
+       "criteria": {"aggregateHitAt5": "pass", "nonFigureHitAt5": "pass", "tickerHitAt5": "pass", "figureKindTop5": "pass"}}},
+    {"id": "C-105", "text": "Chunk 101 was a rerank input for q1 at fused position 1.", "basis": "observed",
+     "check": {"type": "candidate", "report": "../evidence/scripted-report-untraced.json", "question": "q1", "chunk": 101,
+       "expected": {"rerankInput": true, "fusedPosition": 1}}},
+    {"id": "C-106", "text": "q1's phrase occupies tokens [1, 4) of chunk 102.", "basis": "derived",
+     "check": {"type": "phraseSpan", "report": "../evidence/scripted-report.json", "question": "q1", "phrase": "w012 w013 w014 w015", "chunk": 102,
+       "expected": {"tokenSpan": [1, 4]}}},
+    {"id": "C-107", "text": "Chunk 102 holds q1's phrase wholly inside its head window.", "basis": "observed",
+     "check": {"type": "membership", "report": "../evidence/scripted-report.json", "question": "q1", "phrase": "w012 w013 w014 w015", "chunk": 102,
+       "expected": {"head": "wholly"}}},
+    {"id": "C-108", "text": "Reranking suits msft-04.", "basis": "inferred"},
+    {"id": "C-109", "text": "nvda-01 was answered first in every row.", "basis": "inferred", "from": ["C-102"]},
+    {"id": "C-110", "text": "The traced report does not record whether chunk 101 was a rerank input for q1.", "basis": "unknown",
+     "check": {"type": "notRecorded", "report": "../evidence/scripted-report.json", "path": "questions[id=q1].phrases[0].chunks[chunkId=101].rerankInput"}},
+    {"id": "C-111", "text": "Reranking caused msft-04 to leave the top 5 in row A.", "basis": "derived",
+     "check": {"type": "topK", "question": "msft-04", "k": 5, "rows": [{"snapshot": "snapshots/row-a.json", "expected": "outside"}]}},
+    {"id": "C-112", "text": "Raising the window overlap to 224 lifted msft-04 into the top 5.", "basis": "experiment",
+     "experiment": {"file": "experiments/three-settings.json", "factor": "rag.retrieval.cross-encoder.window-overlap-tokens"},
+     "check": {"type": "topK", "question": "msft-04", "k": 5, "rows": [{"snapshot": "snapshots/row-c.json", "expected": "inside"}]}},
+    {"id": "C-113", "text": "Row D ranks aapl-01 first.", "basis": "observed",
+     "check": {"type": "rank", "snapshot": "snapshots/row-d.json", "question": "aapl-01", "expected": 1}},
+    {"id": "C-114", "text": "The rank of msft-04 in row B is not recorded.", "basis": "unknown",
+     "check": {"type": "rank", "snapshot": "snapshots/row-b.json", "question": "msft-04", "expected": null}}
+  ]
+}

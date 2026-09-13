@@ -90,7 +90,13 @@ rag:
       # are recorded as properties.rerankerVersion in evaluation snapshots.
       model-sha256: 5d3e70fd0c9ff14b9b5169a51e957b7a9c74897afd0a35ce4bd318150c1d4d4a
       tokenizer-sha256: d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66
-      # Longest (question, chunk) pair in tokens; only the chunk is truncated. The model's window is 512; 16 to 512.
+      # Longest (question, chunk) pair in tokens, truncated longest_first (a query is cut only when it and the chunk are both long;
+      # only_second aborted the JVM on a 509-token query). Query and chunk are each bounded to 20,000 characters first. The model's
+      # window is 512; 16 to 512.
+      # With enabled true, loading the scorer sets JVM-wide system properties unless already set as an environment variable or -D
+      # property: RUST_FLAVOR=cpu (DJL tokenizer native flavor, so no CUDA build is downloaded), OPT_OUT_TRACKING=true and
+      # ai.djl.offline=true (DJL's EC2 metadata and telemetry call, which bypasses proxies, returns without connecting; DJL download
+      # helpers refuse). Nothing else in this application uses DJL. See RAG.md, Cross-encoder reranker, Network.
       max-length: 512
       # Pairs per ONNX Runtime call; 1 to 64.
       batch-size: 20

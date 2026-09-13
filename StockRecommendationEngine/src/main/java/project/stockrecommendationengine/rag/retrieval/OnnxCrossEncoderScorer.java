@@ -48,13 +48,9 @@ import java.util.stream.Collectors;
  * Work per call. Passages are tokenized {@code batchSize} at a time, and each batch runs as one or more ONNX Runtime calls whose
  * rows times longest-pair width squared stays within {@link CrossEncoderPairAssembler#MAX_ATTENTION_CELLS_PER_RUN} (eight
  * 512-token pairs), because attention memory, about 88 MB per 512-token row, would otherwise reach 3.9 GB at batch size 64.
- * Measured in child JVMs under {@code /usr/bin/time -l} on the development Mac (2026-09-13, RAG.md Latency): a query and 40
- * passages of 20,000 characters take at most about 2.1 s per call with a peak process footprint of about 1.0 GB at max-length 512
- * (CJK or {@code "a "}), and at most 1.1 s and 0.38 GB at max-length 16; 20 passages of 2,000 characters at the defaults take
- * about 0.3 s. The cap bounds memory at about 1.0 GB per call (1,008 MiB for 64 passages of 181-token pairs at batch size 64,
- * the worst shape found); below that ceiling batch size still matters, not monotonically (303 MiB at batch size 1 against
- * 880 MiB at 20 and 856 MiB at 64 for the same input). Memory adds up per concurrent call: up to 1,651 MiB (about 1.7 GB)
- * measured for the two calls the retrieval pool allows at once. Evidence: live-runs/2026-09-13-reranker/scrutiny-probes/.
+ * Measured latency and memory (per call, per batch size, and for the two calls the retrieval pool runs at once), with
+ * the evidence behind each figure, are kept in one place: RAG.md, Cross-encoder reranker, Latency and Shutdown
+ * (live-runs/2026-09-13-reranker/). In short, about 1 GB per call and about 1.7 GB for two concurrent calls, as measured.
  * <p>
  * Network. The static initializer applies {@link DjlRuntimeDefaults} (system properties {@code OPT_OUT_TRACKING=true} and
  * {@code ai.djl.offline=true} when absent) before any DJL class is initialised, so {@code Ec2Utils.callHome} in

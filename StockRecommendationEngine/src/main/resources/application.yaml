@@ -99,9 +99,8 @@ rag:
       # helpers refuse). Nothing else in this application uses DJL. See RAG.md, Cross-encoder reranker, Network.
       max-length: 512
       # Chunks tokenized and scored together; 1 to 64. Each group runs as one or more ONNX Runtime calls of at most eight 512-token
-      # pairs' attention size (rows x longest pair squared), so memory stays bounded at about 1 GB per call at any value; below that
-      # ceiling the value still matters, not monotonically (303 MiB at 1, 880 MiB at 20, 856 MiB at 64 for the same input; RAG.md,
-      # Cross-encoder reranker, Latency; evidence live-runs/2026-09-13-reranker/scrutiny-probes/).
+      # pairs' attention size (rows x longest pair squared). The value still affects peak memory; measured figures and evidence are
+      # in RAG.md, Cross-encoder reranker (Properties, Latency).
       batch-size: 20
     # Fuse full-text keyword candidates with the vector candidates (reciprocal rank fusion). On by default since the 2026-09-12
     # measurement (RAG.md, Hybrid Retrieval: snapshots 35 and 34, hit@5 0.600000 to 0.633333, no ticker lower); a request's

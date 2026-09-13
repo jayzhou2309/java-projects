@@ -141,3 +141,51 @@ between them were not stored by these runs).
   V4. After the runs: set -a && source .env && set +a (0 RAG_* or enable-flag variables); ./mvnw -q -o verify -> exit 0 (57 test classes, 426 tests,
       0 failures, 0 errors, 28 skipped, TraceReproductionFilesTests among the skipped; counted from target/surefire-reports of this run), 22:23;
       "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".
+
+Milestone 4b, claims and regeneration (plans/2026-09-13-evaluation-evidence.md Milestone 4, F2 to F4, with Amendments 5 to 7), 2026-09-14 (times +08)
+Main checkout, branch evaluation-evidence from b1e6fcf. No application run, no evaluation snapshot outside the rolled-back floor test, no chat model, no
+/api/recommendations call; no code change. Every shell below: set -a && source .env && set +a, and env | grep -cE
+'^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)=' -> 0.
+
+  F4 floors (defaults unchanged, reranking off), 03:11:25 to 03:11:47; full output floors-live-test.log:
+    rows before: 40|694   (select count(*), max(id) from retrieval_evaluations; the count and max id include rows stored outside this work)
+    ./mvnw -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true -> exit 0, BUILD SUCCESS, Tests run: 1, Failures: 0, Errors: 0
+    RETRIEVAL_EVAL set=v2 questions=42 window=10 strategy=HYBRID_RRF hitAt1=0.547619 hitAt3=0.714286 hitAt5=0.785714 mrr=0.655187 floor=0.65 nonFigureFloor=0.6
+      reranker=null rerankerVersion=null rerankedQuestions=0 rerankFallbackQuestions=0
+    RETRIEVAL_EVAL notInTop5 aggregate hits=33/42 minHits=28 margin=5
+    RETRIEVAL_EVAL notInTop5 slice=nonFigure hits=21/30 minHits=18 margin=3
+    "Retrieval evaluation stored: id=760" inside the test transaction, rolled back.
+    rows after: 40|694 (unchanged).
+
+  Claims: claims.json (C-101 to C-284; 107 observed, 69 derived, 5 inferred, 3 experiment; no unknown) and experiment-overlap-613-641.json (factor
+  rerankerScoring; snapshots 613 and 641, whose recorded properties differ only in rerankerScoring, trace excepted). Written by a scratchpad script that reads
+  the committed snapshot and evidence files for each expected value; every sentence is rendered by DocumentationClaimsTests, and each claim was reread against
+  the evidence files before committing. Blocks: RAG.md, Cross-encoder reranker, Reranker measurement, Windowed rows (eleven blocks).
+    ./mvnw -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> exit 0, CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md]
+      notGenerated=0, CLAIMS_CHECK claimsFiles=2 documents=21 problems=0. (A first generation reported one problem, the lead-in "Questions that gain or lose
+      the leading rank in some windowed row" refused for the causal stem "leading"; reworded to "the top rank".)
+    ./mvnw -o test -Dtest=DocumentationClaimsTests -> exit 0, CLAIMS_CHECK claimsFiles=2 documents=21 problems=0.
+
+  rankedAbove, copied from each evidence report (the chunks ranked above the question's best accepted chunk in the report's ranking, observed from the trace;
+  no check type renders them, so RAG.md states the accepted chunks' reranked positions and points here):
+    nvda-01  evidence-598.json  fused order     best accepted chunk 805 at 3   above [806, 852]
+    nvda-01  evidence-599.json  reranked order  best accepted chunk 805 at 8   above [852, 873, 851, 881, 872, 800, 863]
+    nvda-01  evidence-613.json  reranked order  best accepted chunk 805 at 11  above [852, 873, 864, 851, 842, 881, 872, 857, 800, 863]
+    nvda-01  evidence-627.json  reranked order  best accepted chunk 805 at 12  above [852, 873, 864, 851, 842, 881, 872, 857, 800, 841, 863]
+    nvda-01  evidence-641.json  reranked order  best accepted chunk 805 at 11  above [852, 873, 864, 881, 872, 857, 800, 851, 842, 863]
+    nvda-11  evidence-598.json  fused order     best accepted chunk 805 at 1   above []
+    nvda-11  evidence-599.json  reranked order  best accepted chunk 805 at 5   above [852, 881, 873, 851]
+    nvda-11  evidence-613.json  reranked order  best accepted chunk 805 at 5   above [852, 881, 873, 851]
+    nvda-11  evidence-627.json  reranked order  best accepted chunk 805 at 5   above [852, 881, 873, 851]
+    nvda-11  evidence-641.json  reranked order  best accepted chunk 805 at 5   above [852, 881, 873, 851]
+    msft-04  evidence-598.json  fused order     best accepted chunk 466 at 4   above [514, 573, 518]
+    msft-04  evidence-599.json  reranked order  best accepted chunk 466 at 8   above [514, 516, 573, 637, 635, 518, 645]
+    msft-04  evidence-613.json  reranked order  best accepted chunk 466 at 11  above [514, 516, 573, 637, 635, 642, 518, 645, 512, 641]
+    msft-04  evidence-627.json  reranked order  best accepted chunk 467 at 1   above []
+    msft-04  evidence-641.json  reranked order  best accepted chunk 466 at 12  above [514, 516, 573, 637, 635, 642, 518, 645, 512, 641, 643]
+    msft-04 in snapshot 627, chunk 466 (reranked 16th, not the best accepted chunk, so not in the report's rankedAbove): the 15 chunks above it in the trace's
+      rerank candidates ordered by rerankedPosition (snapshot-627-traced-snapshot-298-rerank-candidates-40-timeout-4000.json, traces[id=msft-04].trace.rerank):
+      [467, 514, 516, 573, 637, 635, 642, 518, 645, 574, 512, 1064, 636, 572, 641].
+
+  Build, after the documentation edits: ./mvnw -q -o verify -> exit 0 (58 test classes, 534 tests, 0 failures, 0 errors, 28 skipped; counted from
+  target/surefire-reports of this run), 03:18:38 to 03:18:51.

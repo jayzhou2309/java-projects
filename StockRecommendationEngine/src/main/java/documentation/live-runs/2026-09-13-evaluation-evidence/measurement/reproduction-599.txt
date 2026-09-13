@@ -1,0 +1,4 @@
+reference=src/main/java/documentation/live-runs/2026-09-13-reranker-windows/measurement/snapshot-296-rerank-candidates-10.json (snapshot 296)
+run=src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/measurement/snapshot-599-traced-snapshot-296-rerank-candidates-10.json (snapshot 599)
+questions reference=42 run=42 traces=42
+problems=0

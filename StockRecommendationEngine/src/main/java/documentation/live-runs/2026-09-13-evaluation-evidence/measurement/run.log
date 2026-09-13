@@ -1,0 +1,143 @@
+Traced re-measurement at the settings of snapshots 295 to 299 (Follow_Ups RAG-14; plans/2026-09-13-evaluation-evidence.md, Milestone 4 F1 and F5 with
+Amendment 1's timeout rule, as restricted by Amendment 5: Milestone 4a, measure), 2026-09-13 (times +08)
+Worktree /Users/jayzhou/Documents/GitHub/java-projects-m4a, branch evaluation-evidence-m4a from 432f456; no main-code change. Development Mac, CPU. App port 8082.
+No chat model and no /api/recommendations call. Embeddings: 42 per evaluation + 1 per warm-up = 215. Counterparts: the committed files under
+live-runs/2026-09-13-reranker-windows/measurement/ (snapshot-295 to snapshot-299); settings read from each file's properties and that directory's run.log.
+
+Build and harness
+  V1. set -a && source .env && set +a; env | grep for RAG_* and the application enable flags: 0 lines; .env holds none of them.
+      ./mvnw -q -o verify -> exit 0 (56 test classes, 425 tests, 0 failures, 0 errors, 27 skipped; counted from target/surefire-reports of this run), 22:01.
+  V2. Reproduction harness added: src/test/java/project/stockrecommendationengine/rag/evaluation/TraceReproductionFilesTests.java (opt-in on
+      -Drag.reproduction.run). It reads the run file (row_to_json export) into a RetrievalEvaluation the way RetrievalEvaluationRepository's row mapper
+      reads a row (results as StoredResults, properties as a map), calls the committed TraceReproductionCheck.problems(reference, run) unchanged, writes
+      "problems=<n>" and every problem to -Drag.reproduction.out, then TraceReproductionCheck.assertReproduces (exit 1 on any problem).
+      Command used for every run below:
+        ./mvnw -q -o test -Dtest=TraceReproductionFilesTests -Drag.reproduction.reference=<counterpart file> -Drag.reproduction.run=<traced row file>
+            -Drag.reproduction.out=<measurement>/reproduction-<id>.txt
+  V3. Harness sanity on committed files (outputs not committed):
+      reference snapshot-297-rerank-candidates-20.json, run ../traced-snapshot-297-settings.json (row 410) -> exit 0, problems=0.
+      reference snapshot-296-rerank-candidates-10.json, run ../traced-snapshot-297-settings.json -> exit 1, problems=9 (aapl-09, msft-04, msft-05, msft-07,
+      msft-08, nvda-01, nvda-05, nvda-07 rank or chunk lines, and "property rerankCandidates: snapshot 296 10, run 20").
+
+Per-run procedure (one application start per run; a scratch script ran these commands in this order)
+  1. Run shell: cd <project>; set -a; source .env; set +a; export SERVER_PORT=8082 INTEGRATION_ACCESS_TOKEN=<42-character token> RAG_CROSS_ENCODER_ENABLED=true
+     plus the run's overrides; env | grep '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)='
+     printed (in run 295 the pattern lacked [A-Z0-9_]* after RAG_ and printed nothing; fixed from run 296 on; run 295's overrides are shown by its startup
+     line and stored properties below). lsof -nP -iTCP:8082 -sTCP:LISTEN: 0 listeners before every start.
+  2. CPU sharing wait: ps -ax -o pid=,args= filtered on surefire|spring-boot:run|StockRecommendationEngineApplication, excluding processes whose cwd
+     (lsof -a -p <pid> -d cwd) is inside java-projects-m4a; poll every 30 s, up to 30 minutes. Checked before the app start and before the evaluate call.
+     (Checked with two probe processes named *surefire-probe: the one with cwd java-projects was reported, the one with cwd java-projects-m4a was not.)
+  3. nohup ./mvnw -q -o spring-boot:run > app.log 2>&1 &; wait for "Started StockRecommendationEngineApplication"; the "Cross-encoder loaded ... scoring=" line.
+  4. Warm-up: curl -X POST http://localhost:8082/api/rag/retrieve -H "Authorization: Bearer <token>" -H 'Content-Type: application/json'
+       -d '{"ticker":"NVDA","query":"What was NVIDIA gross margin in fiscal 2026?","rerank":true}'
+  5. CPU sharing wait (step 2), then sysctl -n vm.loadavg, then
+       curl --max-time 1200 -X POST "http://localhost:8082/api/rag/evaluate?<query>" -H "Authorization: Bearer <token>"
+  6. docker exec -i trading-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "select row_to_json(e) from retrieval_evaluations e where id = <id>"
+     -> snapshot-<id>-traced-<counterpart file name>.json (the single psql output line, with its newline).
+  7. curl -H "Authorization: Bearer <token>" http://localhost:8082/api/rag/evaluate/<id>/evidence -> HTTP 200 application/json, indented by the application's
+     Jackson setting (spring.jackson.serialization.indent-output true). evidence-<id>.json is that body with whitespace outside strings removed (one line plus a newline);
+     a script checked the compact file parses equal to the fetched body with every number kept as written.
+  8. grep -E 'Cross-encoder scoring completed|Reranking failed|Retrieval evaluation stored|WARN|ERROR' app.log -> scoring-<id>.txt.
+  9. Stop: kill the port-8082 listener JVM, the mvnw process, and its child processes (by pid, so no process of another worktree is signalled); then
+     lsof on 8082 -> 0 listeners, mvnw not alive, no spring-boot:run or application process with cwd in java-projects-m4a.
+  10. After the stop and before the next run's step 1: the harness command (V2) and the F5 extraction script on evidence-<id>.json.
+
+Run 295 (counterpart snapshot-295-reference-rerank-off.json; settings: rerank=false, rerankCandidates 20 default, max-window/overlap=64/maxWindows=4)
+  overrides: RAG_CROSS_ENCODER_ENABLED=true only; evaluate query rerank=false&trace=true
+  cpu-wait before app start 22:05:12: clear after 0 s. App start 22:05:12; "Started StockRecommendationEngineApplication in 3.917 seconds";
+  startup "Cross-encoder loaded: ... maxLength=512, batchSize=20, scoring=max-window/overlap=64/maxWindows=4".
+  warm-up HTTP 200 in 4.28 s, HYBRID_RRF_RERANKED, 5 results; scoring line candidates=20, windows=44, topK=5, elapsedMs=1192.
+  cpu-wait before evaluate 22:05:22: clear after 0 s. Load average at evaluate start: { 3.03 2.97 2.94 }.
+  evaluate HTTP 200 in 14.57 s -> snapshot 598. properties: rerank=false rerankCandidates=20 rerankerScoring=max-window/overlap=64/maxWindows=4
+  rerankedQuestions=0 rerankFallbackQuestions=0 trace=true; hit@1 0.547619 hit@3 0.714286 hit@5 0.785714 MRR 0.655187; 42 traces, outcome OFF on 42.
+  Fallback count: 0 (no FALLBACK trace, no errors, 0 "Reranking failed" lines; scoring-598.txt holds the warm-up call only). No rerun.
+  row export 241,400 bytes; evidence fetched 499,987 bytes -> evidence-598.json 354,878 bytes. Stopped 22:05:38; port 8082 free.
+  Reproduction (reproduction-598.txt): harness exit 0, problems=0.
+
+Run 296 (counterpart snapshot-296-rerank-candidates-10.json; settings: rerank=true, rerankCandidates 10, max-window/overlap=64/maxWindows=4)
+  overrides: RAG_CROSS_ENCODER_ENABLED=true RAG_RETRIEVAL_RERANK_CANDIDATES=10; evaluate query rerank=true&trace=true
+  cpu-wait before app start 22:06:47: clear after 0 s. App start 22:06:47; started in 3.527 seconds; scoring=max-window/overlap=64/maxWindows=4.
+  warm-up HTTP 200 in 2.09 s, HYBRID_RRF_RERANKED, 5 results; scoring candidates=10, windows=22, topK=5, elapsedMs=844.
+  cpu-wait before evaluate 22:06:54: clear after 0 s. Load average at evaluate start: { 3.75 3.08 2.97 }.
+  evaluate HTTP 200 in 39.94 s -> snapshot 599. properties: rerank=true rerankCandidates=10 rerankerScoring=max-window/overlap=64/maxWindows=4
+  rerankedQuestions=42 rerankFallbackQuestions=0 trace=true; hit@1 0.500000 hit@3 0.714286 hit@5 0.761905 MRR 0.625198; 42 traces, RERANKED on 42.
+  Fallback count: 0 (0 "Reranking failed" lines). No rerun. Evaluation scoring calls (scoring-599.txt): 42, candidates=10 topK=10, elapsedMs 449 to 1,508
+  (median 586), windows 16 to 24 (median 21, total 863).
+  row export 300,784 bytes; evidence fetched 461,177 bytes -> evidence-599.json 335,983 bytes. Stopped 22:07:35; port 8082 free.
+  Reproduction (reproduction-599.txt): harness exit 0, problems=0.
+
+Run 297 (counterpart snapshot-297-rerank-candidates-20.json; settings: rerank=true, rerankCandidates 20, max-window/overlap=64/maxWindows=4, timeout default)
+  overrides: RAG_CROSS_ENCODER_ENABLED=true RAG_RETRIEVAL_RERANK_CANDIDATES=20; evaluate query rerank=true&trace=true
+  cpu-wait before app start 22:16:40: clear after 0 s. App start 22:16:40; started in 3.562 seconds; scoring=max-window/overlap=64/maxWindows=4.
+  warm-up HTTP 200 in 3.51 s, HYBRID_RRF_RERANKED, 5 results; scoring candidates=20, windows=44, topK=5, elapsedMs=1279.
+  cpu-wait before evaluate 22:16:49: clear after 0 s. Load average at evaluate start: { 3.69 4.55 4.17 }.
+  evaluate HTTP 200 in 65.31 s -> snapshot 613. properties: rerank=true rerankCandidates=20 rerankerScoring=max-window/overlap=64/maxWindows=4
+  rerankedQuestions=42 rerankFallbackQuestions=0 trace=true; hit@1 0.500000 hit@3 0.761905 hit@5 0.785714 MRR 0.633135; 42 traces, RERANKED on 42.
+  Fallback count: 0 (0 "Reranking failed" lines). No rerun. Evaluation scoring calls (scoring-613.txt): 42, candidates=20 topK=10, elapsedMs 958 to 1,840
+  (median 1,181), windows 35 to 48 (median 43, total 1,746).
+  row export 361,887 bytes; evidence fetched 480,943 bytes -> evidence-613.json 347,987 bytes. Stopped 22:17:56; port 8082 free.
+  Reproduction (reproduction-613.txt): harness exit 0, problems=0.
+
+Run 298 (counterpart snapshot-298-rerank-candidates-40-timeout-4000.json; settings: rerank=true, rerankCandidates 40, rerank-timeout-ms 4,000 (from the
+counterpart's run.log; not a stored property), max-window/overlap=64/maxWindows=4)
+  overrides: RAG_CROSS_ENCODER_ENABLED=true RAG_RETRIEVAL_RERANK_CANDIDATES=40 RAG_RETRIEVAL_RERANK_TIMEOUT_MS=4000; evaluate query rerank=true&trace=true
+  cpu-wait before app start 22:18:13: clear after 0 s. App start 22:18:13; started in 4.33 seconds; scoring=max-window/overlap=64/maxWindows=4.
+  warm-up HTTP 200 in 3.89 s, HYBRID_RRF_RERANKED, 5 results; scoring candidates=40, windows=88, topK=5, elapsedMs=2541.
+  cpu-wait before evaluate 22:18:23: clear after 0 s. Load average at evaluate start: { 6.49 5.28 4.48 }.
+  evaluate HTTP 200 in 111.16 s -> snapshot 627. properties: rerank=true rerankCandidates=40 rerankerScoring=max-window/overlap=64/maxWindows=4
+  rerankedQuestions=42 rerankFallbackQuestions=0 trace=true; hit@1 0.523810 hit@3 0.785714 hit@5 0.809524 MRR 0.656614; 42 traces, RERANKED on 42.
+  Fallback count: 0 (0 "Reranking failed" lines). No rerun. Evaluation scoring calls (scoring-627.txt): 42, candidates=40 topK=10, elapsedMs 1,843 to 3,072
+  (median 2,342.5), windows 67 to 91 (median 83.5, total 3,430).
+  row export 481,304 bytes; evidence fetched 513,829 bytes -> evidence-627.json 368,217 bytes. Stopped 22:20:16; port 8082 free.
+  Reproduction (reproduction-627.txt): harness exit 0, problems=0.
+
+Run 299 (counterpart snapshot-299-rerank-candidates-20-overlap-224.json; settings: rerank=true, rerankCandidates 20, max-window/overlap=224/maxWindows=4)
+  overrides: RAG_CROSS_ENCODER_ENABLED=true RAG_RETRIEVAL_RERANK_CANDIDATES=20 RAG_RETRIEVAL_CROSS_ENCODER_WINDOW_OVERLAP_TOKENS=224; query rerank=true&trace=true
+  cpu-wait before app start 22:20:33: waiting; two processes with cwd /Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine matched
+  (pid 19742 "/bin/sh -c cd '/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine' && '.../openjdk-26.0.1/.../bin/java' ...", pid 19743
+  ".../bin/java -jar /Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngi..." as printed, truncated at 160 characters); clear at 22:21:03
+  after 30 s. App start 22:21:03; started in 3.784 seconds; scoring=max-window/overlap=224/maxWindows=4.
+  warm-up HTTP 200 in 2.67 s, HYBRID_RRF_RERANKED, 5 results; scoring candidates=20, windows=52, topK=5, elapsedMs=1544.
+  cpu-wait before evaluate 22:21:11: clear after 0 s. Load average at evaluate start: { 7.57 6.97 5.37 }.
+  evaluate HTTP 200 in 70.08 s -> snapshot 641. properties: rerank=true rerankCandidates=20 rerankerScoring=max-window/overlap=224/maxWindows=4
+  rerankedQuestions=42 rerankFallbackQuestions=0 trace=true; hit@1 0.476190 hit@3 0.785714 hit@5 0.809524 MRR 0.635516; 42 traces, RERANKED on 42.
+  Fallback count: 0 (0 "Reranking failed" lines). No rerun. Evaluation scoring calls (scoring-641.txt): 42, candidates=20 topK=10, elapsedMs 937 to 1,730
+  (median 1,409.5), windows 35 to 63 (median 51, total 2,033).
+  row export 364,382 bytes; evidence fetched 475,820 bytes -> evidence-641.json 345,080 bytes. Stopped 22:22:22; port 8082 free.
+  Reproduction (reproduction-641.txt): harness exit 0, problems=0.
+
+Reproduction summary (F1). Every run was fallback-free on its first attempt, so no run was rerun or excluded.
+  counterpart  traced  problems  (TraceReproductionCheck: rank and matched chunk of all 42 questions, fallbacks, errors, all counterpart properties, trace true)
+  295          598     0
+  296          599     0
+  297          613     0
+  298          627     0
+  299          641     0
+  A second comparison by a Python script over the same files (not the committed check): 0 rank or matched-chunk differences in each pair; hit_at_1, hit_at_3,
+  hit_at_5 and mrr equal as stored; the only property difference in each pair is trace (absent in the counterpart, true in the run).
+
+F5: nvda-02's and nvda-04's accepted chunks (from each evidence report; values with basis observed unless stated). In every report each question has one
+accepted phrase, held by one stored chunk.
+  nvda-02: phrase "Data Center revenue for fiscal year 2026 was up 68% from a year ago" (0001045810-26-000021, ITEM_7), holding chunk 802.
+  nvda-04: phrase "we had approximately 42,000 employees in 38 countries; 31,000 were engaged in research and development" (0001045810-26-000021, ITEM_1),
+           holding chunk 754.
+  file              snapshot  question  rank  outcome   fused list  rerank inputs  chunk  fused position  rerank input  reranked position  returned position
+  evidence-598.json 598       nvda-02   null  OFF       55          null           802    41              false         null               null
+  evidence-598.json 598       nvda-04   null  OFF       56          null           754    54              false         null               null
+  evidence-599.json 599       nvda-02   null  RERANKED  55          10             802    41              false         null               null
+  evidence-599.json 599       nvda-04   null  RERANKED  56          10             754    54              false         null               null
+  evidence-613.json 613       nvda-02   null  RERANKED  55          20             802    41              false         null               null
+  evidence-613.json 613       nvda-04   null  RERANKED  56          20             754    54              false         null               null
+  evidence-627.json 627       nvda-02   null  RERANKED  55          40             802    41              false         null               null
+  evidence-627.json 627       nvda-04   null  RERANKED  56          40             754    54              false         null               null
+  evidence-641.json 641       nvda-02   null  RERANKED  55          20             802    41              false         null               null
+  evidence-641.json 641       nvda-04   null  RERANKED  56          20             754    54              false         null               null
+  The same positions, rerank-input membership, and returned membership were read directly from the traces in the five snapshot-<id>-traced-*.json files by
+  the Python script above, and agree with the reports.
+
+Database: retrieval_evaluations 34 rows, max id 461 before the runs; 39 rows, max id 641 after (rows 598, 599, 613, 627, 641 added by these runs; the ids
+between them were not stored by these runs).
+
+  V4. After the runs: set -a && source .env && set +a (0 RAG_* or enable-flag variables); ./mvnw -q -o verify -> exit 0 (57 test classes, 426 tests,
+      0 failures, 0 errors, 28 skipped, TraceReproductionFilesTests among the skipped; counted from target/surefire-reports of this run), 22:23;
+      "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0".

@@ -123,7 +123,7 @@ Implementation is phased; work may be delegated to sub-agents under skill files,
 |---|---|---|
 | 1 | Infrastructure (build, DB/extensions, core entities, security, migration/upgrade tests) | Implemented, locally validated; remote CI pending |
 | 2 | Market data ingestion | Partial: TWS delayed quotes and stored daily bars ([IBKR.md](documentation/IBKR.md)); no Kafka/TimescaleDB |
-| 3 | SEC RAG pipeline | Implemented: ingestion, hybrid keyword plus vector retrieval (PostgreSQL full-text and pgvector candidates fused by reciprocal rank, on by default since 2026-09-12: hit@5 0.633333 against 0.600000 vector-only on the 30-question set, snapshots 34 and 35; fusion tuned the same day to weights vector 1.0 / keyword 0.5 / figure 1.0, snapshot 51: hit@5 0.633333, MRR 0.463373, every FIGURE question either baseline had in the top 5 kept there), rebuild workflow ([RAG.md](documentation/RAG.md)) |
+| 3 | SEC RAG pipeline | Implemented: ingestion, hybrid keyword plus vector retrieval (PostgreSQL full-text and pgvector candidates fused by reciprocal rank, on by default since 2026-09-12: hit@5 0.633333 against 0.600000 vector-only on the 30-question set, snapshots 34 and 35; fusion tuned the same day to weights vector 1.0 / keyword 0.5 / figure 1.0, snapshot 51: hit@5 0.633333, MRR 0.463373, every FIGURE question either baseline had in the top 5 kept there), a local cross-encoder reranker with windowed passage scoring behind `FilingReranker`, off by default because no configuration met the selection rule on set v2 on 2026-09-13 (head-only snapshots 248 to 250, windowed snapshots 296 to 299; Follow_Ups RAG-1, RAG-14 to RAG-16), rebuild workflow ([RAG.md](documentation/RAG.md)) |
 | 4 | ML baseline / confidence scoring | Partial: deterministic ATR levels, an input-coverage confidence ([Quant.md](documentation/Quant.md)), and histogram calibration of that confidence against realized 20-day direction hits, applied once 30 directional runs are scored ([Outcomes.md](documentation/Outcomes.md)); no scored directional runs exist yet, no backtest or ensemble terms |
 | 5 | Specialist agents | Partial: RAG and broker specialists under a manager ([Agent_Harness.md](documentation/Agent_Harness.md)) |
 | 6 | Orchestration | Partial: bounded explicit tool loop, no MCP or multi-user |
@@ -133,6 +133,11 @@ Implementation is phased; work may be delegated to sub-agents under skill files,
 | — | Trade staging, Guard Pipeline, UTA, execution (v2 scope) | Planned — sequence after core phases above |
 
 ## 9. Open Questions
+
+See also [documentation/Target_State_Trading_Desk.md](documentation/Target_State_Trading_Desk.md) for a longer-range
+vision (specialist agents, a multi-agent Debate Desk, portfolio/risk committee, AI CIO, self-improvement loop) that
+is not yet part of this delivery plan.
+
 - Which LLM provider(s) for production vs. fallback?
 - Real-time vs. end-of-day granularity for quant features?
 - Regulatory/compliance requirements for automated financial recommendations, and how execution mode changes that calculus jurisdiction-by-jurisdiction?

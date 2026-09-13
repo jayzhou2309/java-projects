@@ -204,3 +204,13 @@ Milestone 2 (79e8480) passed Scrutiny on the first round with no correctness fin
 - **Evidence size.** Committed evidence reports are stored as compact JSON only (one line per file); markdown is not
   committed, since the endpoint regenerates it from the JSON. Milestone 3 converts the two Milestone 2 reports
   (evidence-459 and evidence-297) accordingly and notes the change in run.log; the claims check reads the JSON.
+
+## Amendment 3 (2026-09-13, after Milestone 2 UT PASS)
+
+Milestone 2 passed UT on the first round. One more wording note folded into Milestone 3 with Amendment 2's: with the
+cross-encoder off, `settings.loadedModelVersion` carries reason `tokenizer unavailable`; it should say the cross-encoder
+is not loaded. UT also recorded, from snapshot 459's report, facts Milestone 4's claims will cite as observed: chunk 515
+(msft-05's ITEM_7 phrase) was a rerank input at fused position 14, reranked 12, score 0.81250834, window scores
+[-4.609346, 0.81250834]; chunk 466 (msft-04) reranked 11 with ten chunks above; chunk 467 fused 21, not a rerank input;
+nvda-02's and nvda-04's accepted chunks at fused positions 41 and 54, outside the 20 inputs. These are properties of
+snapshot 459 only; Milestone 4 cites them from its own traced runs.

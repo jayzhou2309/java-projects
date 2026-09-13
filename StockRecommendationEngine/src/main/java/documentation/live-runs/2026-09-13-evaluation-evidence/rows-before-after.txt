@@ -1,2 +1,8 @@
 before: 31|299
 after: 31|299
+Remediation 1, 2026-09-13, RetrievalEvaluationTraceLiveTests attempt 1 (failed, 2 timeouts):
+before: 31|299
+after: 31|299
+Remediation 1, 2026-09-13, RetrievalEvaluationTraceLiveTests attempt 2 (passed):
+before: 31|299
+after: 31|299

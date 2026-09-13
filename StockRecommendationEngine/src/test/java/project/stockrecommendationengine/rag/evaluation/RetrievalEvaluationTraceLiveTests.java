@@ -2,7 +2,6 @@ package project.stockrecommendationengine.rag.evaluation;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,13 +27,15 @@ import static org.assertj.core.api.Assertions.*;
  * Opt-in (-Drag.evaluation.live=true; model files under models/; one embedding per question plus one warm-up, no chat model)
  * reproduction check for traced evaluation (plan 2026-09-13-evaluation-evidence, Milestone 1, C5): a traced run at the settings
  * of snapshot 297 (cross-encoder on, rerank true, rerank-candidates 20, max-window scoring with overlap 64 and at most 4 windows,
- * window 10, hybrid at its default, set v2) must reproduce 297's rank and matched chunk for every question; a failure names every
- * differing question. The cross-encoder and those settings are enabled only in this test's own Spring context (the properties
- * below), never through the environment; the run's recorded properties are asserted equal to 297's. The snapshot is saved inside
- * a transaction that is rolled back, so nothing is left in the shared database. Also checks, on the live data, one trace per
- * question with no fallback, the trace invariants (fused positions, every rerank input once, the first topK of the rerank order
- * are the returned chunks, window scores reduce to each score), that the stored traces read back equal, and prints the stored
- * document's size with and without traces. With -Drag.evaluation.trace-out=<file> the stored row (row_to_json) is written there
+ * window 10, hybrid at its default, set v2) must reproduce 297's rank and matched chunk for every question. The cross-encoder and those
+ * settings are enabled only in this test's own Spring context (the properties below), never through the environment. The comparison is
+ * {@link TraceReproductionCheck} (unit-tested without a database in TraceReproductionCheckTests): it collects every problem, prints each
+ * one, and fails once naming every question whose rank or matched chunk differs from 297's, every question that fell back with its
+ * trace's reason, every errored question, and then every run property that differs from 297's (all of 297's properties are compared;
+ * the run's extra {@code trace} must be true). The snapshot is saved inside a transaction that is rolled back, so nothing is left in the
+ * shared database. After the comparison passes it also checks, on the live data, one trace per question, each RERANKED, the trace
+ * invariants (fused positions, every rerank input once, the first topK of the rerank order are the returned chunks, window scores
+ * reduce to each score), that the stored traces read back equal, and prints the stored document's size with and without traces. With -Drag.evaluation.trace-out=<file> the stored row (row_to_json) is written there
  * before the rollback.
  */
 @SpringBootTest(properties = {
@@ -49,10 +50,6 @@ import static org.assertj.core.api.Assertions.*;
 @EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")
 class RetrievalEvaluationTraceLiveTests {
     static final Path SNAPSHOT_297 = Path.of("src/main/java/documentation/live-runs/2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json");
-    /** The run properties that define 297's configuration; each must equal 297's recorded value. */
-    static final List<String> SETTINGS = List.of("set", "setCreatedOn", "window", "latestFilingsOnly", "candidateCount", "hybrid", "hybridEnabled",
-            "keywordCandidateCount", "rrfK", "rrfVectorWeight", "rrfKeywordWeight", "rrfFigureWeight", "rerank", "rerankCandidates", "reranker",
-            "rerankerVersion", "rerankerScoring");
 
     @Autowired RetrievalEvaluationService service;
     @Autowired RetrievalEvaluationRepository repository;
@@ -75,34 +72,13 @@ class RetrievalEvaluationTraceLiveTests {
         System.out.println("RETRIEVAL_TRACE snapshot id=" + evaluation.id() + " elapsedMs=" + elapsedMs + " hitAt1=" + evaluation.hitAt1()
                 + " hitAt3=" + evaluation.hitAt3() + " hitAt5=" + evaluation.hitAt5() + " mrr=" + evaluation.mrr() + " properties=" + properties);
 
-        // The settings are 297's, read from its recorded properties rather than assumed.
-        JsonNode referenceProperties = reference.get("properties");
-        List<String> settingDifferences = new ArrayList<>();
-        for (String key : SETTINGS) {
-            String expected = referenceProperties.get(key).isNull() ? null : referenceProperties.get(key).asString();
-            String actual = properties.get(key) == null ? null : String.valueOf(properties.get(key));
-            if (!java.util.Objects.equals(expected, actual)) settingDifferences.add(key + " expected " + expected + " but was " + actual);
-        }
-        assertThat(settingDifferences).as("run settings against snapshot 297").isEmpty();
-        assertThat(properties).containsEntry("trace", true).containsEntry("rerankFallbackQuestions", 0).containsEntry("rerankedQuestions", 42);
-
-        // C5: every question's rank and matched chunk equal 297's; any difference names every differing question.
-        JsonNode referenceQuestions = reference.get("results").get("questions");
-        assertThat(evaluation.results()).hasSize(referenceQuestions.size());
-        List<String> differences = new ArrayList<>();
-        for (int i = 0; i < referenceQuestions.size(); i++) {
-            JsonNode expected = referenceQuestions.get(i);
-            QuestionResult actual = evaluation.results().get(i);
-            Integer expectedRank = expected.get("rank").isNull() ? null : expected.get("rank").asInt();
-            Long expectedChunk = expected.get("matchedChunkId").isNull() ? null : expected.get("matchedChunkId").asLong();
-            if (!expected.get("id").asString().equals(actual.id()) || !java.util.Objects.equals(expectedRank, actual.rank())
-                    || !java.util.Objects.equals(expectedChunk, actual.matchedChunkId())) {
-                differences.add(expected.get("id").asString() + ": 297 rank " + expectedRank + " chunk " + expectedChunk
-                        + ", traced run " + actual.id() + " rank " + actual.rank() + " chunk " + actual.matchedChunkId());
-            }
-        }
-        System.out.println("RETRIEVAL_TRACE reproduction questions=" + referenceQuestions.size() + " differences=" + differences.size() + " " + differences);
-        assertThat(differences).as("questions whose rank or matched chunk differ from snapshot 297").isEmpty();
+        // C5: every question's rank and matched chunk, every fallback, every error, and every property against 297's; all problems are
+        // collected and printed first, then the test fails once with all of them.
+        List<String> problems = TraceReproductionCheck.problems(reference, evaluation);
+        System.out.println("RETRIEVAL_TRACE reproduction questions=" + reference.get("results").get("questions").size() + " results="
+                + evaluation.results().size() + " problems=" + problems.size());
+        problems.forEach(problem -> System.out.println("RETRIEVAL_TRACE problem " + problem));
+        TraceReproductionCheck.assertReproduces(reference, evaluation);
 
         // One trace per question, in set order, each reranked, with the recorded invariants holding on the live data.
         assertThat(evaluation.traces()).extracting(QuestionTrace::id).containsExactlyElementsOf(evaluation.results().stream().map(QuestionResult::id).toList());

@@ -16,26 +16,24 @@ public interface FilingReranker {
     }
 
     /**
-     * The outcome of {@link #rerankScored}: {@code results} exactly as {@link #rerank} returns them for the same input, and
-     * {@code order} every candidate given, once each, in reranked order, so its first {@code results.size()} entries are the
-     * results.
+     * The outcome of {@link #rerankScored}: {@code results}, the reranked subset retrieval validates and uses, and {@code order},
+     * every candidate given, once each, in reranked order, so its first {@code results.size()} entries are the results; {@code order}
+     * is null when the reranker reports no scores.
      */
     record ScoredReranking(List<RetrievedFilingChunk> results, List<ScoredCandidate> order) {
     }
 
-    /** True when {@link #rerankScored} is implemented; the default is false. */
-    default boolean reportsScores() {
-        return false;
-    }
-
     /**
-     * {@link #rerank} with the scores that produced its order, from one scoring pass (never a second scoring call). Used only by
-     * traced evaluation runs through {@code FilingRetrievalService.retrieveTraced}; its results must equal {@link #rerank}'s for the
-     * same input. The default is not supported: it throws {@link UnsupportedOperationException}, and {@link #reportsScores()} is
-     * false.
+     * The one reranker method {@code FilingRetrievalService} calls, once per reranked retrieval, on both {@code retrieve} and
+     * {@code retrieveTraced}; the untraced path discards {@code order}, the traced path records it. Because both paths take their
+     * results from this single call, traced and untraced retrieval return identical results for any reranker, including one whose
+     * {@link #rerank} would order differently, and there is no separate capability flag to disagree with it. The default calls
+     * {@link #rerank} once and reports no scores ({@code order} null), which the trace records as {@code reranker reports no scores}.
+     * A reranker that overrides it returns the scores that produced its order from the same scoring pass (never a second scoring
+     * call) and should keep {@link #rerank} equal to its results for direct callers.
      */
     default ScoredReranking rerankScored(String query, List<RetrievedFilingChunk> candidates, int topK) {
-        throw new UnsupportedOperationException(getClass().getSimpleName() + " does not report reranking scores");
+        return new ScoredReranking(rerank(query, candidates, topK), null);
     }
 
     /** A short identifier of the exact model this reranker runs, recorded in evaluation snapshots; null when it has none. */

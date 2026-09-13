@@ -133,10 +133,10 @@ public class FilingRetrievalService {
     /**
      * {@link #retrieve} with a {@link RetrievalTrace} of the same retrieval: the same searches, fusion, diversification, rerank
      * input, timeout, fallback, and {@link #validateRerankedEvidence}, so the response is the one {@link #retrieve} returns for the
-     * same inputs. The only difference is which reranker method runs, once: {@link FilingReranker#rerankScored} when the reranker
-     * {@link FilingReranker#reportsScores() reports scores} (its results equal {@link FilingReranker#rerank}'s, and the recorded
-     * scores are the ones that produced the order), otherwise {@link FilingReranker#rerank}. For evaluation runs only
-     * (RetrievalEvaluationService with {@code trace}); the trace never enters a {@link RetrievalResponse}.
+     * same inputs. Both paths make the same single reranker call, {@link FilingReranker#rerankScored}, and take the results from it;
+     * the untraced path discards its scored order and this one records it, so the recorded scores are the ones that produced the
+     * order, never a second scoring call. For evaluation runs only (RetrievalEvaluationService with {@code trace}); the trace never
+     * enters a {@link RetrievalResponse}.
      */
     public TracedRetrieval retrieveTraced(RetrievalRequest request) {
         return retrieve(request, true);
@@ -213,7 +213,7 @@ public class FilingRetrievalService {
                 List<RetrievedFilingChunk> rerankInput = List.copyOf(diverseCandidates.subList(
                         0, Math.min(diverseCandidates.size(),
                                 Math.max(retrievalProperties.getRerankCandidates(), requestedResultCount))));
-                RerankAttempt attempt = rerank(normalizedTicker, normalizedQuery, rerankInput, requestedResultCount, traced);
+                RerankAttempt attempt = rerank(normalizedTicker, normalizedQuery, rerankInput, requestedResultCount);
                 selectedEvidence = attempt.results();
                 if (selectedEvidence != null) retrievalStrategy = retrievalStrategy + "_RERANKED";
                 if (traced) {
@@ -246,8 +246,8 @@ public class FilingRetrievalService {
 
     /**
      * The rerank step's outcome: {@code results}, the validated reranked order, or null on a fallback with {@code fallbackReason}
-     * the reason class logged; {@code scored}, only on a traced call to a reranker that reports scores and only when the order was
-     * used, the scored reranking the results came from.
+     * the reason class logged; {@code scored}, only when the order was used, the scored reranking the results came from (its
+     * {@code order} null when the reranker reports no scores).
      */
     private record RerankAttempt(List<RetrievedFilingChunk> results, String fallbackReason, FilingReranker.ScoredReranking scored) {
         static RerankAttempt fallback(String reason) {
@@ -259,28 +259,24 @@ public class FilingRetrievalService {
      * The reranker's validated order over {@code rerankInput}, or a fallback when it must not be used: the call timed out
      * (the future is cancelled), threw, was rejected by the saturated pool, or returned evidence failing
      * {@link #validateRerankedEvidence}. Each case logs one WARN naming the exception class only, never its message. The reranker
-     * is called once: {@link FilingReranker#rerankScored} when {@code traced} and it reports scores, {@link FilingReranker#rerank}
-     * otherwise; the same timeout, fallback, and validation apply to both.
+     * is called once, through {@link FilingReranker#rerankScored}, whether or not the retrieval is traced, so the results cannot
+     * depend on tracing.
      */
     private RerankAttempt rerank(
             String normalizedTicker,
             String normalizedQuery,
             List<RetrievedFilingChunk> rerankInput,
-            int requestedResultCount,
-            boolean traced
+            int requestedResultCount
     ) {
         long rerankStarted = System.nanoTime();
         long timeoutMs = retrievalProperties.getRerankTimeoutMs();
         FilingReranker reranker = filingReranker.orElseThrow();
-        boolean scoredCall = traced && reranker.reportsScores();
         log.info("Reranking filing candidates: ticker={}, candidates={}, timeoutMs={}", normalizedTicker, rerankInput.size(), timeoutMs);
         Future<FilingReranker.ScoredReranking> pending = null;
         String reason;
         Throwable failure;
         try {
-            pending = rerankExecutor.submit(() -> scoredCall
-                    ? reranker.rerankScored(normalizedQuery, rerankInput, requestedResultCount)
-                    : new FilingReranker.ScoredReranking(reranker.rerank(normalizedQuery, rerankInput, requestedResultCount), null));
+            pending = rerankExecutor.submit(() -> reranker.rerankScored(normalizedQuery, rerankInput, requestedResultCount));
             FilingReranker.ScoredReranking outcome = pending.get(timeoutMs, TimeUnit.MILLISECONDS);
             List<RetrievedFilingChunk> reranked = outcome == null ? null : outcome.results();
             try {
@@ -290,7 +286,7 @@ public class FilingRetrievalService {
                 return RerankAttempt.fallback("invalidEvidence");
             }
             log.info("Reranking completed: ticker={}, results={}, elapsedMs={}", normalizedTicker, reranked.size(), elapsedMillis(rerankStarted));
-            return new RerankAttempt(List.copyOf(reranked), null, scoredCall ? outcome : null);
+            return new RerankAttempt(List.copyOf(reranked), null, outcome);
         } catch (TimeoutException timeout) {
             pending.cancel(true);
             reason = "timeout";

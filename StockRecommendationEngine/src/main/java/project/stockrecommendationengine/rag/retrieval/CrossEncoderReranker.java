@@ -17,7 +17,8 @@ import java.util.stream.IntStream;
  * head scoring, more under windowed scoring).
  * <p>
  * {@link #rerank} and {@link #rerankScored} run the same single scoring call and the same ordering, so their results are
- * identical for the same input; the scored form also returns every candidate's score and row scores in reranked order.
+ * identical for the same input; the scored form, the one retrieval calls, also returns every candidate's score and row scores in
+ * reranked order.
  */
 @Slf4j
 public class CrossEncoderReranker implements FilingReranker {
@@ -33,11 +34,6 @@ public class CrossEncoderReranker implements FilingReranker {
     @Override
     public List<RetrievedFilingChunk> rerank(String query, List<RetrievedFilingChunk> candidates, int topK) {
         return rank(query, candidates, topK).results();
-    }
-
-    @Override
-    public boolean reportsScores() {
-        return true;
     }
 
     /**

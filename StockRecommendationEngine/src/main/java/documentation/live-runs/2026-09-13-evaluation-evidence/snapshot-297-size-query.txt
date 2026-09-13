@@ -1,0 +1,10 @@
+Snapshot 297 as stored: read-only size query (evaluation evidence Milestone 1, remediation 1, finding 6), run 2026-09-13 19:18 +08.
+Captures the figures run.log step 3 quotes for 297 (9,561 bytes of JSON text, pg_column_size 1,596), which were stated without the query output.
+Command (shell with .env exported):
+docker exec -i trading-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT id, octet_length(results::text) AS results_bytes, octet_length((results - 'traces')::text) AS without_traces_bytes, results ? 'traces' AS has_traces_key, pg_column_size(results) AS stored_bytes FROM retrieval_evaluations WHERE id = 297"
+Output:
+ id  | results_bytes | without_traces_bytes | has_traces_key | stored_bytes 
+-----+---------------+----------------------+----------------+--------------
+ 297 |          9561 |                 9561 | f              |         1596
+(1 row)
+

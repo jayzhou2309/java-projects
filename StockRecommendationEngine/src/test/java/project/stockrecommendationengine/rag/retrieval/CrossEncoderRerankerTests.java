@@ -352,7 +352,7 @@ class CrossEncoderRerankerTests {
     }
 
     @Test
-    void windowScoresAreNullWhenTheScorerReportsNoneOrAMismatchedCountAndTheDefaultsAreNotSupported() {
+    void windowScoresAreNullWhenTheScorerReportsNoneOrAMismatchedCountAndTheDefaultReportsNoOrder() {
         var candidates = List.of(chunk(1, "a"), chunk(2, "b"));
         PairScorer noRows = new PairScorer() {
             @Override
@@ -381,12 +381,14 @@ class CrossEncoderRerankerTests {
         var scored = new CrossEncoderReranker(mismatched, null).rerankScored("q", candidates, 2);
         assertThat(scored.order()).extracting(FilingReranker.ScoredCandidate::windowScores).containsOnlyNulls();
         assertThat(scored.results()).extracting(RetrievedFilingChunk::chunkId).containsExactly(2L, 1L);
-        assertThat(new CrossEncoderReranker(mismatched, null).reportsScores()).isTrue();
         assertThat(new CrossEncoderReranker(mismatched, null).rerankScored("q", List.of(), 2)).isEqualTo(new FilingReranker.ScoredReranking(List.of(), List.of()));
 
+        // The interface default: one rerank call, its results, and no order (the trace records "reranker reports no scores").
         var reversing = new ReversingFilingReranker();
-        assertThat(reversing.reportsScores()).isFalse();
-        assertThatThrownBy(() -> reversing.rerankScored("q", candidates, 2)).isInstanceOf(UnsupportedOperationException.class);
+        var defaultScored = reversing.rerankScored("q", candidates, 2);
+        assertThat(defaultScored.results()).extracting(RetrievedFilingChunk::chunkId).containsExactly(2L, 1L);
+        assertThat(defaultScored.order()).isNull();
+        assertThat(reversing.calls).isEqualTo(1);
         // A scorer's default scoreWithWindows reports no rows when its scores are missing or miscounted.
         PairScorer shortScores = (query, passages) -> new float[] {1f};
         assertThat(shortScores.scoreWithWindows("q", List.of("a", "b")).windowScores()).isNull();

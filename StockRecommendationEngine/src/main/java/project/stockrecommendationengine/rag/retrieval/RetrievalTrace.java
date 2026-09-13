@@ -44,16 +44,16 @@ public record RetrievalTrace(int vectorCandidates, Integer keywordCandidates, In
     }
 
     /**
-     * The rerank step. {@code fallbackReason} (FALLBACK only) is the reason class the service logs: {@code timeout},
-     * {@code interrupted}, {@code failure}, {@code invalidEvidence}, or {@code noCandidates} (the fused list was empty, so the
-     * reranker was not called). {@code inputCount} is the number of chunks given to the reranker, the first
+     * The rerank step. {@code fallbackReason} (FALLBACK only) is either the reason class the service logs at WARN ({@code timeout},
+     * {@code interrupted}, {@code failure}, {@code invalidEvidence}) or {@code noCandidates}, which the service does not log (the fused
+     * list was empty, so the reranker was not called). {@code inputCount} is the number of chunks given to the reranker, the first
      * max({@code rerank-candidates}, topK) of the fused list (0 for {@code noCandidates}; null when OFF). {@code candidates}
      * (RERANKED only; null otherwise, so a fallback records no scores) lists every rerank input chunk once, ordered by reranked
      * position, with chunks the order does not place last in fused order. {@code scoresNotRecorded} (RERANKED only) is null when
      * every candidate carries its reranked position and score, otherwise the reason they do not: {@code reranker reports no scores}
-     * (only the returned chunks then carry a reranked position) or {@code scores inconsistent with the returned order} (the
-     * reranker's scored order did not list every input once with the returned chunks first; the returned chunks still carry their
-     * positions).
+     * (its {@link FilingReranker#rerankScored} reported no order, as the default does; only the returned chunks then carry a reranked
+     * position) or {@code scores inconsistent with the returned order} (the reranker's scored order did not list every input once
+     * with the returned chunks first; the returned chunks still carry their positions).
      */
     public record Rerank(Outcome outcome, String fallbackReason, Integer inputCount, String scoresNotRecorded, List<RerankedCandidate> candidates) {
         static Rerank off() {
@@ -105,10 +105,11 @@ public record RetrievalTrace(int vectorCandidates, Integer keywordCandidates, In
     /**
      * The RERANKED record for {@code input} and the validated {@code results}. With a {@code scored} order that lists every input
      * index once and whose first entries are exactly the results, every candidate carries its position, score, and row scores;
-     * otherwise only the returned chunks carry a position, and {@code scoresNotRecorded} says why.
+     * otherwise (no order reported, or an inconsistent one) only the returned chunks carry a position, and {@code scoresNotRecorded}
+     * says why.
      */
     static Rerank reranked(List<RetrievedFilingChunk> input, List<RetrievedFilingChunk> results, FilingReranker.ScoredReranking scored) {
-        String notRecorded = scored == null ? NO_SCORES : consistent(input, results, scored) ? null : INCONSISTENT_SCORES;
+        String notRecorded = scored == null || scored.order() == null ? NO_SCORES : consistent(input, results, scored) ? null : INCONSISTENT_SCORES;
         Integer[] positions = new Integer[input.size()];
         FilingReranker.ScoredCandidate[] scores = new FilingReranker.ScoredCandidate[input.size()];
         if (notRecorded == null) {
@@ -136,7 +137,7 @@ public record RetrievalTrace(int vectorCandidates, Integer keywordCandidates, In
 
     private static boolean consistent(List<RetrievedFilingChunk> input, List<RetrievedFilingChunk> results, FilingReranker.ScoredReranking scored) {
         List<FilingReranker.ScoredCandidate> order = scored.order();
-        if (order == null || order.size() != input.size() || results.size() > order.size()) return false;
+        if (order.size() != input.size() || results.size() > order.size()) return false;
         Set<Integer> seen = new HashSet<>();
         for (FilingReranker.ScoredCandidate candidate : order) {
             if (candidate == null || candidate.inputIndex() < 0 || candidate.inputIndex() >= input.size() || !seen.add(candidate.inputIndex())) return false;

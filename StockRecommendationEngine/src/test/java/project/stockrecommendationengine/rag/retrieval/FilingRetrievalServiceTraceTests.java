@@ -30,8 +30,9 @@ import static org.mockito.Mockito.*;
 /**
  * The traced retrieval path (plan 2026-09-13-evaluation-evidence, Milestone 1, C1 and C2), against a scripted repository and
  * scripted rerankers: the traced and untraced paths return identical responses for rerank off, on, timeout, reranker exception,
- * and invalid evidence; the reranker is invoked exactly once per traced retrieval; a fallback records its reason and no scores;
- * and the trace's fused positions, leg ranks, rerank order, and returned ids agree with what retrieval actually did.
+ * and invalid evidence; the reranker is invoked exactly once per retrieval, through the same method on both paths, so a reranker whose
+ * two methods disagree still returns identical results traced and untraced; a fallback records its reason and no scores; and the
+ * trace's fused positions, leg ranks, rerank order, and returned ids agree with what retrieval actually did.
  */
 class FilingRetrievalServiceTraceTests {
     /** Holds a figure ("64,377"), so the figure leg runs at the default figure weight. */
@@ -111,15 +112,15 @@ class FilingRetrievalServiceTraceTests {
         var request = request(3, true);
 
         RetrievalResponse untraced = service.retrieve(request);
-        assertThat(reranker.rerankCalls.get()).isEqualTo(1);
+        assertThat(reranker.scoredCalls.get()).as("the untraced path calls the same scored method").isEqualTo(1);
         assertThat(scorer.calls.get()).isEqualTo(1);
 
         var traced = service.retrieveTraced(request);
         assertThat(traced.response()).isEqualTo(untraced);
         assertThat(untraced.retrievalStrategy()).isEqualTo("HYBRID_RRF_RERANKED");
         assertThat(untraced.results()).extracting(RetrievedFilingChunk::chunkId).containsExactly(2L, 1L, 10L);
-        assertThat(reranker.scoredCalls.get()).as("one scored call for the traced retrieval").isEqualTo(1);
-        assertThat(reranker.rerankCalls.get()).as("no plain rerank call on the traced path").isEqualTo(1);
+        assertThat(reranker.scoredCalls.get()).as("one scored call per retrieval").isEqualTo(2);
+        assertThat(reranker.rerankCalls.get()).as("no separate rerank call on either path").isZero();
         assertThat(scorer.calls.get()).as("one scoring call per retrieval, never a second for the trace").isEqualTo(2);
         assertThat(reranker.lastInput).extracting(RetrievedFilingChunk::chunkId).containsExactly(8L, 1L, 3L, 2L, 10L);
 
@@ -181,8 +182,8 @@ class FilingRetrievalServiceTraceTests {
         assertThat(traced.response()).isEqualTo(untraced);
         assertThat(untraced.retrievalStrategy()).isEqualTo("HYBRID_RRF");
         assertThat(traced.trace().rerank()).isEqualTo(new RetrievalTrace.Rerank(Outcome.FALLBACK, "failure", 5, null, null));
-        assertThat(reranker.scoredCalls.get()).isEqualTo(1);
-        assertThat(reranker.rerankCalls.get()).isEqualTo(1);
+        assertThat(reranker.scoredCalls.get()).isEqualTo(2);
+        assertThat(reranker.rerankCalls.get()).isZero();
         assertThat(calls.get()).isEqualTo(2);
     }
 
@@ -200,8 +201,8 @@ class FilingRetrievalServiceTraceTests {
             assertThat(untraced.retrievalStrategy()).isEqualTo("HYBRID_RRF");
             assertThat(untraced.results()).extracting(RetrievedFilingChunk::chunkId).containsExactly(8L, 1L, 3L);
             assertThat(traced.trace().rerank()).isEqualTo(new RetrievalTrace.Rerank(Outcome.FALLBACK, "invalidEvidence", 5, null, null));
-            assertThat(reranker.scoredCalls.get()).isEqualTo(1);
-            assertThat(reranker.rerankCalls.get()).isEqualTo(1);
+            assertThat(reranker.scoredCalls.get()).isEqualTo(2);
+            assertThat(reranker.rerankCalls.get()).isZero();
         }
     }
 
@@ -240,7 +241,93 @@ class FilingRetrievalServiceTraceTests {
         assertThat(rerank.candidates()).extracting(RerankedCandidate::chunkId).containsExactly(2L, 1L, 8L, 3L, 10L);
         assertThat(rerank.candidates()).extracting(RerankedCandidate::rerankedPosition).containsExactly(1, 2, null, null, null);
         assertThat(rerank.candidates()).extracting(RerankedCandidate::score).containsOnlyNulls();
-        assertThat(reranker.scoredCalls.get()).isEqualTo(1);
+        assertThat(reranker.scoredCalls.get()).isEqualTo(2);
+    }
+
+    // Remediation 1, finding 4: the reranker contract cannot be broken silently. There is no capability flag to set without
+    // implementing the scored method (FilingReranker declares none), and both paths take their results from the one scored call.
+
+    @Test
+    void aRerankerCannotClaimScoresWithoutProducingThemBecauseThereIsNoFlagAndTheDefaultDelegatesToRerank() {
+        // The former hazard: a reranker saying it reports scores while keeping the throwing default made traced retrieval fall back
+        // with "failure" while untraced retrieval reranked. The flag no longer exists, and the default scored method is rerank.
+        assertThat(Arrays.stream(FilingReranker.class.getMethods()).map(java.lang.reflect.Method::getName))
+                .containsExactlyInAnyOrder("rerank", "rerankScored", "version", "scoring");
+        var reranker = new ReversingFilingReranker(); // implements rerank only
+        var service = service(reranker);
+        var request = request(3, true);
+        RetrievalResponse untraced = service.retrieve(request);
+        assertThat(reranker.calls).as("one rerank call for the untraced retrieval").isEqualTo(1);
+        var traced = service.retrieveTraced(request);
+        assertThat(reranker.calls).as("one rerank call for the traced retrieval").isEqualTo(2);
+        assertThat(traced.response()).isEqualTo(untraced);
+        assertThat(untraced.retrievalStrategy()).isEqualTo("HYBRID_RRF_RERANKED");
+        assertThat(traced.trace().rerank().outcome()).isEqualTo(Outcome.RERANKED);
+        assertThat(traced.trace().rerank().scoresNotRecorded()).isEqualTo("reranker reports no scores");
+
+        // A reranker whose scored method is overridden to refuse (the old default) now fails both paths alike, never only the trace.
+        var refusing = new FilingReranker() {
+            final AtomicInteger rerankCalls = new AtomicInteger();
+            final AtomicInteger scoredCalls = new AtomicInteger();
+
+            @Override
+            public List<RetrievedFilingChunk> rerank(String query, List<RetrievedFilingChunk> candidates, int topK) {
+                rerankCalls.incrementAndGet();
+                return List.of(candidates.get(3));
+            }
+
+            @Override
+            public ScoredReranking rerankScored(String query, List<RetrievedFilingChunk> candidates, int topK) {
+                scoredCalls.incrementAndGet();
+                throw new UnsupportedOperationException("does not report reranking scores");
+            }
+        };
+        var refusingService = service(refusing);
+        RetrievalResponse refusedUntraced = refusingService.retrieve(request);
+        var refusedTraced = refusingService.retrieveTraced(request);
+        assertThat(refusedTraced.response()).isEqualTo(refusedUntraced);
+        assertThat(refusedUntraced.retrievalStrategy()).isEqualTo("HYBRID_RRF");
+        assertThat(refusedTraced.trace().rerank()).isEqualTo(new RetrievalTrace.Rerank(Outcome.FALLBACK, "failure", 5, null, null));
+        assertThat(refusing.scoredCalls.get()).isEqualTo(2);
+        assertThat(refusing.rerankCalls.get()).isZero();
+    }
+
+    @Test
+    void aRerankerWhoseScoredResultsDifferFromRerankStillReturnsIdenticalResultsTracedAndUntraced() {
+        // rerank would return chunks 10, 2 (input 4, 3); the scored method returns chunks 1, 3 (input 1, 2) with a consistent order.
+        var disagreeing = new FilingReranker() {
+            final AtomicInteger rerankCalls = new AtomicInteger();
+            final AtomicInteger scoredCalls = new AtomicInteger();
+
+            @Override
+            public List<RetrievedFilingChunk> rerank(String query, List<RetrievedFilingChunk> candidates, int topK) {
+                rerankCalls.incrementAndGet();
+                return List.of(candidates.get(4), candidates.get(3));
+            }
+
+            @Override
+            public ScoredReranking rerankScored(String query, List<RetrievedFilingChunk> candidates, int topK) {
+                scoredCalls.incrementAndGet();
+                List<ScoredCandidate> order = List.of(new ScoredCandidate(1, 3f, new float[] {3f}), new ScoredCandidate(2, 2f, new float[] {2f}),
+                        new ScoredCandidate(0, 1f, new float[] {1f}), new ScoredCandidate(3, 0f, new float[] {0f}),
+                        new ScoredCandidate(4, -1f, new float[] {-1f}));
+                return new ScoredReranking(List.of(candidates.get(1), candidates.get(2)), order);
+            }
+        };
+        var service = service(disagreeing);
+        var request = request(2, true);
+        RetrievalResponse untraced = service.retrieve(request);
+        var traced = service.retrieveTraced(request);
+        assertThat(traced.response()).isEqualTo(untraced);
+        assertThat(untraced.retrievalStrategy()).isEqualTo("HYBRID_RRF_RERANKED");
+        assertThat(untraced.results()).extracting(RetrievedFilingChunk::chunkId).containsExactly(1L, 3L);
+        assertThat(disagreeing.scoredCalls.get()).as("exactly one reranker call per retrieval").isEqualTo(2);
+        assertThat(disagreeing.rerankCalls.get()).as("rerank is never called by retrieval, so it cannot make the paths differ").isZero();
+        RetrievalTrace.Rerank rerank = traced.trace().rerank();
+        assertThat(rerank.scoresNotRecorded()).isNull();
+        assertThat(rerank.candidates()).extracting(RerankedCandidate::chunkId).containsExactly(1L, 3L, 8L, 2L, 10L);
+        assertThat(rerank.candidates()).extracting(RerankedCandidate::score).containsExactly(3f, 2f, 1f, 0f, -1f);
+        assertRerankTrace(traced.trace(), untraced, List.of(chunks.get(8L), chunks.get(1L), chunks.get(3L), chunks.get(2L), chunks.get(10L)));
     }
 
     @Test
@@ -327,7 +414,8 @@ class FilingRetrievalServiceTraceTests {
             RetrievalResponse untraced = service.retrieve(request);
             var traced = service.retrieveTraced(request);
             assertThat(traced.response()).as("round %d topK %d", round, topK).isEqualTo(untraced);
-            assertThat(reranker.scoredCalls.get()).isEqualTo(1);
+            assertThat(reranker.scoredCalls.get()).isEqualTo(2);
+            assertThat(reranker.rerankCalls.get()).isZero();
             assertThat(traced.trace().rerank().inputCount()).isEqualTo(Math.max(5, topK));
             assertFusedTrace(traced.trace(), untraced);
             assertRerankTrace(traced.trace(), untraced, reranker.lastInput);
@@ -454,11 +542,6 @@ class FilingRetrievalServiceTraceTests {
         }
 
         @Override
-        public boolean reportsScores() {
-            return delegate.reportsScores();
-        }
-
-        @Override
         public ScoredReranking rerankScored(String query, List<RetrievedFilingChunk> candidates, int topK) {
             scoredCalls.incrementAndGet();
             lastInput = candidates;
@@ -483,11 +566,6 @@ class FilingRetrievalServiceTraceTests {
         public List<RetrievedFilingChunk> rerank(String query, List<RetrievedFilingChunk> candidates, int topK) {
             rerankCalls.incrementAndGet();
             return results.apply(candidates);
-        }
-
-        @Override
-        public boolean reportsScores() {
-            return true;
         }
 
         @Override

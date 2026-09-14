@@ -172,3 +172,9 @@ Correctness contract:
   follows. Low findings left open: chunk-id-only lookups would misreport a repeated vector chunk (not produced by the vector
   query), and the evidence `removed` source text names the empty case for every question. UT observed that
   `POST /api/rag/retrieve` is not token-gated (pre-existing; raised as a separate task).
+- 2026-09-14, Jay's note during Milestone 4 review (an uncommitted edit to `Project_Challenges.md`, folded into the
+  document's format in 3b5a179 with Jay's approval), as written: "Increased retrieval candidate pool from 40 to 200";
+  "correct chunks are now within the 40 chunks that reranker can examine"; "reranker doesnt rank all correct chunks highly
+  enough"; "check whether diversification (removal of duplicate chunks) is removing correct chunks before blaming or
+  changing cross encoder". The diversification check was already step 3 of the agreed order above, written before
+  Milestone 2 ran; the note restates that order after Milestone 2's outcome.

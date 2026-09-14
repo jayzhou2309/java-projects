@@ -152,3 +152,8 @@ Correctness contract:
   hit@5 whose best fused position is 1 to 5, so R1's sum cannot hold for reranked runs; a fifth class `fused 1-5` is added.
   The Design constraints line naming the taken claim ids was reworded because the claims check read it as a citation
   outside a block.
+- 2026-09-14, amendment 2 (Milestone 2): `POST /api/rag/evaluate` takes only `hybrid`, `rerank`, and `trace` per call, so
+  each run gets its own application start with `RAG_*` settings (one warm-up embedding call per start); X2's property diff
+  covers this. Run (c) (snapshot 933) recorded one rerank fallback, so under X5 it gives no selection outcome. As in the
+  evidence plan's Milestone 4, run (c) may be repeated once, after the CPU-sharing wait, as a new snapshot; the fallback run
+  stays committed and labelled. If the repeat also records a fallback, no selection outcome is stated for (c).

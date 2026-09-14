@@ -1,5 +1,6 @@
 package project.stockrecommendationengine.rag.retrieval;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 
 import java.util.ArrayList;
@@ -19,11 +20,34 @@ import java.util.Set;
  * {@code vectorCandidates} is the size of the vector leg; {@code keywordCandidates} and {@code figureCandidates} are the sizes
  * of those legs, null when the leg did not run or failed (so a null leg rank below means "absent from a leg that ran" only when
  * the leg size is not null). {@code fused} is the fused, diversified candidate list in order (the vector list, diversified,
- * when fusion did not run); chunks diversification removed are not listed. {@code returnedChunkIds} are the response's
+ * when fusion did not run); chunks diversification removed are not listed there. {@code returnedChunkIds} are the response's
  * results in order.
+ * <p>
+ * {@code removed} lists, in the order diversification met them, the chunks it removed from the list before diversification (the
+ * fused list, or the vector list when fusion did not run), each with its position in that list, its leg ranks, and the kept chunk that
+ * made it redundant. Every position of the list before diversification is either in {@code fused} or in {@code removed}, never both.
+ * It is an empty list when nothing was removed, and null only on a trace recorded before removals were traced (plan
+ * 2026-09-14-retrieval-recall, Milestone 3): such a trace does not say what diversification removed. A null list is not written to
+ * JSON, so a stored trace without the key reads back null and an older trace written back keeps its keys.
  */
 public record RetrievalTrace(int vectorCandidates, Integer keywordCandidates, Integer figureCandidates, List<FusedCandidate> fused,
-        Rerank rerank, List<Long> returnedChunkIds) {
+        Rerank rerank, List<Long> returnedChunkIds, @JsonInclude(JsonInclude.Include.NON_NULL) List<RemovedCandidate> removed) {
+
+    /** A trace that does not record removals ({@code removed} null), as every trace stored before removals were traced. */
+    public RetrievalTrace(int vectorCandidates, Integer keywordCandidates, Integer figureCandidates, List<FusedCandidate> fused,
+            Rerank rerank, List<Long> returnedChunkIds) {
+        this(vectorCandidates, keywordCandidates, figureCandidates, fused, rerank, returnedChunkIds, null);
+    }
+
+    /**
+     * One chunk diversification removed: its 1-based {@code candidatePosition} in the list before diversification, its 1-based rank in
+     * each leg (null when that leg did not return it or did not run, as for {@link FusedCandidate}), and {@code redundantWith}, the id of
+     * the first kept chunk (in fused order) of the same filing, section key, and section title whose text it repeats, contains, or
+     * overlaps by at least half of the shorter text (FilingRetrievalService.redundantText). That chunk is in {@code fused}.
+     */
+    public record RemovedCandidate(long chunkId, int candidatePosition, Integer vectorRank, Integer keywordRank, Integer figureRank,
+            long redundantWith) {
+    }
 
     /**
      * One chunk of the fused, diversified list: its 1-based {@code fusedPosition} (1..n without gaps) and its 1-based rank in
@@ -87,6 +111,25 @@ public record RetrievalTrace(int vectorCandidates, Integer keywordCandidates, In
         for (int index = 0; index < diversified.size(); index++) {
             long chunkId = diversified.get(index).chunkId();
             out.add(new FusedCandidate(chunkId, index + 1, vectorRanks.get(chunkId), keywordRanks.get(chunkId), figureRanks.get(chunkId)));
+        }
+        return List.copyOf(out);
+    }
+
+    /** A removal as {@code FilingRetrievalService.diversify} recorded it: the removed chunk, its position before diversification, and the kept chunk. */
+    record Removal(RetrievedFilingChunk chunk, int candidatePosition, RetrievedFilingChunk redundantWith) {
+    }
+
+    /** The removed list as recorded, with each removed chunk's leg ranks; legs null when they did not run. */
+    static List<RemovedCandidate> removed(List<Removal> removals, List<RetrievedFilingChunk> vector, List<RetrievedFilingChunk> keyword,
+            List<RetrievedFilingChunk> figure) {
+        Map<Long, Integer> vectorRanks = ranks(vector);
+        Map<Long, Integer> keywordRanks = ranks(keyword);
+        Map<Long, Integer> figureRanks = ranks(figure);
+        List<RemovedCandidate> out = new ArrayList<>(removals.size());
+        for (Removal removal : removals) {
+            long chunkId = removal.chunk().chunkId();
+            out.add(new RemovedCandidate(chunkId, removal.candidatePosition(), vectorRanks.get(chunkId), keywordRanks.get(chunkId),
+                    figureRanks.get(chunkId), removal.redundantWith().chunkId()));
         }
         return List.copyOf(out);
     }

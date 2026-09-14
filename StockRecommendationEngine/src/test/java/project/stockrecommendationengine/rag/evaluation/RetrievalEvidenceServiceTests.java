@@ -18,6 +18,7 @@ import project.stockrecommendationengine.rag.evaluation.RetrievalEvidenceReport.
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.FusedCandidate;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.Outcome;
+import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.RemovedCandidate;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.RerankedCandidate;
 import project.stockrecommendationengine.rag.retrieval.ScriptedWordTokenizer;
 import tools.jackson.databind.JsonNode;
@@ -30,9 +31,9 @@ import static org.mockito.Mockito.*;
  */
 class RetrievalEvidenceServiceTests {
     private static final List<String> QUESTION_CANDIDATE_FIELDS = List.of("rerankOutcome", "fallbackReason", "scoresNotRecorded", "fusedCount",
-            "rerankInputCount", "ranking", "bestAcceptedChunk", "bestAcceptedPosition", "rankedAbove");
+            "rerankInputCount", "ranking", "bestAcceptedChunk", "bestAcceptedPosition", "rankedAbove", "removed", "acceptedChunkRemoved");
     private static final List<String> CHUNK_CANDIDATE_FIELDS = List.of("fusedPosition", "rerankInput", "rerankedPosition", "score", "windowCount",
-            "windowScores", "returnedPosition");
+            "windowScores", "returnedPosition", "removedRedundantWith");
     private static final List<String> CHUNK_TOKEN_FIELDS = List.of("chunkTokens", "windowLength", "windowStarts");
     private static final List<String> OCCURRENCE_TOKEN_FIELDS = List.of("tokenSpan", "head", "windowsHoldingWholly");
 
@@ -432,6 +433,90 @@ class RetrievalEvidenceServiceTests {
         assertThatThrownBy(() -> new EvidenceValue<>(1, Basis.UNKNOWN, null, null, "reason")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new EvidenceValue<>(1, Basis.OBSERVED, null, "rule", null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new EvidenceValue<>(1, null, "source", null, null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // Plan 2026-09-14-retrieval-recall, Milestone 3, D3: removals come only from the trace; a trace recorded before removals were traced
+    // says unknown / no trace of removals, never an empty list or false.
+
+    @Test
+    void aTraceWithoutRemovalsReportsEveryRemovalFieldUnknownWithNoTraceOfRemovals() {
+        RetrievalEvidenceReport report = scripted.service().report(ScriptedEvidence.tracedSnapshot());
+        for (String id : List.of("q1", "q2")) {
+            QuestionEvidence question = question(report, id);
+            assertThat(question.removed()).as(id).isEqualTo(EvidenceValue.unknown(RetrievalEvidenceService.NO_TRACE_OF_REMOVALS));
+            assertThat(question.acceptedChunkRemoved()).as(id).isEqualTo(EvidenceValue.unknown(RetrievalEvidenceService.NO_TRACE_OF_REMOVALS));
+            question.phrases().forEach(phrase -> phrase.chunks().forEach(chunk ->
+                    assertThat(chunk.removedRedundantWith()).isEqualTo(EvidenceValue.unknown(RetrievalEvidenceService.NO_TRACE_OF_REMOVALS))));
+        }
+        QuestionEvidence failed = question(report, "q3");
+        assertThat(failed.removed()).isEqualTo(EvidenceValue.unknown(RetrievalEvidenceService.NO_TRACE_FOR_QUESTION));
+        assertThat(failed.acceptedChunkRemoved()).isEqualTo(EvidenceValue.unknown(RetrievalEvidenceService.NO_TRACE_FOR_QUESTION));
+    }
+
+    @Test
+    void recordedRemovalsAreObservedAndAnAcceptedChunkAmongThemIsMarked() {
+        // q1 removed nothing; q2 removed chunk 201, which holds its accepted phrase, as redundant with chunk 202, and chunk 204, which holds none.
+        RetrievalEvaluation traced = ScriptedEvidence.tracedSnapshot();
+        RetrievalTrace q1 = withRemoved(traced.traces().get(0).trace(), List.of());
+        List<RemovedCandidate> q2Removed = List.of(new RemovedCandidate(201, 2, 2, null, null, 202), new RemovedCandidate(204, 4, null, 3, null, 203));
+        RetrievalTrace q2 = withRemoved(traced.traces().get(1).trace(), q2Removed);
+        RetrievalEvidenceReport report = scripted.service().report(ScriptedEvidence.with(traced, traced.properties(),
+                List.of(new QuestionTrace("q1", q1), new QuestionTrace("q2", q2), new QuestionTrace("q3", null))));
+
+        QuestionEvidence first = question(report, "q1");
+        assertThat(first.removed()).isEqualTo(EvidenceValue.observed(List.of(), RetrievalEvidenceService.SOURCE_REMOVED));
+        assertThat(first.acceptedChunkRemoved()).isEqualTo(EvidenceValue.derived(false, RetrievalEvidenceService.RULE_ACCEPTED_REMOVED));
+        assertThat(chunk(first, 0, 101).removedRedundantWith()).isEqualTo(EvidenceValue.observed(null, RetrievalEvidenceService.SOURCE_REDUNDANT_WITH));
+
+        QuestionEvidence second = question(report, "q2");
+        assertThat(second.removed()).isEqualTo(EvidenceValue.observed(q2Removed, RetrievalEvidenceService.SOURCE_REMOVED));
+        assertThat(second.acceptedChunkRemoved()).isEqualTo(EvidenceValue.derived(true, RetrievalEvidenceService.RULE_ACCEPTED_REMOVED));
+        assertThat(chunk(second, 0, 201).removedRedundantWith()).isEqualTo(EvidenceValue.observed(202L, RetrievalEvidenceService.SOURCE_REDUNDANT_WITH));
+
+        // Only a removed chunk that holds an accepted phrase marks the question.
+        RetrievalTrace unrelated = withRemoved(traced.traces().get(1).trace(), List.of(new RemovedCandidate(204, 3, null, 3, null, 203)));
+        RetrievalEvidenceReport other = scripted.service().report(ScriptedEvidence.with(traced, traced.properties(),
+                List.of(new QuestionTrace("q1", q1), new QuestionTrace("q2", unrelated), new QuestionTrace("q3", null))));
+        assertThat(question(other, "q2").acceptedChunkRemoved().value()).isFalse();
+
+        // The markdown lists the removals and marks the chunk.
+        String markdown = scripted.service().markdown(report);
+        assertThat(markdown).contains("removed: 2 chunks (observed [").contains("| 201 | 2 | 2 | none | none | 202 |")
+                .contains("removed: 0 chunks (observed [").contains("| acceptedChunkRemoved | true (derived [");
+    }
+
+    @Test
+    void theCommittedSnapshots598And694ReadBackWithRemovedNullAndReportNoTraceOfRemovals() throws Exception {
+        for (String file : List.of("src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json",
+                "src/main/java/documentation/live-runs/2026-09-13-rag15-recall/snapshot-694-candidate-count-200-rerank-off.json")) {
+            RetrievalEvaluation snapshot = readExport(java.nio.file.Path.of(file));
+            assertThat(snapshot.traces()).as(file).hasSize(42);
+            assertThat(snapshot.traces()).allSatisfy(trace -> assertThat(trace.trace().removed()).as(trace.id()).isNull());
+            RetrievalEvidenceService service = new RetrievalEvidenceService(scripted.snapshots,
+                    new RetrievalEvaluationSetLoader(new RetrievalEvaluationProperties()), scripted.chunks, scripted.crossEncoder, Optional.empty());
+            RetrievalEvidenceReport report = service.report(snapshot);
+            assertThat(report.questions()).hasSize(42).allSatisfy(question -> {
+                assertThat(question.removed()).as(question.id()).isEqualTo(EvidenceValue.unknown(RetrievalEvidenceService.NO_TRACE_OF_REMOVALS));
+                assertThat(question.acceptedChunkRemoved()).as(question.id()).isEqualTo(EvidenceValue.unknown(RetrievalEvidenceService.NO_TRACE_OF_REMOVALS));
+            });
+        }
+    }
+
+    /** A row_to_json export read as RetrievalEvaluationRepository's row mapper reads the row (as TraceReproductionFilesTests does). */
+    private static RetrievalEvaluation readExport(java.nio.file.Path file) throws Exception {
+        var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+        JsonNode row = mapper.readTree(Files.readString(file));
+        var stored = mapper.readValue(row.get("results").toString(), RetrievalEvaluationRepository.StoredResults.class);
+        Map<String, Object> properties = mapper.readValue(row.get("properties").toString(), new tools.jackson.core.type.TypeReference<Map<String, Object>>() { });
+        return new RetrievalEvaluation(row.get("id").asLong(), java.time.OffsetDateTime.parse(row.get("evaluated_at").asString()).toInstant(),
+                row.get("set_version").asString(), row.get("question_count").asInt(), row.get("hit_at_1").decimalValue(), row.get("hit_at_3").decimalValue(),
+                row.get("hit_at_5").decimalValue(), row.get("mrr").decimalValue(), row.get("window_size").asInt(), row.get("retrieval_strategy").asString(),
+                properties, stored.questions(), stored.tickerHitAt5(), stored.misses(), stored.slices(), stored.traces());
+    }
+
+    private static RetrievalTrace withRemoved(RetrievalTrace trace, List<RemovedCandidate> removed) {
+        return new RetrievalTrace(trace.vectorCandidates(), trace.keywordCandidates(), trace.figureCandidates(), trace.fused(), trace.rerank(),
+                trace.returnedChunkIds(), removed);
     }
 
     private static void collectValues(JsonNode node, List<JsonNode> out) {

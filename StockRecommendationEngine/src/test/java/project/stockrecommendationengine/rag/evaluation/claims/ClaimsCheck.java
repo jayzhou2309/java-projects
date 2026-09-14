@@ -44,7 +44,7 @@ public final class ClaimsCheck {
     static final List<String> BASES = List.of("observed", "derived", "inferred", "unknown", "experiment");
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
     static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
-            "candidateRecall", "notRecorded");
+            "candidateRecall", "removedAccepted", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -53,17 +53,18 @@ public final class ClaimsCheck {
             + "|tickerHitAt5\\.([A-Z0-9.-]{1,16})");
     private static final Set<String> FILE_KEYS = Set.of("claims", "description", "labels");
     private static final Set<String> CLAIM_KEYS = Set.of("id", "basis", "block", "check", "text", "from", "experiment");
-    private static final Map<String, Set<String>> CHECK_KEYS = Map.of(
-            "rank", Set.of("type", "snapshot", "question", "expected"),
-            "topK", Set.of("type", "question", "k", "rows"),
-            "metric", Set.of("type", "snapshot", "metric", "expected"),
-            "ruleRow", Set.of("type", "reference", "candidate", "criteria"),
-            "phraseSpan", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected"),
-            "membership", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected"),
-            "candidate", Set.of("type", "report", "question", "chunk", "expected"),
-            "bestFusedPosition", Set.of("type", "report", "question", "expected"),
-            "candidateRecall", Set.of("type", "report", "k", "expected"),
-            "notRecorded", Set.of("type", "report", "path", "reason"));
+    private static final Map<String, Set<String>> CHECK_KEYS = Map.ofEntries(
+            Map.entry("rank", Set.of("type", "snapshot", "question", "expected")),
+            Map.entry("topK", Set.of("type", "question", "k", "rows")),
+            Map.entry("metric", Set.of("type", "snapshot", "metric", "expected")),
+            Map.entry("ruleRow", Set.of("type", "reference", "candidate", "criteria")),
+            Map.entry("phraseSpan", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected")),
+            Map.entry("membership", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected")),
+            Map.entry("candidate", Set.of("type", "report", "question", "chunk", "expected")),
+            Map.entry("bestFusedPosition", Set.of("type", "report", "question", "expected")),
+            Map.entry("candidateRecall", Set.of("type", "report", "k", "expected")),
+            Map.entry("removedAccepted", Set.of("type", "report", "expected")),
+            Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
             "phraseSpan", List.of("tokenSpan", "characterSpan"),
@@ -611,6 +612,7 @@ public final class ClaimsCheck {
                 case "candidate" -> candidate(claim, check, evaluation);
                 case "bestFusedPosition" -> bestFusedPosition(claim, check, evaluation);
                 case "candidateRecall" -> candidateRecall(claim, check, evaluation);
+                case "removedAccepted" -> removedAccepted(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -1083,6 +1085,71 @@ public final class ClaimsCheck {
         return all ? in + " over the whole fused list is " + share.toPlainString() + ": " + within + " of " + total + " questions have a chunk holding an accepted phrase in the fused list."
                 : in + "@" + k.intValue() + " is " + share.toPlainString() + ": " + within + " of " + total + " questions have a chunk holding an accepted phrase at fused position "
                 + k.intValue() + " or earlier.";
+    }
+
+    // Template: "In <Report>, diversification removed no chunk holding an accepted phrase of any of the <total> questions." | "In <Report>,
+    // diversification removed a chunk holding an accepted phrase of <n> of the <total> questions: <question> (chunk <id>, redundant with chunk
+    // <id>), ...." (several removed holding chunks of one question are listed in its parentheses, separated by semicolons)
+    /**
+     * The number of the report's questions for which the trace's {@code removed} list (plan {@code 2026-09-14-retrieval-recall.md}, Milestone 3)
+     * holds a chunk listed under any accepted phrase of the question. Read from each question's {@code removed} list and its phrases' chunk ids,
+     * not from the report's {@code acceptedChunkRemoved} flag. A question whose removals are unknown or missing (a trace recorded before removals
+     * were traced says {@code no trace of removals}) or whose accepted phrases are unknown makes the claim unreadable, naming every such question,
+     * so an unknown is never counted as nothing removed. A failure names the count found and every counted question with its removed chunks.
+     */
+    private String removedAccepted(Claim claim, JsonNode check, Evaluation evaluation) {
+        String reportFile = requireText(check, "report");
+        JsonNode expected = check.get("expected");
+        if (expected == null || !expected.isIntegralNumber() || expected.intValue() < 0) {
+            throw new Unreadable("check.expected must be a question count (non-negative integer), found " + (expected == null ? "none" : expected));
+        }
+        evaluation.subject("removals in " + reportFile);
+        Loaded report = report(reportFile, evaluation);
+        JsonNode questions = report.json().get("questions");
+        if (questions == null || !questions.isArray() || questions.isEmpty()) throw new Unreadable(reportFile + " lists no questions");
+        List<String> unreadable = new ArrayList<>();
+        List<String> counted = new ArrayList<>();
+        for (JsonNode questionNode : questions) {
+            String question = questionNode.path("id").asString("");
+            JsonNode count = questionNode.get("acceptedPhraseCount");
+            if (count == null || !count.isObject() || !count.path("basis").asString("").equals("observed")) {
+                unreadable.add("question " + question + " has unknown accepted phrases (acceptedPhraseCount " + (isUnknown(count) ? reason(count)
+                        : "has basis " + (count == null ? "none" : count.path("basis").asString("none"))) + ")");
+                continue;
+            }
+            JsonNode removed = questionNode.get("removed");
+            if (removed == null || !removed.isObject() || !removed.has("basis")) {
+                unreadable.add("question " + question + " has no removed value in the report");
+                continue;
+            }
+            if (isUnknown(removed)) {
+                unreadable.add("question " + question + " has unknown removals (" + reason(removed) + ")");
+                continue;
+            }
+            JsonNode entries = removed.get("value");
+            if (entries == null || !entries.isArray()) {
+                unreadable.add("question " + question + " has removals " + (entries == null ? "none" : abbreviate(entries.toString())) + ", not a list");
+                continue;
+            }
+            Set<Long> holding = new LinkedHashSet<>();
+            for (JsonNode phraseNode : questionNode.path("phrases")) {
+                for (JsonNode chunkNode : phraseNode.path("chunks")) holding.add(chunkNode.path("chunkId").asLong(-1));
+            }
+            List<String> hits = new ArrayList<>();
+            for (JsonNode entry : entries) {
+                long chunk = entry.path("chunkId").asLong(-1);
+                if (holding.contains(chunk)) hits.add("chunk " + chunk + ", redundant with chunk " + render(entry.get("redundantWith")));
+            }
+            if (!hits.isEmpty()) counted.add(question + " (" + String.join("; ", hits) + ")");
+        }
+        if (!unreadable.isEmpty()) throw new Unreadable(String.join(", ", unreadable));
+        if (counted.size() != expected.intValue()) {
+            evaluation.differs("count", String.valueOf(expected.intValue()), counted.size() + " (" + (counted.isEmpty() ? "none" : String.join(", ", counted)) + ")");
+        }
+        basis(claim, "derived", evaluation);
+        String in = "In " + reportReference(report) + ", diversification removed ";
+        return counted.isEmpty() ? in + "no chunk holding an accepted phrase of any of the " + questions.size() + " questions."
+                : in + "a chunk holding an accepted phrase of " + counted.size() + " of the " + questions.size() + " questions: " + String.join(", ", counted) + ".";
     }
 
     /**

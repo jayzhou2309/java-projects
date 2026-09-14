@@ -205,7 +205,8 @@ public class FilingRetrievalService {
                 }
             }
 
-            List<RetrievedFilingChunk> diverseCandidates = diversify(candidates);
+            List<RetrievalTrace.Removal> removals = traced ? new ArrayList<>() : null;
+            List<RetrievedFilingChunk> diverseCandidates = diversify(candidates, removals);
             List<RetrievedFilingChunk> selectedEvidence = null;
             String retrievalStrategy = keywordContributed ? "HYBRID_RRF" : "FILTERED_VECTOR";
             RetrievalTrace.Rerank rerankTrace = rerankRequested ? RetrievalTrace.Rerank.fallback("noCandidates", 0) : RetrievalTrace.Rerank.off();
@@ -235,7 +236,8 @@ public class FilingRetrievalService {
             RetrievalTrace trace = new RetrievalTrace(vectorCandidates.size(),
                     keywordCandidates == null ? null : keywordCandidates.size(), figureCandidates == null ? null : figureCandidates.size(),
                     RetrievalTrace.fused(diverseCandidates, vectorCandidates, keywordCandidates, figureCandidates), rerankTrace,
-                    RetrievalTrace.chunkIds(response.results()));
+                    RetrievalTrace.chunkIds(response.results()),
+                    RetrievalTrace.removed(removals, vectorCandidates, keywordCandidates, figureCandidates));
             return new TracedRetrieval(response, trace);
         } catch (RuntimeException retrievalFailure) {
             log.error("Retrieval failed: ticker={}, elapsedMs={}",
@@ -452,15 +454,23 @@ public class FilingRetrievalService {
         return fusedScores;
     }
 
-    private List<RetrievedFilingChunk> diversify(List<RetrievedFilingChunk> candidates) {
+    /**
+     * Keeps each candidate, in order, unless a chunk already kept is of the same filing, section key, and section title and
+     * {@link #redundantText} holds for the two texts. When {@code removals} is not null (the traced path only) each removed candidate is
+     * appended to it with its 1-based position in {@code candidates} and the first kept chunk that made it redundant; the kept list is the
+     * same either way.
+     */
+    private List<RetrievedFilingChunk> diversify(List<RetrievedFilingChunk> candidates, List<RetrievalTrace.Removal> removals) {
         List<RetrievedFilingChunk> selected = new java.util.ArrayList<>();
-        for (var candidate : candidates) {
-            boolean redundant = selected.stream().anyMatch(existing ->
+        for (int index = 0; index < candidates.size(); index++) {
+            var candidate = candidates.get(index);
+            Optional<RetrievedFilingChunk> redundantWith = selected.stream().filter(existing ->
                     existing.filingId().equals(candidate.filingId())
                     && java.util.Objects.equals(existing.sectionKey(), candidate.sectionKey())
                     && java.util.Objects.equals(existing.sectionTitle(), candidate.sectionTitle())
-                    && redundantText(existing.content(), candidate.content()));
-            if (!redundant) selected.add(candidate);
+                    && redundantText(existing.content(), candidate.content())).findFirst();
+            if (redundantWith.isEmpty()) selected.add(candidate);
+            else if (removals != null) removals.add(new RetrievalTrace.Removal(candidate, index + 1, redundantWith.get()));
         }
         return selected;
     }

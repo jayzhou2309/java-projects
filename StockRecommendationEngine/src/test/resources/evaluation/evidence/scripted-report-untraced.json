@@ -215,6 +215,11 @@
           "value" : null,
           "basis" : "unknown",
           "reason" : "no trace"
+        },
+        "removedRedundantWith" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         }
       }, {
         "chunkId" : 102,
@@ -295,6 +300,11 @@
           "value" : null,
           "basis" : "unknown",
           "reason" : "no trace"
+        },
+        "removedRedundantWith" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         }
       } ]
     }, {
@@ -324,6 +334,16 @@
       "reason" : "no trace"
     },
     "rankedAbove" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
+    },
+    "removed" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
+    },
+    "acceptedChunkRemoved" : {
       "value" : null,
       "basis" : "unknown",
       "reason" : "no trace"
@@ -476,6 +496,11 @@
           "value" : null,
           "basis" : "unknown",
           "reason" : "no trace"
+        },
+        "removedRedundantWith" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         }
       } ]
     } ],
@@ -495,6 +520,16 @@
       "reason" : "no trace"
     },
     "rankedAbove" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
+    },
+    "removed" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
+    },
+    "acceptedChunkRemoved" : {
       "value" : null,
       "basis" : "unknown",
       "reason" : "no trace"
@@ -647,6 +682,11 @@
           "value" : null,
           "basis" : "unknown",
           "reason" : "no trace"
+        },
+        "removedRedundantWith" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace"
         }
       } ]
     } ],
@@ -666,6 +706,16 @@
       "reason" : "no trace"
     },
     "rankedAbove" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
+    },
+    "removed" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace"
+    },
+    "acceptedChunkRemoved" : {
       "value" : null,
       "basis" : "unknown",
       "reason" : "no trace"

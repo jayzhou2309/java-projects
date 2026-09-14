@@ -182,6 +182,18 @@ Build (after the repeat, in a new shell started with env -i HOME PATH, so no RAG
       "CLAIMS_CHECK claimsFiles=4 documents=22 problems=0" (observed: verify output).
   B2. lsof -iTCP:8081 -sTCP:LISTEN -> 0 lines (observed).
 
+Low findings after validation (2026-09-14, no app start, no evaluation, no model call)
+  L1. rerank-timeout-ms of 598: ../2026-09-13-evaluation-evidence/measurement/run.log states no timeout for run 295 (its "timeout default" line is run
+      297's) (observed). The value 2000 is now sourced to rerank-timeout-ms in src/main/resources/application.yaml at 432f456, the commit that run.log
+      names, with no override recorded for run 295 (observed: git show 432f456:./src/main/resources/application.yaml, line 82); still not recorded
+      in the snapshot. compare_one_factor.py prints each run's source (TIMEOUT_SOURCE).
+  L2. property-diff.txt adds the pair 627 against 598 (the pair of C-637).
+  L3. C-658 and C-659 check the fused positions in 598 (41, 54) that the texts of C-631 and C-636 state; appended after C-657, no id renumbered.
+  L4. RAG.md change log, plan amendment 2 bullet: no longer lists the claims that amendment added; it points to 32b100d and this run.log.
+  python3 compare_one_factor.py twice -> the three outputs byte identical (md5), no __pycache__ (observed). DocumentationClaimsTests
+  -Dclaims.generate=true -> changed=1 (RAG.md), problems=0. Clean shell (env -i), .env exported, no RAG_ or enable flag set; ./mvnw -q -o verify
+  -> exit 0; 542 tests, 0 failures, 0 errors, 28 skipped (derived: surefire XML sums); "CLAIMS_CHECK claimsFiles=4 documents=22 problems=0" (observed).
+
 Files committed in this directory
   snapshot-931-a-reproduction-of-598.json, snapshot-932-b-candidate-count-200-rerank-off.json, snapshot-933-c-candidate-count-200-rerank-candidates-40-timeout-4000.json
   (the run with a rerank fallback), snapshot-947-c-repeat-candidate-count-200-rerank-candidates-40-timeout-4000.json (row_to_json exports, step 7);

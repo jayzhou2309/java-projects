@@ -7,7 +7,7 @@
     * A cause is given only where the pointed-to source states one; a lesson is attributed to whoever the source attributes it to (Jay, a validator, a plan).
 
 * How to read
-    * One section per theme. Each bullet names the challenge, then what happened, then the lesson, then the pointer.
+    * One section per theme. Each bullet names the challenge, then what happened, then the lesson where a source states one (otherwise an outcome line or a note that none is recorded), then the pointer. A bullet for work that is still open (What remains) has no lesson line.
     * Pointers are repository paths (relative to the StockRecommendationEngine project directory, where CLAUDE.md sits), Follow_Ups ids, plan milestones or amendments, and commit ids.
 
 ## Broker sessions and market data
@@ -15,13 +15,13 @@
 * Client Portal sessions that were never ready
     * Challenge: the first live manager runs on 2026-09-10 went through the Client Portal gateway, and broker discovery kept returning SESSION_NOT_READY.
     * What happened: a retry after login and a session reset both still returned SESSION_NOT_READY, with the gateway reporting not authenticated; a later ready session reached discovery but received null prices, with the cause recorded as not established. The adapter was then replaced by the TWS socket API, and the Client Portal implementation was archived.
-    * Lesson (Agent_Harness.md, Follow_Ups BROKER-4): those runs stayed PARTIAL with NO_VERIFIED_CURRENT_QUOTE in their limitations, and a stale session still fails silently until the next request, so a heartbeat with reconnect is open.
+    * Outcome (Agent_Harness.md, Follow_Ups BROKER-4): those runs stayed PARTIAL with NO_VERIFIED_CURRENT_QUOTE in their limitations, and a stale session still fails silently until the next request, so a heartbeat with reconnect is open; the sources state no lesson.
     * Pointers: `src/main/java/documentation/Agent_Harness.md` (Historical change log, Live retry after user login, Session reset retry, Ready-session retry); `src/main/java/documentation/live-runs/2026-09-10-session-reset/`; `src/main/java/documentation/IBKR_Client_Portal_History.md`; Follow_Ups BROKER-4.
 
 * Delayed quotes that did not arrive over TWS
     * Challenge: after the TWS migration, the quote path returned no delayed prices in both the Java adapter and an independent Python SDK probe, even after a clean TWS restart.
     * What happened: IBKR.md records a sequence of diagnostics: an entitlement rejection for realtime data, delivery that appeared after a probe requested a primary exchange, closed-market ticks where the delayed close was the only price, and on 2026-09-11 with the market open the finding recorded as the root cause: SMART-routed requests for NASDAQ stocks received no delayed data on this account while primary-exchange requests did. The adapter now requests quotes on the primary exchange and maps the delayed close tick.
-    * Lesson (IBKR.md): earlier entries keep "cause not established" until the market-open comparison of request shapes; its consequence note says a delayed quote still cannot make a run COMPLETE, which needs a realtime subscription.
+    * Outcome (IBKR.md): earlier entries record the cause of absent data as not established until the market-open comparison of request shapes; its consequence note says a delayed quote still cannot make a run COMPLETE, which needs a realtime subscription; the source states no lesson.
     * Pointers: `src/main/java/documentation/IBKR.md` (Delayed quote diagnostic, Delayed data delivered, Closed-market close mapping, Root cause of missing delayed quotes); commits 54716dc and 44e5807; `src/main/java/documentation/live-runs/2026-09-11-quote-primary-exchange/`; Follow_Ups BROKER-1 and BROKER-2.
 
 * Data-gated phases waiting on broker-on runs in US hours
@@ -89,7 +89,7 @@
 * Exact figures and defined terms that embeddings miss
     * Challenge: filing questions about table rows and exact terms retrieved poorly by embedding alone (Follow_Ups RAG-2).
     * What happened: hybrid keyword plus vector retrieval was measured against the vector-only run and turned on by default; fusion tuning then weighted the keyword leg and added a figure leg. Set v1 carried no figure tokens, so the figure leg was evidenced by live queries only until set v2 re-measured it.
-    * Lesson (Follow_Ups RAG-12): a ticker-level decision rule hid question-level regressions, so later selection rules also check per-question and per-slice movement.
+    * Lesson (Follow_Ups RAG-12): the ticker-level decision rule hid question-level regressions.
     * Pointers: Follow_Ups RAG-2 and RAG-12 (snapshots 34, 35, 51, 69, 71 to 75); `src/main/java/documentation/plans/2026-09-12-hybrid-keyword-retrieval.md`; `src/main/java/documentation/plans/2026-09-12-fusion-tuning.md`; commits b24b582 and 90c2acd.
 
 * A reranker that no configuration qualified
@@ -107,7 +107,7 @@
 * Parser and normalisation defects found while building the set
     * Challenge: expected passages are keyed by section and matched by phrase.
     * What happened: authoring the evaluation set surfaced NVDA financial statements stored under Item 15, inconsistent 8-K item keys across filers, a combined-heading title glitch with Part II items under Part I keys, and whitespace normalisation that does not treat a non-breaking space as a space. The set encodes the current keys and the items stay open.
-    * Lesson (Follow_Ups preamble): items that need a decision or later work are logged with stable ids and a status instead of being fixed in passing.
+    * Lesson (Follow_Ups preamble): open items that need a decision are logged with stable ids and a status.
     * Pointers: Follow_Ups RAG-7, RAG-8, RAG-9, RAG-10.
 
 ## Evaluation honesty and the claims check
@@ -175,6 +175,12 @@
     * What happened: the evaluate endpoint takes only three per-call overrides, so amendment 2 gave each run its own application start. Run (c) recorded a rerank fallback and stays committed as the fallback run with no selection outcome; its one allowed repeat recorded none. Scrutiny failed round 1 on a rule row judged against a reranked configuration; amendment 3 fixed the reference to the default snapshot 598, and remediation passed. The repeat does not meet the selection rule against 598, so defaults stay. Low-findings wording fixes then failed scoped Scrutiny twice on change-log pointers, and at the cap Jay approved collapsing those bullets into one pointer.
     * Lesson (amendments 2 and 3): a selection outcome is judged only against the default reference, and a run with a fallback stays committed and labelled.
     * Pointers: `src/main/java/documentation/plans/2026-09-14-retrieval-recall.md` (Status, amendments 2 and 3, Milestone 2 closed); snapshots 931, 932, 933, 947; claim C-657 in `src/main/java/documentation/RAG.md` (One-factor recall experiment block); commits cd539f9, 32b100d, f98002f, 48db9cd; `src/main/java/documentation/live-runs/2026-09-14-recall-one-factor/run.log`; Follow_Ups RAG-15.
+
+* A larger candidate pool that the reranker reached but did not rank through
+    * Challenge: in the one-factor experiment, raising the `candidate-count` setting from 40 to 200 (a setting of runs b, c, and the run c repeat, not a default) with reranking at 40 candidates, was expected in Follow_Ups RAG-15 to put the answer chunks of nvda-02 and nvda-04 among the rerank inputs.
+    * What happened: in the run c repeat both answer chunks were rerank inputs, yet the reranker did not rank every one into the top 5 (claims C-651 and C-653, observed; C-654, experiment), and the repeat does not meet the selection rule against snapshot 598 (claim C-657). Why the cross-encoder ranked them where it did is not stated by the sources; the outcome is observed, not explained. Defaults are unchanged: `candidate-count` stays at its configured default and reranking stays off.
+    * Lesson (Jay, 2026-09-14): before blaming or changing the cross-encoder, check whether diversification (the removal of redundant chunks) removes answer chunks; Milestone 3 of the recall plan is that check (next bullet).
+    * Pointers: `src/main/java/documentation/RAG.md` (One-factor recall experiment block; Diversification removals block); `src/main/java/documentation/plans/2026-09-14-retrieval-recall.md` (Milestone 3 scope; Status, Milestone 2 closed); snapshots 598 and 947; Follow_Ups RAG-15.
 
 * Diversification removals and the move decision
     * Challenge: traces did not list what diversification removed, so it could not be ruled in or out for a recorded miss.

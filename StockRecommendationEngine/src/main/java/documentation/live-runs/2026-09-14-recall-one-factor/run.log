@@ -160,7 +160,7 @@ Remediation round 1 (Scrutiny round 1 findings; plan amendment 3, 79b662c; no ev
       printed for the record only, no claim; 933 against 932 as X5.
   R2. property-diff.txt: retrieval_strategy is compared; rerankedQuestions and retrieval_strategy are named as outcome values, not settings, for the pairs
       where reranking is on in one run and off in the other (947 against 932, and the added pair 947 against 598); each run's rerank-timeout-ms is printed
-      from the run logs (TIMEOUT_MS: 598 default per ../2026-09-13-evaluation-evidence/measurement/run.log, 627 4000 per the same log, 931 and 932 2000
+      from the run logs (TIMEOUT_MS: 598 default per ../2026-09-13-evaluation-evidence/measurement/run.log (source corrected in L1 below), 627 4000 per the same log, 931 and 932 2000
       per the warm-up lines above, 933 and 947 4000 per their overrides) and named in the X2 line where it differs.
   R3. The free text of C-652 and C-654 states top-5 membership (what their topK checks read) instead of ranks. RAG.md (Settings bullet and a change-log
       bullet) and Follow_Ups RAG-15 point to the generated block for positions, ranks, the fallback and the rule rows instead of restating them.

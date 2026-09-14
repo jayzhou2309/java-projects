@@ -73,10 +73,9 @@ one-line fix, a typo, or a question, just do it directly.
   claim; only the nearest line above each block's start marker that is not blank once normalised
   (skipped: blank lines and lines holding only a one-line HTML comment or tag such as `<br>`,
   markdown marks such as `***` or `___`, `&nbsp;`, invisible format characters (Unicode Cf), or
-  Unicode space separators (Zs) such as U+00A0; other blank-looking characters are not skipped) is
-  screened for causal
-  and absolute words and numbers, so a wrapped lead-in's earlier lines, a setext heading's text, and
-  text above a multi-line comment are not.
+  whitespace and Unicode space separators (Zs) such as U+00A0; the exact set is `Wording.blank`) is
+  screened for causal and absolute words and numbers, so a wrapped lead-in's earlier lines, a setext
+  heading's text, and text above a multi-line comment are not.
   Claim ids (`C-` and at least three digits) must be unique across claims files whose blocks share a
   document; give each such file its own number range.
   The check does not prove, so reviewers and validators read all of: prose outside generated
@@ -96,7 +95,10 @@ one-line fix, a typo, or a question, just do it directly.
   Corrected 2026-09-14 at the Milestone 4b remediation cap: the skip list named only "invisible
   characters" and not the Unicode space separators the check also skips, or that other blank-looking
   characters are not skipped; and the Milestone 4b note above was reworded in remediation round 1
-  without its own mark.)
+  without its own mark (its earlier wording is readable at commit 95a3f63). Corrected again 2026-09-14,
+  after that cap check: "other blank-looking characters are not skipped" was too broad, since the
+  check also skips whitespace such as line and paragraph separators; the list now points to
+  `Wording.blank`.)
 
 ## Loop history
 

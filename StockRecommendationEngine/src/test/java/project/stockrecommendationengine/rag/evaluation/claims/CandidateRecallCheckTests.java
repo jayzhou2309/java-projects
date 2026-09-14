@@ -109,7 +109,42 @@ class CandidateRecallCheckTests {
         String name = ClaimsCheck.display(claims);
         assertThat(ClaimsCheck.check(claims, temp)).containsExactly(
                 name + " C-501 [bestFusedPosition] question q2 in evidence/report.json: question q2 chunk 201 has an unknown fused position (no trace)",
-                name + " C-502 [candidateRecall] k all in evidence/report.json: question q1 chunk 101 has an unknown fused position (no trace)");
+                name + " C-502 [candidateRecall] k all in evidence/report.json: question q1 chunk 101 has an unknown fused position (no trace), "
+                        + "chunk 102 has an unknown fused position (no trace)");
+    }
+
+    @Test
+    void unknownAcceptedPhrasesAreNeverReadAsNotFused(@TempDir Path temp) throws IOException {
+        // A question whose set did not load with the snapshot's version: acceptedPhraseCount unknown and phrases empty (RAG.md, Evidence report).
+        ObjectNode report = report();
+        ObjectNode q2 = (ObjectNode) report.get("questions").get(1);
+        q2.putArray("phrases");
+        ObjectNode count = q2.putObject("acceptedPhraseCount");
+        count.putNull("value");
+        count.put("basis", "unknown");
+        count.put("reason", "question not in the bundled set");
+        Path claims = write(temp, report, CLAIMS);
+        String name = ClaimsCheck.display(claims);
+        String unreadable = "question q2 has unknown accepted phrases (acceptedPhraseCount question not in the bundled set)";
+        assertThat(ClaimsCheck.check(claims, temp)).containsExactly(
+                name + " C-502 [bestFusedPosition] question q2 in evidence/report.json: " + unreadable,
+                name + " C-503 [candidateRecall] k 1 in evidence/report.json: " + unreadable,
+                name + " C-504 [candidateRecall] k 5 in evidence/report.json: " + unreadable,
+                name + " C-505 [candidateRecall] k all in evidence/report.json: " + unreadable);
+    }
+
+    @Test
+    void everyChunkWithAnUnreadableFusedPositionIsNamed(@TempDir Path temp) throws IOException {
+        ObjectNode report = report();
+        ObjectNode first = fused(report, 0, 0, 0);
+        first.putNull("value");
+        first.put("basis", "unknown");
+        first.put("reason", "no trace recorded for this question");
+        fused(report, 0, 0, 1).put("value", 2.5);
+        Path claims = write(temp, report, CLAIMS);
+        String name = ClaimsCheck.display(claims);
+        assertThat(ClaimsCheck.check(claims, temp)).first().isEqualTo(name + " C-501 [bestFusedPosition] question q1 in evidence/report.json: question q1 "
+                + "chunk 101 has an unknown fused position (no trace recorded for this question), chunk 102 has fused position 2.5, not an integer");
     }
 
     @Test

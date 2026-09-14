@@ -981,29 +981,47 @@ public final class ClaimsCheck {
 
     /**
      * The best fused position of the question in the report (plan {@code 2026-09-14-retrieval-recall.md}, Milestone 1): the smallest
-     * {@code fusedPosition} over every chunk listed under any accepted phrase, null when no such chunk is in the fused list. A chunk whose
-     * fused position is unknown, missing, or not an integer makes the value unreadable, naming the question and chunk.
+     * {@code fusedPosition} over every chunk listed under any accepted phrase, null when no such chunk is in the fused list. Every chunk whose
+     * fused position is unknown, missing, or not an integer makes the value unreadable, naming the question and each such chunk; a question
+     * whose accepted phrases are unknown (its {@code acceptedPhraseCount} not observed, so the report lists no phrases) is unreadable too, so
+     * an unknown is never read as not fused.
      */
     private static Best best(JsonNode questionNode, String question) {
+        JsonNode count = questionNode.get("acceptedPhraseCount");
+        if (count == null || !count.isObject() || !count.path("basis").asString("").equals("observed")) {
+            throw new Unreadable("question " + question + " has unknown accepted phrases (acceptedPhraseCount " + (isUnknown(count) ? reason(count)
+                    : "has basis " + count.path("basis").asString("none")) + ")");
+        }
         Integer position = null;
         Long chunk = null;
         Set<Long> holding = new LinkedHashSet<>();
+        Map<Long, String> unreadable = new LinkedHashMap<>();
         for (JsonNode phraseNode : questionNode.path("phrases")) {
             for (JsonNode candidate : phraseNode.path("chunks")) {
                 long id = candidate.path("chunkId").asLong(-1);
                 holding.add(id);
                 JsonNode value = candidate.get("fusedPosition");
-                if (value == null || !value.isObject()) throw new Unreadable("question " + question + " chunk " + id + " has no fusedPosition in the report");
-                if (isUnknown(value)) throw new Unreadable("question " + question + " chunk " + id + " has an unknown fused position (" + reason(value) + ")");
+                if (value == null || !value.isObject()) {
+                    unreadable.putIfAbsent(id, "chunk " + id + " has no fusedPosition in the report");
+                    continue;
+                }
+                if (isUnknown(value)) {
+                    unreadable.putIfAbsent(id, "chunk " + id + " has an unknown fused position (" + reason(value) + ")");
+                    continue;
+                }
                 JsonNode found = value.get("value");
                 if (found == null || found.isNull()) continue;
-                if (!found.isIntegralNumber()) throw new Unreadable("question " + question + " chunk " + id + " has fused position " + render(found) + ", not an integer");
+                if (!found.isIntegralNumber()) {
+                    unreadable.putIfAbsent(id, "chunk " + id + " has fused position " + render(found) + ", not an integer");
+                    continue;
+                }
                 if (position == null || found.intValue() < position) {
                     position = found.intValue();
                     chunk = id;
                 }
             }
         }
+        if (!unreadable.isEmpty()) throw new Unreadable("question " + question + " " + String.join(", ", unreadable.values()));
         return new Best(position, chunk, holding.size());
     }
 

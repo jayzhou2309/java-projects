@@ -43,7 +43,8 @@ import tools.jackson.databind.json.JsonMapper;
 public final class ClaimsCheck {
     static final List<String> BASES = List.of("observed", "derived", "inferred", "unknown", "experiment");
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
-    static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "notRecorded");
+    static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
+            "candidateRecall", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -60,6 +61,8 @@ public final class ClaimsCheck {
             "phraseSpan", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected"),
             "membership", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected"),
             "candidate", Set.of("type", "report", "question", "chunk", "expected"),
+            "bestFusedPosition", Set.of("type", "report", "question", "expected"),
+            "candidateRecall", Set.of("type", "report", "k", "expected"),
             "notRecorded", Set.of("type", "report", "path", "reason"));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
@@ -606,6 +609,8 @@ public final class ClaimsCheck {
                 case "ruleRow" -> ruleRow(claim, check, evaluation);
                 case "phraseSpan", "membership" -> occurrence(claim, check, type, evaluation);
                 case "candidate" -> candidate(claim, check, evaluation);
+                case "bestFusedPosition" -> bestFusedPosition(claim, check, evaluation);
+                case "candidateRecall" -> candidateRecall(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -968,6 +973,98 @@ public final class ClaimsCheck {
             });
         }
         return "In " + reportReference(report) + ", chunk " + chunk + ", which holds an accepted phrase of " + question + ", " + joinAnd(parts) + ".";
+    }
+
+    /** A question's smallest fused position over every chunk holding any of its accepted phrases; null position when none is fused. */
+    private record Best(Integer position, Long chunk, int holdingChunks) {
+    }
+
+    /**
+     * The best fused position of the question in the report (plan {@code 2026-09-14-retrieval-recall.md}, Milestone 1): the smallest
+     * {@code fusedPosition} over every chunk listed under any accepted phrase, null when no such chunk is in the fused list. A chunk whose
+     * fused position is unknown, missing, or not an integer makes the value unreadable, naming the question and chunk.
+     */
+    private static Best best(JsonNode questionNode, String question) {
+        Integer position = null;
+        Long chunk = null;
+        Set<Long> holding = new LinkedHashSet<>();
+        for (JsonNode phraseNode : questionNode.path("phrases")) {
+            for (JsonNode candidate : phraseNode.path("chunks")) {
+                long id = candidate.path("chunkId").asLong(-1);
+                holding.add(id);
+                JsonNode value = candidate.get("fusedPosition");
+                if (value == null || !value.isObject()) throw new Unreadable("question " + question + " chunk " + id + " has no fusedPosition in the report");
+                if (isUnknown(value)) throw new Unreadable("question " + question + " chunk " + id + " has an unknown fused position (" + reason(value) + ")");
+                JsonNode found = value.get("value");
+                if (found == null || found.isNull()) continue;
+                if (!found.isIntegralNumber()) throw new Unreadable("question " + question + " chunk " + id + " has fused position " + render(found) + ", not an integer");
+                if (position == null || found.intValue() < position) {
+                    position = found.intValue();
+                    chunk = id;
+                }
+            }
+        }
+        return new Best(position, chunk, holding.size());
+    }
+
+    // Template: "In <Report>, the best fused position of a chunk holding an accepted phrase of <question> is <n> (chunk <id>)." | "In <Report>,
+    // none of the <m> chunks holding an accepted phrase of <question> was in the fused list." ("the chunk" for one) | "In <Report>, no stored
+    // chunk holds an accepted phrase of <question>."
+    private String bestFusedPosition(Claim claim, JsonNode check, Evaluation evaluation) {
+        String reportFile = requireText(check, "report");
+        String question = requireText(check, "question");
+        JsonNode expected = check.get("expected");
+        if (expected == null || !(expected.isNull() || expected.isIntegralNumber() && expected.intValue() >= 1)) {
+            throw new Unreadable("check.expected must be a fused position (positive integer) or null, found " + (expected == null ? "none" : expected));
+        }
+        evaluation.subject("question " + question + " in " + reportFile);
+        Loaded report = report(reportFile, evaluation);
+        Best best = best(reportQuestion(report, question), question);
+        Integer wanted = expected.isNull() ? null : expected.intValue();
+        if (!Objects.equals(best.position(), wanted)) {
+            evaluation.differs("best fused position", String.valueOf(wanted), best.position() == null ? "null (not fused)" : best.position() + " (chunk " + best.chunk() + ")");
+        }
+        basis(claim, "derived", evaluation);
+        String in = "In " + reportReference(report) + ", ";
+        if (best.position() != null) return in + "the best fused position of a chunk holding an accepted phrase of " + question + " is " + best.position() + " (chunk " + best.chunk() + ").";
+        if (best.holdingChunks() == 0) return in + "no stored chunk holds an accepted phrase of " + question + ".";
+        return in + (best.holdingChunks() == 1 ? "the chunk" : "none of the " + best.holdingChunks() + " chunks") + " holding an accepted phrase of " + question + " was"
+                + (best.holdingChunks() == 1 ? " not" : "") + " in the fused list.";
+    }
+
+    // Template: "In <Report>, candidate recall@<k> is <share>: <n> of <total> questions have a chunk holding an accepted phrase at fused position
+    // <k> or earlier." | with k "all": "In <Report>, candidate recall over the whole fused list is <share>: <n> of <total> questions have a chunk
+    // holding an accepted phrase in the fused list." The share is n / total rounded half up to six decimal places.
+    private String candidateRecall(Claim claim, JsonNode check, Evaluation evaluation) {
+        String reportFile = requireText(check, "report");
+        JsonNode k = check.get("k");
+        boolean all = k != null && k.isString() && k.stringValue().equals("all");
+        if (!all && (k == null || !k.isIntegralNumber() || k.intValue() < 1)) throw new Unreadable("check.k must be a positive integer or \"all\", found " + k);
+        JsonNode expectedNode = check.get("expected");
+        BigDecimal expected = scale6(expectedNode);
+        if (expected == null) throw new Unreadable("check.expected must be a number with at most six decimal places, found " + expectedNode);
+        evaluation.subject("k " + (all ? "all" : k.intValue()) + " in " + reportFile);
+        Loaded report = report(reportFile, evaluation);
+        int total = 0;
+        int within = 0;
+        List<String> beyond = new ArrayList<>();
+        for (JsonNode questionNode : report.json().get("questions")) {
+            String question = questionNode.path("id").asString("");
+            Best best = best(questionNode, question);
+            total++;
+            if (best.position() != null && (all || best.position() <= k.intValue())) within++;
+            else beyond.add(question + " (" + (best.position() == null ? "not fused" : "fused position " + best.position()) + ")");
+        }
+        if (total == 0) throw new Unreadable(reportFile + " lists no questions");
+        BigDecimal share = BigDecimal.valueOf(within).divide(BigDecimal.valueOf(total), 6, RoundingMode.HALF_UP);
+        if (share.compareTo(expected) != 0) {
+            evaluation.differs("share", expected.toPlainString(), share.toPlainString() + " (" + within + " of " + total + "; not counted: " + String.join(", ", beyond) + ")");
+        }
+        basis(claim, "derived", evaluation);
+        String in = "In " + reportReference(report) + ", candidate recall";
+        return all ? in + " over the whole fused list is " + share.toPlainString() + ": " + within + " of " + total + " questions have a chunk holding an accepted phrase in the fused list."
+                : in + "@" + k.intValue() + " is " + share.toPlainString() + ": " + within + " of " + total + " questions have a chunk holding an accepted phrase at fused position "
+                + k.intValue() + " or earlier.";
     }
 
     /**

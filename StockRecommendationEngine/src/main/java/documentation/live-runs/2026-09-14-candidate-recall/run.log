@@ -1,0 +1,41 @@
+Candidate recall from committed traces, plan documentation/plans/2026-09-14-retrieval-recall.md, Milestone 1 (Follow_Ups RAG-18), 2026-09-14
+Branch retrieval-recall from 3bc07d9. No application start, no database write, no model call. Commands ran on the development Mac.
+Labels: observed = command output or file content quoted here; derived = computed (computation named). This log states no cause.
+
+Environment
+  E1. env | grep -E '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)=' -> 0 lines;
+      grep -cE '^(RAG_|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)' .env -> 0 (observed: command output).
+
+Script
+  S1. python3 candidate_recall.py -> exit 0; candidate-recall.txt ends "Checks: R1, R2 and R4 hold as computed above." (observed).
+  S2. Reproduction: shasum -a 256 before and after a second python3 candidate_recall.py (observed: command output, identical):
+        2d6771b228ab49a7e5a91e74a761fba52ca33edaabaca3c8c6127b352d924b4c  candidate-recall.txt
+        c03cc2da8d1cd748dcf207a01d479590273b8f9fc51b8b736992f7a0398d7a3a  claims.json
+      After the commit, re-run with: python3 candidate_recall.py && git diff --exit-code candidate-recall.txt claims.json
+
+Claims and block
+  C1. set -a && source .env && set +a && ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> exit 1 with
+      "CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md] notGenerated=0" and one problem, not in this milestone's files (observed):
+      "src/main/java/documentation/plans/2026-09-14-retrieval-recall.md:29 citation (C-101 to C-410 are taken) is outside a generated block".
+      The plan's Design constraints line was reworded to "C-501 to C-799; ids C-101 to C-410 are taken." (no parenthesis).
+  C2. ./mvnw -q -o test -Dtest=DocumentationClaimsTests -> exit 0, "CLAIMS_CHECK claimsFiles=3 documents=22 problems=0" (observed).
+
+R3 deliberate failure (captured in r3-deliberate-failure.log, rolled back)
+  D1. shasum -a 256 of ../2026-09-13-evaluation-evidence/measurement/evidence-598.json before the change (observed):
+        52e203e1e535c75dc33327fcbb0be0dafc03af8f646948a0d4ac363b8d00d8b6
+  D2. In that committed file, in place (not a copy), question nvda-02, chunk 802: "fusedPosition":{"value":41 changed to "fusedPosition":{"value":12
+      by a one-off Python edit; git diff --stat showed 1 line changed in the file (observed).
+  D3. ./mvnw -q -o test -Dtest=DocumentationClaimsTests > r3-deliberate-failure.log -> exit 1, "CLAIMS_CHECK claimsFiles=3 documents=22 problems=10"
+      (observed). Among them (observed, quoted from the log):
+        claims.json C-510 [bestFusedPosition] question nvda-02 in ../2026-09-13-evaluation-evidence/measurement/evidence-598.json: best fused position
+        expected 41, found 12 (chunk 802)
+        claims.json C-502, C-503, C-504 [candidateRecall] k 20, 30, 40: share expected 0.952381, found 0.976190 (41 of 42; not counted: nvda-04 (fused
+        position 54))
+      and the block lines of C-502 to C-504 and C-510 differing from the generator's output, plus the existing measurement claim C-274 [candidate] on the
+      same chunk and its block line.
+  D4. git checkout -- ../2026-09-13-evaluation-evidence/measurement/evidence-598.json; shasum -a 256 -c against D1 -> "OK" (observed).
+
+Build
+  B1. rm -rf target/surefire-reports; set -a && source .env && set +a && ./mvnw -q -o verify -> exit 0, 19:10:18 to 19:10:34 (observed: command output);
+      59 test classes, 540 tests, 0 failures, 0 errors, 28 skipped (derived: sum of the tests, failures, errors, skipped attributes over
+      target/surefire-reports/TEST-*.xml of this run); "CLAIMS_CHECK claimsFiles=3 documents=22 problems=0" (observed: verify output).

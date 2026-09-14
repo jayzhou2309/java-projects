@@ -26,7 +26,7 @@ Steps 4 to 7 are Plan B: their contracts depend on Plan A's evidence and are wri
 ## Design constraints
 
 - Evidence rule (CLAUDE.md, RAG-14): conclusions only from committed evidence; every claim labelled; a cause only with an
-  experiment varying one factor. New claims files use ids C-501 to C-799 (C-101 to C-410 are taken).
+  experiment varying one factor. New claims files use ids C-501 to C-799; ids C-101 to C-410 are taken.
 - Defaults unchanged in Plan A: reranking, the cross-encoder, candidate counts, weights, and diversification order stay as
   they are. A row that meets the selection rule is recorded as a DECISION for Jay, not enabled.
 - Tracing never changes what retrieval returns, and no trace reaches `/api/rag/retrieve` or a prompt (RAG-14 constraint).

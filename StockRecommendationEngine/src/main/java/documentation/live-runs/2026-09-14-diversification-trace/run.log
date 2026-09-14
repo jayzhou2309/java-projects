@@ -1,0 +1,78 @@
+Diversification removals in the retrieval trace (plan documentation/plans/2026-09-14-retrieval-recall.md, Milestone 3; Follow_Ups RAG-15), 2026-09-14 (times +08)
+Branch retrieval-recall; the application was built from commit dd7c9b5 ("Milestone 3: record diversification removals in the retrieval trace"), working tree clean
+at the start (git status --porcelain -> 0 lines, observed). Main worktree /Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine. Development Mac, CPU.
+App port 8081. No chat model and no /api/recommendations call; model calls: 43 query embeddings (42 evaluation + 1 warm-up) and one cross-encoder scoring call
+(the warm-up retrieval) (derived: grep -c "Query embedding completed" and "Cross-encoder scoring completed" over app.log).
+Counterpart: snapshot 598 (traced, settings of 295, reranking off, cross-encoder loaded), committed under
+live-runs/2026-09-13-evaluation-evidence/measurement/ with its run.log.
+Labels: observed = command output, a log line, or a file value quoted here; derived = computed (computation named). This log states no cause.
+app.log (application stdout) is not committed; every line relied on below is quoted here or in scoring-1108.txt.
+
+Before the run
+  E1. grep -cE '^(RAG_|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)' .env -> 0 (observed).
+  E2. lsof -nP -iTCP:8081 -sTCP:LISTEN -> 0 lines; ps -ax filtered on surefire|spring-boot:run|StockRecommendationEngineApplication -> no process; docker
+      trading-postgres "Up 3 hours (healthy)"; retrieval_evaluations count 44, max id 947 (observed: command output, psql).
+
+Procedure (a scratch script ran these in order; the same steps as live-runs/2026-09-14-recall-one-factor/run.log, Per-run procedure, without the CPU wait loop)
+  1. Run shell: set -a; source .env; set +a; export SERVER_PORT=8081 INTEGRATION_ACCESS_TOKEN=<42-character random hex token, openssl rand -hex 21, not recorded>
+     RAG_CROSS_ENCODER_ENABLED=true. env | grep -E '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE|SERVER_PORT)='
+     printed exactly SERVER_PORT=8081 and RAG_CROSS_ENCODER_ENABLED=true (observed). No other override: candidate count, rerank-candidates, and rerank-timeout-ms
+     at their defaults, as for 598.
+  2. 21:17:09 nohup ./mvnw -q -o spring-boot:run > app.log 2>&1 &; loadavg { 3.17 3.62 3.62 }. "Started StockRecommendationEngineApplication in 4.121 seconds";
+     "Cross-encoder loaded: ... maxLength=512, batchSize=20, scoring=max-window/overlap=64/maxWindows=4" (observed).
+  3. Warm-up: curl -X POST http://localhost:8081/api/rag/retrieve -H "Authorization: Bearer <token>" -H 'Content-Type: application/json'
+       -d '{"ticker":"NVDA","query":"What was NVIDIA gross margin in fiscal 2026?","rerank":true}'
+     -> HTTP 200 in 4.65 s, 21,500 bytes; response keys ticker, query, retrievalStrategy, latestFilingsOnly, topK, candidatesRetrieved, results (no trace or
+     removed key); HYBRID_RRF_RERANKED, 5 results; "Reranking filing candidates: ticker=NVDA, candidates=20, timeoutMs=2000"; "Cross-encoder scoring completed:
+     candidates=20, windows=44, topK=5, elapsedMs=1406" (observed).
+  4. 21:17:20 loadavg { 3.67 3.72 3.66 }; curl --max-time 1200 -X POST "http://localhost:8081/api/rag/evaluate?trace=true&rerank=false" -H "Authorization: Bearer <token>"
+     -> HTTP 200 in 15.79 s, 374,079 bytes; loadavg after { 3.67 3.71 3.66 }. "Evaluating retrieval: set=v2, questions=42, window=10, hybrid=null, rerank=false,
+     trace=true"; "Retrieval evaluation stored: id=1108, hitAt1=0.547619, hitAt3=0.714286, hitAt5=0.785714, mrr=0.655187, misses=5, rerankedQuestions=0,
+     rerankFallbackQuestions=0" (observed). app.log counts: 43 "Query embedding completed"; 42 "Selecting evidence by fused order"; 0 "Reranking failed" (derived: grep -c).
+  5. GET /api/rag/evaluate/1108 -> HTTP 200 application/json 374,079 bytes; GET /api/rag/evaluate/1108/evidence -> HTTP 200 application/json 530,666 bytes (observed).
+  6. docker exec -i trading-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "select row_to_json(e) from retrieval_evaluations e where id = 1108"'
+     -> exit 0, 244,349 bytes, 1 line -> snapshot-1108-traced-settings-of-598-rerank-off.json (the output unaltered).
+  7. evidence-1108.json: the fetched evidence body with whitespace (space, tab, CR, LF) outside JSON strings removed, one line plus a newline, 376,939 bytes; a scratch
+     script parsed both texts with every number and constant kept as its written text: parses_equal_numbers_as_written=True (observed).
+  8. grep -E 'Cross-encoder scoring completed|Reranking failed|Retrieval evaluation stored|WARN|ERROR' app.log, taken before the stop -> scoring-1108.txt: four JVM
+     "WARNING:" lines about restricted native access, the warm-up scoring line, and the stored line (observed).
+  9. Stop (after step 8; start time not recorded): kill the port-8081 listener JVM by pid; 5 s later the mvnw pid if alive; pkill -f spring-boot:run. 21:17:43: lsof on 8081 -> 0 listeners, JVM not
+     alive, mvnw not alive, pgrep -f spring-boot:run -> 0 (observed). app.log ends with Maven's "[ERROR] Failed to execute goal ... spring-boot-maven-plugin:4.1.1:run
+     ... exit code: 143" help lines, written after the kill (observed, as in the counterpart runs).
+  Database after: retrieval_evaluations count 45, max id 1108 (observed: psql). The ids between 947 and 1108 were not stored by this run.
+
+D4 reproduction of 598
+  R1. New shell; set -a && source .env && set +a; env | grep -cE '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)='
+      -> 0 (observed). ./mvnw -q -o test -Dtest=TraceReproductionFilesTests
+      -Drag.reproduction.reference=<abs>/live-runs/2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json
+      -Drag.reproduction.run=<abs>/live-runs/2026-09-14-diversification-trace/snapshot-1108-traced-settings-of-598-rerank-off.json
+      -Drag.reproduction.out=<abs>/live-runs/2026-09-14-diversification-trace/reproduction-1108.txt
+      -> exit 0; "questions reference=42 run=42 traces=42", "problems=0" (observed: reproduction-1108.txt). TraceReproductionCheck compares rank and matched chunk of all
+      42 questions, fallbacks, errors, and 598's recorded properties.
+  R2. A scratch script over the two committed exports: the recorded properties of 1108 and 598 are equal key for key (0 differences); every question's fused chunk id
+      list in 1108 equals 598's in order (derived).
+
+Removals (D2 on the live data; the count is claim C-701, checked by verify)
+  V1. Over the 42 traces of the export (derived, scratch script): every trace has a removed list (0 null); 19 removed entries in total, all in MSFT questions (each of
+      msft-01 to msft-14 has one or two; every AAPL and NVDA question has an empty list); per trace the candidatePosition values are distinct and lie in 1 to
+      (fused count + removed count); every redundantWith chunk is in that trace's fused list at a fused position smaller than the removed entry's candidatePosition.
+      The removed chunk ids are 461 (redundant with 460), 653 (redundant with 652), and 580 (redundant with 579).
+  V2. The evidence report (evidence-1108.json): removed is observed for all 42 questions and acceptedChunkRemoved is derived false for all 42 (derived: scratch script
+      over the file).
+  V3. Independent of the report: sec_filing_chunks rows 461, 580, 653 (psql, content with whitespace runs collapsed) were read and, for every question listing
+      one of them in its removed list, no accepted phrase of that question in retrieval-set-v2.json (whitespace collapsed, trimmed, lower-cased) occurs in the
+      removed chunk's text (derived: scratch script printed no match).
+  V4. Claim C-701 (claims.json, check removedAccepted over evidence-1108.json, expected 0) is generated into RAG.md, Retrieval Evaluation, Diversification removals,
+      with ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true, and checked by DocumentationClaimsTests in verify (Build below).
+  Decision under the plan's Milestone 3 scope: the count is 0, so Follow_Ups RAG-15 records it and the diversification order stays; no redundancy rule or order change.
+
+Build (after the documentation and claims were written)
+  B1. ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> "CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md] notGenerated=0",
+      "CLAIMS_CHECK claimsFiles=5 documents=22 problems=0" (observed).
+  B2. New shell started with env -i HOME PATH; set -a && source .env && set +a; the env grep of R1 -> 0 (observed). rm -rf target/surefire-reports; ./mvnw -q -o verify
+      -> exit 0 (observed); 60 test classes, 552 tests, 0 failures, 0 errors, 28 skipped (derived: sum of the testsuite attributes over target/surefire-reports/TEST-*.xml);
+      "CLAIMS_CHECK claimsFiles=5 documents=22 problems=0" (observed). lsof -iTCP:8081 -sTCP:LISTEN -> 0 lines (observed).
+
+Files committed in this directory
+  snapshot-1108-traced-settings-of-598-rerank-off.json (step 6), evidence-1108.json (step 7), scoring-1108.txt (step 8), reproduction-1108.txt (R1), claims.json (V4),
+  run.log.

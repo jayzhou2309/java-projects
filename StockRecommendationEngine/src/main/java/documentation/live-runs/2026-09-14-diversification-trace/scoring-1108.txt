@@ -1,0 +1,6 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+2026-09-14T21:17:20.563+08:00  INFO 94430 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=20, windows=44, topK=5, elapsedMs=1406
+2026-09-14T21:17:36.354+08:00  INFO 94430 --- [StockRecommendationEngine] [nio-8081-exec-3] p.s.r.e.RetrievalEvaluationService       : Retrieval evaluation stored: id=1108, hitAt1=0.547619, hitAt3=0.714286, hitAt5=0.785714, mrr=0.655187, misses=5, rerankedQuestions=0, rerankFallbackQuestions=0

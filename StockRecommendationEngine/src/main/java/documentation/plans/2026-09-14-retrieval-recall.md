@@ -157,3 +157,7 @@ Correctness contract:
   covers this. Run (c) (snapshot 933) recorded one rerank fallback, so under X5 it gives no selection outcome. As in the
   evidence plan's Milestone 4, run (c) may be repeated once, after the CPU-sharing wait, as a new snapshot; the fallback run
   stays committed and labelled. If the repeat also records a fallback, no selection outcome is stated for (c).
+- 2026-09-14, amendment 3 (Milestone 2, Scrutiny round 1): "a row that meets the selection rule" in Design constraints
+  means a row judged against the default reference, snapshot 598 (reranking off, `candidate-count` 40). Rows judged against
+  another reranked configuration are not selection outcomes and are not written as claims. Milestone 2 adds the repeat of
+  run (c) against 598 as its selection row; X3's pairwise rows stay as the plan lists them.

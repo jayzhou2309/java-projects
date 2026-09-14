@@ -1,0 +1,26 @@
+{
+  "id": 2,
+  "evaluatedAt": "2026-09-13T00:10:00Z",
+  "setVersion": "v-claims",
+  "questionCount": 4,
+  "hitAt1": 0.250000,
+  "hitAt3": 0.250000,
+  "hitAt5": 0.250000,
+  "mrr": 0.281250,
+  "window": 10,
+  "retrievalStrategy": "HYBRID_RRF_RERANKED",
+  "properties": {"rerank": true, "rerankCandidates": 10, "rerankerScoring": "max-window/overlap=64/maxWindows=4"},
+  "results": [
+    {"id": "aapl-01", "ticker": "AAPL", "kind": "FIGURE", "rank": 1, "matchedChunkId": 11, "error": null, "retrievalStrategy": "HYBRID_RRF_RERANKED"},
+    {"id": "msft-04", "ticker": "MSFT", "kind": "FIGURE", "rank": null, "matchedChunkId": null, "error": null, "retrievalStrategy": "HYBRID_RRF_RERANKED"},
+    {"id": "nvda-01", "ticker": "NVDA", "kind": "FIGURE", "rank": 8, "matchedChunkId": 31, "error": null, "retrievalStrategy": "HYBRID_RRF_RERANKED"},
+    {"id": "nvda-02", "ticker": "NVDA", "kind": "NARRATIVE", "rank": null, "matchedChunkId": null, "error": null, "retrievalStrategy": "HYBRID_RRF_RERANKED"}
+  ],
+  "tickerHitAt5": {"AAPL": 1.000000, "MSFT": 0.000000, "NVDA": 0.000000},
+  "misses": [],
+  "slices": {
+    "figure": {"questionCount": 3, "hitAt1": 0.333333, "hitAt3": 0.333333, "hitAt5": 0.333333, "mrr": 0.375000, "missIds": ["msft-04"], "notInTop5": [{"id": "msft-04", "rank": null}, {"id": "nvda-01", "rank": 8}]},
+    "nonFigure": {"questionCount": 1, "hitAt1": 0.000000, "hitAt3": 0.000000, "hitAt5": 0.000000, "mrr": 0.000000, "missIds": ["nvda-02"], "notInTop5": [{"id": "nvda-02", "rank": null}]}
+  },
+  "traces": null
+}

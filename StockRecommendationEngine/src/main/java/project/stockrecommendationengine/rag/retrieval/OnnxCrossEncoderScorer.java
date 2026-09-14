@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,7 @@ import java.util.stream.Collectors;
  * window is one model row, and the passage's score is the maximum logit over its rows; under {@link PassageScoring#HEAD} the
  * first window alone is scored, exactly as before windowing. The query keeps what the longest-first cut gives it against the
  * whole passage in both modes. {@link #scoreWithWindows} also reports the rows scored, which the reranker logs as
- * {@code windows=}.
+ * {@code windows=}, and every row's logit per passage, which a traced evaluation records (RAG.md, Retrieval Evaluation, Traces).
  * <p>
  * Work per call. Passages are tokenized {@code batchSize} at a time, and each batch's windows run as one or more ONNX Runtime
  * calls whose rows times longest-row width squared stays within {@link CrossEncoderPairAssembler#MAX_ATTENTION_CELLS_PER_RUN}
@@ -145,8 +144,17 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
     /** {@code head}, or {@code max-window/overlap=<windowOverlapTokens>/maxWindows=<maxWindows>}. */
     @Override
     public String scoring() {
-        if (passageScoring == PassageScoring.HEAD) return PassageScoring.HEAD.label();
-        return PassageScoring.MAX_WINDOW.label() + "/overlap=" + windowOverlapTokens + "/maxWindows=" + maxWindows;
+        return scoring(passageScoring, windowOverlapTokens, maxWindows);
+    }
+
+    /**
+     * The recorded scoring label for these settings ({@link CrossEncoderTokenPositions.Scoring#label()}, which the evidence report
+     * parses back): {@code head}, or {@code max-window/overlap=<windowOverlapTokens>/maxWindows=<maxWindows>}.
+     */
+    static String scoring(PassageScoring passageScoring, int windowOverlapTokens, int maxWindows) {
+        CrossEncoderTokenPositions.Scoring scoring = passageScoring == PassageScoring.HEAD ? CrossEncoderTokenPositions.Scoring.head()
+                : CrossEncoderTokenPositions.Scoring.maxWindow(windowOverlapTokens, maxWindows);
+        return scoring.label();
     }
 
     /** The session's input and output names with their declared types and shapes, as reported by ONNX Runtime. */
@@ -173,8 +181,9 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
 
     /**
      * One score per passage: the maximum logit over the passage's windows ({@link CrossEncoderPairAssembler#windows}; one
-     * window, so its own logit, under {@link PassageScoring#HEAD}), and the total windows scored. Every window of a group is a
-     * row under the per-call attention cap, so a call's memory is unchanged by windowing.
+     * window, so its own logit, under {@link PassageScoring#HEAD}), the total windows scored, and each passage's row logits in
+     * window order ({@link PairScorer.Scored#windowScores}), from which the score is reduced by {@link CrossEncoderPairAssembler#maxOverWindows}. Every
+     * window of a group is a row under the per-call attention cap, so a call's memory is unchanged by windowing.
      */
     @Override
     public Scored scoreWithWindows(String query, List<String> passages) {
@@ -184,6 +193,7 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
             String boundedQuery = CrossEncoderInputBounds.bound(query);
             long[] queryIds = tokenIds(boundedQuery);
             float[] scores = new float[passages.size()];
+            float[][] windowScores = new float[passages.size()][];
             int queryTokensKept = Integer.MAX_VALUE;
             int windowsScored = 0;
             for (int start = 0; start < passages.size(); start += batchSize) {
@@ -192,8 +202,11 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
                 for (String passage : batch) passageIds.add(tokenIds(CrossEncoderInputBounds.bound(passage)));
                 List<CrossEncoderPairAssembler.Window> windows =
                         assembler.windows(queryIds.length, passageIds, passageScoring, windowOverlapTokens, maxWindows);
-                float[] best = new float[batch.size()];
-                Arrays.fill(best, Float.NEGATIVE_INFINITY);
+                int[] rowsPerPassage = new int[batch.size()];
+                for (CrossEncoderPairAssembler.Window window : windows) rowsPerPassage[window.passage()]++;
+                float[][] rowScores = new float[batch.size()][];
+                for (int passage = 0; passage < batch.size(); passage++) rowScores[passage] = new float[rowsPerPassage[passage]];
+                int[] filled = new int[batch.size()];
                 for (int from = 0; from < windows.size(); ) {
                     int end = assembler.runEnd(windows, from);
                     CrossEncoderPairAssembler.Batch tensors = assembler.assemble(queryIds, passageIds, windows.subList(from, end));
@@ -201,15 +214,18 @@ public final class OnnxCrossEncoderScorer implements PairScorer {
                     float[] runScores = run(tensors);
                     for (int row = 0; row < runScores.length; row++) {
                         int passage = windows.get(from + row).passage();
-                        best[passage] = Math.max(best[passage], runScores[row]);
+                        rowScores[passage][filled[passage]++] = runScores[row];
                     }
                     from = end;
                 }
                 windowsScored += windows.size();
-                System.arraycopy(best, 0, scores, start, best.length);
+                for (int passage = 0; passage < batch.size(); passage++) {
+                    scores[start + passage] = CrossEncoderPairAssembler.maxOverWindows(rowScores[passage]);
+                    windowScores[start + passage] = rowScores[passage];
+                }
             }
             logQueryTruncation(query, boundedQuery, queryIds.length, queryTokensKept);
-            return new Scored(scores, windowsScored);
+            return new Scored(scores, windowsScored, windowScores);
         } finally {
             lifecycle.readLock().unlock();
         }

@@ -19,6 +19,7 @@ import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 import project.stockrecommendationengine.rag.repository.FilingRetrievalRepository;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.Miss;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionResult;
+import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionTrace;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.RankedQuestion;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.SliceMetrics;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.TopChunk;
@@ -75,6 +76,18 @@ public class RetrievalEvaluationService {
      * reranker bean throws {@link RerankerUnavailableException} before any question runs or any snapshot is stored.
      */
     public RetrievalEvaluation evaluate(Boolean hybrid, Boolean rerank) {
+        return evaluate(hybrid, rerank, null);
+    }
+
+    /**
+     * {@link #evaluate(Boolean, Boolean)} with per-question retrieval traces when {@code trace} is true: each question is retrieved
+     * through {@link FilingRetrievalService#retrieveTraced}, which returns the same response {@code retrieve} would, and the
+     * snapshot stores one {@link QuestionTrace} per question in set order ({@code traces}); {@code properties.trace} records
+     * whether it did (false when {@code trace} is null or false, and then no traces are stored). Ranks, metrics, and misses are
+     * computed from the responses exactly as without tracing.
+     */
+    public RetrievalEvaluation evaluate(Boolean hybrid, Boolean rerank, Boolean trace) {
+        boolean traced = Boolean.TRUE.equals(trace);
         String reranker = retrieval.rerankerName().orElse(null);
         if (Boolean.TRUE.equals(rerank) && reranker == null) throw new RerankerUnavailableException();
         RetrievalEvaluationSet set = loader.load();
@@ -83,13 +96,21 @@ public class RetrievalEvaluationService {
         List<Miss> misses = new ArrayList<>();
         List<QuestionResult> figure = new ArrayList<>();
         List<QuestionResult> nonFigure = new ArrayList<>();
+        List<QuestionTrace> traces = traced ? new ArrayList<>() : null;
         String strategy = null;
-        log.info("Evaluating retrieval: set={}, questions={}, window={}, hybrid={}, rerank={}", set.version(), set.questions().size(), window, hybrid, rerank);
+        log.info("Evaluating retrieval: set={}, questions={}, window={}, hybrid={}, rerank={}, trace={}", set.version(), set.questions().size(), window, hybrid, rerank, traced);
         for (RetrievalEvaluationQuestion question : set.questions()) {
             List<QuestionResult> slice = isFigureQuestion(question.question()) ? figure : nonFigure;
             RetrievalResponse response;
             try {
-                response = retrieval.retrieve(new RetrievalRequest(question.ticker(), question.question(), null, null, null, null, window, true, hybrid, rerank));
+                RetrievalRequest request = new RetrievalRequest(question.ticker(), question.question(), null, null, null, null, window, true, hybrid, rerank);
+                if (traced) {
+                    FilingRetrievalService.TracedRetrieval tracedRetrieval = retrieval.retrieveTraced(request);
+                    response = tracedRetrieval.response();
+                    traces.add(new QuestionTrace(question.id(), tracedRetrieval.trace()));
+                } else {
+                    response = retrieval.retrieve(request);
+                }
             } catch (RuntimeException failure) {
                 String error = failure.getClass().getSimpleName() + ": " + failure.getMessage();
                 log.warn("Retrieval failed for evaluation question {}: {}", question.id(), error);
@@ -97,6 +118,7 @@ public class RetrievalEvaluationService {
                 results.add(failed);
                 slice.add(failed);
                 misses.add(new Miss(question.id(), List.of(), error));
+                if (traced) traces.add(new QuestionTrace(question.id(), null));
                 continue;
             }
             if (strategy == null) strategy = response.retrievalStrategy();
@@ -110,8 +132,8 @@ public class RetrievalEvaluationService {
         }
         RetrievalEvaluation evaluation = new RetrievalEvaluation(null, Instant.now(), set.version(), results.size(),
                 hitAt(results, 1), hitAt(results, 3), hitAt(results, 5), mrr(results), window, strategy == null ? "UNAVAILABLE" : strategy,
-                runProperties(set, window, hybrid, rerank, reranker, results), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses),
-                slices(figure, nonFigure));
+                runProperties(set, window, hybrid, rerank, reranker, traced, results), List.copyOf(results), tickerHitAt5(results), List.copyOf(misses),
+                slices(figure, nonFigure), traced ? List.copyOf(traces) : null);
         RetrievalEvaluation stored = repository.save(evaluation);
         log.info("Retrieval evaluation stored: id={}, hitAt1={}, hitAt3={}, hitAt5={}, mrr={}, misses={}, rerankedQuestions={}, rerankFallbackQuestions={}",
                 stored.id(), stored.hitAt1(), stored.hitAt3(), stored.hitAt5(), stored.mrr(), stored.misses().size(),
@@ -202,7 +224,7 @@ public class RetrievalEvaluationService {
     }
 
     private Map<String, Object> runProperties(RetrievalEvaluationSet set, int window, Boolean hybrid, Boolean rerank, String reranker,
-            List<QuestionResult> results) {
+            boolean traced, List<QuestionResult> results) {
         boolean rerankResolved = rerank != null ? rerank : retrievalProperties.isRerankingEnabled();
         long rerankedQuestions = results.stream().filter(RetrievalEvaluationService::reranked).count();
         long fallbackQuestions = rerankResolved
@@ -228,6 +250,7 @@ public class RetrievalEvaluationService {
         out.put("rerankerScoring", retrieval.rerankerScoring().orElse(null));
         out.put("rerankedQuestions", (int) rerankedQuestions);
         out.put("rerankFallbackQuestions", (int) fallbackQuestions);
+        out.put("trace", traced);
         return out;
     }
 }

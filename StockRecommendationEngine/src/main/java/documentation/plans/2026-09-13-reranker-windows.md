@@ -5,11 +5,20 @@ Orchestrated build per CLAUDE.md. Two serial milestones with contracts written b
 never export the application enable flags or `RAG_*` overrides in a shell that runs tests. Plan
 `2026-09-13-reranker.md` and its Amendments 1 and 2 stay in force unless changed below.
 
-## Why: the reranker cannot see most answers
+## Why: the head cut does not reach some expected phrases
 
 The 2026-09-13 measurement (snapshots 247 to 250) found no configuration meeting the selection rule. The cause was
 diagnosed on 2026-09-13 with the real tokenizer and model against every chunk in the database
-(`live-runs/2026-09-13-reranker-windows/truncation-probe-512.txt`, source beside it):
+(`live-runs/2026-09-13-reranker-windows/truncation-probe-512.txt`, source beside it).
+(Corrected 2026-09-14, plan `2026-09-13-evaluation-evidence.md` Milestone 4b: "The cause was diagnosed" is not
+supported. The probe recorded which expected phrases the head cut did not reach; no experiment isolating truncation
+as the cause of the measurement's outcome was run, so the probe is a finding about what the model saw, not a
+diagnosed cause. The windowed rows' outcome is stated in RAG.md, Cross-encoder reranker, Reranker measurement,
+Windowed rows, generated blocks.)
+(Corrected 2026-09-14, plan `2026-09-13-evaluation-evidence.md` Milestone 4b remediation round 1: this section's heading
+read "the reranker cannot see most answers". The probe's 65% and 78% describe chunk length and the share of a chunk the
+model saw; for answers it records that for 11 of the 39 questions with a matched chunk the expected phrase starts past the
+kept tokens.)
 
 - The chunker cuts filings at 4,000 characters and stores `token_count` as characters / 4 (median 780). Exact
   WordPiece lengths are somewhat lower but still well past the window: median 647 tokens, 90th percentile 849, longest
@@ -23,7 +32,7 @@ diagnosed on 2026-09-13 with the real tokenizer and model against every chunk in
   the 39 questions with a matched chunk the expected phrase starts past the kept tokens, and nvda-01's phrase begins
   at token 483 of 489 kept, so 6 of its 17 tokens were seen (the probe's 485 is the offset of "215,938" inside
   it; corrected after Milestone 2 remediation 2). Every top-5 loss in the measurement but one is such a question: nvda-11 (answer at token
-  596, 477 kept), nvda-14 (820 of 996, 477 kept), msft-12 (544, 490 kept), msft-04 (606, 480 kept), nvda-01. The exception is msft-05, which left the top 5 at 20 and 40 candidates although the phrases in the chunks it matched (571, 460) are inside the kept head; its third accepted phrase, in chunk 515, is past it (tokens 614 to 625 of 700), and whether chunk 515 was a reranked candidate is not recorded, so truncation is not ruled out for msft-05 (corrected after Milestone 2 remediation 1: this line first said every loss was a truncation case). Rescoring
+  596, 477 kept), nvda-14 (820 of 996, 477 kept), msft-12 (544, 490 kept), msft-04 (606, 480 kept), nvda-01. The exception is msft-05, which left the top 5 at 20 and 40 candidates although the phrases in the chunks it matched (571, 460) are inside the kept head; its third accepted phrase, in chunk 515, is past it (tokens 614 to 625 of 700), and whether chunk 515 was a reranked candidate is not recorded, so truncation is not ruled out for msft-05 (corrected after Milestone 2 remediation 1: this line first said every loss was a truncation case). (Superseded 2026-09-14, plan `2026-09-13-evaluation-evidence.md` Milestone 4b: this bullet was rewritten in place on 2026-09-13 in commit f757ad1 instead of being marked; as corrected after remediation 1 it said msft-05 left the top 5 "with its answer at token 121, inside the kept head", readable at commit c9b2e5f. Whether chunk 515 was a reranked candidate stays unrecorded for the head rows, which carry no trace; for the windowed rows the traced runs record it, in RAG.md, Reranker measurement, Windowed rows, generated blocks.) Rescoring
   the same question on the chunk text starting 200 characters before the answer (about 40 to 60 tokens in, not a
   production window position) flips the logit: nvda-11 2.6 to 5.3, nvda-14 -0.3 to 4.8, msft-12 -1.8 to 5.1,
   nvda-01 -1.7 to 5.0, msft-04 -10.7 to 0.2, msft-10 -9.5 to 9.9, msft-13 -1.7 to 7.7, aapl-05 -6.6 to 5.1.
@@ -195,3 +204,21 @@ of nvda-09 with the never-retrieved questions is corrected above.
 - Revisit by recording evidence rather than rewording: store each question's reranker candidates, fused and reranked
   positions, and scores in evaluation snapshots, generate the per-question facts (accepted phrase spans in every chunk,
   head and window membership, rank source observed or inferred) from that record, and regenerate the write-up from it.
+- Closed 2026-09-14 (plan `2026-09-13-evaluation-evidence.md`, Milestone 4b, commit 95a3f63): the write-up is regenerated from
+  the traced runs at snapshots 295 to 299's settings (598, 599, 613, 627, 641, each reproducing its counterpart) as generated
+  blocks in RAG.md, Cross-encoder reranker, Reranker measurement, Windowed rows, written from
+  `live-runs/2026-09-13-evaluation-evidence/measurement/claims.json`; the replaced text can be read at commit e11b9b6. The open
+  findings are resolved there and in dated notes, not by rewording: chunk 515's candidacy for msft-05 and "every accepted phrase is
+  scored" (observed candidate and derived row claims per traced run, and an inferred summary, in the Microsoft segments question's
+  block; the Milestone 1 change-log correction and run.log's Other movements sentence marked superseded); chunk 466's position at
+  40 candidates and the chunks ranked above nvda-01's, nvda-11's, and msft-04's accepted chunks (observed reranked positions in the
+  NVIDIA total revenue, Microsoft headcount, and NVIDIA Compute and Networking blocks; the chunk ids above them, which no check type
+  renders, are copied from the evidence reports into the measurement `run.log`, section Milestone 4b); "The cause was diagnosed" in
+  this plan's Why (dated correction note there); the earlier correction notes (run.log's re-validation msft-05 note, kept and marked
+  superseded; RAG.md's Windows Why note and this plan's Why msft-05 bullet, kept and marked superseded, naming c9b2e5f for their
+  earlier wording; RAG.md's Windows Why note and Milestone 1 change-log correction were later collapsed into pointers, 2026-09-14 at the Milestone 4b remediation cap, Orchestrator, with Jay's approval,
+  commit bc29a48, and their text is readable at commit 08b7f60; corrected 2026-09-14, plan `2026-09-13-evaluation-evidence.md` Milestone 4b remediation round 1: this
+  parenthesis grouped run.log's note, which names no commit, with the two that name c9b2e5f); and "its matched chunk's" in the
+  Milestone 1 change-log correction (its superseded note named chunks 805 and 466; corrected 2026-09-14 at the Milestone 4b remediation cap, Orchestrator, with Jay's approval:
+  remediation round 2 of Milestone 4b replaced that note's wording, including the chunk ids, with a description, so the
+  wording naming chunk 805 for nvda-01 and chunk 466 for msft-04 is readable at commit 43b1931, not in RAG.md at HEAD).

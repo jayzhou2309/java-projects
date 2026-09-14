@@ -166,7 +166,7 @@ answering sentence at +10.29 at a window's start, +5.91 at token 141, +2.56 at 1
   nvda-07: no match -> 8, 9, 8 (chunk 770) at 20 candidates and above (head 6, 7); still outside the top 5. msft-08: no match -> 2 (chunk 547) at 20 and 40 candidates,
     as under head; still no match at 10. nvda-05: 10 -> no match at 20 candidates and above, as under head.
 Other movements (every windowed row unless stated): msft-05 2 -> 6, 10, 10, 10 (chunk 460, which holds the set's first, ITEM_1 expectation; the reference matched
-  chunk 571 through the ITEM_8 alternative; head 5, 8, 8). The phrases of both chunks it matched lie inside the first window under every setting (counted with the real tokenizer: chunk 571 at tokens 121 to 132 of 655, W 492; chunk 460 at tokens 105 to 121 of 650). Its third accepted phrase, the ITEM_7 alternative in chunk 515, is at tokens 614 to 625 of 700 (W 492): past the head cut, and inside the second window under both overlaps (starts 0 and 208). Whether chunk 515 was among the reranked candidates is not recorded, so whether truncation played a part in the head rows was not determined; in the windowed rows every accepted phrase is scored. The probe ranked chunk 571 13th of 263 MSFT chunks under
+  chunk 571 through the ITEM_8 alternative; head 5, 8, 8). The phrases of both chunks it matched lie inside the first window under every setting (counted with the real tokenizer: chunk 571 at tokens 121 to 132 of 655, W 492; chunk 460 at tokens 105 to 121 of 650). Its third accepted phrase, the ITEM_7 alternative in chunk 515, is at tokens 614 to 625 of 700 (W 492): past the head cut, and inside the second window under both overlaps (starts 0 and 208). Whether chunk 515 was among the reranked candidates is not recorded, so whether truncation played a part in the head rows was not determined; in the windowed rows every accepted phrase is scored. [Superseded 2026-09-14: Corrections (5).] The probe ranked chunk 571 13th of 263 MSFT chunks under
   head (1064 at 6.65 and 640 at 3.82 above it), and its rescoring from 200 characters before the phrase gave 2.90, not a production window. Which chunks rank above
   chunk 460 in the windowed rows, and why, was not determined.
   aapl-09 8 -> 8, miss, miss, 10 (chunk 280; head 4, 5, 5: the head rows had it in the top 5, windowed rows do not). Its 23-token answer (tokens 509 to 532 of 818,
@@ -241,7 +241,7 @@ retrieval-set-v2.json and a read-only select of the chunks. The corrections abov
     the head row, so chunk 280 scores at least its head score, which ranked it 4 or 5 at the same candidate counts; its drop means other candidates now score above
     it. Now: observed ranks, that bound, and "which chunks overtook it was not determined".
   - msft-05: "so the segment question is answered by many chunks" and "a model preference, not truncation" replaced by what is established (the answer lies in the
-    first window under every setting, so not truncation; why other chunks rank above chunk 460 not determined). Chunk 460 was called "an alternative"; it holds the
+    first window under every setting, so not truncation; why other chunks rank above chunk 460 not determined). [Superseded 2026-09-14: Corrections (5).] Chunk 460 was called "an alternative"; it holds the
     set's first (ITEM_1) expectation, and the reference's chunk 571 holds the ITEM_8 alternative.
   - aapl-02: chunk 226 was called "an alternative"; it holds the first (ITEM_7) expectation, and the reference's chunk 241 holds the ITEM_8 alternative.
     msft-13: chunk 524 was called "the alternative chunk"; msft-13 has one expectation, whose phrase chunk 524 also holds.
@@ -261,7 +261,26 @@ Corrections (3), 2026-09-13, Orchestrator at the Milestone 2 remediation cap, ap
 Corrections (4), 2026-09-13, Orchestrator, after the docs-only check of Corrections (3) (documentation only, no run; token positions counted with the real tokenizer alone):
   msft-05: the set accepts three phrases. The two in the chunks it matched (571, 460) are inside the head window; the ITEM_7 alternative in chunk 515 is at
     tokens 614 to 625 of 700 (W 492), past the head cut and inside the second window. The entry above no longer says msft-05 "is not a truncation case"; whether
-    chunk 515 was a reranked candidate is not recorded. RAG.md's Windows Why, Windowed rows, per-question, and change-log text say the same.
+    chunk 515 was a reranked candidate is not recorded. RAG.md's Windows Why, Windowed rows, per-question, and change-log text say the same. [Superseded for the
+    windowed rows 2026-09-14: Corrections (5).]
   Chunk 466 at 40 candidates (298): marked as inferred from row 297 here too (Corrections (3) had marked it in RAG.md only).
   RAG.md change log: the Corrections (3) note for the Milestone 1 cause bullet called nvda-01 and msft-04 misses in every windowed row; nvda-01 is 8 in 296 and
     msft-04 is 8 in 296 and 1 in 298 (chunk 467). Rewritten.
+
+Corrections (5), 2026-09-14, plans/2026-09-13-evaluation-evidence.md Milestone 4b (documentation only in this file; no run, evaluation, or snapshot):
+  The per-question account in this log (the named questions against the probe, Other movements, and the corrections above) is superseded by the generated
+  blocks of RAG.md, Cross-encoder reranker, Reranker measurement, Windowed rows, written from
+  ../../2026-09-13-evaluation-evidence/measurement/claims.json over the traced runs at these rows' settings (snapshots 598, 599, 613, 627, and 641, each
+  reproducing its counterpart with problems=0). The entries above stay as the record of what was written on 2026-09-13; where they call a candidate position,
+  a rank of an unmatched chunk, or the chunks above a matched chunk not recorded or not determined, the traced evidence reports now record it.
+  Marked superseded:
+  - The re-validation corrections' msft-05 bullet ("so not truncation"): Corrections (4) rewrote the Other movements entry it described, because msft-05's third
+    accepted phrase lies in chunk 515 past the head cut, but left this bullet unmarked.
+  - "in the windowed rows every accepted phrase is scored" (Other movements, msft-05): no record supported it when written. The traced run at snapshot 296's
+    settings records chunk 515 at fused position 14 and not a rerank input at 10 candidates (evidence-599.json); the runs at 297's, 298's, and 299's settings
+    record it as a rerank input whose phrase lies in scored row 2 (evidence-613.json, evidence-627.json, evidence-641.json).
+  - Corrections (4)'s "whether chunk 515 was a reranked candidate is not recorded": it holds for the untraced rows 248 to 250 and 295 to 299 themselves, not for
+    the traced runs at the windowed rows' settings.
+  RAG.md's Windows Why correction note and plans/2026-09-13-reranker-windows.md's Why msft-05 bullet, both rewritten in place in f757ad1, are marked superseded
+  where they stand, naming c9b2e5f for their earlier wording. (2026-09-14 at the Milestone 4b remediation cap, Orchestrator, with Jay's approval: RAG.md's Windows Why correction note was later collapsed into a
+  pointer in commit bc29a48; its text is readable at commit 08b7f60.)

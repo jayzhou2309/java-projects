@@ -35,7 +35,7 @@ class CrossEncoderConfigurationTests {
         assertThat(new CrossEncoderProperties().isEnabled()).isFalse();
         Set<String> before = loadedNativeBindingClasses();
         runner.run(context -> assertThat(context).hasNotFailed().doesNotHaveBean(FilingReranker.class)
-                .doesNotHaveBean(PairScorer.class).doesNotHaveBean(CrossEncoderModelFiles.class)
+                .doesNotHaveBean(PairScorer.class).doesNotHaveBean(CrossEncoderModelFiles.class).doesNotHaveBean(PassageTokenizer.class)
                 .doesNotHaveBean(CrossEncoderConfiguration.class));
         runner.withPropertyValues("rag.retrieval.cross-encoder.enabled=false", "rag.retrieval.cross-encoder.model-path=/does/not/exist.onnx")
                 .run(context -> assertThat(context).hasNotFailed().doesNotHaveBean(FilingReranker.class));

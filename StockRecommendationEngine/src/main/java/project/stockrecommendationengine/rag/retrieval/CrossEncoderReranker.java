@@ -15,6 +15,10 @@ import java.util.stream.IntStream;
  * score is thrown as a {@link RuntimeException}, which {@link FilingRetrievalService} turns into the fused-order fallback.
  * The completion log line carries {@code windows=}, the model rows the scorer ran for the call (the candidate count under
  * head scoring, more under windowed scoring).
+ * <p>
+ * {@link #rerank} and {@link #rerankScored} run the same single scoring call and the same ordering, so their results are
+ * identical for the same input; the scored form, the one retrieval calls, also returns every candidate's score and row scores in
+ * reranked order.
  */
 @Slf4j
 public class CrossEncoderReranker implements FilingReranker {
@@ -29,7 +33,21 @@ public class CrossEncoderReranker implements FilingReranker {
 
     @Override
     public List<RetrievedFilingChunk> rerank(String query, List<RetrievedFilingChunk> candidates, int topK) {
-        if (candidates.isEmpty() || topK <= 0) return List.of();
+        return rank(query, candidates, topK).results();
+    }
+
+    /**
+     * {@link #rerank} plus, for every candidate in reranked order, its index in the input, its score, and its row scores as
+     * the scorer reported them ({@link PairScorer.Scored#windowScores}; null for every candidate when the scorer reports none or
+     * reports a count that does not match the candidates). Empty for no candidates or a topK of 0 or less, without scoring.
+     */
+    @Override
+    public ScoredReranking rerankScored(String query, List<RetrievedFilingChunk> candidates, int topK) {
+        return rank(query, candidates, topK);
+    }
+
+    private ScoredReranking rank(String query, List<RetrievedFilingChunk> candidates, int topK) {
+        if (candidates.isEmpty() || topK <= 0) return new ScoredReranking(List.of(), List.of());
         long started = System.nanoTime();
         List<String> passages = candidates.stream().map(c -> c.content() == null ? "" : c.content()).toList();
         PairScorer.Scored scored = scorer.scoreWithWindows(query, passages);
@@ -41,15 +59,16 @@ public class CrossEncoderReranker implements FilingReranker {
         for (float score : scores) {
             if (Float.isNaN(score)) throw new IllegalStateException("Cross-encoder returned a NaN score");
         }
-        List<RetrievedFilingChunk> ordered = IntStream.range(0, candidates.size()).boxed()
+        float[][] windowScores = scored.windowScores() != null && scored.windowScores().length == candidates.size() ? scored.windowScores() : null;
+        List<ScoredCandidate> order = IntStream.range(0, candidates.size()).boxed()
                 .sorted(Comparator.<Integer>comparingDouble(index -> scores[index]).reversed()
                         .thenComparing(Comparator.naturalOrder()))
-                .limit(topK)
-                .map(candidates::get)
+                .map(index -> new ScoredCandidate(index, scores[index], windowScores == null ? null : windowScores[index]))
                 .toList();
+        List<RetrievedFilingChunk> ordered = order.stream().limit(topK).map(candidate -> candidates.get(candidate.inputIndex())).toList();
         log.info("Cross-encoder scoring completed: candidates={}, windows={}, topK={}, elapsedMs={}",
                 candidates.size(), scored.windows(), ordered.size(), (System.nanoTime() - started) / 1_000_000);
-        return ordered;
+        return new ScoredReranking(ordered, order);
     }
 
     @Override

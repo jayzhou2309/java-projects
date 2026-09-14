@@ -191,6 +191,49 @@ class CrossEncoderWindowedScoringLiveTests {
         assertThat(logged.get(logged.size() - 1)).containsExactly(20, 20);
     }
 
+    /**
+     * Evaluation evidence Milestone 1, C3, on the real model: for 20 chunks (18 of about 1,000 tokens, the late-answer chunk, and a
+     * short unrelated one) the scored method returns the same top 10 as {@code rerank}; each chunk's score is bit for bit the score
+     * {@code score} gives it, the maximum of its window scores under max-window, and the single window score under head; the
+     * window counts sum to the rows the scorer ran.
+     */
+    @Test
+    void theScoredMethodMatchesRerankAndItsWindowScoresReduceToTheScoreOn20Chunks() {
+        String late = prose(0, 610) + " " + ANSWER + " " + prose(8, 230);
+        List<RetrievedFilingChunk> candidates = new ArrayList<>(longCandidates(18));
+        candidates.add(chunk(19, late));
+        candidates.add(chunk(20, UNRELATED));
+        List<String> passages = candidates.stream().map(RetrievedFilingChunk::content).toList();
+        for (OnnxCrossEncoderScorer scorer : List.of(maxWindow, head)) {
+            CrossEncoderReranker reranker = new CrossEncoderReranker(scorer, files.version());
+            FilingReranker.ScoredReranking scored = reranker.rerankScored(QUESTION, candidates, 10);
+            List<RetrievedFilingChunk> plain = reranker.rerank(QUESTION, candidates, 10);
+            float[] scores = scorer.score(QUESTION, passages);
+            int rows = scorer.scoreWithWindows(QUESTION, passages).windows();
+            assertThat(scored.results()).as(scorer.scoring()).containsExactlyElementsOf(plain);
+            assertThat(scored.order()).hasSize(20);
+            assertThat(scored.order().subList(0, 10).stream().map(c -> candidates.get(c.inputIndex())).toList()).containsExactlyElementsOf(plain);
+            int windowTotal = 0;
+            for (FilingReranker.ScoredCandidate candidate : scored.order()) {
+                assertThat(candidate.score()).isEqualTo(scores[candidate.inputIndex()]);
+                float max = Float.NEGATIVE_INFINITY;
+                for (float row : candidate.windowScores()) max = Math.max(max, row);
+                assertThat(max).isEqualTo(candidate.score());
+                if (scorer == head) {
+                    assertThat(candidate.windowScores()).containsExactly(candidate.score());
+                }
+                windowTotal += candidate.windowScores().length;
+            }
+            assertThat(windowTotal).isEqualTo(rows);
+            if (scorer == maxWindow) {
+                assertThat(rows).isGreaterThan(20);
+                assertThat(scored.order().stream().filter(c -> c.inputIndex() == 19).findFirst().orElseThrow().windowScores()).hasSize(1);
+            }
+            System.out.println("CROSS_ENCODER_WINDOWS scored scoring=" + scorer.scoring() + " rows=" + rows + " top10=" + plain.stream().map(RetrievedFilingChunk::chunkId).toList()
+                    + " order=" + scored.order().stream().map(c -> candidates.get(c.inputIndex()).chunkId() + ":" + c.score() + Arrays.toString(c.windowScores())).toList());
+        }
+    }
+
     @Test
     void latencyFor20And40ChunksOfAbout1000TokensIsPrintedForBothModes() {
         for (int count : new int[] {20, 40}) {

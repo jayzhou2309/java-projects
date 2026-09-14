@@ -1,5 +1,6 @@
 package project.stockrecommendationengine.rag.evaluation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.Miss;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionResult;
+import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionTrace;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.SliceMetrics;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
@@ -23,10 +25,13 @@ public class RetrievalEvaluationRepository {
     private final JsonMapper json = JsonMapper.builder().build();
 
     /**
-     * The results column: per-question ranks, per-ticker hit@5, the misses, and the per-slice metrics, as one JSON
-     * document. Rows written before slices were added have no {@code slices} key and read back with slices null.
+     * The results column: per-question ranks, per-ticker hit@5, the misses, the per-slice metrics, and on a traced snapshot the
+     * per-question traces, as one JSON document. Rows written before slices were added have no {@code slices} key and read back
+     * with slices null. {@code traces} is written only when present, so an untraced snapshot's document has exactly the keys it
+     * had before traces existed, and every row without the key (all rows stored before traces) reads back with traces null.
      */
-    record StoredResults(List<QuestionResult> questions, Map<String, BigDecimal> tickerHitAt5, List<Miss> misses, Map<String, SliceMetrics> slices) { }
+    record StoredResults(List<QuestionResult> questions, Map<String, BigDecimal> tickerHitAt5, List<Miss> misses, Map<String, SliceMetrics> slices,
+            @JsonInclude(JsonInclude.Include.NON_NULL) List<QuestionTrace> traces) { }
 
     public RetrievalEvaluation save(RetrievalEvaluation e) {
         Long id = jdbc.queryForObject("""
@@ -35,7 +40,7 @@ public class RetrievalEvaluationRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb)) RETURNING id
                 """, Long.class, Timestamp.from(e.evaluatedAt()), e.setVersion(), e.questionCount(), e.hitAt1(), e.hitAt3(), e.hitAt5(),
                 e.mrr(), e.window(), e.retrievalStrategy(), json.writeValueAsString(e.properties()),
-                json.writeValueAsString(new StoredResults(e.results(), e.tickerHitAt5(), e.misses(), e.slices())));
+                json.writeValueAsString(new StoredResults(e.results(), e.tickerHitAt5(), e.misses(), e.slices(), e.traces())));
         return e.withId(id);
     }
 
@@ -55,6 +60,6 @@ public class RetrievalEvaluationRepository {
                 rs.getInt("question_count"), rs.getBigDecimal("hit_at_1"), rs.getBigDecimal("hit_at_3"), rs.getBigDecimal("hit_at_5"),
                 rs.getBigDecimal("mrr"), rs.getInt("window_size"), rs.getString("retrieval_strategy"), properties,
                 stored.questions() == null ? List.of() : stored.questions(), stored.tickerHitAt5() == null ? Map.of() : stored.tickerHitAt5(),
-                stored.misses() == null ? List.of() : stored.misses(), stored.slices());
+                stored.misses() == null ? List.of() : stored.misses(), stored.slices(), stored.traces());
     };
 }

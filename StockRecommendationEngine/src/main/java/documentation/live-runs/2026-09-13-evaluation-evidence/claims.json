@@ -1,0 +1,43 @@
+{
+  "description": "Claims about the committed evidence of the evaluation evidence work (Follow_Ups RAG-14, plans/2026-09-13-evaluation-evidence.md, Milestone 3 with plan amendments 4 and 6): evidence-459.json (traced at snapshot 297's settings), evidence-297.json (untraced), snapshot 297 as committed by the windowed reranker measurement, and the traced reproduction row (snapshot 410). Observed and derived sentences are rendered from their checks; inferred and unknown sentences are free text. Checked in verify by DocumentationClaimsTests; the RAG.md block citing them is generated (RAG.md, Retrieval Evaluation, Claims).",
+  "labels": {
+    "traced-snapshot-297-settings.json": "the traced reproduction run"
+  },
+  "claims": [
+    {"id": "C-001", "basis": "observed",
+     "check": {"type": "candidate", "report": "evidence-459.json", "question": "msft-05", "chunk": 515,
+       "expected": {"fusedPosition": 14, "rerankInput": true, "rerankedPosition": 12}}},
+    {"id": "C-002", "basis": "derived",
+     "check": {"type": "phraseSpan", "report": "evidence-459.json", "question": "msft-05", "phrase": "We report our financial performance based on the following three segments",
+       "chunk": 515, "expected": {"tokenSpan": [614, 625]}}},
+    {"id": "C-003", "basis": "derived",
+     "check": {"type": "membership", "report": "evidence-459.json", "question": "msft-05", "phrase": "We report our financial performance based on the following three segments",
+       "chunk": 515, "expected": {"head": "not", "windowsHoldingWholly": [2]}}},
+    {"id": "C-004", "text": "In snapshot 459 the cross-encoder received msft-05's ITEM_7 phrase in full in chunk 515 only in row 2.", "basis": "inferred",
+     "from": ["C-001", "C-003"]},
+    {"id": "C-005", "basis": "observed",
+     "check": {"type": "candidate", "report": "evidence-459.json", "question": "msft-04", "chunk": 466,
+       "expected": {"fusedPosition": 4, "rerankInput": true, "rerankedPosition": 11}}},
+    {"id": "C-006", "basis": "observed",
+     "check": {"type": "candidate", "report": "evidence-459.json", "question": "msft-04", "chunk": 467,
+       "expected": {"fusedPosition": 21, "rerankInput": false}}},
+    {"id": "C-007", "basis": "observed",
+     "check": {"type": "candidate", "report": "evidence-459.json", "question": "nvda-02", "chunk": 802,
+       "expected": {"fusedPosition": 41, "rerankInput": false}}},
+    {"id": "C-008", "basis": "observed",
+     "check": {"type": "candidate", "report": "evidence-459.json", "question": "nvda-04", "chunk": 754,
+       "expected": {"fusedPosition": 54, "rerankInput": false}}},
+    {"id": "C-009", "text": "Snapshot 297's evidence report does not record whether chunk 515 was a rerank input for msft-05.", "basis": "unknown",
+     "check": {"type": "notRecorded", "report": "evidence-297.json", "path": "questions[id=msft-05].phrases[1].chunks[chunkId=515].rerankInput", "reason": "no trace"}},
+    {"id": "C-010", "basis": "observed",
+     "check": {"type": "rank", "snapshot": "../2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json", "question": "msft-05", "expected": 10}},
+    {"id": "C-011", "basis": "observed",
+     "check": {"type": "rank", "snapshot": "traced-snapshot-297-settings.json", "question": "msft-05", "expected": 10}},
+    {"id": "C-012", "basis": "derived",
+     "check": {"type": "topK", "question": "msft-04", "k": 5, "rows": [
+       {"snapshot": "../2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json", "expected": "outside"},
+       {"snapshot": "traced-snapshot-297-settings.json", "expected": "outside"}]}},
+    {"id": "C-013", "basis": "observed",
+     "check": {"type": "metric", "snapshot": "../2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json", "metric": "hitAt5", "expected": "0.785714"}}
+  ]
+}

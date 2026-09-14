@@ -1,0 +1,14 @@
+{
+  "description": "The window overlap at 20 candidates between the traced runs at the settings of snapshots 297 and 299 (Milestone 4a): the recorded properties of snapshots 613 and 641 differ only in rerankerScoring (trace excepted). rerank-timeout-ms and max-length are not recorded; both runs used the defaults (run.log).",
+  "experiment": {
+    "factor": "rerankerScoring",
+    "settings": [
+      "max-window/overlap=64/maxWindows=4",
+      "max-window/overlap=224/maxWindows=4"
+    ],
+    "snapshots": [
+      "snapshot-613-traced-snapshot-297-rerank-candidates-20.json",
+      "snapshot-641-traced-snapshot-299-rerank-candidates-20-overlap-224.json"
+    ]
+  }
+}

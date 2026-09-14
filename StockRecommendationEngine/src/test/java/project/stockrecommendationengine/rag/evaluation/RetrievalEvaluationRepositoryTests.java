@@ -15,6 +15,7 @@ import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.Rank
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.SliceMetrics;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.TopChunk;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationQuestion.Kind;
+import project.stockrecommendationengine.rag.retrieval.RetrievalTrace;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
@@ -110,6 +111,7 @@ class RetrievalEvaluationRepositoryTests {
                 """, Long.class, java.sql.Timestamp.from(base.plusSeconds(2)));
         var legacy = repository.findById(legacyId).orElseThrow();
         assertThat(legacy.slices()).isNull();
+        assertThat(legacy.traces()).isNull();
         // Reranker milestone 1, C4: a snapshot stored before rerank existed reads back with its properties unchanged.
         assertThat(legacy.properties()).containsExactly(Map.entry("window", 10));
         assertThat(legacy.results()).extracting(QuestionResult::rank).containsExactly(1);
@@ -117,6 +119,76 @@ class RetrievalEvaluationRepositoryTests {
         assertThat(legacy.results()).extracting(QuestionResult::retrievalStrategy).containsOnlyNulls();
         assertThat(repository.latest().orElseThrow().id()).isEqualTo(legacyId);
         assertThat(repository.latest().orElseThrow().slices()).isNull();
+    }
+
+    // Evaluation evidence Milestone 1, C4: traces round-trip; an untraced document has no traces key; older rows read back with null.
+
+    @Test void tracesRoundTripAndAnUntracedSnapshotStoresNoTracesKey() {
+        Instant base = Instant.now().plusSeconds(14400);
+        var results = List.of(new QuestionResult("msft-05", "MSFT", Kind.NARRATIVE, 2, 460L, null, "HYBRID_RRF_RERANKED"),
+                new QuestionResult("msft-06", "MSFT", Kind.NARRATIVE, null, null, "IllegalStateException: embedding unavailable", null));
+        var reranked = new RetrievalTrace(40, 38, null,
+                List.of(new RetrievalTrace.FusedCandidate(571, 1, 1, 2, null), new RetrievalTrace.FusedCandidate(460, 2, null, 1, null),
+                        new RetrievalTrace.FusedCandidate(515, 3, 2, null, null)),
+                new RetrievalTrace.Rerank(RetrievalTrace.Outcome.RERANKED, null, 3, null, List.of(
+                        new RetrievalTrace.RerankedCandidate(515, 3, 1, 6.25f, 3, List.of(-11.087456f, 6.25f, 0.1f)),
+                        new RetrievalTrace.RerankedCandidate(460, 2, 2, 5.0303345f, 1, List.of(5.0303345f)),
+                        new RetrievalTrace.RerankedCandidate(571, 1, 3, -2.5f, 2, List.of(-2.5f, -3.75f)))),
+                List.of(515L, 460L));
+        var fallback = new RetrievalTrace(40, null, null, List.of(new RetrievalTrace.FusedCandidate(7, 1, 1, null, null)),
+                new RetrievalTrace.Rerank(RetrievalTrace.Outcome.FALLBACK, "timeout", 1, null, null), List.of(7L));
+        var traces = List.of(new RetrievalEvaluation.QuestionTrace("msft-05", reranked), new RetrievalEvaluation.QuestionTrace("msft-06", null),
+                new RetrievalEvaluation.QuestionTrace("msft-07", fallback));
+        var saved = repository.save(new RetrievalEvaluation(null, base, "v2", 2, new BigDecimal("0.000000"), new BigDecimal("0.500000"),
+                new BigDecimal("0.500000"), new BigDecimal("0.250000"), 10, "HYBRID_RRF_RERANKED", Map.of("window", 10, "trace", true), results,
+                Map.of("MSFT", new BigDecimal("0.500000")), List.of(), null, traces));
+
+        var stored = repository.findById(saved.id()).orElseThrow();
+        assertThat(stored.traces()).isEqualTo(traces);
+        assertThat(stored.traces().get(0).trace().rerank().candidates().get(0).windowScores()).containsExactly(-11.087456f, 6.25f, 0.1f);
+        assertThat(stored.properties()).containsEntry("trace", true);
+        assertThat(jdbc.queryForObject("SELECT jsonb_exists(results, 'traces') FROM retrieval_evaluations WHERE id = ?", Boolean.class, saved.id())).isTrue();
+
+        var untraced = repository.save(new RetrievalEvaluation(null, base.plusSeconds(1), "v2", 2, new BigDecimal("0.000000"), new BigDecimal("0.500000"),
+                new BigDecimal("0.500000"), new BigDecimal("0.250000"), 10, "HYBRID_RRF", Map.of("window", 10, "trace", false), results,
+                Map.of("MSFT", new BigDecimal("0.500000")), List.of(), null));
+        assertThat(repository.findById(untraced.id()).orElseThrow().traces()).isNull();
+        // The untraced document keeps exactly the keys it had before traces existed.
+        assertThat(jdbc.queryForList("SELECT jsonb_object_keys(results) FROM retrieval_evaluations WHERE id = ?", String.class, untraced.id()))
+                .containsExactlyInAnyOrder("questions", "tickerHitAt5", "misses", "slices");
+    }
+
+    @Test void theCommittedSnapshot297StoredBeforeTracesReadsBackUnchangedWithTracesNull() throws Exception {
+        // Snapshot 297 as committed (row_to_json of the stored row, 2026-09-13), inserted with its own properties and results documents.
+        var file = java.nio.file.Path.of("src/main/java/documentation/live-runs/2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json");
+        var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+        var row = mapper.readTree(java.nio.file.Files.readString(file));
+        Long id = jdbc.queryForObject("""
+                INSERT INTO retrieval_evaluations (evaluated_at, set_version, question_count, hit_at_1, hit_at_3, hit_at_5, mrr,
+                    window_size, retrieval_strategy, properties, results)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb)) RETURNING id
+                """, Long.class, java.sql.Timestamp.from(Instant.now().plusSeconds(18000)), row.get("set_version").asString(), row.get("question_count").asInt(),
+                row.get("hit_at_1").decimalValue(), row.get("hit_at_3").decimalValue(), row.get("hit_at_5").decimalValue(), row.get("mrr").decimalValue(),
+                row.get("window_size").asInt(), row.get("retrieval_strategy").asString(), row.get("properties").toString(), row.get("results").toString());
+        var stored = repository.findById(id).orElseThrow();
+        assertThat(stored.traces()).isNull();
+        assertThat(stored.properties()).doesNotContainKey("trace").containsEntry("rerankCandidates", 20)
+                .containsEntry("rerankerScoring", "max-window/overlap=64/maxWindows=4");
+        assertThat(stored.results()).hasSize(42);
+        var questions = row.get("results").get("questions");
+        for (int i = 0; i < 42; i++) {
+            var question = questions.get(i);
+            assertThat(stored.results().get(i).id()).isEqualTo(question.get("id").asString());
+            assertThat(stored.results().get(i).rank()).isEqualTo(question.get("rank").isNull() ? null : question.get("rank").asInt());
+            assertThat(stored.results().get(i).matchedChunkId()).isEqualTo(question.get("matchedChunkId").isNull() ? null : question.get("matchedChunkId").asLong());
+        }
+        assertThat(stored.hitAt5()).isEqualByComparingTo("0.785714");
+        assertThat(stored.slices()).containsOnlyKeys("figure", "nonFigure");
+        assertThat(stored.misses()).hasSize(row.get("results").get("misses").size());
+        // Written back unchanged by this code, the document has the same keys (no traces key is added).
+        var rewritten = repository.save(stored.withId(null));
+        assertThat(jdbc.queryForList("SELECT jsonb_object_keys(results) FROM retrieval_evaluations WHERE id = ?", String.class, rewritten.id()))
+                .containsExactlyInAnyOrder("questions", "tickerHitAt5", "misses", "slices");
     }
 
     @Test void aRowWithSlicesButNoNotInTop5ReadsBackWithoutAnExceptionAndANullList() {

@@ -1,0 +1,8 @@
+{
+  "description": "Claims check fixture: row A and row C differ in rerankCandidates (10 against 20) and in rerankerScoring (overlap 64 against 224), so the runs do not isolate rerankCandidates.",
+  "experiment": {
+    "factor": "rerankCandidates",
+    "settings": [10, 20],
+    "snapshots": ["../snapshots/row-a.json", "../snapshots/row-c.json"]
+  }
+}

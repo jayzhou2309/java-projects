@@ -1,0 +1,76 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< project:StockRecommendationEngine >------------------
+[INFO] Building StockRecommendationEngine 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ StockRecommendationEngine ---
+[INFO] Copying 2 resources from src/main/resources to target/classes
+[INFO] Copying 11 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ StockRecommendationEngine ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ StockRecommendationEngine ---
+[INFO] Copying 2 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ StockRecommendationEngine ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ StockRecommendationEngine ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running project.stockrecommendationengine.rag.retrieval.CrossEncoderPassageTokenizerLiveTests
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+20:23:45.087 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:45.091 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:45.091 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+20:23:45.576 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:46.419 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=head, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+EVIDENCE_WINDOWS maxLength=512 scoring=head queryTokens=17 rows=6 passages=[0t/W492/1rows, 4t/W492/1rows, 476t/W492/1rows, 476t/W492/1rows, 901t/W492/1rows, 2601t/W492/1rows]
+20:23:46.633 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:46.707 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=max-window/overlap=64/maxWindows=4, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+EVIDENCE_WINDOWS maxLength=512 scoring=max-window/overlap=64/maxWindows=4 queryTokens=17 rows=10 passages=[0t/W492/1rows, 4t/W492/1rows, 476t/W492/1rows, 476t/W492/1rows, 901t/W492/2rows, 2601t/W492/4rows]
+20:23:47.009 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:47.085 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=max-window/overlap=224/maxWindows=4, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+EVIDENCE_WINDOWS maxLength=512 scoring=max-window/overlap=224/maxWindows=4 queryTokens=17 rows=11 passages=[0t/W492/1rows, 4t/W492/1rows, 476t/W492/1rows, 476t/W492/1rows, 901t/W492/3rows, 2601t/W492/4rows]
+20:23:47.385 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:47.445 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=max-window/overlap=0/maxWindows=16, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+EVIDENCE_WINDOWS maxLength=512 scoring=max-window/overlap=0/maxWindows=16 queryTokens=17 rows=12 passages=[0t/W492/1rows, 4t/W492/1rows, 476t/W492/1rows, 476t/W492/1rows, 901t/W492/2rows, 2601t/W492/6rows]
+20:23:47.775 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:47.834 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=64, batchSize=20, scoring=head, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+EVIDENCE_WINDOWS maxLength=64 scoring=head queryTokens=17 rows=6 passages=[0t/W44/1rows, 4t/W44/1rows, 476t/W44/1rows, 476t/W44/1rows, 901t/W44/1rows, 2601t/W44/1rows]
+20:23:47.862 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:47.920 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=64, batchSize=20, scoring=max-window/overlap=64/maxWindows=4, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+EVIDENCE_WINDOWS maxLength=64 scoring=max-window/overlap=64/maxWindows=4 queryTokens=17 rows=18 passages=[0t/W44/1rows, 4t/W44/1rows, 476t/W44/4rows, 476t/W44/4rows, 901t/W44/4rows, 2601t/W44/4rows]
+20:23:47.968 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:48.023 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=64, batchSize=20, scoring=max-window/overlap=224/maxWindows=4, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+EVIDENCE_WINDOWS maxLength=64 scoring=max-window/overlap=224/maxWindows=4 queryTokens=17 rows=18 passages=[0t/W44/1rows, 4t/W44/1rows, 476t/W44/4rows, 476t/W44/4rows, 901t/W44/4rows, 2601t/W44/4rows]
+20:23:48.078 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+20:23:48.140 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=64, batchSize=20, scoring=max-window/overlap=0/maxWindows=16, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+EVIDENCE_WINDOWS maxLength=64 scoring=max-window/overlap=0/maxWindows=16 queryTokens=17 rows=56 passages=[0t/W44/1rows, 4t/W44/1rows, 476t/W44/11rows, 476t/W44/11rows, 901t/W44/16rows, 2601t/W44/16rows]
+EVIDENCE_TOKENIZER text=Revenue $ 215,938 $ 130,497 Up 65% tokens=[revenue=0-7, $=8-9, 215=10-13, ,=13-14, 93=14-16, ##8=16-17, $=18-19, 130=20-23, ,=23-24, 49=24-26, ##7=26-27, up=28-30, 65=31-33, %=33-34]
+EVIDENCE_TOKENIZER text=a 😀 revenue 😀😀 growth after emoji tokens=[a=0-1, [UNK]=2-4, revenue=5-12, [UNK]=13-17, growth=18-24, after=25-30, em=31-33, ##oj=33-35, ##i=35-36]
+EVIDENCE_TOKENIZER text=“Café” revenue grew 12% tokens=[“=0-1, cafe=1-5, ”=5-6, revenue=7-14, grew=15-19, 12=20-22, %=22-23]
+EVIDENCE_TOKENIZER text=中文 revenue tokens=[中=0-1, 文=1-2, revenue=3-10]
+EVIDENCE_TOKENIZER text=  we employed approximately 223,000 people on a full-time basis,\n121,000 in the U.S. and 102,000 internationally tokens=[we=2-4, employed=5-13, approximately=14-27, 223=28-31, ,=31-32, 000=32-35, people=36-42, on=43-45, a=46-47, full=48-52, -=52-53, time=53-57, basis=58-63, ,=63-64, 121=65-68, ,=68-69, 000=69-72, in=73-75, the=76-79, u=80-81, .=81-82, s=82-83, .=83-84, and=85-88, 102=89-92, ,=92-93, 000=93-96, internationally=97-112]
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.594 s -- in project.stockrecommendationengine.rag.retrieval.CrossEncoderPassageTokenizerLiveTests
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.864 s
+[INFO] Finished at: 2026-09-13T20:23:48+08:00
+[INFO] ------------------------------------------------------------------------

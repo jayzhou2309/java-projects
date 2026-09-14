@@ -39,8 +39,9 @@ one-line fix, a typo, or a question, just do it directly.
   Filing tables are `sec_filings` and `sec_filing_chunks`. DB-backed tests are
   `@SpringBootTest @Transactional` against that shared database, so make "latest"
   assertions robust to pre-existing rows (future timestamps, unique tickers).
-- Six opt-in live tests skip by design (`@EnabledIfSystemProperty`: `ibkr.live`,
-  `quant.live`, `rag.evaluation.live`); a green `verify` reports them as skipped.
+- Opt-in live tests skip by design (`@EnabledIfSystemProperty`: `ibkr.live`, `ibkr.live.conid`,
+  `ibkr.live.history`, `quant.live`, `rag.evaluation.live`, `rag.rerank.live`,
+  `rag.reproduction.run`); a green `verify` reports them as skipped (28 tests on 2026-09-14).
 - Running the app for a UT check: `SERVER_PORT=8081`, `INTEGRATION_ACCESS_TOKEN`
   of 32+ characters, `./mvnw -q -o spring-boot:run`, wait for
   `Started StockRecommendationEngineApplication`, stop with
@@ -65,6 +66,40 @@ one-line fix, a typo, or a question, just do it directly.
 - Retrieval changes must be measured against the evaluation set
   (`RAG.md`, "Retrieval Evaluation"): run `POST /api/rag/evaluate` or the opt-in
   live test before and after, and cite the snapshot ids.
+- Evidence rule (RAG-14): conclude only from committed evidence; label each claim observed, derived,
+  inferred, unknown, or experiment; a cause needs an experiment isolating that factor. Write a
+  measurement's conclusions in its `claims.json`; `verify` checks the claims and the generated
+  blocks written from them (format: `RAG.md`, "Claims"). Only block bullets are generated, and only
+  observed and derived bullets are rendered from their checks. Prose outside blocks may not cite a
+  claim; only the nearest line above each block's start marker that is not blank once normalised
+  (skipped: blank lines and lines holding only a one-line HTML comment or tag such as `<br>`,
+  markdown marks such as `***` or `___`, `&nbsp;`, invisible format characters (Unicode Cf), or
+  whitespace and Unicode space separators (Zs) such as U+00A0; the exact set is `Wording.blank`) is
+  screened for causal and absolute words and numbers, so a wrapped lead-in's earlier lines, a setext
+  heading's text, and text above a multi-line comment are not.
+  Claim ids (`C-` and at least three digits) must be unique across claims files whose blocks share a
+  document; give each such file its own number range.
+  The check does not prove, so reviewers and validators read all of: prose outside generated
+  blocks; labels; the free text of inferred, unknown, and experiment claims (screened for listed
+  words only), including numbers that contradict premises, inferences drawn from unknown claims,
+  and an experiment text's factor and cause; whether referenced JSON files are committed, unaltered
+  exports (a hand-edited copy with id 297 renders as snapshot 297); that window wording rests on
+  max-length from configuration at report time; and settings snapshots do not record (for example
+  rerank-timeout-ms). (Corrected 2026-09-13, plan amendment 6: this rule said write-ups are
+  generated from `claims.json` without saying that only block bullets are. Corrected 2026-09-14:
+  it did not say only one line above a block is screened, and it gave no rule for claim ids.
+  Corrected again 2026-09-14, Milestone 4b: the skipped lines were given as blank lines and one-line
+  comments only, and the note before this one named only the one-line limit, not that a wrapped
+  lead-in's earlier lines, a setext heading's text, and text above a multi-line comment go
+  unscreened. Corrected 2026-09-14, Milestone 4b remediation round 1: the Milestone 4b correction
+  rewrote the earlier note in place; that note's text is restored and this addition follows it.
+  Corrected 2026-09-14 at the Milestone 4b remediation cap: the skip list named only "invisible
+  characters" and not the Unicode space separators the check also skips, or that other blank-looking
+  characters are not skipped; and the Milestone 4b note above was reworded in remediation round 1
+  without its own mark (its earlier wording is readable at commit 95a3f63). Corrected again 2026-09-14,
+  after that cap check: "other blank-looking characters are not skipped" was too broad, since the
+  check also skips whitespace such as line and paragraph separators; the list now points to
+  `Wording.blank`.)
 
 ## Loop history
 
@@ -101,8 +136,10 @@ one-line fix, a typo, or a question, just do it directly.
   passed; M2 (local ONNX cross-encoder) passed after two remediation rounds (a native
   tokenizer panic that aborted the JVM, then pair truncation memory growth) and a
   docs correction at the cap; M3 measured head-only scoring, no configuration
-  qualified. Plan 2 (windowed scoring, after diagnosing that the head cut missed
-  answers in 65% of chunks): M1 passed Scrutiny and UT on the first round; M2's
+  qualified. Plan 2 (windowed scoring, after a truncation probe found 65% of chunks
+  longer than the window and, for 11 of 39 matched questions, the answer offset past
+  the kept tokens; corrected 2026-09-14, this entry first said answers were missed in
+  65% of chunks): M1 passed Scrutiny and UT on the first round; M2's
   measurement and decision were confirmed every round (no row qualifies, defaults
   off), but its write-up failed Scrutiny four more times and was frozen unvalidated
   at merge. Lesson (Jay): conclusions must not outrun recorded measurements. One
@@ -113,3 +150,23 @@ one-line fix, a typo, or a question, just do it directly.
   inferred, or unknown, allow a cause only with an isolating experiment, and state a
   fact once and reference it. Plans in `documentation/plans/2026-09-13-reranker.md`
   and `documentation/plans/2026-09-13-reranker-windows.md`.
+- 2026-09-13 to 2026-09-14, recorded retrieval evidence and checked claims (RAG-14):
+  four milestones, the fourth split to run in parallel worktrees. M1 (traces) failed
+  Scrutiny once (its reproduction test named no question when a fallback coincided
+  with a difference), then passed with UT. M2 (evidence report) passed both on the
+  first round. M3 (claims check) failed Scrutiny three times, each time on text the
+  checker did not read (free-text sentences beside checks, prose citing claims, one
+  screened lead-in line promised as a paragraph); it was redesigned so observed and
+  derived sentences are rendered from their checks, and closed at the cap with
+  Orchestrator wording fixes approved by Jay. M4a (traced re-measurement) passed first
+  time: all five runs reproduced 295 to 299. M4b (write-up regenerated as generated
+  blocks) passed UT every round (1,396 values against the live app) but failed
+  Scrutiny on hand-written history: correction notes kept restating results, so each
+  rewording created a new copy; it closed at the cap after collapsing that history
+  into pointers. Lessons: a checker proves only what it reads, so its documentation
+  must list what it does not read; history notes that describe corrected results
+  re-state them, so keep correction history in commits and run logs and leave a
+  pointer; count completeness of a generated list from the evidence, not from the
+  lead-in; the Orchestrator's own plan text and cap fixes need the same validation
+  (a W- id prefix it prescribed would have failed verify). Plan in
+  `documentation/plans/2026-09-13-evaluation-evidence.md`.

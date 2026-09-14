@@ -1,0 +1,4 @@
+reference=src/main/java/documentation/live-runs/2026-09-13-reranker-windows/measurement/snapshot-295-reference-rerank-off.json (snapshot 295)
+run=src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json (snapshot 598)
+questions reference=42 run=42 traces=42
+problems=0

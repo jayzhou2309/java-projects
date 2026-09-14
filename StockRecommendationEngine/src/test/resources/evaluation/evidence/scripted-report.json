@@ -1,0 +1,740 @@
+{
+  "snapshotId" : 459,
+  "setVersion" : {
+    "value" : "v-test",
+    "basis" : "observed",
+    "source" : "snapshot set_version"
+  },
+  "set" : {
+    "value" : "evaluation/scripted-set.json",
+    "basis" : "observed",
+    "source" : "snapshot properties.set"
+  },
+  "traced" : {
+    "value" : true,
+    "basis" : "observed",
+    "source" : "snapshot traces (properties.trace true)"
+  },
+  "settings" : {
+    "rerank" : {
+      "value" : true,
+      "basis" : "observed",
+      "source" : "snapshot properties.rerank"
+    },
+    "rerankCandidates" : {
+      "value" : 3,
+      "basis" : "observed",
+      "source" : "snapshot properties.rerankCandidates"
+    },
+    "reranker" : {
+      "value" : "CrossEncoderReranker",
+      "basis" : "observed",
+      "source" : "snapshot properties.reranker"
+    },
+    "rerankerVersion" : {
+      "value" : "5d3e70fd0c9f",
+      "basis" : "observed",
+      "source" : "snapshot properties.rerankerVersion"
+    },
+    "loadedModelVersion" : {
+      "value" : "5d3e70fd0c9f",
+      "basis" : "observed",
+      "source" : "loaded cross-encoder model files"
+    },
+    "rerankerScoring" : {
+      "value" : "max-window/overlap=0/maxWindows=4",
+      "basis" : "observed",
+      "source" : "snapshot properties.rerankerScoring"
+    },
+    "passageScoring" : {
+      "value" : "max-window",
+      "basis" : "derived",
+      "rule" : "parsed from snapshot properties.rerankerScoring"
+    },
+    "windowOverlapTokens" : {
+      "value" : 0,
+      "basis" : "derived",
+      "rule" : "parsed from snapshot properties.rerankerScoring"
+    },
+    "maxWindows" : {
+      "value" : 4,
+      "basis" : "derived",
+      "rule" : "parsed from snapshot properties.rerankerScoring"
+    },
+    "maxLength" : {
+      "value" : 20,
+      "basis" : "observed",
+      "source" : "current configuration rag.retrieval.cross-encoder.max-length (snapshots do not record it)"
+    }
+  },
+  "questions" : [ {
+    "id" : "q1",
+    "ticker" : "AAPL",
+    "kind" : "FIGURE",
+    "question" : "q1 alpha beta",
+    "rank" : {
+      "value" : 2,
+      "basis" : "observed",
+      "source" : "snapshot results rank (null: no matching chunk in the window)"
+    },
+    "matchedChunkId" : {
+      "value" : 102,
+      "basis" : "observed",
+      "source" : "snapshot results matchedChunkId (null: no matching chunk in the window)"
+    },
+    "retrievalStrategy" : {
+      "value" : "HYBRID_RRF_RERANKED",
+      "basis" : "observed",
+      "source" : "snapshot results retrievalStrategy (null: retrieval error, or stored before the field)"
+    },
+    "error" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "snapshot results error (null: none)"
+    },
+    "rerankOutcome" : {
+      "value" : "RERANKED",
+      "basis" : "observed",
+      "source" : "trace rerank outcome"
+    },
+    "fallbackReason" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "trace rerank fallbackReason (null: not a fallback)"
+    },
+    "scoresNotRecorded" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "trace rerank scoresNotRecorded (null: every rerank input carries its position and score, or not reranked)"
+    },
+    "fusedCount" : {
+      "value" : 4,
+      "basis" : "observed",
+      "source" : "trace fused"
+    },
+    "rerankInputCount" : {
+      "value" : 3,
+      "basis" : "observed",
+      "source" : "trace rerank inputCount (null: reranking off)"
+    },
+    "queryTokens" : {
+      "value" : 3,
+      "basis" : "derived",
+      "rule" : "tokens of the question text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer"
+    },
+    "acceptedPhraseCount" : {
+      "value" : 2,
+      "basis" : "observed",
+      "source" : "bundled set evaluation/scripted-set.json"
+    },
+    "phrases" : [ {
+      "accessionNo" : "0000000001-26-000001",
+      "sectionKey" : "ITEM_7",
+      "phrase" : "w012 w013 w014 w015",
+      "heldByStoredChunk" : {
+        "value" : true,
+        "basis" : "observed",
+        "source" : "sec_filing_chunks at report time: chunks of the phrase's accession and section whose text contains the phrase (RetrievalEvaluationService.matches)"
+      },
+      "chunks" : [ {
+        "chunkId" : 101,
+        "chunkTokens" : {
+          "value" : 40,
+          "basis" : "derived",
+          "rule" : "tokens of the stored chunk text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer"
+        },
+        "windowLength" : {
+          "value" : 14,
+          "basis" : "derived",
+          "rule" : "W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)"
+        },
+        "windowStarts" : {
+          "value" : [ 0, 14, 26 ],
+          "basis" : "derived",
+          "rule" : "start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored"
+        },
+        "occurrences" : [ {
+          "characterSpan" : {
+            "value" : {
+              "start" : 60,
+              "end" : 79
+            },
+            "basis" : "derived",
+            "rule" : "occurrence of the normalised phrase in the normalised chunk text (whitespace runs collapsed, trimmed, lower-cased), mapped to UTF-16 offsets of the stored text, end exclusive"
+          },
+          "tokenSpan" : {
+            "value" : {
+              "start" : 12,
+              "end" : 16
+            },
+            "basis" : "derived",
+            "rule" : "tokens of the whole-chunk tokenization whose character span overlaps the occurrence, end exclusive"
+          },
+          "head" : {
+            "value" : "partly",
+            "basis" : "derived",
+            "rule" : "wholly: token span end <= W; partly: start < W < end; not: start >= W"
+          },
+          "windowsHoldingWholly" : {
+            "value" : [ ],
+            "basis" : "derived",
+            "rule" : "1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored"
+          }
+        } ],
+        "fusedPosition" : {
+          "value" : 1,
+          "basis" : "observed",
+          "source" : "trace fused (null: not in the fused list)"
+        },
+        "rerankInput" : {
+          "value" : true,
+          "basis" : "observed",
+          "source" : "trace rerank candidates (true: a rerank input; false: not a rerank input)"
+        },
+        "rerankedPosition" : {
+          "value" : 3,
+          "basis" : "observed",
+          "source" : "trace rerank candidates rerankedPosition"
+        },
+        "score" : {
+          "value" : -0.5,
+          "basis" : "observed",
+          "source" : "trace rerank candidates score"
+        },
+        "windowCount" : {
+          "value" : 3,
+          "basis" : "observed",
+          "source" : "trace rerank candidates windowCount"
+        },
+        "windowScores" : {
+          "value" : [ -0.5, -3.0, -2.0 ],
+          "basis" : "observed",
+          "source" : "trace rerank candidates windowScores"
+        },
+        "returnedPosition" : {
+          "value" : null,
+          "basis" : "observed",
+          "source" : "trace returnedChunkIds (null: not returned)"
+        }
+      }, {
+        "chunkId" : 102,
+        "chunkTokens" : {
+          "value" : 6,
+          "basis" : "derived",
+          "rule" : "tokens of the stored chunk text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer"
+        },
+        "windowLength" : {
+          "value" : 14,
+          "basis" : "derived",
+          "rule" : "W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)"
+        },
+        "windowStarts" : {
+          "value" : [ 0 ],
+          "basis" : "derived",
+          "rule" : "start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored"
+        },
+        "occurrences" : [ {
+          "characterSpan" : {
+            "value" : {
+              "start" : 6,
+              "end" : 27
+            },
+            "basis" : "derived",
+            "rule" : "occurrence of the normalised phrase in the normalised chunk text (whitespace runs collapsed, trimmed, lower-cased), mapped to UTF-16 offsets of the stored text, end exclusive"
+          },
+          "tokenSpan" : {
+            "value" : {
+              "start" : 1,
+              "end" : 5
+            },
+            "basis" : "derived",
+            "rule" : "tokens of the whole-chunk tokenization whose character span overlaps the occurrence, end exclusive"
+          },
+          "head" : {
+            "value" : "wholly",
+            "basis" : "derived",
+            "rule" : "wholly: token span end <= W; partly: start < W < end; not: start >= W"
+          },
+          "windowsHoldingWholly" : {
+            "value" : [ 1 ],
+            "basis" : "derived",
+            "rule" : "1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored"
+          }
+        } ],
+        "fusedPosition" : {
+          "value" : 3,
+          "basis" : "observed",
+          "source" : "trace fused (null: not in the fused list)"
+        },
+        "rerankInput" : {
+          "value" : true,
+          "basis" : "observed",
+          "source" : "trace rerank candidates (true: a rerank input; false: not a rerank input)"
+        },
+        "rerankedPosition" : {
+          "value" : 2,
+          "basis" : "observed",
+          "source" : "trace rerank candidates rerankedPosition"
+        },
+        "score" : {
+          "value" : 1.25,
+          "basis" : "observed",
+          "source" : "trace rerank candidates score"
+        },
+        "windowCount" : {
+          "value" : 1,
+          "basis" : "observed",
+          "source" : "trace rerank candidates windowCount"
+        },
+        "windowScores" : {
+          "value" : [ 1.25 ],
+          "basis" : "observed",
+          "source" : "trace rerank candidates windowScores"
+        },
+        "returnedPosition" : {
+          "value" : 2,
+          "basis" : "observed",
+          "source" : "trace returnedChunkIds (null: not returned)"
+        }
+      } ]
+    }, {
+      "accessionNo" : "0000000001-26-000001",
+      "sectionKey" : "ITEM_1A",
+      "phrase" : "a phrase no stored chunk holds",
+      "heldByStoredChunk" : {
+        "value" : false,
+        "basis" : "observed",
+        "source" : "sec_filing_chunks at report time: chunks of the phrase's accession and section whose text contains the phrase (RetrievalEvaluationService.matches)"
+      },
+      "chunks" : [ ]
+    } ],
+    "ranking" : {
+      "value" : "reranked order",
+      "basis" : "observed",
+      "source" : "trace rerank outcome RERANKED"
+    },
+    "bestAcceptedChunk" : {
+      "value" : 102,
+      "basis" : "observed",
+      "source" : "trace reranked order: first chunk holding an accepted phrase"
+    },
+    "bestAcceptedPosition" : {
+      "value" : 2,
+      "basis" : "observed",
+      "source" : "trace rerank candidates rerankedPosition"
+    },
+    "rankedAbove" : {
+      "value" : [ {
+        "chunkId" : 301,
+        "position" : {
+          "value" : 1,
+          "basis" : "observed",
+          "source" : "trace rerank candidates rerankedPosition"
+        },
+        "fusedPosition" : {
+          "value" : 2,
+          "basis" : "observed",
+          "source" : "trace rerank candidates fusedPosition"
+        },
+        "score" : {
+          "value" : 2.5,
+          "basis" : "observed",
+          "source" : "trace rerank candidates score"
+        },
+        "windowScores" : {
+          "value" : [ 2.5, -1.0 ],
+          "basis" : "observed",
+          "source" : "trace rerank candidates windowScores"
+        }
+      } ],
+      "basis" : "observed",
+      "source" : "trace reranked order: every chunk ranked above the best accepted chunk"
+    }
+  }, {
+    "id" : "q2",
+    "ticker" : "MSFT",
+    "kind" : "NARRATIVE",
+    "question" : "q2 gamma",
+    "rank" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "snapshot results rank (null: no matching chunk in the window)"
+    },
+    "matchedChunkId" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "snapshot results matchedChunkId (null: no matching chunk in the window)"
+    },
+    "retrievalStrategy" : {
+      "value" : "HYBRID_RRF",
+      "basis" : "observed",
+      "source" : "snapshot results retrievalStrategy (null: retrieval error, or stored before the field)"
+    },
+    "error" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "snapshot results error (null: none)"
+    },
+    "rerankOutcome" : {
+      "value" : "FALLBACK",
+      "basis" : "observed",
+      "source" : "trace rerank outcome"
+    },
+    "fallbackReason" : {
+      "value" : "timeout",
+      "basis" : "observed",
+      "source" : "trace rerank fallbackReason (null: not a fallback)"
+    },
+    "scoresNotRecorded" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "trace rerank scoresNotRecorded (null: every rerank input carries its position and score, or not reranked)"
+    },
+    "fusedCount" : {
+      "value" : 2,
+      "basis" : "observed",
+      "source" : "trace fused"
+    },
+    "rerankInputCount" : {
+      "value" : 2,
+      "basis" : "observed",
+      "source" : "trace rerank inputCount (null: reranking off)"
+    },
+    "queryTokens" : {
+      "value" : 2,
+      "basis" : "derived",
+      "rule" : "tokens of the question text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer"
+    },
+    "acceptedPhraseCount" : {
+      "value" : 1,
+      "basis" : "observed",
+      "source" : "bundled set evaluation/scripted-set.json"
+    },
+    "phrases" : [ {
+      "accessionNo" : "0000000002-26-000002",
+      "sectionKey" : "ITEM_1",
+      "phrase" : "w030 w031",
+      "heldByStoredChunk" : {
+        "value" : true,
+        "basis" : "observed",
+        "source" : "sec_filing_chunks at report time: chunks of the phrase's accession and section whose text contains the phrase (RetrievalEvaluationService.matches)"
+      },
+      "chunks" : [ {
+        "chunkId" : 201,
+        "chunkTokens" : {
+          "value" : 40,
+          "basis" : "derived",
+          "rule" : "tokens of the stored chunk text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer"
+        },
+        "windowLength" : {
+          "value" : 15,
+          "basis" : "derived",
+          "rule" : "W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)"
+        },
+        "windowStarts" : {
+          "value" : [ 0, 15, 25 ],
+          "basis" : "derived",
+          "rule" : "start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored"
+        },
+        "occurrences" : [ {
+          "characterSpan" : {
+            "value" : {
+              "start" : 150,
+              "end" : 159
+            },
+            "basis" : "derived",
+            "rule" : "occurrence of the normalised phrase in the normalised chunk text (whitespace runs collapsed, trimmed, lower-cased), mapped to UTF-16 offsets of the stored text, end exclusive"
+          },
+          "tokenSpan" : {
+            "value" : {
+              "start" : 30,
+              "end" : 32
+            },
+            "basis" : "derived",
+            "rule" : "tokens of the whole-chunk tokenization whose character span overlaps the occurrence, end exclusive"
+          },
+          "head" : {
+            "value" : "not",
+            "basis" : "derived",
+            "rule" : "wholly: token span end <= W; partly: start < W < end; not: start >= W"
+          },
+          "windowsHoldingWholly" : {
+            "value" : [ 3 ],
+            "basis" : "derived",
+            "rule" : "1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored"
+          }
+        } ],
+        "fusedPosition" : {
+          "value" : null,
+          "basis" : "observed",
+          "source" : "trace fused (null: not in the fused list)"
+        },
+        "rerankInput" : {
+          "value" : false,
+          "basis" : "derived",
+          "rule" : "fused position <= trace rerank inputCount (the reranker receives the first inputCount fused chunks)"
+        },
+        "rerankedPosition" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+        },
+        "score" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+        },
+        "windowCount" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+        },
+        "windowScores" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+        },
+        "returnedPosition" : {
+          "value" : null,
+          "basis" : "observed",
+          "source" : "trace returnedChunkIds (null: not returned)"
+        }
+      } ]
+    } ],
+    "ranking" : {
+      "value" : "fused order",
+      "basis" : "observed",
+      "source" : "trace rerank outcome FALLBACK"
+    },
+    "bestAcceptedChunk" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "trace fused order: no chunk holding an accepted phrase is in it"
+    },
+    "bestAcceptedPosition" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "trace fused order: no chunk holding an accepted phrase is in it"
+    },
+    "rankedAbove" : {
+      "value" : [ {
+        "chunkId" : 202,
+        "position" : {
+          "value" : 1,
+          "basis" : "observed",
+          "source" : "trace fused fusedPosition"
+        },
+        "fusedPosition" : {
+          "value" : 1,
+          "basis" : "observed",
+          "source" : "trace fused"
+        },
+        "score" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+        },
+        "windowScores" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+        }
+      }, {
+        "chunkId" : 203,
+        "position" : {
+          "value" : 2,
+          "basis" : "observed",
+          "source" : "trace fused fusedPosition"
+        },
+        "fusedPosition" : {
+          "value" : 2,
+          "basis" : "observed",
+          "source" : "trace fused"
+        },
+        "score" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+        },
+        "windowScores" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "rerank fell back (timeout): the trace records no reranked positions or scores"
+        }
+      } ],
+      "basis" : "observed",
+      "source" : "trace fused order: every chunk (no chunk holding an accepted phrase is in it)"
+    }
+  }, {
+    "id" : "q3",
+    "ticker" : "NVDA",
+    "kind" : "FIGURE",
+    "question" : "q3 delta epsilon",
+    "rank" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "snapshot results rank (null: no matching chunk in the window)"
+    },
+    "matchedChunkId" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "snapshot results matchedChunkId (null: no matching chunk in the window)"
+    },
+    "retrievalStrategy" : {
+      "value" : null,
+      "basis" : "observed",
+      "source" : "snapshot results retrievalStrategy (null: retrieval error, or stored before the field)"
+    },
+    "error" : {
+      "value" : "IllegalStateException: Embedding request failed",
+      "basis" : "observed",
+      "source" : "snapshot results error (null: none)"
+    },
+    "rerankOutcome" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace for this question (its retrieval failed)"
+    },
+    "fallbackReason" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace for this question (its retrieval failed)"
+    },
+    "scoresNotRecorded" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace for this question (its retrieval failed)"
+    },
+    "fusedCount" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace for this question (its retrieval failed)"
+    },
+    "rerankInputCount" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace for this question (its retrieval failed)"
+    },
+    "queryTokens" : {
+      "value" : 3,
+      "basis" : "derived",
+      "rule" : "tokens of the question text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer"
+    },
+    "acceptedPhraseCount" : {
+      "value" : 1,
+      "basis" : "observed",
+      "source" : "bundled set evaluation/scripted-set.json"
+    },
+    "phrases" : [ {
+      "accessionNo" : "0000000002-26-000002",
+      "sectionKey" : "ITEM_1",
+      "phrase" : "w030 w031",
+      "heldByStoredChunk" : {
+        "value" : true,
+        "basis" : "observed",
+        "source" : "sec_filing_chunks at report time: chunks of the phrase's accession and section whose text contains the phrase (RetrievalEvaluationService.matches)"
+      },
+      "chunks" : [ {
+        "chunkId" : 201,
+        "chunkTokens" : {
+          "value" : 40,
+          "basis" : "derived",
+          "rule" : "tokens of the stored chunk text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer"
+        },
+        "windowLength" : {
+          "value" : 14,
+          "basis" : "derived",
+          "rule" : "W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)"
+        },
+        "windowStarts" : {
+          "value" : [ 0, 14, 26 ],
+          "basis" : "derived",
+          "rule" : "start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored"
+        },
+        "occurrences" : [ {
+          "characterSpan" : {
+            "value" : {
+              "start" : 150,
+              "end" : 159
+            },
+            "basis" : "derived",
+            "rule" : "occurrence of the normalised phrase in the normalised chunk text (whitespace runs collapsed, trimmed, lower-cased), mapped to UTF-16 offsets of the stored text, end exclusive"
+          },
+          "tokenSpan" : {
+            "value" : {
+              "start" : 30,
+              "end" : 32
+            },
+            "basis" : "derived",
+            "rule" : "tokens of the whole-chunk tokenization whose character span overlaps the occurrence, end exclusive"
+          },
+          "head" : {
+            "value" : "not",
+            "basis" : "derived",
+            "rule" : "wholly: token span end <= W; partly: start < W < end; not: start >= W"
+          },
+          "windowsHoldingWholly" : {
+            "value" : [ 3 ],
+            "basis" : "derived",
+            "rule" : "1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored"
+          }
+        } ],
+        "fusedPosition" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace for this question (its retrieval failed)"
+        },
+        "rerankInput" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace for this question (its retrieval failed)"
+        },
+        "rerankedPosition" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace for this question (its retrieval failed)"
+        },
+        "score" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace for this question (its retrieval failed)"
+        },
+        "windowCount" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace for this question (its retrieval failed)"
+        },
+        "windowScores" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace for this question (its retrieval failed)"
+        },
+        "returnedPosition" : {
+          "value" : null,
+          "basis" : "unknown",
+          "reason" : "no trace for this question (its retrieval failed)"
+        }
+      } ]
+    } ],
+    "ranking" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace for this question (its retrieval failed)"
+    },
+    "bestAcceptedChunk" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace for this question (its retrieval failed)"
+    },
+    "bestAcceptedPosition" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace for this question (its retrieval failed)"
+    },
+    "rankedAbove" : {
+      "value" : null,
+      "basis" : "unknown",
+      "reason" : "no trace for this question (its retrieval failed)"
+    }
+  } ]
+}

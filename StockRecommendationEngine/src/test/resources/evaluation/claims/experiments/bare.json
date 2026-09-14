@@ -1,0 +1,4 @@
+{
+  "description": "Claims check fixture: a bare declaration of a factor and two settings with no snapshots.",
+  "experiment": {"factor": "rerankCandidates", "settings": [10, 20]}
+}

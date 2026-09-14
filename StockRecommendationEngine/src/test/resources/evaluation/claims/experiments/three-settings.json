@@ -1,0 +1,4 @@
+{
+  "description": "Claims check fixture: three settings and no snapshots, so it is not an experiment between two recorded runs.",
+  "experiment": {"factor": "rerankerScoring", "settings": ["max-window/overlap=0/maxWindows=4", "max-window/overlap=64/maxWindows=4", "max-window/overlap=224/maxWindows=4"]}
+}

@@ -95,7 +95,7 @@ class FilingRetrievalServiceTests {
 
     @Test
     void usesConfiguredRerankerWithoutChangingCitationsOrSimilarityScores() {
-        FilingReranker reranker = mock(FilingReranker.class);
+        FilingReranker reranker = mock(FilingReranker.class, CALLS_REAL_METHODS); // retrieval calls the default rerankScored, which calls the stubbed rerank
         properties.setHybridEnabled(false);
         properties.setRerankingEnabled(true);
         service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
@@ -107,7 +107,7 @@ class FilingRetrievalServiceTests {
 
     @Test
     void rejectsRerankerEvidenceOutsideRetrievedCandidates() {
-        FilingReranker reranker = mock(FilingReranker.class);
+        FilingReranker reranker = mock(FilingReranker.class, CALLS_REAL_METHODS); // retrieval calls the default rerankScored, which calls the stubbed rerank
         properties.setRerankingEnabled(true);
         service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
         when(reranker.rerank(anyString(), anyList(), anyInt())).thenReturn(List.of(evidence(99L)));
@@ -290,7 +290,7 @@ class FilingRetrievalServiceTests {
 
     @Test
     void rerankerReceivesTheFusedDiversifiedCandidatesAndIsValidatedAgainstThem() {
-        FilingReranker reranker = mock(FilingReranker.class);
+        FilingReranker reranker = mock(FilingReranker.class, CALLS_REAL_METHODS); // retrieval calls the default rerankScored, which calls the stubbed rerank
         properties.setRerankingEnabled(true);
         service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
         when(repository.findKeywordChunks(any(), any(), any(), anyInt())).thenReturn(List.of(evidence(3L)));
@@ -577,7 +577,7 @@ class FilingRetrievalServiceTests {
 
     @Test
     void theValidatorRejectsMoreThanTopKOrAChunkNotGivenAndRetrievalFallsBack(CapturedOutput output) {
-        FilingReranker reranker = mock(FilingReranker.class);
+        FilingReranker reranker = mock(FilingReranker.class, CALLS_REAL_METHODS); // retrieval calls the default rerankScored, which calls the stubbed rerank
         properties.setHybridEnabled(false);
         properties.setRerankCandidates(5);
         service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
@@ -601,7 +601,7 @@ class FilingRetrievalServiceTests {
 
     @Test
     void rerankedChunksKeepTheirFusedSimilarityScoresAndAnAlteredScoreIsRejected() {
-        FilingReranker reranker = mock(FilingReranker.class);
+        FilingReranker reranker = mock(FilingReranker.class, CALLS_REAL_METHODS); // retrieval calls the default rerankScored, which calls the stubbed rerank
         service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
         when(repository.findSimilarChunks(any(), any(), anyInt())).thenReturn(List.of(evidence(1L, 0.91), evidence(2L, 0.82)));
         when(repository.findKeywordChunks(any(), any(), any(), anyInt())).thenReturn(List.of(evidence(3L, 0.73)));

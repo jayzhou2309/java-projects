@@ -11,6 +11,7 @@ import project.stockrecommendationengine.rag.ingestion.FilingEmbeddingService;
 import project.stockrecommendationengine.rag.repository.FilingRetrievalRepository;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -248,6 +249,157 @@ class CrossEncoderRerankerTests {
             }
         };
         assertThat(service(ranking, new CrossEncoderReranker(describing, null), 2000).rerankerScoring()).contains("head");
+    }
+
+    // Evaluation evidence Milestone 1, C3: the scored method returns each passage's window scores and orders exactly as rerank.
+
+    /**
+     * A scripted windowed scorer: a passage of n words is n tokens, windows follow {@link CrossEncoderPairAssembler#windowStarts}
+     * (window 4, overlap 1, at most 3) under max-window or one head row under head, each row's logit is scripted per passage, and a
+     * passage's score is {@link CrossEncoderPairAssembler#maxOverWindows} of its rows, as OnnxCrossEncoderScorer reduces them.
+     */
+    static final class ScriptedWindowScorer implements PairScorer {
+        final PassageScoring mode;
+        final Map<String, float[]> rowLogits;
+        final AtomicInteger calls = new AtomicInteger();
+
+        ScriptedWindowScorer(PassageScoring mode, Map<String, float[]> rowLogits) {
+            this.mode = mode;
+            this.rowLogits = rowLogits;
+        }
+
+        @Override
+        public float[] score(String query, List<String> passages) {
+            return scoreWithWindows(query, passages).scores();
+        }
+
+        @Override
+        public Scored scoreWithWindows(String query, List<String> passages) {
+            calls.incrementAndGet();
+            float[] scores = new float[passages.size()];
+            float[][] rows = new float[passages.size()][];
+            int windows = 0;
+            for (int i = 0; i < passages.size(); i++) {
+                int tokens = passages.get(i).isBlank() ? 0 : passages.get(i).trim().split("\\s+").length;
+                int count = mode == PassageScoring.HEAD ? 1 : CrossEncoderPairAssembler.windowStarts(tokens, 4, 1, 3).length;
+                rows[i] = Arrays.copyOf(rowLogits.get(passages.get(i)), count);
+                scores[i] = CrossEncoderPairAssembler.maxOverWindows(rows[i]);
+                windows += count;
+            }
+            return new Scored(scores, windows, rows);
+        }
+
+        @Override
+        public String scoring() {
+            return mode.label();
+        }
+    }
+
+    @Test
+    void theScoredMethodReturnsWindowScoresWhoseMaximumIsTheScoreUnderMaxWindowAndWhoseSingleEntryIsTheScoreUnderHead() {
+        // "one two three four five six seven" is 7 tokens: windows at 0, 3 under max-window; its best row is the second.
+        String longPassage = "one two three four five six seven";
+        String shortPassage = "short text";
+        String mid = "a b c d e f g h i j";
+        Map<String, float[]> logits = Map.of(longPassage, new float[] {1.5f, 6.25f, -2f}, shortPassage, new float[] {3f, 9f, 9f},
+                mid, new float[] {-4f, 2f, 5f});
+        var candidates = List.of(chunk(1, longPassage), chunk(2, shortPassage), chunk(3, mid));
+
+        var windowed = new ScriptedWindowScorer(PassageScoring.MAX_WINDOW, logits);
+        var maxWindow = new CrossEncoderReranker(windowed, "v").rerankScored("q", candidates, 2);
+        assertThat(windowed.calls).hasValue(1);
+        assertThat(maxWindow.order()).extracting(FilingReranker.ScoredCandidate::inputIndex).containsExactly(0, 2, 1);
+        assertThat(maxWindow.order().get(0).windowScores()).containsExactly(1.5f, 6.25f);
+        assertThat(maxWindow.order().get(1).windowScores()).containsExactly(-4f, 2f, 5f);
+        assertThat(maxWindow.order().get(2).windowScores()).containsExactly(3f);
+        assertThat(maxWindow.order()).allSatisfy(candidate -> assertThat(candidate.score())
+                .isEqualTo(CrossEncoderPairAssembler.maxOverWindows(candidate.windowScores())));
+        assertThat(maxWindow.order()).extracting(FilingReranker.ScoredCandidate::score).containsExactly(6.25f, 5f, 3f);
+        assertThat(maxWindow.results()).extracting(RetrievedFilingChunk::chunkId).containsExactly(1L, 3L);
+        assertThat(maxWindow.results().get(0)).isSameAs(candidates.get(0));
+        assertThat(new CrossEncoderReranker(windowed, "v").rerank("q", candidates, 2)).containsExactlyElementsOf(maxWindow.results());
+
+        var head = new ScriptedWindowScorer(PassageScoring.HEAD, logits);
+        var headScored = new CrossEncoderReranker(head, "v").rerankScored("q", candidates, 3);
+        assertThat(headScored.order()).allSatisfy(candidate -> {
+            assertThat(candidate.windowScores()).hasSize(1);
+            assertThat(candidate.windowScores()[0]).isEqualTo(candidate.score());
+        });
+        assertThat(headScored.order()).extracting(FilingReranker.ScoredCandidate::inputIndex).containsExactly(1, 0, 2);
+        assertThat(new CrossEncoderReranker(head, "v").rerank("q", candidates, 3)).containsExactlyElementsOf(headScored.results());
+        assertThat(head.calls).hasValue(2);
+    }
+
+    @Test
+    void theScoredMethodOrdersExactlyAsRerankForManyScoreTablesWithTies() {
+        var random = new java.util.Random(13);
+        for (int round = 0; round < 200; round++) {
+            int size = 1 + random.nextInt(25);
+            var candidates = LongStream.rangeClosed(1, size).mapToObj(id -> chunk(id, "p" + id)).toList();
+            Map<String, Float> table = new java.util.HashMap<>();
+            candidates.forEach(c -> table.put(c.content(), (float) random.nextInt(4)));
+            var reranker = new CrossEncoderReranker(new TableScorer(table), null);
+            int topK = 1 + random.nextInt(size + 2);
+            var scored = reranker.rerankScored("q", candidates, topK);
+            var plain = reranker.rerank("q", candidates, topK);
+            assertThat(scored.results()).as("round %d", round).containsExactlyElementsOf(plain);
+            assertThat(scored.order()).hasSize(size);
+            assertThat(scored.order()).extracting(FilingReranker.ScoredCandidate::inputIndex).doesNotHaveDuplicates();
+            assertThat(scored.order().subList(0, plain.size()).stream().map(c -> candidates.get(c.inputIndex())).toList()).containsExactlyElementsOf(plain);
+            // TableScorer uses the default scoreWithWindows: one row per passage, the row logit its score.
+            assertThat(scored.order()).allSatisfy(c -> assertThat(c.windowScores()).containsExactly(c.score()));
+        }
+    }
+
+    @Test
+    void windowScoresAreNullWhenTheScorerReportsNoneOrAMismatchedCountAndTheDefaultReportsNoOrder() {
+        var candidates = List.of(chunk(1, "a"), chunk(2, "b"));
+        PairScorer noRows = new PairScorer() {
+            @Override
+            public float[] score(String query, List<String> passages) {
+                return new float[] {1f, 2f};
+            }
+
+            @Override
+            public Scored scoreWithWindows(String query, List<String> passages) {
+                return new Scored(new float[] {1f, 2f}, 5);
+            }
+        };
+        assertThat(new CrossEncoderReranker(noRows, null).rerankScored("q", candidates, 2).order())
+                .extracting(FilingReranker.ScoredCandidate::windowScores).containsOnlyNulls();
+        PairScorer mismatched = new PairScorer() {
+            @Override
+            public float[] score(String query, List<String> passages) {
+                return new float[] {1f, 2f};
+            }
+
+            @Override
+            public Scored scoreWithWindows(String query, List<String> passages) {
+                return new Scored(new float[] {1f, 2f}, 2, new float[][] {{1f}});
+            }
+        };
+        var scored = new CrossEncoderReranker(mismatched, null).rerankScored("q", candidates, 2);
+        assertThat(scored.order()).extracting(FilingReranker.ScoredCandidate::windowScores).containsOnlyNulls();
+        assertThat(scored.results()).extracting(RetrievedFilingChunk::chunkId).containsExactly(2L, 1L);
+        assertThat(new CrossEncoderReranker(mismatched, null).rerankScored("q", List.of(), 2)).isEqualTo(new FilingReranker.ScoredReranking(List.of(), List.of()));
+
+        // The interface default: one rerank call, its results, and no order (the trace records "reranker reports no scores").
+        var reversing = new ReversingFilingReranker();
+        var defaultScored = reversing.rerankScored("q", candidates, 2);
+        assertThat(defaultScored.results()).extracting(RetrievedFilingChunk::chunkId).containsExactly(2L, 1L);
+        assertThat(defaultScored.order()).isNull();
+        assertThat(reversing.calls).isEqualTo(1);
+        // A scorer's default scoreWithWindows reports no rows when its scores are missing or miscounted.
+        PairScorer shortScores = (query, passages) -> new float[] {1f};
+        assertThat(shortScores.scoreWithWindows("q", List.of("a", "b")).windowScores()).isNull();
+    }
+
+    @Test
+    void maxOverWindowsIsTheMaximumOfTheRowsWithNaNPropagated() {
+        assertThat(CrossEncoderPairAssembler.maxOverWindows(new float[] {-7.5f})).isEqualTo(-7.5f);
+        assertThat(CrossEncoderPairAssembler.maxOverWindows(new float[] {-3f, -1.25f, -9f})).isEqualTo(-1.25f);
+        assertThat(CrossEncoderPairAssembler.maxOverWindows(new float[] {2f, Float.NaN, 5f})).isNaN();
+        assertThat(CrossEncoderPairAssembler.maxOverWindows(new float[] {4f, 4f})).isEqualTo(4f);
     }
 
     private static FilingRetrievalService service(List<RetrievedFilingChunk> ranking, FilingReranker reranker, long timeoutMs) {

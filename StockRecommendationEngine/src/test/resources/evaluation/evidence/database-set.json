@@ -1,0 +1,17 @@
+{
+  "version": "v-database-test",
+  "createdOn": "2026-09-13",
+  "questions": [
+    {
+      "id": "db-01",
+      "ticker": "TEST",
+      "kind": "NARRATIVE",
+      "question": "Which stored chunks hold the evidence database test phrase?",
+      "expected": [
+        { "accessionNo": "9999999914-26-000014", "sectionKey": "ITEM_7", "phrase": "evidence database test phrase" },
+        { "accessionNo": "9999999914-26-000014", "sectionKey": "ITEM_7", "phrase": "a phrase no inserted chunk holds" }
+      ],
+      "notes": "RetrievalEvidenceDatabaseTests only: its filing and chunks are inserted inside the test's rolled-back transaction."
+    }
+  ]
+}

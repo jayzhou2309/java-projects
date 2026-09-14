@@ -1,0 +1,10 @@
+Application log lines of the traced run at snapshot 295's settings (snapshot 598), 2026-09-13, one application start on port 8082.
+Extracted verbatim with: grep -E 'Cross-encoder scoring completed|Reranking failed|Retrieval evaluation stored|WARN|ERROR' app.log
+(the WARNING lines are the JVM's JNA restricted-method notice at startup; the topK=5 scoring line is the warm-up POST /api/rag/retrieve; topK=10 lines are the evaluation's calls).
+
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+2026-09-13T22:05:22.358+08:00  INFO 14607 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=20, windows=44, topK=5, elapsedMs=1192
+2026-09-13T22:05:37.047+08:00  INFO 14607 --- [StockRecommendationEngine] [nio-8082-exec-2] p.s.r.e.RetrievalEvaluationService       : Retrieval evaluation stored: id=598, hitAt1=0.547619, hitAt3=0.714286, hitAt5=0.785714, mrr=0.655187, misses=5, rerankedQuestions=0, rerankFallbackQuestions=0

@@ -123,6 +123,26 @@ public class FilingRetrievalService {
      * fallback case: it propagates and fails the retrieval.
      */
     public RetrievalResponse retrieve(RetrievalRequest request) {
+        return retrieve(request, false).response();
+    }
+
+    /** A retrieval's response and, on the traced path, what produced it; {@code trace} is null on the untraced path. */
+    public record TracedRetrieval(RetrievalResponse response, RetrievalTrace trace) {
+    }
+
+    /**
+     * {@link #retrieve} with a {@link RetrievalTrace} of the same retrieval: the same searches, fusion, diversification, rerank
+     * input, timeout, fallback, and {@link #validateRerankedEvidence}, so the response is the one {@link #retrieve} returns for the
+     * same inputs. Both paths make the same single reranker call, {@link FilingReranker#rerankScored}, and take the results from it;
+     * the untraced path discards its scored order and this one records it, so the recorded scores are the ones that produced the
+     * order, never a second scoring call. For evaluation runs only (RetrievalEvaluationService with {@code trace}); the trace never
+     * enters a {@link RetrievalResponse}.
+     */
+    public TracedRetrieval retrieveTraced(RetrievalRequest request) {
+        return retrieve(request, true);
+    }
+
+    private TracedRetrieval retrieve(RetrievalRequest request, boolean traced) {
         long retrievalStarted = System.nanoTime();
         String normalizedTicker = request.ticker().trim().toUpperCase(Locale.ROOT);
         String normalizedQuery = request.query().trim();
@@ -160,15 +180,17 @@ public class FilingRetrievalService {
 
             List<RetrievedFilingChunk> candidates = vectorCandidates;
             boolean keywordContributed = false;
+            List<RetrievedFilingChunk> keywordCandidates = null;
+            List<RetrievedFilingChunk> figureCandidates = null;
             if (hybridRequested) {
-                List<RetrievedFilingChunk> keywordCandidates = searchKeywords(
+                keywordCandidates = searchKeywords(
                         normalizedTicker, normalizedQuery, queryEmbedding, retrievalFilter);
                 if (keywordCandidates != null) {
                     int rrfK = retrievalProperties.getRrfK();
                     List<FusionLeg> legs = new ArrayList<>(List.of(
                             new FusionLeg(vectorCandidates, retrievalProperties.getRrfVectorWeight()),
                             new FusionLeg(keywordCandidates, retrievalProperties.getRrfKeywordWeight())));
-                    List<RetrievedFilingChunk> figureCandidates = searchFigures(
+                    figureCandidates = searchFigures(
                             normalizedTicker, normalizedQuery, queryEmbedding, retrievalFilter);
                     if (figureCandidates != null) {
                         legs.add(new FusionLeg(figureCandidates, retrievalProperties.getRrfFigureWeight()));
@@ -186,12 +208,19 @@ public class FilingRetrievalService {
             List<RetrievedFilingChunk> diverseCandidates = diversify(candidates);
             List<RetrievedFilingChunk> selectedEvidence = null;
             String retrievalStrategy = keywordContributed ? "HYBRID_RRF" : "FILTERED_VECTOR";
+            RetrievalTrace.Rerank rerankTrace = rerankRequested ? RetrievalTrace.Rerank.fallback("noCandidates", 0) : RetrievalTrace.Rerank.off();
             if (rerankRequested && !diverseCandidates.isEmpty()) {
                 List<RetrievedFilingChunk> rerankInput = List.copyOf(diverseCandidates.subList(
                         0, Math.min(diverseCandidates.size(),
                                 Math.max(retrievalProperties.getRerankCandidates(), requestedResultCount))));
-                selectedEvidence = rerank(normalizedTicker, normalizedQuery, rerankInput, requestedResultCount);
+                RerankAttempt attempt = rerank(normalizedTicker, normalizedQuery, rerankInput, requestedResultCount);
+                selectedEvidence = attempt.results();
                 if (selectedEvidence != null) retrievalStrategy = retrievalStrategy + "_RERANKED";
+                if (traced) {
+                    rerankTrace = selectedEvidence != null
+                            ? RetrievalTrace.reranked(rerankInput, selectedEvidence, attempt.scored())
+                            : RetrievalTrace.Rerank.fallback(attempt.fallbackReason(), rerankInput.size());
+                }
             }
             if (selectedEvidence == null) {
                 log.info("Selecting evidence by {} order: ticker={}, rerank={}",
@@ -200,8 +229,14 @@ public class FilingRetrievalService {
             }
             log.info("Retrieval completed: ticker={}, results={}, strategy={}, elapsedMs={}",
                     normalizedTicker, selectedEvidence.size(), retrievalStrategy, elapsedMillis(retrievalStarted));
-            return new RetrievalResponse(normalizedTicker, normalizedQuery, retrievalStrategy,
+            RetrievalResponse response = new RetrievalResponse(normalizedTicker, normalizedQuery, retrievalStrategy,
                     latestFilingsOnly, requestedResultCount, candidates.size(), List.copyOf(selectedEvidence));
+            if (!traced) return new TracedRetrieval(response, null);
+            RetrievalTrace trace = new RetrievalTrace(vectorCandidates.size(),
+                    keywordCandidates == null ? null : keywordCandidates.size(), figureCandidates == null ? null : figureCandidates.size(),
+                    RetrievalTrace.fused(diverseCandidates, vectorCandidates, keywordCandidates, figureCandidates), rerankTrace,
+                    RetrievalTrace.chunkIds(response.results()));
+            return new TracedRetrieval(response, trace);
         } catch (RuntimeException retrievalFailure) {
             log.error("Retrieval failed: ticker={}, elapsedMs={}",
                     normalizedTicker, elapsedMillis(retrievalStarted), retrievalFailure);
@@ -210,11 +245,24 @@ public class FilingRetrievalService {
     }
 
     /**
-     * The reranker's validated order over {@code rerankInput}, or {@code null} when it must not be used: the call timed out
-     * (the future is cancelled), threw, was rejected by the saturated pool, or returned evidence failing
-     * {@link #validateRerankedEvidence}. Each case logs one WARN naming the exception class only, never its message.
+     * The rerank step's outcome: {@code results}, the validated reranked order, or null on a fallback with {@code fallbackReason}
+     * the reason class logged; {@code scored}, only when the order was used, the scored reranking the results came from (its
+     * {@code order} null when the reranker reports no scores).
      */
-    private List<RetrievedFilingChunk> rerank(
+    private record RerankAttempt(List<RetrievedFilingChunk> results, String fallbackReason, FilingReranker.ScoredReranking scored) {
+        static RerankAttempt fallback(String reason) {
+            return new RerankAttempt(null, reason, null);
+        }
+    }
+
+    /**
+     * The reranker's validated order over {@code rerankInput}, or a fallback when it must not be used: the call timed out
+     * (the future is cancelled), threw, was rejected by the saturated pool, or returned evidence failing
+     * {@link #validateRerankedEvidence}. Each case logs one WARN naming the exception class only, never its message. The reranker
+     * is called once, through {@link FilingReranker#rerankScored}, whether or not the retrieval is traced, so the results cannot
+     * depend on tracing.
+     */
+    private RerankAttempt rerank(
             String normalizedTicker,
             String normalizedQuery,
             List<RetrievedFilingChunk> rerankInput,
@@ -224,20 +272,21 @@ public class FilingRetrievalService {
         long timeoutMs = retrievalProperties.getRerankTimeoutMs();
         FilingReranker reranker = filingReranker.orElseThrow();
         log.info("Reranking filing candidates: ticker={}, candidates={}, timeoutMs={}", normalizedTicker, rerankInput.size(), timeoutMs);
-        Future<List<RetrievedFilingChunk>> pending = null;
+        Future<FilingReranker.ScoredReranking> pending = null;
         String reason;
         Throwable failure;
         try {
-            pending = rerankExecutor.submit(() -> reranker.rerank(normalizedQuery, rerankInput, requestedResultCount));
-            List<RetrievedFilingChunk> reranked = pending.get(timeoutMs, TimeUnit.MILLISECONDS);
+            pending = rerankExecutor.submit(() -> reranker.rerankScored(normalizedQuery, rerankInput, requestedResultCount));
+            FilingReranker.ScoredReranking outcome = pending.get(timeoutMs, TimeUnit.MILLISECONDS);
+            List<RetrievedFilingChunk> reranked = outcome == null ? null : outcome.results();
             try {
                 validateRerankedEvidence(rerankInput, reranked, requestedResultCount);
             } catch (IllegalStateException invalid) {
                 warnRerankFallback(normalizedTicker, "invalidEvidence", invalid, rerankStarted);
-                return null;
+                return RerankAttempt.fallback("invalidEvidence");
             }
             log.info("Reranking completed: ticker={}, results={}, elapsedMs={}", normalizedTicker, reranked.size(), elapsedMillis(rerankStarted));
-            return List.copyOf(reranked);
+            return new RerankAttempt(List.copyOf(reranked), null, outcome);
         } catch (TimeoutException timeout) {
             pending.cancel(true);
             reason = "timeout";
@@ -257,7 +306,7 @@ public class FilingRetrievalService {
             failure = rejected;
         }
         warnRerankFallback(normalizedTicker, reason, failure, rerankStarted);
-        return null;
+        return RerankAttempt.fallback(reason);
     }
 
     private void warnRerankFallback(String normalizedTicker, String reason, Throwable failure, long rerankStarted) {

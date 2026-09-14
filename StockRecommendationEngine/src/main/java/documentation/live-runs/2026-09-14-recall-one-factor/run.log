@@ -12,14 +12,16 @@ Environment
   E2. Before the runs: lsof -nP -iTCP:8081 -sTCP:LISTEN -> 0 listeners; no spring-boot:run, surefire, or StockRecommendationEngineApplication process
       (observed: command output). docker trading-postgres healthy; retrieval_evaluations count 40, max id 694 (observed: psql).
 
-Deviation from the plan's Scope (recorded as the Orchestrator's instructions require)
+Deviation from the plan's Scope (accepted by plan amendment 2, commit 434250c, plan Status)
   - The plan's Scope names one application start. POST /api/rag/evaluate accepts only hybrid, rerank and trace per call
     (RetrievalEvaluationController.evaluate: @RequestParam hybrid, rerank, trace); candidate count, rerank-candidates and rerank-timeout-ms are
     application properties. So each run had its own application start with RAG_* environment variables (observed: the controller source). The
     property diff (property-diff.txt) compares the recorded properties the three starts stored; rerank-timeout-ms and max-length are not recorded
     (logged values below).
-  - Each start made one warm-up call (POST /api/rag/retrieve, as in the counterpart procedure), so the embedding calls are 126 evaluation + 3 warm-up,
-    plus 1 warm-up of the aborted attempt P1: 130 in total (derived: count of "Query embedding completed" over the four app.log files, 1 + 43 + 43 + 43).
+  - Each start made one warm-up call (POST /api/rag/retrieve, as in the counterpart procedure; amendment 2 names it). Embedding calls: 168 evaluation
+    (runs a, b, c, and the repeat of c) + 4 warm-up, plus 1 warm-up of the aborted attempt P1: 173 in total (derived: count of "Query embedding
+    completed" over the five app.log files, 1 + 43 + 43 + 43 + 43).
+  - Amendment 2 allows run c to be repeated once after its rerank fallback, as a new snapshot, with run c kept committed and labelled: see "Run c repeat".
 
 Per-run procedure (a scratch script, run.sh, ran these commands in this order)
   1. Run shell: cd <project>; set -a; source .env; set +a; export SERVER_PORT=8081 INTEGRATION_ACCESS_TOKEN=<42-character random hex token, openssl rand
@@ -96,11 +98,29 @@ Run c (candidate-count 200, reranking at rerank-candidates 40 and rerank-timeout
   elapsedMs=4005" at 19:44:52.784. The snapshot's trace records outcome FALLBACK, fallbackReason timeout, for nvda-08 only; 41 RERANKED (observed:
   results.traces; comparison.txt section 2). Evaluation scoring lines (topK=10): 42, elapsedMs 1,818 to 4,260 (median 2,223.5), windows 70 to 92 (median 84,
   total 3,443) (derived: over the 42 lines of scoring-933.txt with topK=10; one of the 42 is 4,260 ms, written after the timeout line).
-  Not rerun: the plan's X5 labels a run with a fallback and excludes it from a selection outcome; it does not provide a rerun.
+  Not used for a selection outcome (X5). At the time the plan provided no rerun; plan amendment 2 (434250c) then allowed one repeat: see "Run c repeat".
   GET snapshot HTTP 200 application/json 1,372,127 bytes; GET evidence HTTP 200 application/json 472,193 bytes -> evidence-933.json 342,592 bytes.
   row export exit 0, 892,404 bytes, 1 line. Stopped 19:45:21: 0 listeners on 8081, JVM and mvnw not alive, 0 spring-boot:run processes (observed).
 
-Database: retrieval_evaluations 40 rows, max id 694 before; rows 931, 932, 933 added by these runs (the ids between 694 and 931 were not stored by
+Run c repeat under plan amendment 2 (candidate-count 200, rerank-candidates 40, rerank-timeout-ms 4,000, against 627 and run b): snapshot 947
+  Before: ps -ax -o pid=,args= filtered on surefire|spring-boot:run|StockRecommendationEngineApplication -> no process at all (so none from this worktree or
+  any other); lsof on 8081 -> 0 listeners (observed). The CPU wait filter of step 2 excludes only this run's own mvnw and application pids.
+  overrides: as run c; env grep printed exactly RAG_CROSS_ENCODER_ENABLED=true, RAG_RETRIEVAL_CANDIDATE_COUNT=200, RAG_RETRIEVAL_RERANK_CANDIDATES=40,
+  RAG_RETRIEVAL_RERANK_TIMEOUT_MS=4000, SERVER_PORT=8081; query rerank=true&trace=true
+  cpu-wait before app start 19:54:42: clear after 0 s. Started in 4.465 seconds; cross-encoder loaded, scoring=max-window/overlap=64/maxWindows=4 (observed).
+  warm-up HTTP 200 in 5.28 s, HYBRID_RRF_RERANKED, 5 results; scoring candidates=40, windows=88, topK=5, elapsedMs=2403 (observed).
+  cpu-wait before evaluate 19:54:55: clear after 0 s. loadavg { 4.64 4.11 4.38 }; after { 9.32 6.18 5.18 }.
+  evaluate HTTP 200 in 110.98 s, 1,380,981 bytes. "Evaluating retrieval: set=v2, questions=42, window=10, hybrid=null, rerank=true, trace=true";
+  "Retrieval evaluation stored: id=947, hitAt1=0.523810, hitAt3=0.785714, hitAt5=0.833333, mrr=0.659921, misses=6, rerankedQuestions=42, rerankFallbackQuestions=0"
+  (observed). app.log counts: 43 "Query embedding completed"; 43 "Reranking filing candidates: ... candidates=40, timeoutMs=4000" (AAPL 14, MSFT 14, NVDA 15);
+  0 "Selecting evidence by fused order"; 0 "Reranking failed"; 0 WARN or ERROR log lines (derived: grep -c / uniq -c).
+  X5: 0 fallbacks (observed: properties.rerankFallbackQuestions 0; 42 traces RERANKED, comparison.txt sections 1 and 2). Evaluation scoring lines (topK=10): 42,
+  elapsedMs 1,772 to 3,114 (median 2,065.5), windows 70 to 92 (median 84, total 3,443) (derived: over the 42 lines of scoring-947.txt with topK=10).
+  GET snapshot HTTP 200 application/json 1,380,981 bytes; GET evidence HTTP 200 application/json 469,308 bytes -> evidence-947.json 340,724 bytes
+  (parses_equal_numbers_as_written=True). row export exit 0, 898,136 bytes, 1 line -> snapshot-947-c-repeat-candidate-count-200-rerank-candidates-40-timeout-4000.json.
+  Stopped 19:56:56: 0 listeners on 8081, JVM and mvnw not alive, 0 spring-boot:run processes (observed).
+
+Database: retrieval_evaluations 40 rows, max id 694 before; rows 931, 932, 933 and 947 added by these runs (the ids between them were not stored by
 these runs; the sequence values are not recorded here).
 
 Comparison and claims
@@ -112,6 +132,13 @@ Comparison and claims
       recorded properties in candidateCount only.
   K3. Selection rule (comparison.txt section 7, derived): 627 against 598 fails the per-ticker and FIGURE top-5 criteria (claim C-637). 933 against 932 is
       printed for the record only and is not a selection outcome (X5).
+  K3a. After amendment 2 (derived: property-diff.txt, comparison.txt section 7): 947 against 627 differs only in candidateCount, so the experiment claims
+      C-652 and C-654 name experiment-candidate-count-627-947.json and the ruleRow claim C-656 compares them: all four criteria met. 947 against 932 differs
+      in rerank, rerankCandidates and rerankedQuestions, the properties the plan's comparison of (c) with (b) varies; ruleRow claim C-655: aggregate,
+      non-figure and per-ticker hit@5 met, FIGURE top-5 not met (nvda-01, rank 3 in 932, no rank in 947). The plan's comparison does not meet the rule,
+      so no DECISION item is raised; the 627 comparison is between two reranked configurations, neither the defaults.
+  K4a. nvda-02 and nvda-04 in 947 (comparison.txt section 6, observed): chunk 802 fused position 25, rerank input, reranked 4th, returned 4th, rank 4; chunk
+      754 fused position 37, rerank input, reranked 11th, not returned, rank null.
   K4. nvda-02 and nvda-04 (comparison.txt section 6, observed from the evidence reports): 932 chunk 802 fused position 25, not a rerank input, not returned;
       chunk 754 fused position 37, not a rerank input, not returned. 933 chunk 802 fused position 25, rerank input, reranked 4th, returned 4th, rank 4; chunk 754
       fused position 37, rerank input, reranked 11th, not returned, rank null.
@@ -119,19 +146,25 @@ Comparison and claims
       [src/main/java/documentation/RAG.md] notGenerated=0" and one problem: the line introducing the new block held "one" (a spelled-out number); the line was
       reworded to "The recall experiment claims, ...". ./mvnw -q -o test -Dtest=DocumentationClaimsTests -> "CLAIMS_CHECK claimsFiles=4 documents=22 problems=0"
       (observed).
-  K6. Reproduction of the script's output: shasum -a 256 before and after a second python3 compare_one_factor.py (observed: identical, shasum -c OK):
-        15961a662f2799ca1485bd899bf9dcb73b07b6e3fe0c5f99c9054413f7d9e9a8  property-diff.txt
-        d2e4365e87ad7e30c99ab9e9be065a5d6372876a9647c10b497bd3c665829b2e  comparison.txt
-        0ec09d35ba33f342559c70e5cb938c7a4507b3682e55548119940a3d37cceacb  claims.json
+  K5a. After amendment 2, the generator run named two problems: the free text of C-652 and C-654 held "no matching" (absolute wording screen); reworded
+      to "was not ranked within the 10-result window", then generator and check -> "CLAIMS_CHECK claimsFiles=4 documents=22 problems=0" (observed).
+  K6. Reproduction of the script's output after amendment 2: shasum -a 256 after one python3 compare_one_factor.py and again after a second run
+      (observed: identical, shasum -c OK). The pre-amendment values of these files are in commit cd539f9.
+        6c3bb253761528eaf0e8d1e2bde39809c0fe427f537eb517693c6d92188844c0  property-diff.txt
+        957da96a58e60510a313f350d02dc1f5fd191a086fbb8631a28fc2201565ee73  comparison.txt
+        8e90bda990a3cc62312df3898a40511b049f2f9d261b26f92cc6115b3a45a9ed  claims.json
 
-Build (after the runs, in a new shell started with env -i HOME PATH, so no RAG_* or run variable was inherited)
+Build (after the repeat, in a new shell started with env -i HOME PATH, so no RAG_* or run variable was inherited; the same check before amendment 2, at
+19:52, also exited 0 with the same counts)
   B1. set -a && source .env && set +a; env | grep -cE '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)='
-      -> 0 (observed). rm -rf target/surefire-reports; ./mvnw -q -o verify -> exit 0, 19:52:15 to 19:52:29 (observed); 59 test classes, 542 tests,
+      -> 0 (observed). rm -rf target/surefire-reports; ./mvnw -q -o verify -> exit 0, 20:00:47 to 20:01:01 (observed); 59 test classes, 542 tests,
       0 failures, 0 errors, 28 skipped (derived: sum of the testsuite attributes over target/surefire-reports/TEST-*.xml of this run);
       "CLAIMS_CHECK claimsFiles=4 documents=22 problems=0" (observed: verify output).
   B2. lsof -iTCP:8081 -sTCP:LISTEN -> 0 lines (observed).
 
 Files committed in this directory
   snapshot-931-a-reproduction-of-598.json, snapshot-932-b-candidate-count-200-rerank-off.json, snapshot-933-c-candidate-count-200-rerank-candidates-40-timeout-4000.json
-  (row_to_json exports, step 7); evidence-931.json, evidence-932.json, evidence-933.json (step 8); reproduction-931.txt (X1); scoring-931.txt, scoring-932.txt,
-  scoring-933.txt (step 9); compare_one_factor.py, property-diff.txt, comparison.txt, claims.json (K1); experiment-candidate-count-598-932.json (K2); run.log.
+  (the run with a rerank fallback), snapshot-947-c-repeat-candidate-count-200-rerank-candidates-40-timeout-4000.json (row_to_json exports, step 7);
+  evidence-931.json, evidence-932.json, evidence-933.json, evidence-947.json (step 8); reproduction-931.txt (X1); scoring-931.txt, scoring-932.txt,
+  scoring-933.txt, scoring-947.txt (step 9); compare_one_factor.py, property-diff.txt, comparison.txt, claims.json (K1);
+  experiment-candidate-count-598-932.json (K2), experiment-candidate-count-627-947.json (K3a); run.log.

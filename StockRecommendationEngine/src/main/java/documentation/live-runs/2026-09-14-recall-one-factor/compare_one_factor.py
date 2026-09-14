@@ -2,9 +2,9 @@
 """One-factor recall experiment, RAG-15 E1 rerun (plan documentation/plans/2026-09-14-retrieval-recall.md, Milestone 2; Follow_Ups RAG-15).
 
 Reads only committed JSON files (paths relative to this script's directory): the snapshots (row_to_json exports) and evidence reports of the
-three runs of this directory, 931 (a), 932 (b), 933 (c), and of their committed counterparts 598 and 627 under
+runs of this directory, 931 (a), 932 (b), 933 (c, with a rerank fallback), 947 (the repeat of c under plan amendment 2), and of their committed counterparts 598 and 627 under
 ../2026-09-13-evaluation-evidence/measurement/. Writes three files next to this script, replacing them:
-  property-diff.txt  X2: every recorded property of each pair compared (931 against 598, 932 against 598, 933 against 627);
+  property-diff.txt  X2: every recorded property of each pair compared (931 against 598, 932 against 598, 933 and 947 against 627, 947 against 932);
   comparison.txt     X1 (second comparison, beside the committed TraceReproductionCheck output reproduction-931.txt), X3, X5, and nvda-02 and
                      nvda-04 in every run;
   claims.json        the claims (ids from C-601) whose generated block stands in RAG.md, Retrieval Evaluation, One-factor recall experiment.
@@ -38,10 +38,14 @@ RUNS = {
     "931": ("snapshot-931-a-reproduction-of-598.json", "evidence-931.json"),
     "932": ("snapshot-932-b-candidate-count-200-rerank-off.json", "evidence-932.json"),
     "933": ("snapshot-933-c-candidate-count-200-rerank-candidates-40-timeout-4000.json", "evidence-933.json"),
+    "947": ("snapshot-947-c-repeat-candidate-count-200-rerank-candidates-40-timeout-4000.json", "evidence-947.json"),
 }
-NAMES = {"931": "run a", "932": "run b", "933": "run c"}
-# (reference, candidate, the one factor the plan varies; None for the reproduction)
-PAIRS = [("598", "931", None), ("598", "932", "candidateCount"), ("627", "933", "candidateCount")]
+NAMES = {"931": "run a", "932": "run b", "933": "run c with a rerank fallback", "947": "the run c repeat"}
+# (reference, candidate, the properties the plan varies between them: [] for the reproduction). 947 against 932 is the plan's selection
+# comparison of (c) with (b), which varies the reranking settings (and so the recorded count of reranked questions) and is not a one-factor pair.
+PAIRS = [("598", "931", []), ("598", "932", ["candidateCount"]), ("627", "933", ["candidateCount"]), ("627", "947", ["candidateCount"]),
+         ("932", "947", ["rerank", "rerankCandidates", "rerankedQuestions"])]
+EXPERIMENT_C = "experiment-candidate-count-627-947.json"
 KS = [10, 20, 30, 40]
 FOCUS = {"nvda-02": 802, "nvda-04": 754}
 FIRST_ID = 601
@@ -109,7 +113,7 @@ def main():
          "values as stored; derived: equality]. rerank-timeout-ms and max-length are not recorded in any snapshot, so they are not compared here",
          "(run.log records how each run set them).", ""]
     pair_ok = {}
-    for ref, cand, factor in PAIRS:
+    for ref, cand, factors in PAIRS:
         R, C = data[ref][2], data[cand][2]
         keys = sorted(set(R["properties"]) | set(C["properties"]))
         diffs = []
@@ -123,19 +127,19 @@ def main():
                 diffs.append(f"properties.{k}: {ref} {fmt(rv)}, {cand} {fmt(cv)}")
             else:
                 equal.append(f"{k} {fmt(rv)}")
-        expected = [] if factor is None else [factor]
+        expected = factors
         # Properties that report outcomes of the run, not settings: rerankedQuestions and rerankFallbackQuestions.
         outcome_keys = {"rerankedQuestions", "rerankFallbackQuestions"}
         named = [x for x in diffs if not any(x.startswith(f"properties.{k}:") for k in expected)]
         settings_other = [x for x in named if not any(x.startswith(f"properties.{k}:") for k in outcome_keys)]
         pair_ok[(ref, cand)] = not named
         outcome_only = [x for x in named if x not in settings_other]
-        d.append(f"{cand} ({NAMES[cand]}) against {ref}; the plan's factor: {factor or 'none (reproduction)'}")
+        d.append(f"{cand} ({NAMES[cand]}) against {ref}; the plan varies: {', '.join(factors) or 'nothing (reproduction)'}")
         d.append("  differing: " + ("; ".join(diffs) if diffs else "none found"))
         d.append("  other than the factor, settings: " + ("; ".join(settings_other) if settings_other else "none found")
                  + "; outcome counts: " + ("; ".join(outcome_only) or "none found"))
-        d.append("  X2: " + ("the recorded properties differ only in the plan's factor" if not named else
-                             "properties other than the plan's factor differ (named above), so no claim compares this pair"))
+        d.append("  X2: " + ("the recorded properties differ only in what the plan varies" if not named else
+                             "properties other than what the plan varies differ (named above), so no claim compares this pair"))
         d.append("  equal: " + ", ".join(equal) + "; " + ", ".join(f"{c} {fmt(R[c])}" for c in COLUMNS if R[c] == C[c]))
         d.append("")
     with open(os.path.join(HERE, "property-diff.txt"), "w", encoding="utf-8") as f:
@@ -161,7 +165,7 @@ def main():
         p(f"  {run}: candidateCount {pr['candidateCount']}, rerank {fmt(pr['rerank'])}, rerankCandidates {pr['rerankCandidates']}, rerankedQuestions "
           f"{pr['rerankedQuestions']}, rerankFallbackQuestions {pr['rerankFallbackQuestions']}; trace outcomes "
           + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())))
-    p("  X2 (property-diff.txt): " + "; ".join(f"{c} against {r}: {'only the factor differs' if pair_ok[(r, c)] else 'other properties differ, no claim compares the pair'}"
+    p("  X2 (property-diff.txt): " + "; ".join(f"{c} against {r}: {'only what the plan varies differs' if pair_ok[(r, c)] else 'other properties differ, no claim compares the pair'}"
                                               for r, c, _ in PAIRS))
     p("")
 
@@ -194,22 +198,22 @@ def main():
     p("")
 
     p("5. X3: per question, best fused position / rank in both runs of each pair [derived: best fused position; observed: rank]; '-' null;")
-    p("   '*' marks a row where either value differs within the pair; class of a question outside hit@5 in the later run as Milestone 1")
-    p("  question  kind        598       932   |    627       933")
+    p("   '*' marks a row where either value differs from the pair's reference (598 for 932, 627 for 933 and for 947); class of a question outside hit@5 in the later run as Milestone 1")
+    p("  question  kind        598       932   |    627       933       947")
     for q in order:
         def cell(run):
             x = data[run][4][q]
             return f"{fmt(x['best']) if x['best'] is not None else '-'}/{fmt(x['rank']) if x['rank'] is not None else '-'}"
         marks = []
-        for r, c in (("598", "932"), ("627", "933")):
+        for r, c in (("598", "932"), ("627", "933"), ("627", "947")):
             a, b = data[r][4][q], data[c][4][q]
             marks.append("*" if (a["best"], a["rank"]) != (b["best"], b["rank"]) else " ")
         cls = []
-        for run in ("932", "933"):
+        for run in ("932", "933", "947"):
             x = data[run][4][q]
             if x["rank"] is None or x["rank"] > 5:
                 cls.append(f"{run}: {cr.klass(x['best'])}")
-        p(f"  {q:<8}  {data['598'][4][q]['kind']:<9} {cell('598'):>7}  {cell('932'):>7} {marks[0]} | {cell('627'):>7}  {cell('933'):>7} {marks[1]}"
+        p(f"  {q:<8}  {data['598'][4][q]['kind']:<9} {cell('598'):>7}  {cell('932'):>7} {marks[0]} | {cell('627'):>7}  {cell('933'):>7} {marks[1]} {cell('947'):>7} {marks[2]}"
           + ("  outside hit@5: " + "; ".join(cls) if cls else ""))
     p("")
 
@@ -225,8 +229,9 @@ def main():
     p("")
 
     p("7. Selection rule per criterion [derived: as the ruleRow check computes; values observed in each snapshot]")
-    for ref, cand in (("598", "627"), ("932", "933")):
-        label = "selection outcome" if not fell[cand] and not fell[ref] else \
+    for ref, cand in (("598", "627"), ("932", "933"), ("932", "947"), ("627", "947")):
+        label = ("selection outcome" if pair_ok.get((ref, cand), True) else "values only: X2 names other differing properties") \
+            if not fell[cand] and not fell[ref] else \
             f"NOT a selection outcome (X5): {cand} records {len(fell[cand])} rerank fallback(s); values printed for the record only"
         p(f"  {cand} against {ref} ({label}):")
         for name, ok, values in rule(data[ref][2], data[cand][2]):
@@ -286,7 +291,45 @@ def main():
             return 2
         claim({"type": "notRecorded", "report": RUNS["933"][1], "path": f"questions[id={q}].phrases[0].chunks[chunkId={chunk['chunkId']}].rerankedPosition",
                "reason": rp["reason"]}, basis="unknown",
-              text=f"Run c does not record a reranked position for chunk {chunk['chunkId']} of {q}, whose rerank outcome is FALLBACK ({reason}).")
+              text=f"Run c with a rerank fallback does not record a reranked position for chunk {chunk['chunkId']} of {q}, whose rerank outcome is FALLBACK ({reason}).")
+
+    # Plan amendment 2: the repeat of run (c), claims from C-639.
+    s947, e947, S947, E947, q947 = data["947"]
+    if fell["947"]:
+        for q, reason in fell["947"]:
+            chunk = q947[q]["ev"]["phrases"][0]["chunks"][0]
+            claim({"type": "notRecorded", "report": e947, "path": f"questions[id={q}].phrases[0].chunks[chunkId={chunk['chunkId']}].rerankedPosition",
+                   "reason": chunk["rerankedPosition"]["reason"]}, basis="unknown",
+                  text=f"The run c repeat does not record a reranked position for chunk {chunk['chunkId']} of {q}, whose rerank outcome is FALLBACK ({reason}).")
+    for k in KS:
+        claim({"type": "candidateRecall", "report": e947, "k": k,
+               "expected": cr.share(sum(1 for q in q947.values() if q["best"] is not None and q["best"] <= k), len(q947))})
+    claim({"type": "candidateRecall", "report": e947, "k": "all", "expected": cr.share(sum(1 for q in q947.values() if q["best"] is not None), len(q947))})
+    for q in order:
+        if q947[q]["rank"] is None or q947[q]["rank"] > 5:
+            claim({"type": "bestFusedPosition", "report": e947, "question": q, "expected": q947[q]["best"]})
+    for q, chunk in FOCUS.items():
+        c = next(c for ph in q947[q]["ev"]["phrases"] for c in ph["chunks"] if c["chunkId"] == chunk)
+        exp = {"fusedPosition": c["fusedPosition"]["value"], "rerankInput": c["rerankInput"]["value"], "rerankedPosition": c["rerankedPosition"]["value"]}
+        basis = "derived" if any(c[f]["basis"] == "derived" for f in exp) else "observed"
+        claim({"type": "candidate", "report": e947, "question": q, "chunk": chunk, "expected": exp}, basis=basis)
+        inside = lambda run: "inside" if data[run][4][q]["rank"] is not None and data[run][4][q]["rank"] <= 5 else "outside"
+        if pair_ok[("627", "947")] and not fell["947"]:
+            r627, r947 = data["627"][4][q]["rank"], data["947"][4][q]["rank"]
+            where = lambda r: f"was ranked {r}" if r is not None else "was not ranked within the 10-result window"
+            claim({"type": "topK", "question": q, "k": 5, "rows": [{"snapshot": RUNS["627"][0], "expected": inside("627")},
+                                                                   {"snapshot": s947, "expected": inside("947")}]},
+                  basis="experiment", experiment={"file": EXPERIMENT_C, "factor": "candidateCount"},
+                  text=f"With candidateCount 200 in the run c repeat against 40 in snapshot 627, reranking at 40 candidates in both and the other "
+                       f"recorded settings equal, {q} {where(r947)} in the run c repeat and {where(r627)} in snapshot 627.")
+        else:
+            claim({"type": "topK", "question": q, "k": 5, "rows": [{"snapshot": s947, "expected": inside("947")}]})
+    if not fell["947"] and not fell["932"]:
+        claim({"type": "ruleRow", "reference": RUNS["932"][0], "candidate": s947,
+               "criteria": {n: ("pass" if ok else "fail") for n, ok, _ in rule(data["932"][2], S947)}})
+        if pair_ok[("627", "947")] and not fell["627"]:
+            claim({"type": "ruleRow", "reference": RUNS["627"][0], "candidate": s947,
+                   "criteria": {n: ("pass" if ok else "fail") for n, ok, _ in rule(data["627"][2], S947)}})
 
     def value(v):
         if isinstance(v, Decimal):
@@ -297,14 +340,15 @@ def main():
             return "[" + ", ".join(value(x) for x in v) + "]"
         return json.dumps(v, ensure_ascii=False)
 
-    labels = {RUNS[r][0]: NAMES[r] for r in ("932", "933")}
-    labels.update({RUNS[r][1]: NAMES[r] for r in ("932", "933")})
+    labels = {RUNS[r][0]: NAMES[r] for r in ("932", "933", "947")}
+    labels.update({RUNS[r][1]: NAMES[r] for r in ("932", "933", "947")})
     lines = ["{",
              '  "description": "One-factor recall experiment, RAG-15 E1 rerun (plan plans/2026-09-14-retrieval-recall.md, Milestone 2), written by'
              ' compare_one_factor.py: candidate recall and the best fused position of every question outside hit@5 for runs b (snapshot 932) and c'
              ' (snapshot 933); nvda-02 and nvda-04 in runs b and c and their top-5 membership in 598, 932, 627 and 933; the selection rule for 627'
-             ' against 598; the rerank fallback of run c. Runs b and c ran with the cross-encoder loaded; rerank-timeout-ms was 4000 in run c'
-             ' (run.log).",',
+             ' against 598; the rerank fallback of run c (snapshot 933). Then, under plan amendment 2, the repeat of run c (snapshot 947): candidate'
+             ' recall, best fused positions outside hit@5, nvda-02 and nvda-04, and the selection rule against run b and against 627 where X2 and X5'
+             ' allow. Runs b, c and the repeat ran with the cross-encoder loaded; rerank-timeout-ms was 4000 in run c and its repeat (run.log).",',
              '  "labels": ' + value(labels) + ",",
              '  "claims": [']
     for i, c in enumerate(claims):

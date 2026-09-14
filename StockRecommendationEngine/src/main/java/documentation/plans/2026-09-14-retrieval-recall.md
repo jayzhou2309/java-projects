@@ -148,3 +148,7 @@ Correctness contract:
 ## Status
 
 - 2026-09-14: plan written; Plan A approved by Jay.
+- 2026-09-14, amendment 1 (Milestone 1): the Definitions' four classes leave no place for a reranked question outside
+  hit@5 whose best fused position is 1 to 5, so R1's sum cannot hold for reranked runs; a fifth class `fused 1-5` is added.
+  The Design constraints line naming the taken claim ids was reworded because the claims check read it as a citation
+  outside a block.

@@ -282,4 +282,5 @@ Corrections (5), 2026-09-14, plans/2026-09-13-evaluation-evidence.md Milestone 4
   - Corrections (4)'s "whether chunk 515 was a reranked candidate is not recorded": it holds for the untraced rows 248 to 250 and 295 to 299 themselves, not for
     the traced runs at the windowed rows' settings.
   RAG.md's Windows Why correction note and plans/2026-09-13-reranker-windows.md's Why msft-05 bullet, both rewritten in place in f757ad1, are marked superseded
-  where they stand, naming c9b2e5f for their earlier wording.
+  where they stand, naming c9b2e5f for their earlier wording. (2026-09-14 at the Milestone 4b remediation cap, Orchestrator, with Jay's approval: RAG.md's Windows Why correction note was later collapsed into a
+  pointer in commit bc29a48; its text is readable at commit 08b7f60.)

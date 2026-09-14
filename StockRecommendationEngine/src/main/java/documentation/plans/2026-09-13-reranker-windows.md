@@ -216,7 +216,8 @@ of nvda-09 with the never-retrieved questions is corrected above.
   renders, are copied from the evidence reports into the measurement `run.log`, section Milestone 4b); "The cause was diagnosed" in
   this plan's Why (dated correction note there); the earlier correction notes (run.log's re-validation msft-05 note, kept and marked
   superseded; RAG.md's Windows Why note and this plan's Why msft-05 bullet, kept and marked superseded, naming c9b2e5f for their
-  earlier wording; corrected 2026-09-14, plan `2026-09-13-evaluation-evidence.md` Milestone 4b remediation round 1: this
+  earlier wording; RAG.md's Windows Why note and Milestone 1 change-log correction were later collapsed into pointers, 2026-09-14 at the Milestone 4b remediation cap, Orchestrator, with Jay's approval,
+  commit bc29a48, and their text is readable at commit 08b7f60; corrected 2026-09-14, plan `2026-09-13-evaluation-evidence.md` Milestone 4b remediation round 1: this
   parenthesis grouped run.log's note, which names no commit, with the two that name c9b2e5f); and "its matched chunk's" in the
   Milestone 1 change-log correction (its superseded note named chunks 805 and 466; corrected 2026-09-14 at the Milestone 4b remediation cap, Orchestrator, with Jay's approval:
   remediation round 2 of Milestone 4b replaced that note's wording, including the chunk ids, with a description, so the

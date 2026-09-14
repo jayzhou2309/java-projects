@@ -1,0 +1,32 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+12:00:34.292 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:00:35.089 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:00:35.090 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+12:00:35.106 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+12:00:36.370 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=4000, queryCharsKept=4000, queryTokens=4000, queryTokensKept=254
+VMEM call=0 first=5.101165 ms=1264
+12:00:37.587 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=4000, queryCharsKept=4000, queryTokens=4000, queryTokensKept=254
+VMEM call=1 first=5.101165 ms=1215
+VMEM done
+        3.58 real        11.45 user         0.37 sys
+           965509120  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               76694  page reclaims
+                   1  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   2  signals received
+                   3  voluntary context switches
+               25033  involuntary context switches
+         87496350260  instructions retired
+         41838812469  cycles elapsed
+           924862120  peak memory footprint

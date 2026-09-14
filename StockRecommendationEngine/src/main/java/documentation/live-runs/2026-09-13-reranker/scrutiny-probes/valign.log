@@ -1,0 +1,998 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+12:04:43.973 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:04:43.996 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:04:44.804 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=1, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=512 bs=1 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=512 bs=1 qTok=6 n=7 runs=7 runSizes=[1, 1, 1, 1, 1, 1, 1] maxDiff=0.0 bad=0
+VALIGN M=512 bs=1 qTok=6 n=20 runs=20 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+VALIGN M=512 bs=1 qTok=6 n=40 runs=40 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+VALIGN M=512 bs=1 qTok=6 n=64 runs=64 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:04:48.119 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:48.148 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.173 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:48.202 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=270
+12:04:48.229 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=297
+12:04:48.256 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.283 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.311 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.337 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=497
+12:04:48.363 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.389 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=505
+12:04:48.418 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:48.445 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:48.476 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.503 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=373
+12:04:48.530 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=429
+12:04:48.559 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.586 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=323
+12:04:48.613 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=505
+12:04:48.644 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.672 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=314
+12:04:48.701 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:48.729 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.756 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=507
+12:04:48.783 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:48.809 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=496
+12:04:48.837 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=330
+12:04:48.867 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.896 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=504
+12:04:48.925 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:48.952 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:48.980 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:49.008 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:49.038 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=506
+12:04:49.064 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=501
+12:04:49.096 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:49.124 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:49.150 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=282
+12:04:49.177 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=502
+12:04:49.204 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=430
+12:04:49.231 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=411
+12:04:49.261 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:49.289 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=495
+12:04:49.319 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:49.348 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:49.376 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=506
+12:04:49.403 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=499
+12:04:49.430 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=495
+12:04:49.457 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:49.485 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:49.512 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=507
+12:04:49.541 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:49.569 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=325
+12:04:49.596 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=499
+12:04:49.624 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:49.651 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=341
+12:04:49.681 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:49.710 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:49.737 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:49.765 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:49.793 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:49.823 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:49.851 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=349
+12:04:49.877 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=496
+12:04:49.907 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+VALIGN M=512 bs=1 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:04:50.114 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=1 qTok=700 n=7 runs=7 runSizes=[1, 1, 1, 1, 1, 1, 1] maxDiff=0.0 bad=0
+12:04:50.713 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=1 qTok=700 n=20 runs=20 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:04:51.802 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=1 qTok=700 n=40 runs=40 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:04:53.589 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=1 qTok=700 n=64 runs=64 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:04:53.592 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:04:53.660 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=7, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=512 bs=7 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=512 bs=7 qTok=6 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+VALIGN M=512 bs=7 qTok=6 n=20 runs=3 runSizes=[7, 7, 6] maxDiff=9.5367431640625E-7 bad=0
+VALIGN M=512 bs=7 qTok=6 n=40 runs=6 runSizes=[7, 7, 7, 7, 7, 5] maxDiff=2.384185791015625E-6 bad=0
+VALIGN M=512 bs=7 qTok=6 n=64 runs=10 runSizes=[7, 7, 7, 7, 7, 7, 7, 7, 7, 1] maxDiff=2.384185791015625E-6 bad=0
+12:04:58.546 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:58.574 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:58.602 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:58.629 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=270
+12:04:58.658 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=297
+12:04:58.688 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:58.717 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:58.747 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:58.773 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=497
+12:04:58.802 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:58.829 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=505
+12:04:58.860 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:58.889 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:58.921 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:58.949 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=373
+12:04:58.976 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=429
+12:04:59.005 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.032 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=323
+12:04:59.059 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=505
+12:04:59.088 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.115 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=314
+12:04:59.143 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:59.173 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.200 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=507
+12:04:59.229 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:59.256 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=496
+12:04:59.282 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=330
+12:04:59.310 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.337 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=504
+12:04:59.365 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:59.396 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.425 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.452 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:59.480 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=506
+12:04:59.506 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=501
+12:04:59.535 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:59.564 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:59.591 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=282
+12:04:59.618 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=502
+12:04:59.648 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=430
+12:04:59.674 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=411
+12:04:59.703 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.729 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=495
+12:04:59.757 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.784 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.810 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=506
+12:04:59.840 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=499
+12:04:59.865 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=495
+12:04:59.894 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:04:59.922 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:04:59.948 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=507
+12:04:59.976 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:00.002 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=325
+12:05:00.030 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=499
+12:05:00.059 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:00.085 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=341
+12:05:00.117 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:00.145 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:00.173 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:00.203 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:00.230 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:00.259 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:00.288 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=349
+12:05:00.314 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=496
+12:05:00.341 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+VALIGN M=512 bs=7 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:00.546 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=7 qTok=700 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+12:05:01.132 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=7 qTok=700 n=20 runs=3 runSizes=[7, 7, 6] maxDiff=0.0 bad=0
+12:05:02.259 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=7 qTok=700 n=40 runs=6 runSizes=[7, 7, 7, 7, 7, 5] maxDiff=0.0 bad=0
+12:05:04.052 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=7 qTok=700 n=64 runs=10 runSizes=[7, 7, 7, 7, 7, 7, 7, 7, 7, 1] maxDiff=0.0 bad=0
+12:05:04.054 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:04.115 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=512 bs=20 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=512 bs=20 qTok=6 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+VALIGN M=512 bs=20 qTok=6 n=20 runs=3 runSizes=[8, 8, 4] maxDiff=9.5367431640625E-7 bad=0
+VALIGN M=512 bs=20 qTok=6 n=40 runs=6 runSizes=[8, 8, 4, 8, 8, 4] maxDiff=2.384185791015625E-6 bad=0
+VALIGN M=512 bs=20 qTok=6 n=64 runs=10 runSizes=[8, 8, 4, 8, 8, 4, 8, 8, 4, 4] maxDiff=2.384185791015625E-6 bad=0
+12:05:08.899 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:08.929 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:08.957 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:08.984 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=270
+12:05:09.011 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=297
+12:05:09.039 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.069 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.098 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.124 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=497
+12:05:09.152 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.180 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=505
+12:05:09.207 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:09.233 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:09.262 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.289 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=373
+12:05:09.315 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=429
+12:05:09.345 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.372 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=323
+12:05:09.402 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=505
+12:05:09.431 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.461 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=314
+12:05:09.490 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:09.519 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.547 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=507
+12:05:09.574 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:09.601 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=496
+12:05:09.631 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=330
+12:05:09.659 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.686 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=504
+12:05:09.715 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:09.744 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.776 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:09.805 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:09.834 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=506
+12:05:09.864 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=501
+12:05:09.891 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:09.918 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:09.946 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=282
+12:05:09.972 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=502
+12:05:10.000 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=430
+12:05:10.027 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=411
+12:05:10.056 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:10.087 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=495
+12:05:10.117 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:10.147 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:10.175 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=506
+12:05:10.202 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=499
+12:05:10.229 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=495
+12:05:10.257 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:10.290 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:10.321 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=507
+12:05:10.350 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:10.377 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=325
+12:05:10.404 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=499
+12:05:10.431 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:10.459 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=341
+12:05:10.488 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:10.515 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:10.545 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:10.573 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:10.601 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:10.631 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:10.658 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=349
+12:05:10.684 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=496
+12:05:10.713 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+VALIGN M=512 bs=20 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:10.915 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=20 qTok=700 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+12:05:11.486 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=20 qTok=700 n=20 runs=3 runSizes=[8, 8, 4] maxDiff=0.0 bad=0
+12:05:12.600 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=20 qTok=700 n=40 runs=6 runSizes=[8, 8, 4, 8, 8, 4] maxDiff=0.0 bad=0
+12:05:14.408 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=20 qTok=700 n=64 runs=10 runSizes=[8, 8, 4, 8, 8, 4, 8, 8, 4, 4] maxDiff=0.0 bad=0
+12:05:14.409 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:14.467 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=64, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=512 bs=64 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=512 bs=64 qTok=6 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+VALIGN M=512 bs=64 qTok=6 n=20 runs=3 runSizes=[8, 8, 4] maxDiff=9.5367431640625E-7 bad=0
+VALIGN M=512 bs=64 qTok=6 n=40 runs=5 runSizes=[8, 8, 8, 8, 8] maxDiff=2.384185791015625E-6 bad=0
+VALIGN M=512 bs=64 qTok=6 n=64 runs=8 runSizes=[8, 8, 8, 8, 8, 8, 8, 8] maxDiff=2.384185791015625E-6 bad=0
+12:05:19.262 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:19.293 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:19.320 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:19.348 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=270
+12:05:19.376 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=297
+12:05:19.405 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:19.438 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:19.468 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:19.495 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=497
+12:05:19.523 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:19.550 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=505
+12:05:19.577 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:19.604 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:19.635 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:19.665 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=373
+12:05:19.692 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=429
+12:05:19.722 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:19.750 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=323
+12:05:19.777 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=505
+12:05:19.807 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:19.834 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=314
+12:05:19.863 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:19.894 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:19.920 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=507
+12:05:19.947 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:19.975 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=496
+12:05:20.002 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=330
+12:05:20.031 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.057 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=504
+12:05:20.085 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:20.115 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.143 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.171 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:20.198 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=506
+12:05:20.226 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=501
+12:05:20.256 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:20.283 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:20.309 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=282
+12:05:20.338 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=502
+12:05:20.368 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=430
+12:05:20.400 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=411
+12:05:20.431 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.459 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=495
+12:05:20.489 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.518 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.545 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=506
+12:05:20.573 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=499
+12:05:20.598 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=495
+12:05:20.625 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.651 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:20.677 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=507
+12:05:20.704 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:20.731 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=325
+12:05:20.756 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=499
+12:05:20.784 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:20.811 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=341
+12:05:20.839 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.868 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.897 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:20.924 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+12:05:20.950 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:20.980 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+12:05:21.007 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=349
+12:05:21.034 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=496
+12:05:21.063 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=255
+VALIGN M=512 bs=64 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:21.263 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=64 qTok=700 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+12:05:21.831 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=64 qTok=700 n=20 runs=3 runSizes=[8, 8, 4] maxDiff=0.0 bad=0
+12:05:22.968 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=64 qTok=700 n=40 runs=5 runSizes=[8, 8, 8, 8, 8] maxDiff=0.0 bad=0
+12:05:24.764 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=254
+VALIGN M=512 bs=64 qTok=700 n=64 runs=8 runSizes=[8, 8, 8, 8, 8, 8, 8, 8] maxDiff=0.0 bad=0
+12:05:24.766 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:24.824 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=128, batchSize=1, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=128 bs=1 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=128 bs=1 qTok=6 n=7 runs=7 runSizes=[1, 1, 1, 1, 1, 1, 1] maxDiff=0.0 bad=0
+VALIGN M=128 bs=1 qTok=6 n=20 runs=20 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+VALIGN M=128 bs=1 qTok=6 n=40 runs=40 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+VALIGN M=128 bs=1 qTok=6 n=64 runs=64 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:05:25.981 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:25.989 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:25.995 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.002 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.009 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.021 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.030 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.039 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.046 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=113
+12:05:26.056 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.063 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=121
+12:05:26.071 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.078 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.087 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.093 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.099 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.107 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.114 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.120 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=121
+12:05:26.131 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.139 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.146 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.154 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.165 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=123
+12:05:26.173 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.182 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=112
+12:05:26.191 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.202 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.208 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=120
+12:05:26.257 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.280 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.291 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.298 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.304 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=122
+12:05:26.310 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=117
+12:05:26.317 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.324 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.330 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.337 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=118
+12:05:26.343 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.351 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.362 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.369 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=111
+12:05:26.376 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.385 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.393 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=122
+12:05:26.401 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=115
+12:05:26.409 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=111
+12:05:26.416 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.423 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.429 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=123
+12:05:26.437 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.444 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.451 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=115
+12:05:26.458 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.465 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.473 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.481 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.488 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.497 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.507 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.518 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:26.524 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:26.530 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=112
+12:05:26.537 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+VALIGN M=128 bs=1 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:26.598 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=1 qTok=700 n=7 runs=7 runSizes=[1, 1, 1, 1, 1, 1, 1] maxDiff=0.0 bad=0
+12:05:26.741 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=1 qTok=700 n=20 runs=20 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:05:27.007 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=1 qTok=700 n=40 runs=40 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:05:27.429 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=1 qTok=700 n=64 runs=64 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:05:27.431 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:27.492 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=128, batchSize=7, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=128 bs=7 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=128 bs=7 qTok=6 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+VALIGN M=128 bs=7 qTok=6 n=20 runs=3 runSizes=[7, 7, 6] maxDiff=9.5367431640625E-7 bad=0
+VALIGN M=128 bs=7 qTok=6 n=40 runs=6 runSizes=[7, 7, 7, 7, 7, 5] maxDiff=2.384185791015625E-6 bad=0
+VALIGN M=128 bs=7 qTok=6 n=64 runs=10 runSizes=[7, 7, 7, 7, 7, 7, 7, 7, 7, 1] maxDiff=2.384185791015625E-6 bad=0
+12:05:28.690 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.698 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.705 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.711 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.718 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.729 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.738 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.749 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.755 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=113
+12:05:28.763 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.768 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=121
+12:05:28.776 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.783 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.792 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.798 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.805 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.813 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.821 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.829 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=121
+12:05:28.840 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.849 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.860 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.873 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.884 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=123
+12:05:28.895 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.902 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=112
+12:05:28.908 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.915 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.924 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=120
+12:05:28.932 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.941 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.951 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:28.958 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.966 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=122
+12:05:28.974 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=117
+12:05:28.981 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.989 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:28.996 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.002 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=118
+12:05:29.010 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.017 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.025 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:29.032 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=111
+12:05:29.040 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:29.049 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:29.055 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=122
+12:05:29.062 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=115
+12:05:29.070 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=111
+12:05:29.077 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:29.084 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.092 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=123
+12:05:29.101 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.108 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.113 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=115
+12:05:29.120 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.127 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.135 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:29.143 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:29.150 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.157 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.165 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:29.175 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:29.182 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:29.191 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=112
+12:05:29.199 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+VALIGN M=128 bs=7 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:29.246 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=7 qTok=700 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+12:05:29.373 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=7 qTok=700 n=20 runs=3 runSizes=[7, 7, 6] maxDiff=0.0 bad=0
+12:05:29.603 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=7 qTok=700 n=40 runs=6 runSizes=[7, 7, 7, 7, 7, 5] maxDiff=0.0 bad=0
+12:05:29.967 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=7 qTok=700 n=64 runs=10 runSizes=[7, 7, 7, 7, 7, 7, 7, 7, 7, 1] maxDiff=0.0 bad=0
+12:05:29.970 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:30.027 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=128, batchSize=20, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=128 bs=20 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=128 bs=20 qTok=6 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+VALIGN M=128 bs=20 qTok=6 n=20 runs=1 runSizes=[20] maxDiff=9.5367431640625E-7 bad=0
+VALIGN M=128 bs=20 qTok=6 n=40 runs=2 runSizes=[20, 20] maxDiff=2.384185791015625E-6 bad=0
+VALIGN M=128 bs=20 qTok=6 n=64 runs=4 runSizes=[20, 20, 20, 4] maxDiff=2.384185791015625E-6 bad=0
+12:05:31.189 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.200 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.207 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.214 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.221 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.233 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.244 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.253 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.259 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=113
+12:05:31.271 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.277 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=121
+12:05:31.284 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.291 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.299 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.306 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.313 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.323 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.331 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.339 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=121
+12:05:31.349 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.356 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.365 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.374 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.380 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=123
+12:05:31.387 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.393 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=112
+12:05:31.401 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.409 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.416 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=120
+12:05:31.424 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.432 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.440 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.447 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.453 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=122
+12:05:31.460 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=117
+12:05:31.470 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.479 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.485 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.491 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=118
+12:05:31.497 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.505 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.513 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.519 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=111
+12:05:31.526 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.538 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.544 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=122
+12:05:31.550 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=115
+12:05:31.557 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=111
+12:05:31.566 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.573 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.580 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=123
+12:05:31.587 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.593 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.600 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=115
+12:05:31.606 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.612 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.621 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.628 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.637 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.645 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.654 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.666 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:31.673 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:31.681 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=112
+12:05:31.689 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+VALIGN M=128 bs=20 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:31.735 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=20 qTok=700 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+12:05:31.865 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=20 qTok=700 n=20 runs=1 runSizes=[20] maxDiff=0.0 bad=0
+12:05:32.107 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=20 qTok=700 n=40 runs=2 runSizes=[20, 20] maxDiff=0.0 bad=0
+12:05:32.496 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=20 qTok=700 n=64 runs=4 runSizes=[20, 20, 20, 4] maxDiff=0.0 bad=0
+12:05:32.498 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:32.555 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=128, batchSize=64, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=128 bs=64 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=128 bs=64 qTok=6 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+VALIGN M=128 bs=64 qTok=6 n=20 runs=1 runSizes=[20] maxDiff=9.5367431640625E-7 bad=0
+VALIGN M=128 bs=64 qTok=6 n=40 runs=1 runSizes=[40] maxDiff=2.384185791015625E-6 bad=0
+VALIGN M=128 bs=64 qTok=6 n=64 runs=1 runSizes=[64] maxDiff=2.384185791015625E-6 bad=0
+12:05:33.703 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.713 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.720 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.729 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.735 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.744 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.754 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.764 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.771 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=113
+12:05:33.779 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.787 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=121
+12:05:33.796 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.802 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.811 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.818 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.824 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.832 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.839 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.845 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=121
+12:05:33.854 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.861 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.869 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.877 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.883 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=123
+12:05:33.891 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.898 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=112
+12:05:33.906 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.915 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.921 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=120
+12:05:33.930 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.940 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.951 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:33.958 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.964 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=122
+12:05:33.970 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=117
+12:05:33.978 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.985 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:33.994 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.000 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=118
+12:05:34.006 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.012 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.022 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:34.028 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=111
+12:05:34.037 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:34.045 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:34.051 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=122
+12:05:34.057 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=115
+12:05:34.064 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=111
+12:05:34.073 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:34.081 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.088 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=123
+12:05:34.096 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.103 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.109 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=115
+12:05:34.116 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.125 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.133 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:34.141 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:34.151 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.159 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.167 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:34.176 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+12:05:34.182 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+12:05:34.189 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=112
+12:05:34.196 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=63
+VALIGN M=128 bs=64 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:34.246 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=64 qTok=700 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+12:05:34.378 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=64 qTok=700 n=20 runs=1 runSizes=[20] maxDiff=0.0 bad=0
+12:05:34.624 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=64 qTok=700 n=40 runs=1 runSizes=[40] maxDiff=0.0 bad=0
+12:05:35.026 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=62
+VALIGN M=128 bs=64 qTok=700 n=64 runs=1 runSizes=[64] maxDiff=0.0 bad=0
+12:05:35.028 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:35.086 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=16, batchSize=1, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=16 bs=1 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=16 bs=1 qTok=6 n=7 runs=7 runSizes=[1, 1, 1, 1, 1, 1, 1] maxDiff=0.0 bad=0
+VALIGN M=16 bs=1 qTok=6 n=20 runs=20 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+VALIGN M=16 bs=1 qTok=6 n=40 runs=40 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+VALIGN M=16 bs=1 qTok=6 n=64 runs=64 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:05:35.718 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.723 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.727 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.731 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.734 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.739 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.745 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.750 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.754 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.759 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.762 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=9
+12:05:35.765 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.768 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.774 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.777 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.780 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.785 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.788 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.790 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=9
+12:05:35.798 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.802 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.806 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.810 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.813 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=11
+12:05:35.817 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.821 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.824 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.829 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.833 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=8
+12:05:35.837 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.843 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.849 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.853 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.856 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=10
+12:05:35.858 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.862 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.865 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.869 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.873 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.876 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.880 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.887 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.890 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.894 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.899 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.902 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=10
+12:05:35.904 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.907 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.912 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.915 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.919 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=11
+12:05:35.925 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.929 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.932 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.935 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.938 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.947 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.951 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.955 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.959 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.963 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.969 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:35.972 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.975 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:35.981 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+VALIGN M=16 bs=1 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:36.018 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=1 qTok=700 n=7 runs=7 runSizes=[1, 1, 1, 1, 1, 1, 1] maxDiff=0.0 bad=0
+12:05:36.094 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=1 qTok=700 n=20 runs=20 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:05:36.243 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=1 qTok=700 n=40 runs=40 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:05:36.458 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=1 qTok=700 n=64 runs=64 runSizes=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]... maxDiff=0.0 bad=0
+12:05:36.460 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:36.519 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=16, batchSize=7, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=16 bs=7 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=16 bs=7 qTok=6 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+VALIGN M=16 bs=7 qTok=6 n=20 runs=3 runSizes=[7, 7, 6] maxDiff=0.0 bad=0
+VALIGN M=16 bs=7 qTok=6 n=40 runs=6 runSizes=[7, 7, 7, 7, 7, 5] maxDiff=2.384185791015625E-6 bad=0
+VALIGN M=16 bs=7 qTok=6 n=64 runs=10 runSizes=[7, 7, 7, 7, 7, 7, 7, 7, 7, 1] maxDiff=2.384185791015625E-6 bad=0
+12:05:37.023 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.028 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.031 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.034 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.040 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.047 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.052 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.058 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.063 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.070 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.074 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=9
+12:05:37.079 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.085 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.094 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.097 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.101 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.109 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.113 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.115 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=9
+12:05:37.120 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.124 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.128 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.133 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.136 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=11
+12:05:37.142 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.145 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.148 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.154 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.156 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=8
+12:05:37.161 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.166 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.171 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.175 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.178 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=10
+12:05:37.181 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.186 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.189 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.193 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.197 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.202 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.205 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.214 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.218 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.223 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.229 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.234 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=10
+12:05:37.238 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.243 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.247 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.252 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.256 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=11
+12:05:37.259 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.263 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.266 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.270 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.273 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.278 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.283 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.288 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.292 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.298 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.305 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:37.308 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.311 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:37.319 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+VALIGN M=16 bs=7 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:37.342 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=7 qTok=700 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+12:05:37.398 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=7 qTok=700 n=20 runs=3 runSizes=[7, 7, 6] maxDiff=0.0 bad=0
+12:05:37.493 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=7 qTok=700 n=40 runs=6 runSizes=[7, 7, 7, 7, 7, 5] maxDiff=0.0 bad=0
+12:05:37.644 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=7 qTok=700 n=64 runs=10 runSizes=[7, 7, 7, 7, 7, 7, 7, 7, 7, 1] maxDiff=0.0 bad=0
+12:05:37.646 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:37.707 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=16, batchSize=20, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=16 bs=20 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=16 bs=20 qTok=6 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+VALIGN M=16 bs=20 qTok=6 n=20 runs=1 runSizes=[20] maxDiff=0.0 bad=0
+VALIGN M=16 bs=20 qTok=6 n=40 runs=2 runSizes=[20, 20] maxDiff=2.384185791015625E-6 bad=0
+VALIGN M=16 bs=20 qTok=6 n=64 runs=4 runSizes=[20, 20, 20, 4] maxDiff=2.384185791015625E-6 bad=0
+12:05:38.169 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.176 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.180 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.186 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.190 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.199 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.204 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.209 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.212 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.220 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.222 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=9
+12:05:38.226 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.230 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.235 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.238 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.242 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.247 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.250 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.254 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=9
+12:05:38.259 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.263 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.267 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.272 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.276 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=11
+12:05:38.280 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.282 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.285 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.290 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.293 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=8
+12:05:38.297 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.303 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.308 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.313 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.315 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=10
+12:05:38.318 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.322 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.325 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.329 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.333 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.337 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.340 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.346 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.349 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.353 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.359 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.362 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=10
+12:05:38.364 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.367 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.371 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.374 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.377 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=11
+12:05:38.381 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.385 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.389 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.393 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.398 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.407 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.413 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.416 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.420 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.425 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.430 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:38.435 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.438 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:38.443 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+VALIGN M=16 bs=20 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:38.466 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=20 qTok=700 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+12:05:38.519 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=20 qTok=700 n=20 runs=1 runSizes=[20] maxDiff=0.0 bad=0
+12:05:38.603 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=20 qTok=700 n=40 runs=2 runSizes=[20, 20] maxDiff=0.0 bad=0
+12:05:38.737 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=20 qTok=700 n=64 runs=4 runSizes=[20, 20, 20, 4] maxDiff=0.0 bad=0
+12:05:38.739 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:05:38.795 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=16, batchSize=64, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VALIGN M=16 bs=64 qTok=6 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+VALIGN M=16 bs=64 qTok=6 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+VALIGN M=16 bs=64 qTok=6 n=20 runs=1 runSizes=[20] maxDiff=0.0 bad=0
+VALIGN M=16 bs=64 qTok=6 n=40 runs=1 runSizes=[40] maxDiff=2.384185791015625E-6 bad=0
+VALIGN M=16 bs=64 qTok=6 n=64 runs=1 runSizes=[64] maxDiff=2.384185791015625E-6 bad=0
+12:05:39.248 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.254 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.257 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.260 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.264 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.270 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.275 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.280 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.283 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.288 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.291 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=9
+12:05:39.295 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.299 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.305 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.309 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.312 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.316 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.319 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.322 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=9
+12:05:39.326 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.330 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.333 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.338 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.341 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=11
+12:05:39.344 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.347 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.350 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.354 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.356 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=8
+12:05:39.360 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.366 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.373 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.379 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.381 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=10
+12:05:39.384 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.388 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.391 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.395 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.397 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.400 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.403 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.409 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.412 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.417 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.422 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.425 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=10
+12:05:39.428 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.433 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.439 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.442 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.445 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=11
+12:05:39.450 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.454 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.457 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.460 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.464 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.468 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.476 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.480 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.484 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.488 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.494 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+12:05:39.497 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.499 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+12:05:39.504 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=7
+VALIGN M=16 bs=64 qTok=700 n=1 runs=1 runSizes=[1] maxDiff=0.0 bad=0
+12:05:39.529 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=64 qTok=700 n=7 runs=1 runSizes=[7] maxDiff=0.0 bad=0
+12:05:39.579 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=64 qTok=700 n=20 runs=1 runSizes=[20] maxDiff=0.0 bad=0
+12:05:39.661 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=64 qTok=700 n=40 runs=1 runSizes=[40] maxDiff=0.0 bad=0
+12:05:39.794 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=5600, queryCharsKept=5600, queryTokens=700, queryTokensKept=6
+VALIGN M=16 bs=64 qTok=700 n=64 runs=1 runSizes=[64] maxDiff=0.0 bad=0
+VALIGN summary checked=3168 bad(>1e-3)=0 maxDiff=2.384185791015625E-6
+VALIGN done
+       56.14 real       253.70 user         2.85 sys
+          1399308288  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+              112849  page reclaims
+                   1  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   1  signals received
+                  16  voluntary context switches
+              558316  involuntary context switches
+       2129034151805  instructions retired
+        887683539565  cycles elapsed
+          1354106944  peak memory footprint

@@ -1,0 +1,37 @@
+# Regression check, not the committed code: OnnxCrossEncoderScorer temporarily built with optTruncateSecondOnly() (the Milestone 2 setting), then
+# ./mvnw -q -o test -Dtest=CrossEncoderForkedLiveTests -Drag.rerank.live=true  (2026-09-13, Maven exit 1: the test FAILED with the child's exit code 134 and Maven kept running).
+# The change was reverted before any commit; the first 30 lines of the Maven output follow (the rest repeats the child output in the assertion message).
+
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by lombok.permit.Permit
+WARNING: Please consider reporting this to the maintainers of class lombok.permit.Permit
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[child] PROBE properties before OPT_OUT_TRACKING=null ai.djl.offline=null RUST_FLAVOR=null
+[child] PROBE phase=scorer-build-start
+[child] WARNING: A restricted method in java.lang.System has been called
+[child] WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+[child] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[child] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[child] 
+[child] 11:03:29.829 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 11:03:31.145 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 11:03:31.145 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+[child] 11:03:31.175 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+[child] PROBE phase=scorer-built elapsedMs=1562
+[child] PROBE properties after OPT_OUT_TRACKING=true ai.djl.offline=true RUST_FLAVOR=cpu
+[child] PROBE passage chars=2000 tokens=352
+[child] PROBE start case=words508
+[child] PROBE result case=words508 queryChars=2539 queryTokens=508 passageChars=2000 scores=[-0.5590183] elapsedMs=49
+[child] PROBE start case=words509
+[child] 
+[child] thread '<unnamed>' (14339647) panicked at src/lib.rs:321:10:
+[child] called `Result::unwrap()` on an `Err` value: SequenceTooShort
+[child] note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[child] fatal runtime error: failed to initiate panic, error 5, aborting
+CROSS_ENCODER forked exitCode=134 timedOut=false
+CROSS_ENCODER lsof available=true samples=120 distinctSocketLines=0
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 1.715 s <<< FAILURE! -- in project.stockrecommendationengine.rag.retrieval.CrossEncoderForkedLiveTests
+[ERROR] project.stockrecommendationengine.rag.retrieval.CrossEncoderForkedLiveTests.boundaryLengthQueriesScoreNormallyInAChildJvmWithNoOutboundConnection -- Time elapsed: 1.707 s <<< FAILURE!
+...
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project StockRecommendationEngine: There are test failures.

@@ -26,6 +26,18 @@ public class FilingRetrievalProperties {
     private boolean rerankingEnabled = false;
 
     /**
+     * How many of the fused, diversified candidates the reranker receives when reranking runs: the first
+     * max(rerankCandidates, topK), so a topK above this value is never cut short; the rest are dropped. With reranking off the
+     * topK cut is taken from the full fused list as before.
+     */
+    @Min(5) @Max(40)
+    private int rerankCandidates = 20;
+
+    /** Longest wait for the reranker, in milliseconds; past it retrieval keeps the fused order and logs a WARN. */
+    @Min(100) @Max(60000)
+    private long rerankTimeoutMs = 2000;
+
+    /**
      * Fuse full-text keyword candidates with the vector candidates (reciprocal rank fusion); a request's hybrid field
      * overrides per call. On by default since the 2026-09-12 measurement (RAG.md, Hybrid Retrieval: snapshots 35 and 34,
      * hit@5 0.600000 to 0.633333 with no ticker's hit@5 lower).

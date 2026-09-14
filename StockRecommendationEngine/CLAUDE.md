@@ -97,3 +97,19 @@ one-line fix, a typo, or a question, just do it directly.
   guarded metric fall short, and Scrutiny should construct the regression scenario
   and check the message would identify it. Plan in
   `documentation/plans/2026-09-13-non-figure-floor.md`.
+- 2026-09-13, cross-encoder reranker (RAG-1): two plans. Plan 1, three milestones: M1
+  passed; M2 (local ONNX cross-encoder) passed after two remediation rounds (a native
+  tokenizer panic that aborted the JVM, then pair truncation memory growth) and a
+  docs correction at the cap; M3 measured head-only scoring, no configuration
+  qualified. Plan 2 (windowed scoring, after diagnosing that the head cut missed
+  answers in 65% of chunks): M1 passed Scrutiny and UT on the first round; M2's
+  measurement and decision were confirmed every round (no row qualifies, defaults
+  off), but its write-up failed Scrutiny four more times and was frozen unvalidated
+  at merge. Lesson (Jay): conclusions must not outrun recorded measurements. One
+  wrong assumption from the Orchestrator's own diagnosis (msft-05's answer inside the
+  head cut; it has three accepted phrases) spread into the plan, RAG.md, run.log, and
+  change log, and rank claims summarised from memory were wrong. Compute per-question
+  facts with a script over every accepted phrase, label each as observed, derived,
+  inferred, or unknown, allow a cause only with an isolating experiment, and state a
+  fact once and reference it. Plans in `documentation/plans/2026-09-13-reranker.md`
+  and `documentation/plans/2026-09-13-reranker-windows.md`.

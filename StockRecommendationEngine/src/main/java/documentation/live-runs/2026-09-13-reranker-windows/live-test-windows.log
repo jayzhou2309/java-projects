@@ -1,0 +1,309 @@
+# set -a; source .env; set +a; ./mvnw -q -o test -Dtest='CrossEncoder*' -Drag.rerank.live=true  (2026-09-13, plan 2026-09-13-reranker-windows Milestone 1: windowed passage scoring; exit 0; CrossEncoderWindowedScoringLiveTests 6 tests plus the existing CrossEncoder* classes, 0 failures)
+# Lines starting CROSS_ENCODER_WINDOWS are the new class; CROSS_ENCODER lines are the existing live classes under head scoring (handwritten logits 11.371214, 5.7503047, 5.5065556 bit-identical to live-test-remediation-2.log).
+# A second run of CrossEncoderWindowedScoringLiveTests alone (the same day, before this suite) measured 20 chunks of 1,009 tokens: max-window 1,413 / 1,428 / 1,423 ms, head 490 / 489 / 490 ms; 40 chunks: max-window 3,031 / 2,891 / 3,233 ms, head 1,088 / 1,086 / 1,087 ms.
+
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by lombok.permit.Permit
+WARNING: Please consider reporting this to the maintainers of class lombok.permit.Permit
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+13:31:05.836 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=4, windows=4, topK=3, elapsedMs=1
+13:31:05.864 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=4, windows=4, topK=4, elapsedMs=0
+13:31:05.870 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=2, windows=2, topK=2, elapsedMs=0
+13:31:05.872 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=4, windows=4, topK=4, elapsedMs=0
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (/Users/jayzhou/.m2/repository/net/bytebuddy/byte-buddy-agent/1.18.11/byte-buddy-agent-1.18.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+13:31:06.259 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieving filing evidence: ticker=NVDA, topK=3, latestFilingsOnly=true, hybrid=false, rerank=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+13:31:06.259 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Embedding retrieval query: ticker=NVDA, characters=31
+13:31:06.260 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Query embedding completed: ticker=NVDA, elapsedMs=1
+13:31:06.260 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+13:31:06.261 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Vector search completed: ticker=NVDA, candidates=6, elapsedMs=0
+13:31:06.261 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking filing candidates: ticker=NVDA, candidates=5, timeoutMs=2000
+13:31:06.263 [main] WARN project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking failed, keeping the retrieval order: ticker=NVDA, reason=failure, error=IllegalStateException, elapsedMs=1
+13:31:06.263 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Selecting evidence by vector similarity order: ticker=NVDA, rerank=true
+13:31:06.263 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieval completed: ticker=NVDA, results=3, strategy=FILTERED_VECTOR, elapsedMs=4
+13:31:06.267 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=3, windows=3, topK=3, elapsedMs=0
+13:31:06.267 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=3, windows=7, topK=2, elapsedMs=0
+13:31:06.270 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=10, elapsedMs=0
+13:31:06.271 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=10, elapsedMs=0
+13:31:06.274 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieving filing evidence: ticker=NVDA, topK=8, latestFilingsOnly=true, hybrid=false, rerank=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+13:31:06.274 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Embedding retrieval query: ticker=NVDA, characters=31
+13:31:06.274 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Query embedding completed: ticker=NVDA, elapsedMs=0
+13:31:06.274 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+13:31:06.274 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Vector search completed: ticker=NVDA, candidates=12, elapsedMs=0
+13:31:06.274 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking filing candidates: ticker=NVDA, candidates=8, timeoutMs=2000
+13:31:06.275 [filing-reranker-1] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=8, windows=8, topK=8, elapsedMs=0
+13:31:06.276 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking completed: ticker=NVDA, results=8, elapsedMs=1
+13:31:06.276 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieval completed: ticker=NVDA, results=8, strategy=FILTERED_VECTOR_RERANKED, elapsedMs=1
+13:31:06.276 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieving filing evidence: ticker=NVDA, topK=3, latestFilingsOnly=true, hybrid=false, rerank=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+13:31:06.276 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Embedding retrieval query: ticker=NVDA, characters=31
+13:31:06.276 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Query embedding completed: ticker=NVDA, elapsedMs=0
+13:31:06.276 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+13:31:06.276 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Vector search completed: ticker=NVDA, candidates=12, elapsedMs=0
+13:31:06.276 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking filing candidates: ticker=NVDA, candidates=5, timeoutMs=2000
+13:31:06.276 [filing-reranker-2] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=5, windows=5, topK=3, elapsedMs=0
+13:31:06.277 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking completed: ticker=NVDA, results=3, elapsedMs=0
+13:31:06.277 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieval completed: ticker=NVDA, results=3, strategy=FILTERED_VECTOR_RERANKED, elapsedMs=0
+13:31:06.279 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieving filing evidence: ticker=NVDA, topK=3, latestFilingsOnly=true, hybrid=false, rerank=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+13:31:06.280 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Embedding retrieval query: ticker=NVDA, characters=31
+13:31:06.280 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Query embedding completed: ticker=NVDA, elapsedMs=0
+13:31:06.280 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+13:31:06.280 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Vector search completed: ticker=NVDA, candidates=6, elapsedMs=0
+13:31:06.280 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking filing candidates: ticker=NVDA, candidates=5, timeoutMs=100
+13:31:06.383 [main] WARN project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking failed, keeping the retrieval order: ticker=NVDA, reason=timeout, error=TimeoutException, elapsedMs=102
+13:31:06.383 [filing-reranker-1] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=5, windows=5, topK=3, elapsedMs=102
+13:31:06.383 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Selecting evidence by vector similarity order: ticker=NVDA, rerank=true
+13:31:06.383 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieval completed: ticker=NVDA, results=3, strategy=FILTERED_VECTOR, elapsedMs=103
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+13:31:06.666 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+13:31:07.593 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+13:31:07.593 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+13:31:07.618 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=max-window/overlap=64/maxWindows=4, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+13:31:07.618 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+13:31:07.699 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=head, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+CROSS_ENCODER_WINDOWS scoring maxWindow=max-window/overlap=64/maxWindows=4 head=head
+CROSS_ENCODER_WINDOWS positionSweep answerAlone=11.161298 [answerAt=0 tokens=156 head=10.285865 maxWindow=10.285865] [answerAt=54 tokens=210 head=9.416157 maxWindow=9.416157] [answerAt=98 tokens=254 head=8.087172 maxWindow=8.087172] [answerAt=141 tokens=297 head=5.912404 maxWindow=5.912404] [answerAt=164 tokens=320 head=2.555722 maxWindow=2.555722] [answerAt=213 tokens=369 head=-11.086019 maxWindow=-11.086019] [answerAt=257 tokens=413 head=-7.102563 maxWindow=-7.102563] [answerAt=340 tokens=496 head=2.5683727 maxWindow=2.5683727] [answerAt=419 tokens=575 head=-1.666886 maxWindow=3.4453568] [answerAt=484 tokens=640 head=0.46600586 maxWindow=3.0627775] [answerAt=578 tokens=734 head=-11.257737 maxWindow=3.4464] [answerAt=642 tokens=798 head=-11.257737 maxWindow=2.2544808]
+CROSS_ENCODER_WINDOWS earlyAnswer chunkTokens=886 answerTokenOffset=114
+CROSS_ENCODER_WINDOWS earlyAnswer head=3.92034 maxWindow=3.92034
+13:31:13.996 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=60, topK=10, elapsedMs=1620
+13:31:15.542 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=60, topK=10, elapsedMs=1545
+CROSS_ENCODER_WINDOWS determinism identical=true scores=[-11.070759, -10.887231, -10.887231, -10.936744, -10.86081, -10.873182, -10.970498, -10.750698, -10.770663, -10.933218, -10.831197, -10.881786, -11.015834, -11.05801, -10.957473, -11.023997, -11.070759, -10.887231, -10.887231, -10.936744]
+CROSS_ENCODER_WINDOWS lateAnswer chunkTokens=894 answerTokenOffset=622 windowTokens=498
+CROSS_ENCODER_WINDOWS lateAnswer head=-11.257737 maxWindow=-10.085627
+13:31:15.784 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=3, windows=5, topK=3, elapsedMs=136
+CROSS_ENCODER_WINDOWS lateAnswer candidates scores(longDistractor, shortDistractor, lateAnswer)=[-11.108765, -11.387895, -10.085627] order=[3, 1, 2] headScores=[-11.257737, -11.387895, -11.257737]
+13:31:20.575 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=60, topK=5, elapsedMs=1602
+13:31:21.173 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=597
+CROSS_ENCODER_WINDOWS logged chunkTokens=1009 scoredWindows=60 logLines(candidates, windows)=[[20, 60], [20, 20]]
+13:31:23.499 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=60, topK=5, elapsedMs=1593
+13:31:25.027 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=60, topK=5, elapsedMs=1527
+13:31:26.549 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=60, topK=5, elapsedMs=1522
+13:31:28.242 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=60, topK=5, elapsedMs=1692
+CROSS_ENCODER_WINDOWS latency scoring=max-window/overlap=64/maxWindows=4 candidates=20 tokensEach=1009 windows=60 elapsedMs(after warm-up)=[1527, 1522, 1692]
+13:31:30.292 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=530
+13:31:30.835 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=543
+13:31:31.376 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=540
+13:31:31.912 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=536
+CROSS_ENCODER_WINDOWS latency scoring=head candidates=20 tokensEach=1009 windows=20 elapsedMs(after warm-up)=[543, 540, 536]
+13:31:36.827 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=40, windows=120, topK=5, elapsedMs=3079
+13:31:39.917 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=40, windows=120, topK=5, elapsedMs=3090
+13:31:42.984 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=40, windows=120, topK=5, elapsedMs=3066
+13:31:46.094 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=40, windows=120, topK=5, elapsedMs=3110
+CROSS_ENCODER_WINDOWS latency scoring=max-window/overlap=64/maxWindows=4 candidates=40 tokensEach=1009 windows=120 elapsedMs(after warm-up)=[3090, 3066, 3110]
+13:31:50.253 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=40, windows=40, topK=5, elapsedMs=1056
+13:31:51.307 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=40, windows=40, topK=5, elapsedMs=1053
+13:31:52.384 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=40, windows=40, topK=5, elapsedMs=1077
+13:31:53.433 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=40, windows=40, topK=5, elapsedMs=1048
+CROSS_ENCODER_WINDOWS latency scoring=head candidates=40 tokensEach=1009 windows=40 elapsedMs(after warm-up)=[1053, 1077, 1049]
+[child] PROBE properties before OPT_OUT_TRACKING=null ai.djl.offline=null RUST_FLAVOR=null
+[child] PROBE phase=scorer-build-start
+[child] WARNING: A restricted method in java.lang.System has been called
+[child] WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+[child] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[child] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[child] 
+[child] 13:31:54.906 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 13:31:55.838 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 13:31:55.838 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+[child] 13:31:55.857 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=head, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+[child] PROBE phase=scorer-built elapsedMs=1313
+[child] PROBE properties after OPT_OUT_TRACKING=true ai.djl.offline=true RUST_FLAVOR=cpu
+[child] PROBE passage chars=2000 tokens=352
+[child] PROBE start case=words508
+[child] 13:31:55.911 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2539, queryCharsKept=2539, queryTokens=508, queryTokensKept=255
+[child] PROBE result case=words508 queryChars=2539 queryTokens=508 passageChars=2000 scores=[-6.8142157] elapsedMs=35
+[child] PROBE start case=words509
+[child] 13:31:55.943 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2544, queryCharsKept=2544, queryTokens=509, queryTokensKept=255
+[child] PROBE result case=words509 queryChars=2544 queryTokens=509 passageChars=2000 scores=[-6.8142157] elapsedMs=30
+[child] PROBE start case=words600
+[child] 13:31:55.971 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2999, queryCharsKept=2999, queryTokens=600, queryTokensKept=255
+[child] PROBE result case=words600 queryChars=2999 queryTokens=600 passageChars=2000 scores=[-6.8142157] elapsedMs=27
+[child] PROBE start case=chars4000
+[child] 13:31:56.003 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=4000, queryCharsKept=4000, queryTokens=593, queryTokensKept=255
+[child] PROBE result case=chars4000 queryChars=4000 queryTokens=593 passageChars=2000 scores=[-3.4244962] elapsedMs=29
+[child] PROBE start case=chars20000
+[child] 13:31:56.037 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=2963, queryTokensKept=255
+[child] PROBE result case=chars20000 queryChars=20000 queryTokens=2963 passageChars=2000 scores=[-3.4244962] elapsedMs=32
+[child] PROBE start case=chars25000
+[child] 13:31:56.073 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=25000, queryCharsKept=20000, queryTokens=2963, queryTokensKept=255
+[child] PROBE result case=chars25000 queryChars=25000 queryTokens=2963 passageChars=2000 scores=[-3.4244962] elapsedMs=29
+[child] PROBE start case=singleWord5000
+[child] PROBE result case=singleWord5000 queryChars=5000 queryTokens=1 passageChars=2000 scores=[-9.817628] elapsedMs=15
+[child] PROBE start case=unicodeEmoji
+[child] 13:31:56.121 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=3032, queryCharsKept=3032, queryTokens=903, queryTokensKept=255
+[child] PROBE result case=unicodeEmoji queryChars=3032 queryTokens=903 passageChars=2000 scores=[-4.285012] elapsedMs=25
+[child] PROBE sweep queryWords=0 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-3.3430357, -2.7336009, -0.5168751, -0.5098822, -0.08966758, -0.08966758, -5.4757504]
+[child] PROBE sweep queryWords=1 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-7.988062, 1.3267292, 3.765318, 3.8066165, 2.6809385, 2.6809385, -5.5536942]
+[child] PROBE sweep queryWords=253 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.317704, -0.40793353, 7.2425404, 7.2523265, 7.255146, 7.255146, -6.9401836]
+[child] PROBE sweep queryWords=254 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.29069698, -0.10468359, 7.3210645, 7.3223467, 7.3223467, 7.3223467, -6.8520155]
+[child] 13:31:57.172 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=1274, queryCharsKept=1274, queryTokens=255, queryTokensKept=254
+[child] PROBE sweep queryWords=255 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.43723455, -0.13317934, 7.303721, 7.3223467, 7.3223467, 7.3223467, -6.8520155]
+[child] 13:31:57.382 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=1279, queryCharsKept=1279, queryTokens=256, queryTokensKept=254
+[child] PROBE sweep queryWords=256 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.27732325, -0.30030596, 7.303721, 7.303721, 7.3223467, 7.3223467, -6.8520155]
+[child] 13:31:57.591 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2539, queryCharsKept=2539, queryTokens=508, queryTokensKept=254
+[child] PROBE sweep queryWords=508 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.46487305, -0.31343123, 7.303721, 7.303721, 7.3223467, 7.3223467, -6.8142157]
+[child] 13:31:57.793 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2544, queryCharsKept=2544, queryTokens=509, queryTokensKept=254
+[child] PROBE sweep queryWords=509 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.52551985, -0.31343123, 7.303721, 7.303721, 7.3223467, 7.3223467, -6.8142157]
+[child] 13:31:57.989 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2549, queryCharsKept=2549, queryTokens=510, queryTokensKept=254
+[child] PROBE sweep queryWords=510 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.52551985, -0.31343123, 7.303721, 7.303721, 7.303721, 7.3223467, -6.8142157]
+[child] 13:31:58.187 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=4999, queryCharsKept=4999, queryTokens=1000, queryTokensKept=255
+[child] PROBE sweep queryWords=1000 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.52551985, -0.31343123, 7.303721, 7.303721, 7.303721, 7.303721, -6.8142157]
+[child] 13:31:58.769 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=2963, queryTokensKept=255
+[child] 13:31:59.312 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=2963, queryTokensKept=255
+[child] 13:31:59.833 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=2963, queryTokensKept=255
+[child] 13:32:00.386 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=2963, queryTokensKept=255
+[child] PROBE batch pairs=20 queryChars=20000 passageChars=2000 tokensPerPair=512 elapsedMs=[542, 520, 553]
+[child] PROBE control connected port=60458
+[child] PROBE done
+CROSS_ENCODER forked exitCode=0 timedOut=false
+CROSS_ENCODER lsof available=true samples=377 distinctSocketLines=1
+CROSS_ENCODER lsof java 63667 jayzhou 216u IPv6 0xd072b320786363bc 0t0 TCP 127.0.0.1:60460->127.0.0.1:60458 (ESTABLISHED)
+13:32:01.991 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+13:32:02.070 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=head, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+CROSS_ENCODER load elapsedMs=80 version=5d3e70fd0c9f
+CROSS_ENCODER metadata inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+13:32:03.077 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=10, elapsedMs=323
+13:32:03.435 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=10, elapsedMs=357
+CROSS_ENCODER determinism identical=true scores=[3.031333, 4.1086917, 5.0844183, 5.0957613, 5.864985, 2.9623694, 4.078471, 5.080938, 5.1086464, 5.969261, 2.9681904, 3.8686368, 5.0748205, 5.109663, 5.956623, 2.9372752, 3.8666372, 5.078527, 5.12208, 5.9998198]
+13:32:03.446 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=3, windows=3, topK=3, elapsedMs=5
+CROSS_ENCODER pairs query="What was total revenue for fiscal year 2025?" scores(distractor1, distractor2, answer)=[-11.240531, -11.289034, 11.371214] order=[3, 1, 2]
+13:32:03.457 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=3, windows=3, topK=3, elapsedMs=4
+CROSS_ENCODER pairs query="Who is the chief executive officer of the company?" scores(distractor1, distractor2, answer)=[-11.121484, -10.967914, 5.7503047] order=[3, 2, 1]
+13:32:03.467 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=3, windows=3, topK=3, elapsedMs=5
+CROSS_ENCODER pairs query="How much did the company spend on share repurchases?" scores(distractor1, distractor2, answer)=[-4.432799, -11.313744, 5.5065556] order=[3, 1, 2]
+13:32:03.801 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=330
+13:32:04.162 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=361
+13:32:04.490 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=327
+13:32:04.822 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=331
+CROSS_ENCODER latency candidates=20 charsEach=2000 elapsedMs(after warm-up)=[361, 327, 331]
+13:32:04.824 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieving filing evidence: ticker=NVDA, topK=5, latestFilingsOnly=true, hybrid=false, rerank=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+13:32:04.824 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Embedding retrieval query: ticker=NVDA, characters=47
+13:32:04.824 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Query embedding completed: ticker=NVDA, elapsedMs=0
+13:32:04.824 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+13:32:04.824 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Vector search completed: ticker=NVDA, candidates=20, elapsedMs=0
+13:32:04.824 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking filing candidates: ticker=NVDA, candidates=20, timeoutMs=1
+13:32:04.826 [main] WARN project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking failed, keeping the retrieval order: ticker=NVDA, reason=timeout, error=TimeoutException, elapsedMs=1
+13:32:04.826 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Selecting evidence by vector similarity order: ticker=NVDA, rerank=true
+13:32:04.826 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieval completed: ticker=NVDA, results=5, strategy=FILTERED_VECTOR, elapsedMs=1
+CROSS_ENCODER timeout timeoutMs=1 strategy=FILTERED_VECTOR elapsedMs=1
+13:32:04.826 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieving filing evidence: ticker=NVDA, topK=5, latestFilingsOnly=true, hybrid=false, rerank=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+13:32:04.826 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Embedding retrieval query: ticker=NVDA, characters=47
+13:32:04.827 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Query embedding completed: ticker=NVDA, elapsedMs=0
+13:32:04.827 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+13:32:04.827 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Vector search completed: ticker=NVDA, candidates=20, elapsedMs=0
+13:32:04.827 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking filing candidates: ticker=NVDA, candidates=20, timeoutMs=30000
+13:32:05.360 [filing-reranker-1] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=535
+13:32:05.378 [filing-reranker-2] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, windows=20, topK=5, elapsedMs=550
+13:32:05.378 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking completed: ticker=NVDA, results=5, elapsedMs=551
+13:32:05.378 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieval completed: ticker=NVDA, results=5, strategy=FILTERED_VECTOR_RERANKED, elapsedMs=551
+CROSS_ENCODER timeout timeoutMs=30000 strategy=FILTERED_VECTOR_RERANKED order=[20, 10, 15, 5, 19]
+13:32:05.572 [main] INFO org.hibernate.validator.internal.util.Version -- HV000001: Hibernate Validator 9.1.3.Final
+13:32:05.730 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'crossEncoderModelFiles' defined in project.stockrecommendationengine.rag.retrieval.CrossEncoderConfiguration: Failed to instantiate [project.stockrecommendationengine.rag.retrieval.CrossEncoderModelFiles]: Factory method 'crossEncoderModelFiles' threw exception with message: Cross-encoder file not found: /var/folders/97/6dctx0_x4d35s5qfp8hm83r40000gn/T/junit-10483166337690934746/tokenizer.json (rag.retrieval.cross-encoder.tokenizer-path)
+13:32:05.746 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'crossEncoderModelFiles' defined in project.stockrecommendationengine.rag.retrieval.CrossEncoderConfiguration: Failed to instantiate [project.stockrecommendationengine.rag.retrieval.CrossEncoderModelFiles]: Factory method 'crossEncoderModelFiles' threw exception with message: rag.retrieval.cross-encoder.model-sha256 is required when the cross-encoder is enabled (model file /var/folders/97/6dctx0_x4d35s5qfp8hm83r40000gn/T/junit-18334502827536139617/model.onnx)
+13:32:05.762 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'crossEncoderModelFiles' defined in project.stockrecommendationengine.rag.retrieval.CrossEncoderConfiguration: Failed to instantiate [project.stockrecommendationengine.rag.retrieval.CrossEncoderModelFiles]: Factory method 'crossEncoderModelFiles' threw exception with message: Cross-encoder file not found: /var/folders/97/6dctx0_x4d35s5qfp8hm83r40000gn/T/junit-9406546575092749423/absent/model.onnx (rag.retrieval.cross-encoder.model-path)
+13:32:05.781 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'crossEncoderModelFiles' defined in project.stockrecommendationengine.rag.retrieval.CrossEncoderConfiguration: Failed to instantiate [project.stockrecommendationengine.rag.retrieval.CrossEncoderModelFiles]: Factory method 'crossEncoderModelFiles' threw exception with message: Cross-encoder file checksum mismatch: /var/folders/97/6dctx0_x4d35s5qfp8hm83r40000gn/T/junit-4620409960197414795/model.onnx has SHA-256 288c41fe2f8d30443b9cea689d5021908a575889c2a806ca3b9e4703798efbd4 but rag.retrieval.cross-encoder.model-sha256 is 5d3e70fd0c9ff14b9b5169a51e957b7a9c74897afd0a35ce4bd318150c1d4d4a
+13:32:05.798 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'crossEncoderModelFiles' defined in project.stockrecommendationengine.rag.retrieval.CrossEncoderConfiguration: Failed to instantiate [project.stockrecommendationengine.rag.retrieval.CrossEncoderModelFiles]: Factory method 'crossEncoderModelFiles' threw exception with message: Cross-encoder file checksum mismatch: /var/folders/97/6dctx0_x4d35s5qfp8hm83r40000gn/T/junit-4620409960197414795/tokenizer.json has SHA-256 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a but rag.retrieval.cross-encoder.tokenizer-sha256 is 5d3e70fd0c9ff14b9b5169a51e957b7a9c74897afd0a35ce4bd318150c1d4d4a
+13:32:05.839 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.boot.context.properties.ConfigurationPropertiesBindException: Error creating bean with name 'crossEncoderProperties': Could not bind properties to 'CrossEncoderProperties' : prefix=rag.retrieval.cross-encoder, ignoreInvalidFields=false, ignoreUnknownFields=true
+13:32:05.854 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.boot.context.properties.ConfigurationPropertiesBindException: Error creating bean with name 'crossEncoderProperties': Could not bind properties to 'CrossEncoderProperties' : prefix=rag.retrieval.cross-encoder, ignoreInvalidFields=false, ignoreUnknownFields=true
+13:32:05.862 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.boot.context.properties.ConfigurationPropertiesBindException: Error creating bean with name 'crossEncoderProperties': Could not bind properties to 'CrossEncoderProperties' : prefix=rag.retrieval.cross-encoder, ignoreInvalidFields=false, ignoreUnknownFields=true
+13:32:05.870 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.boot.context.properties.ConfigurationPropertiesBindException: Error creating bean with name 'crossEncoderProperties': Could not bind properties to 'CrossEncoderProperties' : prefix=rag.retrieval.cross-encoder, ignoreInvalidFields=false, ignoreUnknownFields=true
+13:32:05.878 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.boot.context.properties.ConfigurationPropertiesBindException: Error creating bean with name 'crossEncoderProperties': Could not bind properties to 'CrossEncoderProperties' : prefix=rag.retrieval.cross-encoder, ignoreInvalidFields=false, ignoreUnknownFields=true
+13:32:05.887 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.boot.context.properties.ConfigurationPropertiesBindException: Error creating bean with name 'crossEncoderProperties': Could not bind properties to 'CrossEncoderProperties' : prefix=rag.retrieval.cross-encoder, ignoreInvalidFields=false, ignoreUnknownFields=true
+13:32:05.896 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.boot.context.properties.ConfigurationPropertiesBindException: Error creating bean with name 'crossEncoderProperties': Could not bind properties to 'CrossEncoderProperties' : prefix=rag.retrieval.cross-encoder, ignoreInvalidFields=false, ignoreUnknownFields=true
+CROSS_ENCODER tokenizer text=mixed chars=53 tokens=20 overflowing=0 exceedMaxLength=false
+CROSS_ENCODER tokenizer text=a20000 chars=20000 tokens=10000 overflowing=0 exceedMaxLength=false
+CROSS_ENCODER tokenizer text=cjk20000 chars=20000 tokens=20000 overflowing=0 exceedMaxLength=false
+CROSS_ENCODER tokenizer text=question chars=44 tokens=10 overflowing=0 exceedMaxLength=false
+[child] WARNING: A restricted method in java.lang.System has been called
+[child] WARNING: java.lang.System::load has been called by ai.onnxruntime.OnnxRuntime in an unnamed module (file:/Users/jayzhou/.m2/repository/com/microsoft/onnxruntime/onnxruntime/1.29.0/onnxruntime-1.29.0.jar)
+[child] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[child] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[child] 
+[child] 13:32:07.411 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] PARITY tokenizer single truncation=DO_NOT_TRUNCATE padding=DO_NOT_PAD reference truncation=LONGEST_FIRST maxLength=512 specialIds(first, middle, last, pad)=[101, 102, 102, 0]
+[child] PARITY a pairs=320 mismatches=0 paddedBatchRowMismatches=0 longestPairTokens=512 pairsWithCjk=225 pairsWithEmoji=245 asciiOnlyPairs=21
+[child] PARITY b pairs=60 exactIdTypeMaskMatches=60 queryLonger=29 passageLonger=26 equalLength=5 logitSample=50 maxAbsLogitDiff=0.0 medianAbsLogitDiff=0.0
+[child] PARITY c pairs=100 exactIdTypeMaskMatches=100
+[child] PARITY done
+CROSS_ENCODER PARITY a pairs=320 mismatches=0 paddedBatchRowMismatches=0 longestPairTokens=512 pairsWithCjk=225 pairsWithEmoji=245 asciiOnlyPairs=21
+CROSS_ENCODER PARITY b pairs=60 exactIdTypeMaskMatches=60 queryLonger=29 passageLonger=26 equalLength=5 logitSample=50 maxAbsLogitDiff=0.0 medianAbsLogitDiff=0.0
+CROSS_ENCODER PARITY c pairs=100 exactIdTypeMaskMatches=100
+[child] WARNING: A restricted method in java.lang.System has been called
+[child] WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+[child] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[child] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[child] 
+[child] 13:32:11.954 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 13:32:12.760 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 13:32:12.760 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+[child] 13:32:12.778 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=64, scoring=head, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+[child] PROBE loaded elapsedMs=1054
+[child] 13:32:14.875 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=20000, queryTokensKept=254
+[child] PROBE call=1 maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40 threads=1 firstScore=5.101165 elapsedMs=2096 heapUsedMb=54
+[child] 13:32:16.840 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=20000, queryTokensKept=254
+[child] PROBE call=2 maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40 threads=1 firstScore=5.101165 elapsedMs=1961 heapUsedMb=41
+[child] PROBE done
+[child]         5.16 real        12.81 user         0.41 sys
+[child]            940818432  maximum resident set size
+[child]                    0  average shared memory size
+[child]                    0  average unshared data size
+[child]                    0  average unshared stack size
+[child]                75821  page reclaims
+[child]                    2  page faults
+[child]                    0  swaps
+[child]                    0  block input operations
+[child]                    0  block output operations
+[child]                    0  messages sent
+[child]                    0  messages received
+[child]                    1  signals received
+[child]                   51  voluntary context switches
+[child]                29057  involuntary context switches
+[child]         114333390188  instructions retired
+[child]          48085315286  cycles elapsed
+[child]           1000507096  peak memory footprint
+CROSS_ENCODER resource PROBE call=1 maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40 threads=1 firstScore=5.101165 elapsedMs=2096 heapUsedMb=54
+CROSS_ENCODER resource PROBE call=2 maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40 threads=1 firstScore=5.101165 elapsedMs=1961 heapUsedMb=41
+CROSS_ENCODER resource unit=cjk exitCode=0 timedOut=false peakMemoryFootprintBytes=1000507096
+[child] WARNING: A restricted method in java.lang.System has been called
+[child] WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+[child] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[child] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[child] 
+[child] 13:32:17.163 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 13:32:18.006 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 13:32:18.006 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+[child] 13:32:18.023 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=64, scoring=head, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+[child] PROBE loaded elapsedMs=1127
+[child] 13:32:19.481 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=10000, queryTokensKept=254
+[child] PROBE call=1 maxLength=512 batchSize=64 unit=a chars=20000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1458 heapUsedMb=24
+[child] 13:32:20.856 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=10000, queryTokensKept=254
+[child] PROBE call=2 maxLength=512 batchSize=64 unit=a chars=20000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1372 heapUsedMb=25
+[child] PROBE done
+[child]         4.00 real        11.55 user         0.36 sys
+[child]            946012160  maximum resident set size
+[child]                    0  average shared memory size
+[child]                    0  average unshared data size
+[child]                    0  average unshared stack size
+[child]                75868  page reclaims
+[child]                   11  page faults
+[child]                    0  swaps
+[child]                    0  block input operations
+[child]                    0  block output operations
+[child]                    0  messages sent
+[child]                    0  messages received
+[child]                    1  signals received
+[child]                  106  voluntary context switches
+[child]                19321  involuntary context switches
+[child]          92713713789  instructions retired
+[child]          43042222269  cycles elapsed
+[child]            905381544  peak memory footprint
+CROSS_ENCODER resource PROBE call=1 maxLength=512 batchSize=64 unit=a chars=20000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1458 heapUsedMb=24
+CROSS_ENCODER resource PROBE call=2 maxLength=512 batchSize=64 unit=a chars=20000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1372 heapUsedMb=25
+CROSS_ENCODER resource unit=a exitCode=0 timedOut=false peakMemoryFootprintBytes=905381544

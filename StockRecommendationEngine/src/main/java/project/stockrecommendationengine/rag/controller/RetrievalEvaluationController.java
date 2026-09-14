@@ -24,10 +24,13 @@ public class RetrievalEvaluationController {
     /**
      * Run the bundled set through retrieval now and store the snapshot. The optional {@code hybrid} parameter forces
      * the keyword plus vector path on or off for every question; absent, each request follows
-     * {@code rag.retrieval.hybrid-enabled}.
+     * {@code rag.retrieval.hybrid-enabled}. The optional {@code rerank} parameter does the same for reranking against
+     * {@code rag.retrieval.reranking-enabled}; {@code rerank=true} with no reranker configured is a 400 before any question runs.
      */
     @PostMapping
-    public RetrievalEvaluation evaluate(@RequestParam(required = false) Boolean hybrid) { return service.evaluate(hybrid); }
+    public RetrievalEvaluation evaluate(@RequestParam(required = false) Boolean hybrid, @RequestParam(required = false) Boolean rerank) {
+        return service.evaluate(hybrid, rerank);
+    }
 
     /** The newest stored snapshot; 404 until one has been run. */
     @GetMapping

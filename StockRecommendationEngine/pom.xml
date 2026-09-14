@@ -30,6 +30,8 @@
         <java.version>17</java.version>
         <spring-ai.version>2.0.1</spring-ai.version>
         <tws-api.version>10.45.01</tws-api.version>
+        <onnxruntime.version>1.29.0</onnxruntime.version>
+        <djl-tokenizers.version>0.38.0</djl-tokenizers.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -105,6 +107,18 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+        <!-- Cross-encoder reranker (RAG-1): ONNX Runtime for the model and the Hugging Face tokenizer, both with bundled
+             native libraries; only loaded when rag.retrieval.cross-encoder.enabled is true. -->
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>${onnxruntime.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ai.djl.huggingface</groupId>
+            <artifactId>tokenizers</artifactId>
+            <version>${djl-tokenizers.version}</version>
         </dependency>
     </dependencies>
 

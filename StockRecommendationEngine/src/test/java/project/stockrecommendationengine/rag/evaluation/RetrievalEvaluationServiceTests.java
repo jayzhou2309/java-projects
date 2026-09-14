@@ -89,7 +89,12 @@ class RetrievalEvaluationServiceTests {
                 .containsEntry("window", 10).containsEntry("latestFilingsOnly", true)
                 .containsEntry("hybridEnabled", true).containsEntry("keywordCandidateCount", 40).containsEntry("rrfK", 60)
                 .containsEntry("rrfVectorWeight", 1.0).containsEntry("rrfKeywordWeight", 0.5).containsEntry("rrfFigureWeight", 1.0)
-                .containsKey("hybrid").containsEntry("hybrid", null);
+                .containsKey("hybrid").containsEntry("hybrid", null)
+                .containsKey("rerank").containsEntry("rerank", null).containsEntry("rerankingEnabled", false)
+                .containsEntry("rerankCandidates", 20).containsKey("reranker").containsEntry("reranker", null)
+                .containsKey("rerankerScoring").containsEntry("rerankerScoring", null)
+                .containsEntry("rerankedQuestions", 0).containsEntry("rerankFallbackQuestions", 0);
+        assertThat(evaluation.results()).extracting(QuestionResult::retrievalStrategy).containsExactly("FILTERED_VECTOR", "FILTERED_VECTOR", "FILTERED_VECTOR", "FILTERED_VECTOR");
 
         ArgumentCaptor<RetrievalRequest> requests = ArgumentCaptor.forClass(RetrievalRequest.class);
         verify(retrieval, times(4)).retrieve(requests.capture());
@@ -99,6 +104,7 @@ class RetrievalEvaluationServiceTests {
             assertThat(request.filingTypes()).isNull();
             assertThat(request.sectionKeys()).isNull();
             assertThat(request.hybrid()).isNull();
+            assertThat(request.rerank()).isNull();
         });
         assertThat(requests.getAllValues()).extracting(RetrievalRequest::ticker).containsExactly("AAPL", "AAPL", "MSFT", "MSFT");
         verify(repository).save(argThat(saved -> saved.id() == null));
@@ -217,11 +223,11 @@ class RetrievalEvaluationServiceTests {
     }
 
     @Test void theAggregateFloorFailureNamesEveryQuestionNotInTheTop5WithItsRankAndTheHitCount() {
-        var results = List.of(new QuestionResult("aapl-01", "AAPL", Kind.FIGURE, 1, 1L, null),
-                new QuestionResult("aapl-09", "AAPL", Kind.NARRATIVE, 8, 2L, null),
-                new QuestionResult("msft-03", "MSFT", Kind.NARRATIVE, 5, 3L, null),
-                new QuestionResult("msft-08", "MSFT", Kind.NARRATIVE, null, null, null),
-                new QuestionResult("nvda-05", "NVDA", Kind.NARRATIVE, 6, 4L, null));
+        var results = List.of(new QuestionResult("aapl-01", "AAPL", Kind.FIGURE, 1, 1L, null, null),
+                new QuestionResult("aapl-09", "AAPL", Kind.NARRATIVE, 8, 2L, null, null),
+                new QuestionResult("msft-03", "MSFT", Kind.NARRATIVE, 5, 3L, null, null),
+                new QuestionResult("msft-08", "MSFT", Kind.NARRATIVE, null, null, null, null),
+                new QuestionResult("nvda-05", "NVDA", Kind.NARRATIVE, 6, 4L, null, null));
         var evaluation = new RetrievalEvaluation(1L, Instant.now(), "v2", 5, new BigDecimal("0.200000"), new BigDecimal("0.200000"),
                 new BigDecimal("0.400000"), new BigDecimal("0.354167"), 10, "HYBRID_RRF", Map.of(), results, Map.of(), List.of(), null);
         assertThatCode(() -> RetrievalEvaluationFloors.assertAggregateFloor(evaluation, new BigDecimal("0.40"))).doesNotThrowAnyException();
@@ -273,6 +279,95 @@ class RetrievalEvaluationServiceTests {
         assertThat(byProperty.properties()).containsKey("hybrid").containsEntry("hybrid", null);
         verify(retrieval, times(2)).retrieve(requests.capture());
         assertThat(requests.getAllValues().subList(4, 6)).extracting(RetrievalRequest::hybrid).containsOnlyNulls();
+    }
+
+    // Reranker milestone 1 (RAG-1), C4: the rerank override and the reranker name are passed and recorded.
+
+    @Test void theRerankOverrideIsPassedOnEveryRequestAndRecordedWithTheRerankerName() {
+        var q1 = question("q1", "AAPL", "net sales were");
+        var q2 = question("q2", "NVDA", "data center revenue");
+        when(loader.load()).thenReturn(new RetrievalEvaluationSet("v1", LocalDate.of(2026, 9, 12), List.of(q1, q2)));
+        when(retrieval.retrieve(any())).thenAnswer(inv -> response(inv.getArgument(0), chunk(1, ACC, "ITEM_7", "Net sales were up")));
+        when(retrieval.rerankerName()).thenReturn(java.util.Optional.of("ReversingFilingReranker"));
+        when(repository.save(any())).thenAnswer(invocation -> ((RetrievalEvaluation) invocation.getArgument(0)).withId(3L));
+
+        var reranked = service.evaluate(null, true);
+        assertThat(reranked.properties()).containsEntry("rerank", true).containsEntry("reranker", "ReversingFilingReranker")
+                .containsEntry("rerankCandidates", 20).containsEntry("hybrid", null);
+        ArgumentCaptor<RetrievalRequest> requests = ArgumentCaptor.forClass(RetrievalRequest.class);
+        verify(retrieval, times(2)).retrieve(requests.capture());
+        assertThat(requests.getAllValues()).extracting(RetrievalRequest::rerank).containsExactly(true, true);
+
+        clearInvocations(retrieval);
+        var fused = service.evaluate(true, false);
+        assertThat(fused.properties()).containsEntry("rerank", false).containsEntry("hybrid", true).containsEntry("reranker", "ReversingFilingReranker");
+        verify(retrieval, times(2)).retrieve(requests.capture());
+        assertThat(requests.getAllValues().subList(2, 4)).extracting(RetrievalRequest::rerank).containsExactly(false, false);
+    }
+
+    // Reranker milestone 2 (Amendment 1): per-question strategy, reranked and fallback counts, and the reranker version.
+
+    @Test void eachQuestionRecordsItsStrategyAndTheSnapshotCountsRerankedAndFallbackQuestions() {
+        var q1 = question("q1", "AAPL", "net sales were");
+        var q2 = question("q2", "NVDA", "data center revenue");
+        var q3 = question("q3", "MSFT", "cloud revenue");
+        var q4 = question("q4", "MSFT", "operating income");
+        when(loader.load()).thenReturn(new RetrievalEvaluationSet("v2", LocalDate.of(2026, 9, 13), List.of(q1, q2, q3, q4)));
+        // q1 reranked, q2 fell back (timeout), q3 failed outright, q4 reranked.
+        when(retrieval.retrieve(any())).thenAnswer(inv -> {
+            RetrievalRequest request = inv.getArgument(0);
+            return switch (request.query()) {
+                case "q1?" -> withStrategy(request, "HYBRID_RRF_RERANKED", chunk(1, ACC, "ITEM_7", "Net sales were up"));
+                case "q2?" -> withStrategy(request, "HYBRID_RRF", chunk(2, ACC, "ITEM_7", "Data center revenue grew"));
+                case "q3?" -> throw new IllegalStateException("embedding unavailable");
+                default -> withStrategy(request, "HYBRID_RRF_RERANKED", chunk(4, ACC, "ITEM_7", "no match here"));
+            };
+        });
+        when(retrieval.rerankerName()).thenReturn(java.util.Optional.of("CrossEncoderReranker"));
+        when(retrieval.rerankerVersion()).thenReturn(java.util.Optional.of("5d3e70fd0c9f"));
+        when(retrieval.rerankerScoring()).thenReturn(java.util.Optional.of("max-window/overlap=64/maxWindows=4"));
+        when(repository.save(any())).thenAnswer(invocation -> ((RetrievalEvaluation) invocation.getArgument(0)).withId(5L));
+
+        var reranked = service.evaluate(null, true);
+        assertThat(reranked.results()).extracting(QuestionResult::retrievalStrategy)
+                .containsExactly("HYBRID_RRF_RERANKED", "HYBRID_RRF", null, "HYBRID_RRF_RERANKED");
+        assertThat(reranked.retrievalStrategy()).isEqualTo("HYBRID_RRF_RERANKED");
+        assertThat(reranked.properties()).containsEntry("rerankedQuestions", 2).containsEntry("rerankFallbackQuestions", 1)
+                .containsEntry("reranker", "CrossEncoderReranker").containsEntry("rerankerVersion", "5d3e70fd0c9f")
+                .containsEntry("rerankerScoring", "max-window/overlap=64/maxWindows=4");
+
+        // Reranking resolved off (override false): nothing is a fallback, whatever the strategies say.
+        var off = service.evaluate(null, false);
+        assertThat(off.properties()).containsEntry("rerankedQuestions", 2).containsEntry("rerankFallbackQuestions", 0);
+    }
+
+    @Test void withNoRerankOverrideTheFallbackCountFollowsTheRerankingProperty() {
+        var q1 = question("q1", "AAPL", "net sales were");
+        when(loader.load()).thenReturn(new RetrievalEvaluationSet("v2", LocalDate.of(2026, 9, 13), List.of(q1)));
+        when(retrieval.retrieve(any())).thenAnswer(inv -> withStrategy(inv.getArgument(0), "HYBRID_RRF", chunk(1, ACC, "ITEM_7", "Net sales were up")));
+        when(repository.save(any())).thenAnswer(invocation -> ((RetrievalEvaluation) invocation.getArgument(0)).withId(6L));
+
+        var byPropertyOff = service.evaluate(null, null);
+        assertThat(byPropertyOff.properties()).containsEntry("rerankedQuestions", 0).containsEntry("rerankFallbackQuestions", 0)
+                .containsKey("rerankerVersion").containsEntry("rerankerVersion", null);
+
+        var retrievalProperties = new FilingRetrievalProperties();
+        retrievalProperties.setRerankingEnabled(true);
+        var onByProperty = new RetrievalEvaluationService(loader, retrieval, repository, properties, retrievalProperties).evaluate(null, null);
+        assertThat(onByProperty.properties()).containsEntry("rerankedQuestions", 0).containsEntry("rerankFallbackQuestions", 1);
+    }
+
+    private static RetrievalResponse withStrategy(RetrievalRequest request, String strategy, RetrievedFilingChunk... chunks) {
+        return new RetrievalResponse(request.ticker(), request.query(), strategy, true, request.topK(), chunks.length, List.of(chunks));
+    }
+
+    @Test void rerankTrueWithoutARerankerFailsBeforeAnyQuestionRunsOrAnySnapshotIsStored() {
+        when(retrieval.rerankerName()).thenReturn(java.util.Optional.empty());
+        assertThatThrownBy(() -> service.evaluate(null, true))
+                .isInstanceOf(project.stockrecommendationengine.rag.retrieval.RerankerUnavailableException.class)
+                .hasMessageContaining("no FilingReranker is configured");
+        verifyNoInteractions(loader, repository);
+        verify(retrieval, never()).retrieve(any());
     }
 
     @Test void matchingIsCaseInsensitiveWithWhitespaceCollapsedAndRequiresTheSameFilingAndSection() {

@@ -1,0 +1,20 @@
+DIAGNOSTIC start 13:55:37 +08 overrides: RAG_CROSS_ENCODER_ENABLED=true (rerank-candidates default 20, overlap default 64); no evaluation run
+2026-09-13T13:55:43.088+08:00  INFO 68793 --- [StockRecommendationEngine] [           main] p.s.r.retrieval.OnnxCrossEncoderScorer   : Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=max-window/overlap=64/maxWindows=4, 
+warm-up HTTP 200 in 3.515951s
+nvda-11 rerank=false HYBRID_RRF candidatesRetrieved=54 chunks=[805, 851, 881, 872, 806, 852, 880, 800, 873, 850]
+nvda-11 rerank=true HYBRID_RRF_RERANKED candidatesRetrieved=54 chunks=[852, 881, 873, 851, 805, 872, 880, 850, 871, 800]
+nvda-11 rerank=true HYBRID_RRF_RERANKED candidatesRetrieved=54 chunks=[852, 881, 873, 851, 805, 872, 880, 850, 871, 800]
+nvda-14 rerank=false HYBRID_RRF candidatesRetrieved=56 chunks=[872, 873, 879, 880, 881, 851, 806, 852, 805, 863]
+nvda-14 rerank=true HYBRID_RRF_RERANKED candidatesRetrieved=56 chunks=[872, 873, 864, 852, 851, 863, 881, 871, 842, 800]
+nvda-01 rerank=false HYBRID_RRF candidatesRetrieved=55 chunks=[806, 852, 805, 881, 851, 873, 872, 800, 839, 863]
+nvda-01 rerank=true HYBRID_RRF_RERANKED candidatesRetrieved=55 chunks=[852, 873, 864, 851, 842, 881, 872, 857, 800, 863]
+msft-04 rerank=false HYBRID_RRF candidatesRetrieved=59 chunks=[514, 573, 518, 466, 643, 645, 635, 637, 516, 460]
+msft-04 rerank=true HYBRID_RRF_RERANKED candidatesRetrieved=59 chunks=[514, 516, 573, 637, 635, 642, 518, 645, 512, 641]
+port free
+2026-09-13T13:55:46.892+08:00  INFO 68793 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=20, windows=44, topK=5, elapsedMs=1369
+2026-09-13T13:55:49.071+08:00  INFO 68793 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=20, windows=46, topK=10, elapsedMs=1219
+2026-09-13T13:55:50.632+08:00  INFO 68793 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=20, windows=46, topK=10, elapsedMs=1206
+2026-09-13T13:55:52.732+08:00  INFO 68793 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=20, windows=46, topK=10, elapsedMs=1189
+2026-09-13T13:55:54.868+08:00  INFO 68793 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=20, windows=47, topK=10, elapsedMs=1195
+2026-09-13T13:55:56.686+08:00  INFO 68793 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=20, windows=37, topK=10, elapsedMs=945
+DIAGNOSTIC stop 13:55:56 +08

@@ -1,7 +1,9 @@
 package project.stockrecommendationengine.rag.retrieval;
 
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ClassUtils;
 import project.stockrecommendationengine.rag.dto.RetrievalRequest;
 import project.stockrecommendationengine.rag.dto.RetrievalResponse;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
@@ -20,6 +22,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
@@ -31,6 +41,8 @@ public class FilingRetrievalService {
     private final FilingRetrievalRepository retrievalRepository;
     private final FilingRetrievalProperties retrievalProperties;
     private final Optional<FilingReranker> filingReranker;
+    /** Runs reranker calls so each can be bounded by {@code rerank-timeout-ms}; null when no reranker bean exists. */
+    private final ExecutorService rerankExecutor;
 
     public FilingRetrievalService(
             FilingEmbeddingService embeddingService,
@@ -42,9 +54,48 @@ public class FilingRetrievalService {
         this.retrievalRepository = retrievalRepository;
         this.retrievalProperties = retrievalProperties;
         this.filingReranker = filingReranker;
+        this.rerankExecutor = filingReranker.isPresent() ? newRerankExecutor() : null;
         if (retrievalProperties.isRerankingEnabled() && filingReranker.isEmpty()) {
             throw new IllegalStateException("Reranking is enabled but no FilingReranker provider is configured");
         }
+    }
+
+    /**
+     * A small bounded pool of daemon threads for reranker calls: two threads that time out when idle and a queue of 16;
+     * a call rejected because the pool is saturated falls back like any other reranker failure.
+     */
+    private static ExecutorService newRerankExecutor() {
+        AtomicInteger threadNumber = new AtomicInteger();
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<>(16), task -> {
+            Thread thread = new Thread(task, "filing-reranker-" + threadNumber.incrementAndGet());
+            thread.setDaemon(true);
+            return thread;
+        });
+        executor.allowCoreThreadTimeOut(true);
+        return executor;
+    }
+
+    @PreDestroy
+    public void shutdownRerankExecutor() {
+        if (rerankExecutor != null) rerankExecutor.shutdownNow();
+    }
+
+    /**
+     * The configured reranker's simple class name, taken from the user class so a CGLIB or other proxy suffix never appears,
+     * or empty when no {@link FilingReranker} bean exists.
+     */
+    public Optional<String> rerankerName() {
+        return filingReranker.map(reranker -> ClassUtils.getUserClass(reranker).getSimpleName());
+    }
+
+    /** The configured reranker's {@link FilingReranker#version()}, or empty when there is no reranker or it reports none. */
+    public Optional<String> rerankerVersion() {
+        return filingReranker.map(FilingReranker::version);
+    }
+
+    /** The configured reranker's {@link FilingReranker#scoring()}, or empty when there is no reranker or it reports none. */
+    public Optional<String> rerankerScoring() {
+        return filingReranker.map(FilingReranker::scoring);
     }
 
     /**
@@ -59,6 +110,17 @@ public class FilingRetrievalService {
      * punctuation only), or when the keyword search failed; a keyword failure is logged at WARN with the exception
      * class and never fails the retrieval. A figure-leg failure is logged the same way and fusion proceeds over the
      * vector and keyword legs.
+     * <p>
+     * Reranking runs when the request's {@code rerank} field is true, or it is absent and
+     * {@code rag.retrieval.reranking-enabled} is on; {@code rerank: true} with no reranker bean throws
+     * {@link RerankerUnavailableException} before any search (HTTP 400). The reranker receives the first
+     * max({@code rerank-candidates}, topK) of the fused, diversified list, so a reranked response never holds fewer chunks
+     * than the fused one would, and waits at most {@code rerank-timeout-ms}; its result is validated against that input (topK
+     * at most, no duplicate, altered, or invented chunk). A timeout, a reranker {@link RuntimeException} (including a
+     * rejected submission), an interruption, or a result failing validation is logged at WARN with the exception class only,
+     * and retrieval returns the fused order cut to topK with the strategy not suffixed {@code _RERANKED}. An {@link Error}
+     * thrown by the reranker (for example {@link OutOfMemoryError} or a native library {@link LinkageError}) is not a
+     * fallback case: it propagates and fails the retrieval.
      */
     public RetrievalResponse retrieve(RetrievalRequest request) {
         long retrievalStarted = System.nanoTime();
@@ -70,13 +132,17 @@ public class FilingRetrievalService {
                 : request.filingDateFrom() == null && request.filingDateTo() == null
                     && retrievalProperties.isLatestFilingsOnly();
         boolean hybridRequested = request.hybrid() != null ? request.hybrid() : retrievalProperties.isHybridEnabled();
+        boolean rerankRequested = request.rerank() != null ? request.rerank() : retrievalProperties.isRerankingEnabled();
+        if (rerankRequested && filingReranker.isEmpty()) {
+            throw new RerankerUnavailableException();
+        }
         FilingRetrievalFilter retrievalFilter = new FilingRetrievalFilter(
                 normalizedTicker, normalizeValues(request.filingTypes()),
                 request.filingDateFrom(), request.filingDateTo(), normalizeValues(request.sectionKeys()),
                 latestFilingsOnly);
 
-        log.info("Retrieving filing evidence: ticker={}, topK={}, latestFilingsOnly={}, hybrid={}, filingTypes={}, dateFrom={}, dateTo={}, sections={}",
-                normalizedTicker, requestedResultCount, latestFilingsOnly, hybridRequested, retrievalFilter.filingTypes(),
+        log.info("Retrieving filing evidence: ticker={}, topK={}, latestFilingsOnly={}, hybrid={}, rerank={}, filingTypes={}, dateFrom={}, dateTo={}, sections={}",
+                normalizedTicker, requestedResultCount, latestFilingsOnly, hybridRequested, rerankRequested, retrievalFilter.filingTypes(),
                 retrievalFilter.filingDateFrom(), retrievalFilter.filingDateTo(), retrievalFilter.sectionKeys());
         try {
             long embeddingStarted = System.nanoTime();
@@ -118,18 +184,18 @@ public class FilingRetrievalService {
             }
 
             List<RetrievedFilingChunk> diverseCandidates = diversify(candidates);
-            List<RetrievedFilingChunk> selectedEvidence;
+            List<RetrievedFilingChunk> selectedEvidence = null;
             String retrievalStrategy = keywordContributed ? "HYBRID_RRF" : "FILTERED_VECTOR";
-            if (retrievalProperties.isRerankingEnabled() && !candidates.isEmpty()) {
-                log.info("Reranking filing candidates: ticker={}, candidates={}", normalizedTicker, candidates.size());
-                selectedEvidence = filingReranker.orElseThrow().rerank(
-                        normalizedQuery, List.copyOf(diverseCandidates), requestedResultCount);
-                validateRerankedEvidence(diverseCandidates, selectedEvidence, requestedResultCount);
-                retrievalStrategy = retrievalStrategy + "_RERANKED";
-            } else {
-                log.info("Selecting evidence by {} order: ticker={}, rerankingEnabled={}",
-                        keywordContributed ? "fused" : "vector similarity", normalizedTicker,
-                        retrievalProperties.isRerankingEnabled());
+            if (rerankRequested && !diverseCandidates.isEmpty()) {
+                List<RetrievedFilingChunk> rerankInput = List.copyOf(diverseCandidates.subList(
+                        0, Math.min(diverseCandidates.size(),
+                                Math.max(retrievalProperties.getRerankCandidates(), requestedResultCount))));
+                selectedEvidence = rerank(normalizedTicker, normalizedQuery, rerankInput, requestedResultCount);
+                if (selectedEvidence != null) retrievalStrategy = retrievalStrategy + "_RERANKED";
+            }
+            if (selectedEvidence == null) {
+                log.info("Selecting evidence by {} order: ticker={}, rerank={}",
+                        keywordContributed ? "fused" : "vector similarity", normalizedTicker, rerankRequested);
                 selectedEvidence = diverseCandidates.stream().limit(requestedResultCount).toList();
             }
             log.info("Retrieval completed: ticker={}, results={}, strategy={}, elapsedMs={}",
@@ -141,6 +207,62 @@ public class FilingRetrievalService {
                     normalizedTicker, elapsedMillis(retrievalStarted), retrievalFailure);
             throw retrievalFailure;
         }
+    }
+
+    /**
+     * The reranker's validated order over {@code rerankInput}, or {@code null} when it must not be used: the call timed out
+     * (the future is cancelled), threw, was rejected by the saturated pool, or returned evidence failing
+     * {@link #validateRerankedEvidence}. Each case logs one WARN naming the exception class only, never its message.
+     */
+    private List<RetrievedFilingChunk> rerank(
+            String normalizedTicker,
+            String normalizedQuery,
+            List<RetrievedFilingChunk> rerankInput,
+            int requestedResultCount
+    ) {
+        long rerankStarted = System.nanoTime();
+        long timeoutMs = retrievalProperties.getRerankTimeoutMs();
+        FilingReranker reranker = filingReranker.orElseThrow();
+        log.info("Reranking filing candidates: ticker={}, candidates={}, timeoutMs={}", normalizedTicker, rerankInput.size(), timeoutMs);
+        Future<List<RetrievedFilingChunk>> pending = null;
+        String reason;
+        Throwable failure;
+        try {
+            pending = rerankExecutor.submit(() -> reranker.rerank(normalizedQuery, rerankInput, requestedResultCount));
+            List<RetrievedFilingChunk> reranked = pending.get(timeoutMs, TimeUnit.MILLISECONDS);
+            try {
+                validateRerankedEvidence(rerankInput, reranked, requestedResultCount);
+            } catch (IllegalStateException invalid) {
+                warnRerankFallback(normalizedTicker, "invalidEvidence", invalid, rerankStarted);
+                return null;
+            }
+            log.info("Reranking completed: ticker={}, results={}, elapsedMs={}", normalizedTicker, reranked.size(), elapsedMillis(rerankStarted));
+            return List.copyOf(reranked);
+        } catch (TimeoutException timeout) {
+            pending.cancel(true);
+            reason = "timeout";
+            failure = timeout;
+        } catch (InterruptedException interrupted) {
+            pending.cancel(true);
+            Thread.currentThread().interrupt();
+            reason = "interrupted";
+            failure = interrupted;
+        } catch (ExecutionException execution) {
+            Throwable cause = execution.getCause() == null ? execution : execution.getCause();
+            if (cause instanceof Error error) throw error;
+            reason = "failure";
+            failure = cause;
+        } catch (RuntimeException rejected) {
+            reason = "failure";
+            failure = rejected;
+        }
+        warnRerankFallback(normalizedTicker, reason, failure, rerankStarted);
+        return null;
+    }
+
+    private void warnRerankFallback(String normalizedTicker, String reason, Throwable failure, long rerankStarted) {
+        log.warn("Reranking failed, keeping the retrieval order: ticker={}, reason={}, error={}, elapsedMs={}",
+                normalizedTicker, reason, failure.getClass().getSimpleName(), elapsedMillis(rerankStarted));
     }
 
     /**

@@ -1,0 +1,58 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+CORPUS chunks=569 exactTokens p50=647 p90=849 max=1214 estimate(chars/4) p50=780 | chunks longer than the 469-token passage window: 371 (65%) | mean fraction of a chunk the model sees: 0.78
+QUESTIONS id | kind | rank247->rank250 | qTokens | chunk | chunkTokens | keptPassageTokens | answerTokenOffset | answerVisible | score(prodTruncation) | score(answerWindow)
+Q aapl-01 | FIGURE | 1->1 | 23 | 225 | 815 | 486 | -1 | ? | 5.742 | NaN
+Q aapl-02 | FIGURE | 1->2 | 17 | 241 | 1075 | 492 | 139 | yes | -0.025 | 0.295
+   all 144 AAPL chunks, production truncation: expected chunk 241 ranks 8 of 144; top5 313=4.52 280=4.03 227=2.46 312=1.76 234=1.27 
+Q aapl-03 | NARRATIVE | 2->1 | 15 | 226 | 770 | 494 | 269 | yes | 4.988 | 5.704
+Q aapl-04 | NARRATIVE | 1->1 | 15 | 210 | 754 | 494 | 106 | yes | 4.440 | 5.547
+Q aapl-05 | NARRATIVE | 1->2 | 9 | 190 | 808 | 500 | 655 | NO | -6.627 | 5.062
+Q aapl-06 | FIGURE | 2->1 | 18 | 269 | 1044 | 491 | 481 | yes | 5.419 | 6.628
+Q aapl-07 | FIGURE | 1->1 | 22 | 240 | 819 | 487 | 529 | NO | 1.827 | 6.327
+Q aapl-08 | NARRATIVE | 1->1 | 16 | 297 | 130 | 130 | 23 | yes | 5.122 | 5.122
+Q aapl-09 | FIGURE | 8->5 | 19 | 280 | 818 | 490 | 509 | NO | 1.732 | 4.393
+Q aapl-10 | NARRATIVE | 1->1 | 21 | 277 | 680 | 488 | 462 | yes | 5.737 | 7.664
+Q aapl-11 | FIGURE | 1->1 | 25 | 225 | 815 | 484 | 785 | NO | 3.275 | 4.221
+Q aapl-12 | FIGURE | 1->1 | 29 | 226 | 770 | 480 | 328 | yes | 4.439 | 4.686
+Q aapl-13 | FIGURE | 1->1 | 32 | 278 | 882 | 477 | 342 | yes | 4.721 | 4.812
+Q aapl-14 | FIGURE | 1->1 | 32 | 279 | 886 | 477 | 437 | yes | 4.422 | 3.856
+Q msft-01 | FIGURE | 6->2 | 17 | 514 | 660 | 492 | 358 | yes | 5.125 | 7.975
+Q msft-02 | FIGURE | 2->1 | 17 | 514 | 660 | 492 | 372 | yes | 4.873 | 6.090
+Q msft-03 | NARRATIVE | 2->1 | 15 | 517 | 610 | 494 | 473 | yes | 4.609 | 5.072
+Q msft-04 | FIGURE | 4->1 | 29 | 466 | 693 | 480 | 606 | NO | -10.675 | 0.197
+   all 263 MSFT chunks, production truncation: expected chunk 466 ranks 150 of 263; top5 467=3.04 514=-0.79 573=-1.77 635=-3.01 1066=-3.65 
+Q msft-05 | NARRATIVE | 2->8 | 17 | 571 | 655 | 492 | 121 | yes | -0.032 | 2.904
+   all 263 MSFT chunks, production truncation: expected chunk 571 ranks 13 of 263; top5 1064=6.65 640=3.82 635=2.65 573=2.50 514=1.77 
+Q msft-06 | NARRATIVE | 1->1 | 15 | 489 | 642 | 494 | 326 | yes | 0.663 | 3.743
+Q msft-07 | NARRATIVE | 7->3 | 18 | 495 | 695 | 491 | 374 | yes | -2.687 | 4.393
+Q msft-08 | FIGURE | miss->2 | 18 | 547 | 780 | 491 | 122 | yes | 4.982 | 7.459
+Q msft-09 | NARRATIVE | 1->1 | 15 | 1064 | 263 | 263 | 71 | yes | 8.118 | 3.340
+Q msft-10 | FIGURE | 1->1 | 14 | 637 | 737 | 495 | 620 | NO | -9.522 | 9.879
+Q msft-11 | FIGURE | 1->3 | 34 | 519 | 605 | 475 | 189 | yes | 3.983 | 5.794
+   all 263 MSFT chunks, production truncation: expected chunk 519 ranks 3 of 263; top5 646=6.12 518=5.03 519=3.98 573=3.97 635=3.94 
+Q msft-12 | FIGURE | 2->6 | 19 | 519 | 605 | 490 | 544 | NO | -1.843 | 5.140
+   all 263 MSFT chunks, production truncation: expected chunk 519 ranks 6 of 263; top5 645=4.07 646=1.13 520=0.77 517=0.66 514=0.02 
+Q msft-13 | FIGURE | 1->1 | 26 | 523 | 734 | 483 | 630 | NO | -1.659 | 7.728
+Q msft-14 | FIGURE | 1->1 | 24 | 644 | 533 | 485 | 215 | yes | 0.255 | 2.667
+Q nvda-01 | FIGURE | 3->miss | 20 | 805 | 854 | 489 | 485 | yes | -1.746 | 5.027
+   all 162 NVDA chunks, production truncation: expected chunk 805 ranks 30 of 162; top5 852=5.75 873=5.62 864=4.55 881=4.26 857=4.16 
+Q nvda-02 | FIGURE | miss->miss | 18 | miss in both
+Q nvda-03 | FIGURE | 1->2 | 20 | 797 | 762 | 489 | 278 | yes | 3.877 | 4.596
+   all 162 NVDA chunks, production truncation: expected chunk 797 ranks 6 of 162; top5 798=6.25 850=5.46 901=4.49 857=3.97 858=3.95 
+Q nvda-04 | FIGURE | miss->miss | 24 | miss in both
+Q nvda-05 | NARRATIVE | 10->miss | 16 | 749 | 700 | 493 | 433 | yes | -9.518 | -9.330
+Q nvda-06 | NARRATIVE | 1->1 | 22 | 894 | 691 | 487 | 137 | yes | 5.297 | 5.597
+Q nvda-07 | NARRATIVE | miss->7 | 26 | 770 | 685 | 483 | 416 | yes | -5.373 | 0.013
+Q nvda-08 | FIGURE | 5->1 | 18 | 852 | 822 | 491 | 206 | yes | 5.957 | 6.015
+Q nvda-09 | FIGURE | miss->miss | 19 | miss in both
+Q nvda-10 | NARRATIVE | 1->1 | 24 | 895 | 804 | 485 | 537 | NO | 2.364 | 6.178
+Q nvda-11 | FIGURE | 1->10 | 32 | 805 | 854 | 477 | 596 | NO | 2.623 | 5.261
+   all 162 NVDA chunks, production truncation: expected chunk 805 ranks 10 of 162; top5 852=6.14 881=5.85 873=5.67 851=5.52 839=3.52 
+Q nvda-12 | FIGURE | 5->3 | 23 | 802 | 698 | 486 | 361 | yes | 0.723 | 3.854
+Q nvda-13 | FIGURE | 1->4 | 36 | 880 | 980 | 473 | 85 | yes | 1.542 | 3.612
+   all 162 NVDA chunks, production truncation: expected chunk 880 ranks 4 of 162; top5 873=2.22 862=1.97 864=1.65 880=1.54 881=1.53 
+Q nvda-14 | FIGURE | 1->miss | 32 | 872 | 996 | 477 | 820 | NO | -0.261 | 4.776
+   all 162 NVDA chunks, production truncation: expected chunk 872 ranks 20 of 162; top5 873=5.91 864=4.82 852=3.75 863=3.44 881=3.33 

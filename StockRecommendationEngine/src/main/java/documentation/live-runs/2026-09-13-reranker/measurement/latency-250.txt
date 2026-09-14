@@ -1,0 +1,51 @@
+Per-call cross-encoder scoring times, snapshot 250 (rerank=true, rerank-candidates 40), 2026-09-13.
+Extracted verbatim with grep from that run's application log (one application start; lines: the start, every
+"Cross-encoder scoring completed" line, and the "Retrieval evaluation stored" line that names the snapshot id).
+The topK=5 line is the warm-up POST /api/rag/retrieve; the topK=10 lines are the evaluation's scoring calls.
+Evaluation calls: 42; median 981 ms, max 1103 ms, min 954 ms (warm-up [1110] ms excluded).
+
+2026-09-13T12:33:54.654+08:00  INFO 57730 --- [StockRecommendationEngine] [           main] p.s.StockRecommendationEngineApplication : Started StockRecommendationEngineApplication in 3.476 seconds (process running for 3.62)
+2026-09-13T12:33:57.673+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=5, elapsedMs=1110
+2026-09-13T12:33:59.188+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1103
+2026-09-13T12:34:00.455+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=986
+2026-09-13T12:34:01.786+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1048
+2026-09-13T12:34:03.112+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1005
+2026-09-13T12:34:04.508+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1062
+2026-09-13T12:34:05.774+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=983
+2026-09-13T12:34:07.241+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=994
+2026-09-13T12:34:08.535+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=963
+2026-09-13T12:34:09.853+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=967
+2026-09-13T12:34:11.188+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=971
+2026-09-13T12:34:12.486+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=970
+2026-09-13T12:34:13.928+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=970
+2026-09-13T12:34:15.219+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=970
+2026-09-13T12:34:16.508+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=974
+2026-09-13T12:34:17.800+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=966
+2026-09-13T12:34:19.153+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=957
+2026-09-13T12:34:20.430+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=954
+2026-09-13T12:34:21.757+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=997
+2026-09-13T12:34:23.236+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1033
+2026-09-13T12:34:24.804+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1067
+2026-09-13T12:34:26.128+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1003
+2026-09-13T12:34:27.471+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1025
+2026-09-13T12:34:28.792+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1028
+2026-09-13T12:34:30.118+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1020
+2026-09-13T12:34:31.456+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=994
+2026-09-13T12:34:32.750+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=964
+2026-09-13T12:34:34.071+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=975
+2026-09-13T12:34:35.373+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=966
+2026-09-13T12:34:36.696+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=979
+2026-09-13T12:34:38.018+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=994
+2026-09-13T12:34:39.361+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=1006
+2026-09-13T12:34:40.852+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=989
+2026-09-13T12:34:42.231+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=986
+2026-09-13T12:34:43.540+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=973
+2026-09-13T12:34:44.849+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=967
+2026-09-13T12:34:46.207+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=989
+2026-09-13T12:34:47.537+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=989
+2026-09-13T12:34:48.911+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=969
+2026-09-13T12:34:50.238+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=968
+2026-09-13T12:34:51.678+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=973
+2026-09-13T12:34:52.975+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-2] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=967
+2026-09-13T12:34:54.356+08:00  INFO 57730 --- [StockRecommendationEngine] [ling-reranker-1] p.s.rag.retrieval.CrossEncoderReranker   : Cross-encoder scoring completed: candidates=40, topK=10, elapsedMs=975
+2026-09-13T12:34:54.375+08:00  INFO 57730 --- [StockRecommendationEngine] [nio-8081-exec-2] p.s.r.e.RetrievalEvaluationService       : Retrieval evaluation stored: id=250, hitAt1=0.523810, hitAt3=0.714286, hitAt5=0.761905, mrr=0.630584, misses=6, rerankedQuestions=42, rerankFallbackQuestions=0

@@ -18,7 +18,8 @@ public record RetrievalRequest(
         @Size(min = 1, max = 20) List<@NotBlank @Size(max = 64) String> sectionKeys,
         @Min(1) @Max(20) Integer topK,
         Boolean latestFilingsOnly,
-        Boolean hybrid
+        Boolean hybrid,
+        Boolean rerank
 ) {
     @AssertTrue(message = "filingDateFrom must be on or before filingDateTo")
     public boolean isFilingDateRangeValid() {

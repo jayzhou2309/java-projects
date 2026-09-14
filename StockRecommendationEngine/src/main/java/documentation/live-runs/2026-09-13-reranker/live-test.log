@@ -1,0 +1,43 @@
+# ./mvnw -q -o test -Dtest=CrossEncoderRerankerLiveTests -Drag.rerank.live=true  (2026-09-13, exit 0)
+
+10:38:54.598 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+10:38:59.849 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+10:38:59.850 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+10:38:59.893 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+CROSS_ENCODER load elapsedMs=5465 version=5d3e70fd0c9f
+CROSS_ENCODER metadata inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+10:39:01.057 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, topK=10, elapsedMs=332
+10:39:01.385 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, topK=10, elapsedMs=325
+CROSS_ENCODER determinism identical=true scores=[3.031333, 4.1086917, 5.0844183, 5.0957613, 5.864985, 2.9623694, 4.078471, 5.080938, 5.1086464, 5.969261, 2.9681904, 3.8686368, 5.0748205, 5.109663, 5.956623, 2.9372752, 3.8666372, 5.078527, 5.12208, 5.9998198]
+10:39:01.405 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=3, topK=3, elapsedMs=4
+CROSS_ENCODER pairs query="What was total revenue for fiscal year 2025?" scores(distractor1, distractor2, answer)=[-11.240531, -11.289034, 11.371214] order=[3, 1, 2]
+10:39:01.418 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=3, topK=3, elapsedMs=5
+CROSS_ENCODER pairs query="Who is the chief executive officer of the company?" scores(distractor1, distractor2, answer)=[-11.121484, -10.967914, 5.7503047] order=[3, 2, 1]
+10:39:01.431 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=3, topK=3, elapsedMs=5
+CROSS_ENCODER pairs query="How much did the company spend on share repurchases?" scores(distractor1, distractor2, answer)=[-4.432799, -11.313744, 5.5065556] order=[3, 1, 2]
+10:39:01.755 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, topK=5, elapsedMs=322
+10:39:02.110 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, topK=5, elapsedMs=354
+10:39:02.447 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, topK=5, elapsedMs=337
+10:39:02.776 [main] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, topK=5, elapsedMs=328
+CROSS_ENCODER latency candidates=20 charsEach=2000 elapsedMs(after warm-up)=[354, 337, 328]
+10:39:03.159 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieving filing evidence: ticker=NVDA, topK=5, latestFilingsOnly=true, hybrid=false, rerank=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+10:39:03.159 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Embedding retrieval query: ticker=NVDA, characters=47
+10:39:03.160 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Query embedding completed: ticker=NVDA, elapsedMs=1
+10:39:03.160 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+10:39:03.161 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Vector search completed: ticker=NVDA, candidates=20, elapsedMs=0
+10:39:03.161 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking filing candidates: ticker=NVDA, candidates=20, timeoutMs=1
+10:39:03.164 [main] WARN project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking failed, keeping the retrieval order: ticker=NVDA, reason=timeout, error=TimeoutException, elapsedMs=2
+10:39:03.164 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Selecting evidence by vector similarity order: ticker=NVDA, rerank=true
+10:39:03.164 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieval completed: ticker=NVDA, results=5, strategy=FILTERED_VECTOR, elapsedMs=5
+CROSS_ENCODER timeout timeoutMs=1 strategy=FILTERED_VECTOR elapsedMs=5
+10:39:03.167 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieving filing evidence: ticker=NVDA, topK=5, latestFilingsOnly=true, hybrid=false, rerank=true, filingTypes=[], dateFrom=null, dateTo=null, sections=[]
+10:39:03.167 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Embedding retrieval query: ticker=NVDA, characters=47
+10:39:03.167 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Query embedding completed: ticker=NVDA, elapsedMs=0
+10:39:03.167 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Searching eligible filing chunks: ticker=NVDA, candidateLimit=40
+10:39:03.167 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Vector search completed: ticker=NVDA, candidates=20, elapsedMs=0
+10:39:03.168 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking filing candidates: ticker=NVDA, candidates=20, timeoutMs=30000
+10:39:03.828 [filing-reranker-1] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, topK=5, elapsedMs=666
+10:39:03.845 [filing-reranker-2] INFO project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker -- Cross-encoder scoring completed: candidates=20, topK=5, elapsedMs=677
+10:39:03.848 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Reranking completed: ticker=NVDA, results=5, elapsedMs=680
+10:39:03.848 [main] INFO project.stockrecommendationengine.rag.retrieval.FilingRetrievalService -- Retrieval completed: ticker=NVDA, results=5, strategy=FILTERED_VECTOR_RERANKED, elapsedMs=681
+CROSS_ENCODER timeout timeoutMs=30000 strategy=FILTERED_VECTOR_RERANKED order=[20, 10, 15, 5, 19]

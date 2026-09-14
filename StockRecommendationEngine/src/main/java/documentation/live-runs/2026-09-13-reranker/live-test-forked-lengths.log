@@ -1,0 +1,70 @@
+# ./mvnw -q -o test -Dtest=CrossEncoderForkedLiveTests -Drag.rerank.live=true  (2026-09-13 remediation, exit 0)
+# Child JVM environment without OPT_OUT_TRACKING, DJL_OFFLINE, RUST_FLAVOR, RUST_LIBRARY_PATH; lsof sampled the child's TCP/UDP sockets for its whole life; the only socket seen is the loopback control connection the probe opens on purpose at the end.
+
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by lombok.permit.Permit
+WARNING: Please consider reporting this to the maintainers of class lombok.permit.Permit
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[child] PROBE properties before OPT_OUT_TRACKING=null ai.djl.offline=null RUST_FLAVOR=null
+[child] PROBE phase=scorer-build-start
+[child] WARNING: A restricted method in java.lang.System has been called
+[child] WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+[child] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[child] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[child] 
+[child] 11:03:45.016 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 11:03:45.851 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+[child] 11:03:45.851 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+[child] 11:03:45.886 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+[child] PROBE phase=scorer-built elapsedMs=1072
+[child] PROBE properties after OPT_OUT_TRACKING=true ai.djl.offline=true RUST_FLAVOR=cpu
+[child] PROBE passage chars=2000 tokens=352
+[child] PROBE start case=words508
+[child] 11:03:46.000 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2539, queryCharsKept=2539, queryTokens=508, queryTokensKept=255
+[child] PROBE result case=words508 queryChars=2539 queryTokens=508 passageChars=2000 scores=[-6.8142157] elapsedMs=95
+[child] PROBE start case=words509
+[child] 11:03:46.036 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2544, queryCharsKept=2544, queryTokens=509, queryTokensKept=255
+[child] PROBE result case=words509 queryChars=2544 queryTokens=509 passageChars=2000 scores=[-6.8142157] elapsedMs=32
+[child] PROBE start case=words600
+[child] 11:03:46.078 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2999, queryCharsKept=2999, queryTokens=512+, queryTokensKept=255
+[child] PROBE result case=words600 queryChars=2999 queryTokens=600 passageChars=2000 scores=[-6.8142157] elapsedMs=41
+[child] PROBE start case=chars4000
+[child] 11:03:46.123 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=4000, queryCharsKept=4000, queryTokens=512+, queryTokensKept=255
+[child] PROBE result case=chars4000 queryChars=4000 queryTokens=593 passageChars=2000 scores=[-3.4244962] elapsedMs=42
+[child] PROBE start case=chars20000
+[child] 11:03:46.168 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=512+, queryTokensKept=255
+[child] PROBE result case=chars20000 queryChars=20000 queryTokens=2963 passageChars=2000 scores=[-3.4244962] elapsedMs=42
+[child] PROBE start case=chars25000
+[child] 11:03:46.209 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=25000, queryCharsKept=20000, queryTokens=512+, queryTokensKept=255
+[child] PROBE result case=chars25000 queryChars=25000 queryTokens=2963 passageChars=2000 scores=[-3.4244962] elapsedMs=35
+[child] PROBE start case=singleWord5000
+[child] PROBE result case=singleWord5000 queryChars=5000 queryTokens=1 passageChars=2000 scores=[-9.817628] elapsedMs=15
+[child] PROBE start case=unicodeEmoji
+[child] 11:03:46.266 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=3032, queryCharsKept=3032, queryTokens=512+, queryTokensKept=255
+[child] PROBE result case=unicodeEmoji queryChars=3032 queryTokens=903 passageChars=2000 scores=[-4.285012] elapsedMs=33
+[child] PROBE sweep queryWords=0 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-3.3430357, -2.7336009, -0.5168751, -0.5098822, -0.08966758, -0.08966758, -5.4757504]
+[child] PROBE sweep queryWords=1 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-7.988062, 1.3267292, 3.765318, 3.8066165, 2.6809385, 2.6809385, -5.5536942]
+[child] PROBE sweep queryWords=253 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.317704, -0.40793353, 7.2425404, 7.2523265, 7.255146, 7.255146, -6.9401836]
+[child] PROBE sweep queryWords=254 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.29069698, -0.10468359, 7.3210645, 7.3223467, 7.3223467, 7.3223467, -6.8520155]
+[child] 11:03:47.262 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=1274, queryCharsKept=1274, queryTokens=255, queryTokensKept=254
+[child] PROBE sweep queryWords=255 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.43723455, -0.13317934, 7.303721, 7.3223467, 7.3223467, 7.3223467, -6.8520155]
+[child] 11:03:47.436 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=1279, queryCharsKept=1279, queryTokens=256, queryTokensKept=254
+[child] PROBE sweep queryWords=256 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.27732325, -0.30030596, 7.303721, 7.303721, 7.3223467, 7.3223467, -6.8520155]
+[child] 11:03:47.611 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2539, queryCharsKept=2539, queryTokens=508, queryTokensKept=254
+[child] PROBE sweep queryWords=508 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.46487305, -0.31343123, 7.303721, 7.303721, 7.3223467, 7.3223467, -6.8142157]
+[child] 11:03:47.787 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2544, queryCharsKept=2544, queryTokens=509, queryTokensKept=254
+[child] PROBE sweep queryWords=509 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.52551985, -0.31343123, 7.303721, 7.303721, 7.3223467, 7.3223467, -6.8142157]
+[child] 11:03:47.960 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=2549, queryCharsKept=2549, queryTokens=510, queryTokensKept=254
+[child] PROBE sweep queryWords=510 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.52551985, -0.31343123, 7.303721, 7.303721, 7.303721, 7.3223467, -6.8142157]
+[child] 11:03:48.135 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=4999, queryCharsKept=4999, queryTokens=512+, queryTokensKept=255
+[child] PROBE sweep queryWords=1000 passageWords=[0, 1, 254, 255, 509, 510, 2000 chars] scores=[-0.52551985, -0.31343123, 7.303721, 7.303721, 7.303721, 7.303721, -6.8142157]
+[child] 11:03:48.811 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=512+, queryTokensKept=255
+[child] 11:03:49.509 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=512+, queryTokensKept=255
+[child] 11:03:50.052 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=512+, queryTokensKept=255
+[child] 11:03:50.597 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=20000, queryCharsKept=20000, queryTokens=512+, queryTokensKept=255
+[child] PROBE batch pairs=20 queryChars=20000 passageChars=2000 tokensPerPair=512 elapsedMs=[698, 542, 545]
+[child] PROBE control connected port=58022
+[child] PROBE done
+CROSS_ENCODER forked exitCode=0 timedOut=false
+CROSS_ENCODER lsof available=true samples=368 distinctSocketLines=1
+CROSS_ENCODER lsof java 10411 jayzhou 216u IPv6 0x5cc2911aee395eb8 0t0 TCP 127.0.0.1:58024->127.0.0.1:58022 (ESTABLISHED)

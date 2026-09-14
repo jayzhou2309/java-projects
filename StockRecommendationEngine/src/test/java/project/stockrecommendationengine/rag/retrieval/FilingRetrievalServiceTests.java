@@ -54,7 +54,7 @@ class FilingRetrievalServiceTests {
     @Test
     void normalizesInputsAndReturnsLimitedEvidenceWithExplicitStrategy() {
         properties.setHybridEnabled(false);
-        var request = new RetrievalRequest(" aapl ", " risks? ", List.of("10-k"), null, null, List.of("item_1a"), 1, null, null);
+        var request = new RetrievalRequest(" aapl ", " risks? ", List.of("10-k"), null, null, List.of("item_1a"), 1, null, null, null);
         var response = service.retrieve(request);
         assertThat(response.ticker()).isEqualTo("AAPL");
         assertThat(response.query()).isEqualTo("risks?");
@@ -73,10 +73,10 @@ class FilingRetrievalServiceTests {
     @Test
     void explicitDateRangeSearchesAllEligibleFilingsUnlessLatestIsRequested() {
         var cutoff = LocalDate.parse("2025-12-31");
-        var response = service.retrieve(new RetrievalRequest("AAPL", "risks", null, null, cutoff, null, null, null, null));
+        var response = service.retrieve(new RetrievalRequest("AAPL", "risks", null, null, cutoff, null, null, null, null, null));
         assertThat(response.latestFilingsOnly()).isFalse();
         assertThat(response.topK()).isEqualTo(5);
-        var latestResponse = service.retrieve(new RetrievalRequest("AAPL", "risks", null, null, cutoff, null, null, true, null));
+        var latestResponse = service.retrieve(new RetrievalRequest("AAPL", "risks", null, null, cutoff, null, null, true, null, null));
         assertThat(latestResponse.latestFilingsOnly()).isTrue();
     }
 
@@ -111,7 +111,10 @@ class FilingRetrievalServiceTests {
         properties.setRerankingEnabled(true);
         service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
         when(reranker.rerank(anyString(), anyList(), anyInt())).thenReturn(List.of(evidence(99L)));
-        assertThatThrownBy(() -> service.retrieve(request())).hasMessageContaining("altered evidence");
+        // Reranker milestone 1, C2: the validator still rejects the invented chunk; retrieval falls back to the fused order.
+        var response = service.retrieve(request());
+        assertThat(response.results()).doesNotContain(evidence(99L)).containsExactly(evidence(1L), evidence(2L));
+        assertThat(response.retrievalStrategy()).isEqualTo("HYBRID_RRF");
     }
 
     @Test
@@ -303,7 +306,9 @@ class FilingRetrievalServiceTests {
         assertThat(rerankInput.getValue()).containsExactly(evidence(1L), evidence(3L), evidence(2L));
 
         when(reranker.rerank(anyString(), anyList(), anyInt())).thenReturn(List.of(evidence(99L)));
-        assertThatThrownBy(() -> service.retrieve(request("risks", 2, true))).hasMessageContaining("altered evidence");
+        var rejected = service.retrieve(request("risks", 2, true));
+        assertThat(rejected.retrievalStrategy()).isEqualTo("HYBRID_RRF");
+        assertThat(rejected.results()).containsExactly(evidence(1L), evidence(3L));
     }
 
     // Fusion tuning Milestone 1 (RAG-12), C2 and C4: weighted legs, the figure leg, and behaviour preservation by default.
@@ -463,6 +468,159 @@ class FilingRetrievalServiceTests {
     }
 
     /** One weighted fusion term as the service computes it: weight / denominator in a single division at scale 18. */
+    // Reranker milestone 1 (RAG-1): per-call override, candidate cap, timeout and fallback.
+
+    private List<RetrievedFilingChunk> vectorRanking(int count) {
+        return java.util.stream.LongStream.rangeClosed(1, count)
+                .mapToObj(id -> evidence(id, 0.99 - id / 100.0)).toList();
+    }
+
+    @Test
+    void rerankTrueReordersTheFirstRerankCandidatesAndReturnsTopKOfThem() {
+        var reranker = new ReversingFilingReranker();
+        properties.setRerankCandidates(5);
+        service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
+        List<RetrievedFilingChunk> ranking = vectorRanking(8);
+        when(repository.findSimilarChunks(any(), any(), anyInt())).thenReturn(ranking);
+
+        when(repository.findKeywordChunks(any(), any(), any(), anyInt())).thenReturn(List.of());
+        var hybrid = service.retrieve(request("risks", 3, true, true));
+        assertThat(reranker.lastCandidates).containsExactlyElementsOf(ranking.subList(0, 5));
+        assertThat(hybrid.results()).containsExactly(ranking.get(4), ranking.get(3), ranking.get(2));
+        assertThat(hybrid.retrievalStrategy()).isEqualTo("HYBRID_RRF_RERANKED");
+        assertThat(hybrid.candidatesRetrieved()).isEqualTo(8);
+
+        var vectorOnly = service.retrieve(request("risks", 3, false, true));
+        assertThat(vectorOnly.results()).containsExactly(ranking.get(4), ranking.get(3), ranking.get(2));
+        assertThat(vectorOnly.retrievalStrategy()).isEqualTo("FILTERED_VECTOR_RERANKED");
+    }
+
+    @Test
+    void rerankFalseKeepsTheFusedOrderAndNullFollowsTheProperty() {
+        var reranker = new ReversingFilingReranker();
+        properties.setHybridEnabled(false);
+        service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
+        List<RetrievedFilingChunk> ranking = vectorRanking(6);
+        when(repository.findSimilarChunks(any(), any(), anyInt())).thenReturn(ranking);
+
+        var off = service.retrieve(request("risks", 3, null, false));
+        assertThat(off.results()).containsExactlyElementsOf(ranking.subList(0, 3));
+        assertThat(off.retrievalStrategy()).isEqualTo("FILTERED_VECTOR");
+        var byPropertyOff = service.retrieve(request("risks", 3, null, null));
+        assertThat(byPropertyOff.retrievalStrategy()).isEqualTo("FILTERED_VECTOR");
+        assertThat(reranker.calls).isZero();
+
+        properties.setRerankingEnabled(true);
+        service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
+        var byPropertyOn = service.retrieve(request("risks", 3, null, null));
+        assertThat(byPropertyOn.results()).containsExactly(ranking.get(5), ranking.get(4), ranking.get(3));
+        assertThat(byPropertyOn.retrievalStrategy()).isEqualTo("FILTERED_VECTOR_RERANKED");
+        var forcedOff = service.retrieve(request("risks", 3, null, false));
+        assertThat(forcedOff.results()).containsExactlyElementsOf(ranking.subList(0, 3));
+        assertThat(forcedOff.retrievalStrategy()).isEqualTo("FILTERED_VECTOR");
+        assertThat(reranker.calls).isEqualTo(1);
+    }
+
+    @Test
+    void rerankTrueWithoutARerankerFailsBeforeAnySearch() {
+        assertThatThrownBy(() -> service.retrieve(request("risks", 3, null, true)))
+                .isInstanceOf(RerankerUnavailableException.class)
+                .hasMessageContaining("no FilingReranker is configured");
+        verifyNoInteractions(embeddings, repository);
+        assertThat(service.rerankerName()).isEmpty();
+        assertThat(new FilingRetrievalService(embeddings, repository, properties, Optional.of(new ReversingFilingReranker()))
+                .rerankerName()).contains("ReversingFilingReranker");
+    }
+
+    @Test
+    void aThrowingRerankerFallsBackToTheFusedOrderWithAWarningWithoutTheMessage(CapturedOutput output) {
+        FilingReranker reranker = (query, candidates, topK) -> { throw new IllegalArgumentException("secret provider detail"); };
+        service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
+        when(repository.findKeywordChunks(any(), any(), any(), anyInt())).thenReturn(List.of(evidence(3L)));
+
+        var response = service.retrieve(request("risks", 2, true, true));
+        assertThat(response.retrievalStrategy()).isEqualTo("HYBRID_RRF");
+        assertThat(response.results()).containsExactly(evidence(1L), evidence(3L));
+        assertThat(output.getOut() + output.getErr())
+                .contains("WARN")
+                .contains("Reranking failed, keeping the retrieval order")
+                .contains("reason=failure")
+                .contains("error=IllegalArgumentException")
+                .doesNotContain("secret provider detail")
+                .doesNotContain("Retrieval failed");
+    }
+
+    @Test
+    void aRerankerExceedingTheTimeoutFallsBackAndIsInterrupted(CapturedOutput output) throws Exception {
+        var interrupted = new java.util.concurrent.CountDownLatch(1);
+        FilingReranker reranker = (query, candidates, topK) -> {
+            try {
+                Thread.sleep(30_000);
+            } catch (InterruptedException e) {
+                interrupted.countDown();
+            }
+            return List.of();
+        };
+        properties.setHybridEnabled(false);
+        properties.setRerankTimeoutMs(100);
+        service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
+
+        long started = System.nanoTime();
+        var response = service.retrieve(request("risks", 2, null, true));
+        assertThat((System.nanoTime() - started) / 1_000_000).isLessThan(5_000);
+        assertThat(response.retrievalStrategy()).isEqualTo("FILTERED_VECTOR");
+        assertThat(response.results()).containsExactly(evidence(1L), evidence(2L));
+        assertThat(interrupted.await(5, java.util.concurrent.TimeUnit.SECONDS)).as("timed-out call is cancelled").isTrue();
+        assertThat(output.getOut() + output.getErr()).contains("WARN").contains("reason=timeout").contains("error=TimeoutException");
+        service.shutdownRerankExecutor();
+    }
+
+    @Test
+    void theValidatorRejectsMoreThanTopKOrAChunkNotGivenAndRetrievalFallsBack(CapturedOutput output) {
+        FilingReranker reranker = mock(FilingReranker.class);
+        properties.setHybridEnabled(false);
+        properties.setRerankCandidates(5);
+        service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
+        List<RetrievedFilingChunk> ranking = vectorRanking(7);
+        when(repository.findSimilarChunks(any(), any(), anyInt())).thenReturn(ranking);
+
+        when(reranker.rerank(anyString(), anyList(), anyInt())).thenReturn(ranking.subList(0, 3));
+        var tooMany = service.retrieve(request("risks", 2, null, true));
+        assertThat(tooMany.results()).containsExactlyElementsOf(ranking.subList(0, 2));
+        assertThat(tooMany.retrievalStrategy()).isEqualTo("FILTERED_VECTOR");
+
+        // Chunk 6 was retrieved but lies beyond rerank-candidates, so the reranker was not given it.
+        when(reranker.rerank(anyString(), anyList(), anyInt())).thenReturn(List.of(ranking.get(5)));
+        var notGiven = service.retrieve(request("risks", 2, null, true));
+        assertThat(notGiven.results()).containsExactlyElementsOf(ranking.subList(0, 2));
+        assertThat(notGiven.retrievalStrategy()).isEqualTo("FILTERED_VECTOR");
+
+        assertThat(output.getOut() + output.getErr()).contains("reason=invalidEvidence").contains("error=IllegalStateException")
+                .doesNotContain("invalid result count").doesNotContain("altered evidence");
+    }
+
+    @Test
+    void rerankedChunksKeepTheirFusedSimilarityScoresAndAnAlteredScoreIsRejected() {
+        FilingReranker reranker = mock(FilingReranker.class);
+        service = new FilingRetrievalService(embeddings, repository, properties, Optional.of(reranker));
+        when(repository.findSimilarChunks(any(), any(), anyInt())).thenReturn(List.of(evidence(1L, 0.91), evidence(2L, 0.82)));
+        when(repository.findKeywordChunks(any(), any(), any(), anyInt())).thenReturn(List.of(evidence(3L, 0.73)));
+        var reversing = new ReversingFilingReranker();
+        when(reranker.rerank(anyString(), anyList(), anyInt())).thenAnswer(inv ->
+                reversing.rerank(inv.getArgument(0), inv.getArgument(1), inv.getArgument(2)));
+
+        var response = service.retrieve(request("risks", 3, true, true));
+        assertThat(response.retrievalStrategy()).isEqualTo("HYBRID_RRF_RERANKED");
+        var fused = FilingRetrievalService.fuse(List.of(evidence(1L, 0.91), evidence(2L, 0.82)), List.of(evidence(3L, 0.73)), 60);
+        assertThat(response.results()).hasSize(3).allSatisfy(chunk -> assertThat(chunk.similarityScore()).isEqualTo(
+                fused.stream().filter(f -> f.chunkId().equals(chunk.chunkId())).findFirst().orElseThrow().similarityScore()));
+
+        when(reranker.rerank(anyString(), anyList(), anyInt())).thenReturn(List.of(evidence(2L, 5.0)));
+        var altered = service.retrieve(request("risks", 3, true, true));
+        assertThat(altered.retrievalStrategy()).isEqualTo("HYBRID_RRF");
+        assertThat(altered.results()).noneMatch(chunk -> chunk.similarityScore() == 5.0);
+    }
+
     private static BigDecimal term(double weight, int denominator) {
         return BigDecimal.valueOf(weight).divide(BigDecimal.valueOf(denominator), 18, RoundingMode.HALF_EVEN);
     }
@@ -482,7 +640,11 @@ class FilingRetrievalServiceTests {
     }
 
     private RetrievalRequest request(String query, Integer topK, Boolean hybrid) {
-        return new RetrievalRequest("AAPL", query, null, null, null, null, topK, null, hybrid);
+        return request(query, topK, hybrid, null);
+    }
+
+    private RetrievalRequest request(String query, Integer topK, Boolean hybrid, Boolean rerank) {
+        return new RetrievalRequest("AAPL", query, null, null, null, null, topK, null, hybrid, rerank);
     }
 
     private RetrievedFilingChunk evidence(Long chunkId) {

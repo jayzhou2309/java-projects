@@ -1,0 +1,157 @@
+# Cross-encoder resource grid, Milestone 2 remediation 2 (separate tokenization, bounded ONNX Runtime calls), 2026-09-13 11:51 +08, commit base 9085d0c plus working tree
+# Machine: Apple M4, 16 GB, macOS 26.5.1; openjdk version "26.0.1" 2026-04-21
+# Each case: a fresh child JVM, 'java -Xmx1g -cp <target/test-classes:target/classes:dependencies> project.stockrecommendationengine.rag.retrieval.CrossEncoderResourceProbe <modelDir> <maxLength> <batchSize> <unit> <chars> <passages> [threads]'
+# wrapped in '/usr/bin/time -l'; a watchdog sampled the child's RSS every 0.2 s and would kill it above 4 GB (never triggered).
+# The query and every passage are the same text: unit a = "a " repeated to <chars> characters, cjk = U+4E2D x <chars>, filing = a short question against <chars>-character filing-like passages.
+# Two score() calls per JVM (call 1 includes warm-up). 'peak memory footprint' (bytes) is for the whole process: JVM, model, ONNX Runtime and tokenizer.
+
+CASE maxLength=16 batchSize=20 unit=a chars=4000 passages=40
+  PROBE loaded elapsedMs=1077
+  PROBE call=1 maxLength=16 batchSize=20 unit=a chars=4000 passages=40 threads=1 firstScore=7.3966455 elapsedMs=113 heapUsedMb=25
+  PROBE call=2 maxLength=16 batchSize=20 unit=a chars=4000 passages=40 threads=1 firstScore=7.3966455 elapsedMs=104 heapUsedMb=21
+  PROBE done
+  /usr/bin/time -l: 1.33 real 1.29 user 0.12 sys; 286475440 peak memory footprint; 327352320 maximum resident set size
+  child exit=0 max_sampled_rss_kb=306608
+CASE maxLength=16 batchSize=20 unit=a chars=20000 passages=40
+  PROBE loaded elapsedMs=1174
+  PROBE call=1 maxLength=16 batchSize=20 unit=a chars=20000 passages=40 threads=1 firstScore=7.3966455 elapsedMs=431 heapUsedMb=21
+  PROBE call=2 maxLength=16 batchSize=20 unit=a chars=20000 passages=40 threads=1 firstScore=7.3966455 elapsedMs=415 heapUsedMb=20
+  PROBE done
+  /usr/bin/time -l: 2.06 real 1.96 user 0.13 sys; 291947672 peak memory footprint; 332873728 maximum resident set size
+  child exit=0 max_sampled_rss_kb=324880
+CASE maxLength=16 batchSize=20 unit=cjk chars=4000 passages=40
+  PROBE loaded elapsedMs=1135
+  PROBE call=1 maxLength=16 batchSize=20 unit=cjk chars=4000 passages=40 threads=1 firstScore=7.4934096 elapsedMs=212 heapUsedMb=21
+  PROBE call=2 maxLength=16 batchSize=20 unit=cjk chars=4000 passages=40 threads=1 firstScore=7.4934096 elapsedMs=197 heapUsedMb=28
+  PROBE done
+  /usr/bin/time -l: 1.59 real 1.50 user 0.13 sys; 287294616 peak memory footprint; 328187904 maximum resident set size
+  child exit=0 max_sampled_rss_kb=320352
+CASE maxLength=16 batchSize=20 unit=cjk chars=20000 passages=40
+  PROBE loaded elapsedMs=1068
+  PROBE call=1 maxLength=16 batchSize=20 unit=cjk chars=20000 passages=40 threads=1 firstScore=7.4934096 elapsedMs=1004 heapUsedMb=24
+  PROBE call=2 maxLength=16 batchSize=20 unit=cjk chars=20000 passages=40 threads=1 firstScore=7.4934096 elapsedMs=1001 heapUsedMb=26
+  PROBE done
+  /usr/bin/time -l: 3.12 real 3.12 user 0.17 sys; 307348656 peak memory footprint; 348160000 maximum resident set size
+  child exit=0 max_sampled_rss_kb=339920
+CASE maxLength=16 batchSize=64 unit=a chars=4000 passages=40
+  PROBE loaded elapsedMs=1175
+  PROBE call=1 maxLength=16 batchSize=64 unit=a chars=4000 passages=40 threads=1 firstScore=7.3966455 elapsedMs=109 heapUsedMb=25
+  PROBE call=2 maxLength=16 batchSize=64 unit=a chars=4000 passages=40 threads=1 firstScore=7.3966455 elapsedMs=107 heapUsedMb=29
+  PROBE done
+  /usr/bin/time -l: 1.44 real 1.28 user 0.14 sys; 312411360 peak memory footprint; 353288192 maximum resident set size
+  child exit=0 max_sampled_rss_kb=327792
+CASE maxLength=16 batchSize=64 unit=a chars=20000 passages=40
+  PROBE loaded elapsedMs=1200
+  PROBE call=1 maxLength=16 batchSize=64 unit=a chars=20000 passages=40 threads=1 firstScore=7.3966455 elapsedMs=459 heapUsedMb=45
+  PROBE call=2 maxLength=16 batchSize=64 unit=a chars=20000 passages=40 threads=1 firstScore=7.3966455 elapsedMs=440 heapUsedMb=45
+  PROBE done
+  /usr/bin/time -l: 2.14 real 1.95 user 0.18 sys; 371918024 peak memory footprint; 412811264 maximum resident set size
+  child exit=0 max_sampled_rss_kb=392352
+CASE maxLength=16 batchSize=64 unit=cjk chars=4000 passages=40
+  PROBE loaded elapsedMs=1122
+  PROBE call=1 maxLength=16 batchSize=64 unit=cjk chars=4000 passages=40 threads=1 firstScore=7.4934096 elapsedMs=224 heapUsedMb=37
+  PROBE call=2 maxLength=16 batchSize=64 unit=cjk chars=4000 passages=40 threads=1 firstScore=7.4934096 elapsedMs=212 heapUsedMb=58
+  PROBE done
+  /usr/bin/time -l: 1.60 real 1.50 user 0.15 sys; 340296952 peak memory footprint; 381157376 maximum resident set size
+  child exit=0 max_sampled_rss_kb=358848
+CASE maxLength=16 batchSize=64 unit=cjk chars=20000 passages=40
+  PROBE loaded elapsedMs=1132
+  PROBE call=1 maxLength=16 batchSize=64 unit=cjk chars=20000 passages=40 threads=1 firstScore=7.4934096 elapsedMs=1107 heapUsedMb=59
+  PROBE call=2 maxLength=16 batchSize=64 unit=cjk chars=20000 passages=40 threads=1 firstScore=7.4934096 elapsedMs=1028 heapUsedMb=57
+  PROBE done
+  /usr/bin/time -l: 3.31 real 3.01 user 0.19 sys; 372114680 peak memory footprint; 412958720 maximum resident set size
+  child exit=0 max_sampled_rss_kb=392496
+CASE maxLength=512 batchSize=20 unit=a chars=4000 passages=40
+  PROBE loaded elapsedMs=1109
+  PROBE call=1 maxLength=512 batchSize=20 unit=a chars=4000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1255 heapUsedMb=22
+  PROBE call=2 maxLength=512 batchSize=20 unit=a chars=4000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1171 heapUsedMb=24
+  PROBE done
+  /usr/bin/time -l: 3.59 real 11.85 user 0.45 sys; 921716368 peak memory footprint; 962248704 maximum resident set size
+  child exit=0 max_sampled_rss_kb=939520
+CASE maxLength=512 batchSize=20 unit=a chars=20000 passages=40
+  PROBE loaded elapsedMs=1079
+  PROBE call=1 maxLength=512 batchSize=20 unit=a chars=20000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1507 heapUsedMb=26
+  PROBE call=2 maxLength=512 batchSize=20 unit=a chars=20000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1571 heapUsedMb=78
+  PROBE done
+  /usr/bin/time -l: 4.22 real 12.32 user 0.44 sys; 987219672 peak memory footprint; 1027801088 maximum resident set size
+  child exit=0 max_sampled_rss_kb=1003168
+CASE maxLength=512 batchSize=20 unit=cjk chars=4000 passages=40
+  PROBE loaded elapsedMs=1058
+  PROBE call=1 maxLength=512 batchSize=20 unit=cjk chars=4000 passages=40 threads=1 firstScore=5.101165 elapsedMs=1302 heapUsedMb=23
+  PROBE call=2 maxLength=512 batchSize=20 unit=cjk chars=4000 passages=40 threads=1 firstScore=5.101165 elapsedMs=1254 heapUsedMb=18
+  PROBE done
+  /usr/bin/time -l: 3.66 real 11.74 user 0.41 sys; 924894864 peak memory footprint; 965427200 maximum resident set size
+  child exit=0 max_sampled_rss_kb=942608
+CASE maxLength=512 batchSize=20 unit=cjk chars=20000 passages=40
+  PROBE loaded elapsedMs=1045
+  PROBE call=1 maxLength=512 batchSize=20 unit=cjk chars=20000 passages=40 threads=1 firstScore=5.101165 elapsedMs=2052 heapUsedMb=22
+  PROBE call=2 maxLength=512 batchSize=20 unit=cjk chars=20000 passages=40 threads=1 firstScore=5.101165 elapsedMs=2014 heapUsedMb=24
+  PROBE done
+  /usr/bin/time -l: 5.16 real 13.29 user 0.43 sys; 946914984 peak memory footprint; 987283456 maximum resident set size
+  child exit=0 max_sampled_rss_kb=964128
+CASE maxLength=512 batchSize=64 unit=a chars=4000 passages=40
+  PROBE loaded elapsedMs=1058
+  PROBE call=1 maxLength=512 batchSize=64 unit=a chars=4000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1248 heapUsedMb=21
+  PROBE call=2 maxLength=512 batchSize=64 unit=a chars=4000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1162 heapUsedMb=26
+  PROBE done
+  /usr/bin/time -l: 3.53 real 11.74 user 0.43 sys; 903218808 peak memory footprint; 943865856 maximum resident set size
+  child exit=0 max_sampled_rss_kb=921488
+CASE maxLength=512 batchSize=64 unit=a chars=20000 passages=40
+  PROBE loaded elapsedMs=1076
+  PROBE call=1 maxLength=512 batchSize=64 unit=a chars=20000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1530 heapUsedMb=39
+  PROBE call=2 maxLength=512 batchSize=64 unit=a chars=20000 passages=40 threads=1 firstScore=-0.4406123 elapsedMs=1445 heapUsedMb=33
+  PROBE done
+  /usr/bin/time -l: 4.10 real 12.07 user 0.42 sys; 971097816 peak memory footprint; 1011679232 maximum resident set size
+  child exit=0 max_sampled_rss_kb=987728
+CASE maxLength=512 batchSize=64 unit=cjk chars=4000 passages=40
+  PROBE loaded elapsedMs=1116
+  PROBE call=1 maxLength=512 batchSize=64 unit=cjk chars=4000 passages=40 threads=1 firstScore=5.101165 elapsedMs=1256 heapUsedMb=39
+  PROBE call=2 maxLength=512 batchSize=64 unit=cjk chars=4000 passages=40 threads=1 firstScore=5.101165 elapsedMs=1342 heapUsedMb=61
+  PROBE done
+  /usr/bin/time -l: 3.77 real 11.80 user 0.43 sys; 943671048 peak memory footprint; 984137728 maximum resident set size
+  child exit=0 max_sampled_rss_kb=960864
+CASE maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40
+  PROBE loaded elapsedMs=1041
+  PROBE call=1 maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40 threads=1 firstScore=5.101165 elapsedMs=2105 heapUsedMb=50
+  PROBE call=2 maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40 threads=1 firstScore=5.101165 elapsedMs=2053 heapUsedMb=55
+  PROBE done
+  /usr/bin/time -l: 5.25 real 13.49 user 0.45 sys; 977077952 peak memory footprint; 1017659392 maximum resident set size
+  child exit=0 max_sampled_rss_kb=993536
+CASE maxLength=512 batchSize=20 unit=filing chars=2000 passages=20
+  PROBE loaded elapsedMs=1156
+  PROBE call=1 maxLength=512 batchSize=20 unit=filing chars=2000 passages=20 threads=1 firstScore=6.111365 elapsedMs=303 heapUsedMb=27
+  PROBE call=2 maxLength=512 batchSize=20 unit=filing chars=2000 passages=20 threads=1 firstScore=6.111365 elapsedMs=282 heapUsedMb=29
+  PROBE done
+  /usr/bin/time -l: 1.80 real 3.49 user 0.29 sys; 880133752 peak memory footprint; 920731648 maximum resident set size
+  child exit=0 max_sampled_rss_kb=889472
+CASE maxLength=512 batchSize=20 unit=filing chars=2000 passages=40
+  PROBE loaded elapsedMs=1096
+  PROBE call=1 maxLength=512 batchSize=20 unit=filing chars=2000 passages=40 threads=1 firstScore=6.111365 elapsedMs=630 heapUsedMb=25
+  PROBE call=2 maxLength=512 batchSize=20 unit=filing chars=2000 passages=40 threads=1 firstScore=6.111365 elapsedMs=630 heapUsedMb=20
+  PROBE done
+  /usr/bin/time -l: 2.41 real 6.54 user 0.40 sys; 883558032 peak memory footprint; 924123136 maximum resident set size
+  child exit=0 max_sampled_rss_kb=902208
+CASE maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40 threads=2
+  PROBE loaded elapsedMs=1108
+  PROBE call=1 maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40 threads=2 firstScore=5.101165 elapsedMs=3170 heapUsedMb=64
+  PROBE call=2 maxLength=512 batchSize=64 unit=cjk chars=20000 passages=40 threads=2 firstScore=5.101165 elapsedMs=2979 heapUsedMb=70
+  PROBE done
+  /usr/bin/time -l: 7.33 real 26.96 user 0.88 sys; 1432553488 peak memory footprint; 1472741376 maximum resident set size
+  child exit=0 max_sampled_rss_kb=1438000
+CASE maxLength=512 batchSize=64 unit=a chars=20000 passages=40 threads=2
+  PROBE loaded elapsedMs=1093
+  PROBE call=1 maxLength=512 batchSize=64 unit=a chars=20000 passages=40 threads=2 firstScore=-0.4406123 elapsedMs=2366 heapUsedMb=79
+  PROBE call=2 maxLength=512 batchSize=64 unit=a chars=20000 passages=40 threads=2 firstScore=-0.4406123 elapsedMs=2247 heapUsedMb=72
+  PROBE done
+  /usr/bin/time -l: 5.76 real 23.95 user 0.63 sys; 1378732024 peak memory footprint; 1419034624 maximum resident set size
+  child exit=0 max_sampled_rss_kb=1385664
+
+# Rerun of the Scrutiny Validator's probe program (Fuzz.java, unchanged, compiled against this tree) through the production scorer, each group in a child JVM with -Xmx1g under /usr/bin/time -l:
+# content 512 20: exit=0 max_rss_kb=982800  65.32 real 274.34 user 1.66 sys  961054472 peak memory footprint   | OK=53 exc=0 DONE cases=53  maxms=1485
+# content 16 64: exit=0 max_rss_kb=375488  14.29 real 19.88 user 0.27 sys  338855184 peak memory footprint   | OK=53 exc=0 DONE cases=53  maxms=276
+# heavy 512 20: exit=0 max_rss_kb=953888  4.59 real 14.27 user 0.35 sys  936527552 peak memory footprint   | OK=4 exc=0 DONE cases=4  maxms=1048
+# grid 512 20: exit=0 max_rss_kb=1039840  39.52 real 186.00 user 1.95 sys  1019610960 peak memory footprint   | OK=812 exc=0 DONE cases=812  maxms=893
+# grid 16 20: exit=0 max_rss_kb=318640  2.70 real 5.12 user 0.21 sys  285656216 peak memory footprint   | OK=342 exc=0 DONE cases=342  maxms=34
+# concurrent 512 20: exit=0 max_rss_kb=3495024  4.93 real 23.37 user 2.29 sys  3792965376 peak memory footprint   | OK=8 exc=17 closed after ms=3479 DONE cases=25  maxms=3780
+# 
+# (concurrent: 8 threads call the scorer directly and close() runs after 300 ms; the 17 exceptions are the expected IllegalStateException: Cross-encoder is closed for calls after close.)

@@ -23,8 +23,14 @@ public record RetrievalEvaluation(Long id, Instant evaluatedAt, String setVersio
     public static final String FIGURE_SLICE = "figure";
     public static final String NON_FIGURE_SLICE = "nonFigure";
 
-    /** One question's outcome: the 1-based rank of the first matching chunk within the window, null on a miss or an error. */
-    public record QuestionResult(String id, String ticker, Kind kind, Integer rank, Long matchedChunkId, String error) { }
+    /**
+     * One question's outcome: the 1-based rank of the first matching chunk within the window, null on a miss or an error.
+     * {@code retrievalStrategy} is the strategy retrieval reported for this question (so {@code HYBRID_RRF} on a question
+     * where reranking was requested means it fell back); null on a retrieval error and on snapshots stored before the field
+     * was added.
+     */
+    public record QuestionResult(String id, String ticker, Kind kind, Integer rank, Long matchedChunkId, String error,
+            String retrievalStrategy) { }
 
     /** A question with no matching chunk in the window, with what retrieval returned instead (or the error that stopped it). */
     public record Miss(String id, List<TopChunk> top, String error) { }

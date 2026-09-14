@@ -1,0 +1,8 @@
+ONNX Runtime 1.29.0 session metadata for models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx (SHA-256 5d3e70fd0c9f...), observed 2026-09-13 by OnnxCrossEncoderScorer.describe() in CrossEncoderRerankerLiveTests:
+
+inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])
+attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])
+token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])]
+outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+
+Summary: three INT64 inputs input_ids, attention_mask, token_type_ids, each [batch_size, sequence_length]; one FLOAT output logits of shape [batch_size, 1]. The scorer feeds all three and takes logits[row][0] as the pair's score.

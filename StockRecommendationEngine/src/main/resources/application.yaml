@@ -69,8 +69,52 @@ rag:
     default-top-k: 5
     candidate-count: 40
     latest-filings-only: true
-    # Requires a FilingReranker adapter before enabling.
+    # Whether retrieval reranks by default. Requires a FilingReranker bean (cross-encoder.enabled below) before enabling; a request's
+    # "rerank" field (or ?rerank= on evaluate) overrides per call. Off: the cross-encoder was measured on 2026-09-13 under head scoring
+    # (snapshots 248 to 250) and under windowed scoring (296 to 299) and no configuration met the selection rule (RAG.md, Cross-encoder
+    # reranker, Reranker measurement).
     reranking-enabled: false
+    # The reranker receives the first max(rerank-candidates, topK) of the fused, diversified candidates, so a reranked response is never
+    # shorter than the requested topK; 5 to 40.
+    rerank-candidates: 20
+    # Longest wait for the reranker in milliseconds; on timeout or a reranker exception retrieval keeps the fused order (an Error still
+    # propagates); 100 to 60000.
+    rerank-timeout-ms: 2000
+    # Local cross-encoder reranker (cross-encoder/ms-marco-MiniLM-L-6-v2 on ONNX Runtime, CPU; RAG.md, Cross-encoder reranker).
+    # enabled only creates the reranker bean, verifies the files, and loads the model at startup; it does not turn reranking on
+    # (reranking-enabled above). The files are not in git: download them into models/ as recorded in
+    # documentation/live-runs/2026-09-13-reranker/downloads.md. Relative paths resolve against the working directory (the project root).
+    cross-encoder:
+      enabled: ${RAG_CROSS_ENCODER_ENABLED:false}
+      model-path: models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx
+      tokenizer-path: models/cross-encoder-ms-marco-MiniLM-L-6-v2/tokenizer.json
+      # Expected SHA-256 of each file; startup fails naming the path on a missing file or a mismatch. The model's first 12 hex characters
+      # are recorded as properties.rerankerVersion in evaluation snapshots.
+      model-sha256: 5d3e70fd0c9ff14b9b5169a51e957b7a9c74897afd0a35ce4bd318150c1d4d4a
+      tokenizer-sha256: d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66
+      # Longest (question, chunk) pair in tokens. Question and chunk are each bounded to 20,000 characters, tokenized separately without
+      # truncation, and cut longest first in Java (a question is cut only when it and the chunk are both long); the native tokenizer never
+      # encodes a pair (RAG.md, Cross-encoder reranker, Input bounds). The model's window is 512; 16 to 512.
+      # With enabled true, loading the scorer sets JVM-wide system properties unless already set as an environment variable or -D
+      # property: RUST_FLAVOR=cpu (DJL tokenizer native flavor, so no CUDA build is downloaded), OPT_OUT_TRACKING=true and
+      # ai.djl.offline=true (DJL's EC2 metadata and telemetry call, which bypasses proxies, returns without connecting; DJL download
+      # helpers refuse). Nothing else in this application uses DJL. See RAG.md, Cross-encoder reranker, Network.
+      max-length: 512
+      # Chunks tokenized and scored together; 1 to 64. Each group runs as one or more ONNX Runtime calls of at most eight 512-token
+      # pairs' attention size (rows x longest pair squared). The value still affects peak memory; measured figures and evidence are
+      # in RAG.md, Cross-encoder reranker (Properties, Latency).
+      batch-size: 20
+      # How a chunk longer than one window (max-length - 3 - the question's tokens, about 480 tokens; 65% of stored chunks are longer) is
+      # scored. head: its first window only, the behaviour before 2026-09-13's windowed scoring, which never saw an answer in the tail.
+      # max-window: the maximum logit over sliding windows that cover the whole chunk, built in Java from the same token ids (RAG.md,
+      # Cross-encoder reranker, Windows). A chunk that fits one window scores the same either way.
+      passage-scoring: ${RAG_CROSS_ENCODER_PASSAGE_SCORING:max-window}
+      # Tokens shared by consecutive windows, so a sentence cut by a window edge is whole in the next; 0 to 256.
+      window-overlap-tokens: 64
+      # Most windows scored per chunk, taken from its head; 1 to 16. With the defaults 4 windows cover chunks of about 1,740 tokens and
+      # the longest stored chunk (1,214 tokens) takes 3. Windows are rows under the same per-call attention cap as before, so peak
+      # memory per ONNX Runtime call is unchanged and the work per call is at most max-windows times the head figure.
+      max-windows: 4
     # Fuse full-text keyword candidates with the vector candidates (reciprocal rank fusion). On by default since the 2026-09-12
     # measurement (RAG.md, Hybrid Retrieval: snapshots 35 and 34, hit@5 0.600000 to 0.633333, no ticker lower); a request's
     # "hybrid" field overrides per call.

@@ -1,0 +1,79 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/Users/jayzhou/.m2/repository/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+12:03:19.552 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:03:20.418 [main] INFO ai.djl.util.Platform -- Found matching platform from: jar:file:/Users/jayzhou/.m2/repository/ai/djl/huggingface/tokenizers/0.38.0/tokenizers-0.38.0.jar!/native/lib/tokenizers.properties
+12:03:20.419 [main] INFO ai.djl.huggingface.tokenizers.jni.LibUtils -- Uses override RUST_FLAVOR: cpu
+12:03:20.438 [main] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder loaded: model=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, inputs=[input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length]); token_type_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])], outputs=[logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])]
+VCHURN call=0 ms=1088
+VCHURN call=1 ms=586
+12:03:22.215 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=592, queryCharsKept=592, queryTokens=296, queryTokensKept=254
+VCHURN call=2 ms=941
+VCHURN call=3 ms=430
+VCHURN call=4 ms=545
+VCHURN call=5 ms=971
+12:03:25.624 [pool-1-thread-2] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=526, queryCharsKept=526, queryTokens=263, queryTokensKept=254
+12:03:26.413 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=532, queryCharsKept=532, queryTokens=266, queryTokensKept=254
+VCHURN call=6 ms=1407
+VCHURN call=7 ms=1201
+VCHURN call=8 ms=856
+VCHURN call=9 ms=901
+VCHURN call=10 ms=1093
+VCHURN call=11 ms=1056
+12:03:32.519 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=524, queryCharsKept=524, queryTokens=262, queryTokensKept=254
+VCHURN call=12 ms=996
+12:03:33.577 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=564, queryCharsKept=564, queryTokens=282, queryTokensKept=254
+12:03:33.902 [pool-1-thread-2] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=564, queryCharsKept=564, queryTokens=282, queryTokensKept=254
+VCHURN call=13 ms=1382
+VCHURN call=14 ms=790
+VCHURN call=15 ms=790
+VCHURN call=16 ms=931
+VCHURN call=17 ms=1158
+VCHURN call=18 ms=1088
+VCHURN call=19 ms=444
+VCHURN call=20 ms=1358
+12:03:41.392 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=556, queryCharsKept=556, queryTokens=278, queryTokensKept=254
+VCHURN call=21 ms=925
+VCHURN call=22 ms=763
+VCHURN call=23 ms=1256
+12:03:44.220 [pool-1-thread-2] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=526, queryCharsKept=526, queryTokens=263, queryTokensKept=254
+VCHURN call=24 ms=1030
+12:03:45.621 [pool-1-thread-2] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=544, queryCharsKept=544, queryTokens=272, queryTokensKept=254
+VCHURN call=25 ms=1178
+VCHURN call=26 ms=1072
+VCHURN call=27 ms=1055
+12:03:48.585 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=574, queryCharsKept=574, queryTokens=287, queryTokensKept=254
+VCHURN call=28 ms=834
+VCHURN call=29 ms=944
+VCHURN call=30 ms=555
+VCHURN call=31 ms=1254
+12:03:52.111 [pool-1-thread-1] INFO project.stockrecommendationengine.rag.retrieval.OnnxCrossEncoderScorer -- Cross-encoder query truncated: queryChars=540, queryCharsKept=540, queryTokens=270, queryTokensKept=254
+VCHURN call=32 ms=824
+VCHURN call=33 ms=930
+VCHURN call=34 ms=564
+VCHURN call=35 ms=1703
+VCHURN call=36 ms=1107
+VCHURN call=37 ms=476
+VCHURN call=38 ms=605
+VCHURN call=39 ms=594
+VMEM done
+       38.94 real       205.27 user         2.65 sys
+          1587560448  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+              123523  page reclaims
+                  17  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   1  signals received
+                  41  voluntary context switches
+              515335  involuntary context switches
+       1042390662232  instructions retired
+        700006782616  cycles elapsed
+          1542506704  peak memory footprint

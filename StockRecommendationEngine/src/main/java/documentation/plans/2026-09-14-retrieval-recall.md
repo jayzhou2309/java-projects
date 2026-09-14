@@ -178,3 +178,7 @@ Correctness contract:
   enough"; "check whether diversification (removal of duplicate chunks) is removing correct chunks before blaming or
   changing cross encoder". The diversification check was already step 3 of the agreed order above, written before
   Milestone 2 ran; the note restates that order after Milestone 2's outcome.
+- 2026-09-14, Milestone 4 closed: Scrutiny failed rounds 1 and 2 (lessons attributed beyond their sources; a lesson with no
+  recorded source, now the Status entry above) and passed after remediation round 2 (ffe91d8, 3b5a179, 668d928); the
+  Milestone 2 documentation re-read at the cap passed. Remaining low findings: Follow_Ups RAG-19.
+- 2026-09-14, Plan A closed. Plan B is Follow_Ups RAG-20; its contracts are written and approved before any work.

@@ -1,0 +1,14 @@
+{
+  "description": "The retrieval candidate count with reranking off between the traced run at the settings of snapshot 295 (598, committed under ../2026-09-13-evaluation-evidence/measurement/) and run b of Milestone 2 (932): both ran with the cross-encoder loaded, and their recorded properties differ only in candidateCount (property-diff.txt). rerank-timeout-ms and max-length are not recorded; both runs used the defaults (run.log).",
+  "experiment": {
+    "factor": "candidateCount",
+    "settings": [
+      40,
+      200
+    ],
+    "snapshots": [
+      "../2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json",
+      "snapshot-932-b-candidate-count-200-rerank-off.json"
+    ]
+  }
+}

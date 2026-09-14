@@ -27,7 +27,7 @@
 * Data-gated phases waiting on broker-on runs in US hours
     * Challenge: outcomes, calibration, the track record, and critic evaluation need scored directional runs, which need TWS logged in and the broker, quant, and outcomes enabled during US regular hours.
     * What happened: every stored run so far is NEUTRAL or brokerless, so the pipeline is verified with scripted tests only; the watchlist scheduler was added to produce directional runs, and keeping the stack up over those hours is left as operations work.
-    * Lesson (Follow_Ups preamble): items that need a market session or accumulated data are logged with what unblocks them, and closed items are marked rather than deleted.
+    * Outcome (Follow_Ups DATA-1 and DATA-3): DATA-1 stays open and DATA-3 is blocked on it, each with what unblocks it logged; the sources state no lesson for this challenge.
     * Pointers: `src/main/java/documentation/Outcomes.md` (Implementation Status); Follow_Ups DATA-1, DATA-3, AGENT-2, QUANT-1; commit 0ba15f2.
 
 ## LLM cost and token limits
@@ -75,7 +75,7 @@
 * Native code and network boundaries in the local cross-encoder
     * Challenge: the reranker runs a local ONNX cross-encoder through a native tokenizer.
     * What happened: Milestone 2 of the reranker plan needed two remediation rounds: first a long query made the native tokenizer panic and abort the whole JVM before any fallback could run, and a telemetry call reached a metadata endpoint outside the approved network boundary; then native pair truncation grew memory until the OS killed the process. Tokenization moved to single sequences with pair assembly in Java, and inference calls were bounded. The memory documentation needed three further correction commits.
-    * Lesson (reranker plan Amendment 2): no automatic default flip, since startup fails without the gitignored model files; only runs without fallbacks count, with one warm-up retrieval after each start.
+    * Outcome: the sources state no lesson from the panic or the memory growth; the rules that followed for the measurement (reranker plan Amendment 2): no automatic default flip, since startup fails without the gitignored model files; only runs without fallbacks count, with one warm-up retrieval after each start.
     * Pointers: `src/main/java/documentation/plans/2026-09-13-reranker.md` (Amendment 2); commits 9085d0c, eaeed7a, d06d480, 8316c0e, 6cbbcba; CLAUDE.md "Loop history" (cross-encoder reranker).
 
 * Uncommitted edits in a shared working tree
@@ -107,7 +107,7 @@
 * Parser and normalisation defects found while building the set
     * Challenge: expected passages are keyed by section and matched by phrase.
     * What happened: authoring the evaluation set surfaced NVDA financial statements stored under Item 15, inconsistent 8-K item keys across filers, a combined-heading title glitch with Part II items under Part I keys, and whitespace normalisation that does not treat a non-breaking space as a space. The set encodes the current keys and the items stay open.
-    * Lesson (Follow_Ups preamble): open items that need a decision are logged with stable ids and a status.
+    * Outcome (Follow_Ups RAG-7 to RAG-10): the defects are logged as open items; the sources state no lesson for this challenge.
     * Pointers: Follow_Ups RAG-7, RAG-8, RAG-9, RAG-10.
 
 ## Evaluation honesty and the claims check
@@ -152,9 +152,9 @@
 
 * The remediation cap and decisions escalated to Jay
     * Challenge: plans allow at most two remediation rounds per milestone, then escalate.
-    * What happened: the cap was reached on reranker Milestone 2 (documentation correction applied by the Orchestrator at Jay's choice), on the windowed write-up (frozen), on evidence Milestones 3 and 4b (closed with Orchestrator wording fixes Jay approved), and on the recall plan's Milestone 2 low-findings fixes (collapsed into one pointer at Jay's approval).
+    * What happened: the cap was reached on reranker Milestone 2 (documentation correction applied by the Orchestrator at Jay's choice), on the windowed write-up (frozen), on evidence Milestones 3 and 4b (closed with Orchestrator wording fixes Jay approved, as Follow_Ups RAG-14 states), and on the recall plan's Milestone 2 low-findings fixes (collapsed into one pointer at Jay's approval).
     * Lesson: none stated as a rule; the records show that each cap ended with a choice by Jay (Orchestrator correction, freeze with the open findings listed, rewording, or collapse into a pointer).
-    * Pointers: `src/main/java/documentation/plans/2026-09-13-reranker.md` (Amendment 2); `src/main/java/documentation/plans/2026-09-13-reranker-windows.md` (Status at merge); `src/main/java/documentation/plans/2026-09-13-evaluation-evidence.md` (Amendment 7); `src/main/java/documentation/plans/2026-09-14-retrieval-recall.md` (Status, Milestone 2 closed); commit 48db9cd.
+    * Pointers: `src/main/java/documentation/plans/2026-09-13-reranker.md` (Amendment 2); `src/main/java/documentation/plans/2026-09-13-reranker-windows.md` (Status at merge); `src/main/java/documentation/plans/2026-09-13-evaluation-evidence.md` (Amendment 7); Follow_Ups RAG-14; `src/main/java/documentation/plans/2026-09-14-retrieval-recall.md` (Status, Milestone 2 closed); commit 48db9cd.
 
 * Correction notes that drift
     * Challenge: dated correction notes were meant to keep documentation history honest.
@@ -176,11 +176,11 @@
     * Lesson (amendments 2 and 3): a selection outcome is judged only against the default reference, and a run with a fallback stays committed and labelled.
     * Pointers: `src/main/java/documentation/plans/2026-09-14-retrieval-recall.md` (Status, amendments 2 and 3, Milestone 2 closed); snapshots 931, 932, 933, 947; claim C-657 in `src/main/java/documentation/RAG.md` (One-factor recall experiment block); commits cd539f9, 32b100d, f98002f, 48db9cd; `src/main/java/documentation/live-runs/2026-09-14-recall-one-factor/run.log`; Follow_Ups RAG-15.
 
-* A larger candidate pool that the reranker reached but did not rank through
+* A larger candidate pool that the reranker reached but did not rank fully into the top 5
     * Challenge: in the one-factor experiment, raising the `candidate-count` setting from 40 to 200 (a setting of runs b, c, and the run c repeat, not a default) with reranking at 40 candidates, was expected in Follow_Ups RAG-15 to put the answer chunks of nvda-02 and nvda-04 among the rerank inputs.
-    * What happened: in the run c repeat both answer chunks were rerank inputs, yet the reranker did not rank every one into the top 5 (claims C-651 and C-653, observed; C-654, experiment), and the repeat does not meet the selection rule against snapshot 598 (claim C-657). Why the cross-encoder ranked them where it did is not stated by the sources; the outcome is observed, not explained. Defaults are unchanged: `candidate-count` stays at its configured default and reranking stays off.
-    * Lesson (Jay, 2026-09-14): before blaming or changing the cross-encoder, check whether diversification (the removal of redundant chunks) removes answer chunks; Milestone 3 of the recall plan is that check (next bullet).
-    * Pointers: `src/main/java/documentation/RAG.md` (One-factor recall experiment block; Diversification removals block); `src/main/java/documentation/plans/2026-09-14-retrieval-recall.md` (Milestone 3 scope; Status, Milestone 2 closed); snapshots 598 and 947; Follow_Ups RAG-15.
+    * What happened: in the run c repeat both answer chunks were rerank inputs, and nvda-02 was inside the top 5 (claims C-651, observed; C-652, experiment) while nvda-04 stayed outside the top 5 (claims C-653, observed; C-654, experiment), and the repeat does not meet the selection rule against snapshot 598 (claim C-657). Why the cross-encoder ranked them where it did is not stated by the sources; the outcome is recorded, not explained. Defaults are unchanged: `candidate-count` stays at its configured default and reranking stays off.
+    * Lesson (Jay's note during Milestone 4 review, recall plan Status): before blaming or changing the cross-encoder, check whether diversification (the removal of duplicate chunks) removes correct chunks. That check was already step 3 of the plan's agreed order (Milestone 3, next bullet), written before Milestone 2 ran; the note restates that order after Milestone 2's outcome.
+    * Pointers: `src/main/java/documentation/RAG.md` (One-factor recall experiment block; Diversification removals block); `src/main/java/documentation/plans/2026-09-14-retrieval-recall.md` (Agreed order; Milestone 3 scope; Status, Milestone 2 closed and Jay's note during Milestone 4 review); snapshots 598 and 947; Follow_Ups RAG-15.
 
 * Diversification removals and the move decision
     * Challenge: traces did not list what diversification removed, so it could not be ruled in or out for a recorded miss.

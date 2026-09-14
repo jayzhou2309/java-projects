@@ -161,3 +161,9 @@ Correctness contract:
   means a row judged against the default reference, snapshot 598 (reranking off, `candidate-count` 40). Rows judged against
   another reranked configuration are not selection outcomes and are not written as claims. Milestone 2 adds the repeat of
   run (c) against 598 as its selection row; X3's pairwise rows stay as the plan lists them.
+- 2026-09-14, Milestone 1 closed: Scrutiny and UT passed on the first round (86a88d9); low findings fixed (ef61439) and
+  passed a scoped Scrutiny check.
+- 2026-09-14, Milestone 2 closed: Scrutiny failed round 1 on a rule row judged against a reranked configuration (amendment
+  3), passed after remediation (f98002f); UT passed. The low-findings wording fixes (75aa219, 2fb94d7) failed scoped
+  Scrutiny twice on change-log pointers; at the cap Jay approved collapsing those bullets into one pointer (48db9cd), which
+  Milestone 4's documentation check re-reads.

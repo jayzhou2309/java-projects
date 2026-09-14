@@ -1,0 +1,120 @@
+Experiment E1 for Follow_Ups RAG-15 (recall of nvda-02's chunk 802 and nvda-04's chunk 754), 2026-09-13 (times +08)
+One factor: retrieval candidate count 40 -> 200 (rag.retrieval.candidate-count through RAG_RETRIEVAL_CANDIDATE_COUNT); everything else at defaults,
+reranking off. Counterpart: snapshot 598 (traced, candidate count 40, reranking off), committed under
+live-runs/2026-09-13-evaluation-evidence/measurement/ (snapshot-598-traced-snapshot-295-reference-rerank-off.json, evidence-598.json).
+Worktree /Users/jayzhou/Documents/GitHub/java-projects-rag15, branch rag15-recall-e1 at 8835758; no main-code change. Development Mac, CPU. App port 8083.
+No chat model and no /api/recommendations call; 42 embedding calls (the evaluation only, no warm-up).
+This log records where the two chunks sit in the vector ranking at candidate count 200 and what else changed. It states no cause.
+
+Labels: observed (file and field, or command output quoted here) = a value as recorded; derived (script and computation) = computed from recorded
+values. S598, E598, S694, E694 name the four JSON files as in comparison-694-vs-598.txt's header; "comparison §n" is that file's section n.
+app.log (the application's stdout) is not committed; every line of it relied on below is quoted here.
+
+Build
+  B1. Run shell: cd /Users/jayzhou/Documents/GitHub/java-projects-rag15/StockRecommendationEngine; env | grep -E
+      '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE|SERVER_PORT|INTEGRATION_ACCESS_TOKEN)='
+      -> 0 lines before and 0 lines after set -a && source .env && set +a; the same pattern over .env (grep -c '^(RAG_|...)') -> 0 (observed: command output).
+  B2. set -a && source .env && set +a && ./mvnw -q -o verify -> exit 0, 22:28:59 to 22:29:17 (observed: command output). target/ did not exist before.
+      57 test classes, 426 tests, 0 failures, 0 errors, 28 skipped (derived: sum of tests, failures, errors, skipped attributes over
+      target/surefire-reports/TEST-*.xml of this run); "CLAIMS_CHECK claimsFiles=1 documents=21 problems=0" (observed: DocumentationClaimsTests report).
+  B3. git diff --stat 432f456 8835758 -- src/main/java/project src/main/resources -> empty (observed: command output). 432f456 is the base the
+      598 run's worktree started from (observed: the counterpart run.log, header).
+
+Run (one application start; scratch scripts ran these commands in this order)
+  R1. New run shell: cd <project>; set -a; source .env; set +a;
+      export SERVER_PORT=8083 INTEGRATION_ACCESS_TOKEN=<42-character random hex token, openssl rand -hex 21, not recorded> RAG_RETRIEVAL_CANDIDATE_COUNT=200
+      env | grep -E '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE|SERVER_PORT)=' printed
+      exactly "SERVER_PORT=8083" and "RAG_RETRIEVAL_CANDIDATE_COUNT=200"; token length 42; lsof -nP -iTCP:8083 -sTCP:LISTEN -t -> 0 listeners
+      (observed: command output, 22:30:55). RAG_CROSS_ENCODER_ENABLED not set, so the cross-encoder is off by its default.
+  R2. CPU sharing wait: ps -ax -o pid=,args= | grep -E 'surefire', dropping processes whose cwd (lsof -a -p <pid> -d cwd -Fn) is inside
+      java-projects-rag15; poll every 30 s, up to 20 minutes. Filter checked first with two probe processes named surefire-probe-*: the one with cwd in
+      the scratchpad was reported, the one with cwd in this worktree was not (observed: command output, 22:30:32).
+      Before the app start: "cpu-wait before-app-start 22:30:55: clear at 22:30:55 after 0 s" (observed: command output).
+  R3. nohup ./mvnw -q -o spring-boot:run > app.log 2>&1 &  (mvnw pid 22482; application JVM pid 22612, child of 22482, listener on 8083, cwd this
+      worktree's project directory). app.log: "Tomcat started on port 8083 (http)" and "Started StockRecommendationEngineApplication in 2.324 seconds"
+      at 22:30:59; 0 lines containing "cross-encoder" in any case (observed: app.log, grep -ci).
+  R4. CPU sharing wait (R2): "cpu-wait before-evaluate 22:31:15: clear at 22:31:15 after 0 s". sysctl -n vm.loadavg at 22:31:15: { 3.86 4.68 4.93 };
+      after the call at 22:31:39: { 3.49 4.54 4.87 } (observed: command output).
+  R5. curl -sS --max-time 1200 -X POST "http://localhost:8083/api/rag/evaluate?trace=true&rerank=false" -H "Authorization: Bearer <token>"
+      -> HTTP 200 in 24.07 s, 1,009,709 bytes, 22:31:15 to 22:31:39 (observed: curl -w output). Response id 694.
+      app.log (observed, quoted): "Evaluating retrieval: set=v2, questions=42, window=10, hybrid=null, rerank=false, trace=true";
+      "Retrieval evaluation stored: id=694, hitAt1=0.571429, hitAt3=0.738095, hitAt5=0.785714, mrr=0.674235, misses=5, rerankedQuestions=0,
+      rerankFallbackQuestions=0". Counts over app.log (derived: grep -c / uniq -c): 42 "Query embedding completed"; 42 "Searching eligible filing
+      chunks ... candidateLimit=200"; "Vector search completed" 14 each with ticker=AAPL candidates=109, ticker=MSFT candidates=200, ticker=NVDA
+      candidates=162; 42 "Selecting evidence by fused order ... rerank=false"; 0 "Reranking filing candidates" and 0 "Reranking failed".
+  R6. docker exec -i trading-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "select row_to_json(e) from retrieval_evaluations e where id = 694"
+      > snapshot-694-candidate-count-200-rerank-off.json -> exit 0, one line plus newline, 658,059 bytes (observed: command output, wc).
+      Same psql: select count(*), max(id) from retrieval_evaluations -> 40|694 after the run (observed; the count before the run was not taken).
+  R7. curl -sS -H "Authorization: Bearer <token>" http://localhost:8083/api/rag/evaluate/694/evidence -> HTTP 200 application/json, 382,867 bytes,
+      indented (observed: curl -w output and body). evidence-694.json is that body with whitespace (space, tab, CR, LF) outside JSON strings removed,
+      written as one line plus a newline, 250,386 bytes; a scratch script parsed both texts with every number and constant kept as its written text
+      and found them equal: "parses_equal_numbers_as_written=True" (observed: script output).
+  R8. Stop, 22:32:03: kill 22612 (the port-8083 listener JVM, cwd this worktree) by pid; 5 s later kill 22482 only if still alive; 3 s later
+      lsof on 8083 -> 0 listeners, pid 22612 not alive, pid 22482 not alive, no spring-boot:run or StockRecommendationEngineApplication process left
+      (observed: command output, 22:32:11). app.log ends with Maven's "[ERROR] Failed to execute goal ... spring-boot-maven-plugin:4.1.1:run ...
+      Process terminated with exit code: 143" and its six help lines, written after the kill (observed: app.log lines 530 to 536, the only WARN or
+      ERROR lines in app.log).
+  R9. After the stop: cd src/main/java/documentation/live-runs/2026-09-13-rag15-recall && python3 compare_e1.py > comparison-694-vs-598.txt -> exit 0.
+      compare_e1.py reads only S598, E598 (committed under ../2026-09-13-evaluation-evidence/measurement/), S694 and E694 (this directory).
+
+Settings confirmation
+  - candidateCount: 598 40, 694 200 (observed: S598, S694 properties.candidateCount). rerank false in both; rerankingEnabled false in both;
+    rerankedQuestions 0 and rerankFallbackQuestions 0 in both (observed: properties.rerank, rerankingEnabled, rerankedQuestions, rerankFallbackQuestions).
+  - 42 traces with rerank outcome OFF in each snapshot (derived: compare_e1.py, count of results.traces by trace.rerank.outcome; comparison §1).
+  - The other stored properties that differ: reranker (598 CrossEncoderReranker, 694 null), rerankerVersion (598 5d3e70fd0c9f, 694 null),
+    rerankerScoring (598 max-window/overlap=64/maxWindows=4, 694 null); every other property is equal, among them hybridEnabled true,
+    keywordCandidateCount 40, rrfK 60, weights vector 1.0 / keyword 0.5 / figure 1.0, rerankCandidates 20, window 10, set v2
+    (derived: compare_e1.py, property-by-property equality of S598 and S694 properties; comparison §1). 598 ran with the cross-encoder loaded and
+    reranking off (observed: the counterpart run.log, run 295); 694 ran with the cross-encoder not loaded (R1, R3).
+  - E694's token fields are unknown with reason "cross-encoder not loaded (no PassageTokenizer bean: rag.retrieval.cross-encoder.enabled is not
+    true)" (observed: E694 settings.loadedModelVersion basis and reason). Positions in E694 are observed from the trace.
+
+Recorded facts (values as printed in comparison-694-vs-598.txt)
+  F1. nvda-02, chunk 802 (comparison §2)
+      - Chunks holding an accepted phrase: 802 only, in E598 and in E694 (observed: E598/E694 questions[id=nvda-02].phrases[].chunks[].chunkId).
+      - 694: vectorRank 43, keywordRank 11, figureRank null, fusedPosition 25 (observed: S694 results.traces[id=nvda-02].trace.fused[chunkId=802]);
+        vector leg 162, keyword leg 40, figure leg null (observed: S694 trace vectorCandidates, keywordCandidates, figureCandidates); fused list 160
+        (derived: length of trace.fused); not returned: not among the 10 returnedChunkIds (derived: index in S694 trace.returnedChunkIds);
+        rank null, matchedChunkId null (observed: S694 results.questions[id=nvda-02]).
+      - 598: vectorRank null (absent from the 40-candidate vector leg), keywordRank 11, figureRank null, fusedPosition 41; vector leg 40, keyword leg
+        40, figure leg null; fused list 55; not returned; rank null (observed: S598, same fields; derived: same computations).
+      - Vector rank 43 is greater than 40 and at most the vector leg size 162 (derived: compare_e1.py, integer comparison).
+      - E694 records chunk 802 at fusedPosition 25, rerankInput false, rerankedPosition null, returnedPosition null, and bestAcceptedPosition 25; these
+        agree with the trace (observed: E694 questions[id=nvda-02]; derived: compare_e1.py equality check "fused true, returned true").
+      - The returned list of nvda-02 is identical in 598 and 694 (derived: compare_e1.py, list equality; comparison §4).
+  F2. nvda-04, chunk 754 (comparison §2)
+      - Chunks holding an accepted phrase: 754 only, in E598 and in E694 (observed: E598/E694 questions[id=nvda-04].phrases[].chunks[].chunkId).
+      - 694: vectorRank 52, keywordRank 35, figureRank null, fusedPosition 37; vector leg 162, keyword leg 40, figure leg null; fused list 160;
+        not returned; rank null, matchedChunkId null (observed: S694 results.traces[id=nvda-04] and results.questions[id=nvda-04]; derived: fused
+        length and returned index).
+      - 598: vectorRank null (absent from the 40-candidate vector leg), keywordRank 35, figureRank null, fusedPosition 54; vector leg 40; fused list 56;
+        not returned; rank null (observed: S598, same fields; derived: same computations).
+      - Vector rank 52 is greater than 40 and at most the vector leg size 162 (derived: compare_e1.py, integer comparison).
+      - E694 records chunk 754 at fusedPosition 37, rerankInput false, rerankedPosition null, returnedPosition null, bestAcceptedPosition 37, agreeing
+        with the trace (observed: E694 questions[id=nvda-04]; derived: compare_e1.py equality check).
+      - The returned list of nvda-04 is identical in 598 and 694 (derived: compare_e1.py, list equality).
+  F3. Vector leg size at 200 (comparison §3)
+      - Every question: AAPL 109, MSFT 200, NVDA 162 vector candidates; keyword leg 40 on every question (observed: S694 results.traces[].trace
+        vectorCandidates, keywordCandidates). No question's keyword or figure leg size differs from 598's (derived: compare_e1.py, equality of
+        keywordCandidates and figureCandidates per question: "0: none"). AAPL and NVDA are less than the candidate count 200, MSFT equals it (derived:
+        compare_e1.py, comparison with properties.candidateCount). In 598 every question's vector leg is 40 (observed: S598 trace vectorCandidates).
+      - In 694 every question's fused list is shorter than its vector leg (derived: compare_e1.py, 42 of 42). For nvda-02 the fused list holds 160
+        entries with a vectorRank, largest 162, and vector ranks 122 and 130 are not in it; for nvda-04, 160 entries, largest 162, ranks 122 and 149 not
+        in it (derived: compare_e1.py, vectorRank values of trace.fused against 1 to vectorCandidates). The reason these ranks are absent is not recorded.
+  F4. Rank and matched chunk, all 42 questions (comparison §4)
+      - Question lists equal in order, 42 questions (derived: compare_e1.py).
+      - One question's rank or matched chunk differs: nvda-12, rank 5 -> 1, matched chunk 802 in both (observed: S598/S694 results.questions[id=nvda-12]
+        rank, matchedChunkId; derived: compare_e1.py inequality). In its trace, chunk 802 has 598: vectorRank null, keywordRank 8, figureRank 1,
+        fusedPosition 5; 694: vectorRank 47, keywordRank 8, figureRank 1, fusedPosition 1 (observed: trace.fused[chunkId=802]). Recorded change only.
+      - The other 41 questions have equal rank and matched chunk (derived: compare_e1.py).
+      - Returned lists (top 10 returnedChunkIds) differ on three questions: msft-12 (rank 2, chunk 519 in both), nvda-12, nvda-13 (rank 1, chunk 880 in
+        both); the lists are printed in comparison §4 (derived: compare_e1.py, list inequality). Recorded changes only.
+  F5. Metrics (comparison §5; observed: top-level fields and results.tickerHitAt5 / results.slices of S598 and S694; differences derived)
+      - hit@1 0.547619 -> 0.571429 (+0.023810); hit@3 0.714286 -> 0.738095 (+0.023809); hit@5 0.785714 -> 0.785714 (0); MRR 0.655187 -> 0.674235
+        (+0.019048). Each stored value equals the value recomputed from the same file's per-question ranks at scale 6 (derived: compare_e1.py).
+      - Per-ticker hit@5: AAPL 0.928571, MSFT 0.785714, NVDA 0.642857 in both (difference 0 each).
+      - Slices: figure (12 questions) hit@1 0.833333 -> 0.916667, hit@3 0.916667 -> 1.000000, hit@5 1.000000 -> 1.000000, MRR 0.891667 -> 0.958333;
+        nonFigure (30 questions) hit@1 0.433333, hit@3 0.633333, hit@5 0.700000, MRR 0.560595 in both.
+
+Files committed in this directory
+  snapshot-694-candidate-count-200-rerank-off.json (R6), evidence-694.json (R7), compare_e1.py and comparison-694-vs-598.txt (R9), run.log.

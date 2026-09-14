@@ -167,3 +167,8 @@ Correctness contract:
   3), passed after remediation (f98002f); UT passed. The low-findings wording fixes (75aa219, 2fb94d7) failed scoped
   Scrutiny twice on change-log pointers; at the cap Jay approved collapsing those bullets into one pointer (48db9cd), which
   Milestone 4's documentation check re-reads.
+- 2026-09-14, Milestone 3 closed: Scrutiny and UT passed on the first round (dd7c9b5, 089e20e). At 598's settings no
+  accepted chunk was removed (claim C-701), so under this milestone's rule the diversification order stays and no amendment
+  follows. Low findings left open: chunk-id-only lookups would misreport a repeated vector chunk (not produced by the vector
+  query), and the evidence `removed` source text names the empty case for every question. UT observed that
+  `POST /api/rag/retrieve` is not token-gated (pre-existing; raised as a separate task).

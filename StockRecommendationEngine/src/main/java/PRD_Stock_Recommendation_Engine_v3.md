@@ -138,6 +138,9 @@ See also [documentation/Target_State_Trading_Desk.md](documentation/Target_State
 vision (specialist agents, a multi-agent Debate Desk, portfolio/risk committee, AI CIO, self-improvement loop) that
 is not yet part of this delivery plan.
 
+See [documentation/Project_Challenges.md](documentation/Project_Challenges.md) for the problems met during delivery so
+far and what was learned, each with a pointer to its source.
+
 - Which LLM provider(s) for production vs. fallback?
 - Real-time vs. end-of-day granularity for quant features?
 - Regulatory/compliance requirements for automated financial recommendations, and how execution mode changes that calculus jurisdiction-by-jurisdiction?

@@ -15,7 +15,7 @@ Labels: [observed] a value as stored (file and field named); [derived] computed 
   932: candidateCount 200, rerank false, rerankCandidates 20, rerankedQuestions 0, rerankFallbackQuestions 0; trace outcomes OFF 42
   933: candidateCount 200, rerank true, rerankCandidates 40, rerankedQuestions 41, rerankFallbackQuestions 1; trace outcomes FALLBACK 1, RERANKED 41
   947: candidateCount 200, rerank true, rerankCandidates 40, rerankedQuestions 42, rerankFallbackQuestions 0; trace outcomes RERANKED 42
-  X2 (property-diff.txt): 931 against 598: only what the plan varies differs; 932 against 598: only what the plan varies differs; 933 against 627: other properties differ, no claim compares the pair; 947 against 627: only what the plan varies differs; 947 against 932: only what the plan varies differs
+  X2 (property-diff.txt): 931 against 598: recorded settings: only what the plan varies differs; 932 against 598: recorded settings: only what the plan varies differs; 933 against 627: other properties differ, no claim compares the pair; 947 against 627: recorded settings: only what the plan varies differs; 947 against 932: recorded settings: only what the plan varies differs (outcome values and rerank-timeout-ms also differ, named there); 947 against 598: recorded settings: only what the plan varies differs (outcome values and rerank-timeout-ms also differ, named there)
 
 2. X5: rerank fallbacks per run [observed: results.traces[].trace.rerank.outcome FALLBACK and fallbackReason]
   598: 0
@@ -102,7 +102,7 @@ Labels: [observed] a value as stored (file and field named); [derived] computed 
   947 nvda-04 chunk 754: fusedPosition 37, rerankInput true (observed), rerankedPosition 11 (observed), returnedPosition null; rank null, rerank outcome RERANKED
 
 7. Selection rule per criterion [derived: as the ruleRow check computes; values observed in each snapshot]
-  627 against 598 (selection outcome):
+  627 against 598 (selection outcome: judged against the default reference 598 (plan amendment 3)):
     aggregateHitAt5: pass (hit@5 0.809524 against 0.785714)
     nonFigureHitAt5: pass (non-figure-slice hit@5 0.733333 against 0.700000)
     tickerHitAt5: fail (AAPL 0.928571 against 0.928571, MSFT 0.928571 against 0.785714, NVDA 0.571429 against 0.642857 (below))
@@ -112,14 +112,19 @@ Labels: [observed] a value as stored (file and field named); [derived] computed 
     nonFigureHitAt5: pass (non-figure-slice hit@5 0.766667 against 0.700000)
     tickerHitAt5: pass (AAPL 0.928571 against 0.928571, MSFT 0.928571 against 0.785714, NVDA 0.642857 against 0.642857)
     figureKindTop5: fail (left the top 5: nvda-01 (rank null, was 3))
-  947 against 932 (selection outcome):
+  947 against 932 (the plan's comparison of (c) with (b); not a selection outcome: selection outcomes are judged against 598 (plan amendment 3)):
     aggregateHitAt5: pass (hit@5 0.833333 against 0.785714)
     nonFigureHitAt5: pass (non-figure-slice hit@5 0.766667 against 0.700000)
     tickerHitAt5: pass (AAPL 0.928571 against 0.928571, MSFT 0.928571 against 0.785714, NVDA 0.642857 against 0.642857)
     figureKindTop5: fail (left the top 5: nvda-01 (rank null, was 3))
-  947 against 627 (selection outcome):
+  947 against 627 (NOT a selection outcome (plan amendment 3): 627 is a reranked configuration, not the default reference 598; values printed for the record only, no claim):
     aggregateHitAt5: pass (hit@5 0.833333 against 0.809524)
     nonFigureHitAt5: pass (non-figure-slice hit@5 0.766667 against 0.733333)
     tickerHitAt5: pass (AAPL 0.928571 against 0.928571, MSFT 0.928571 against 0.928571, NVDA 0.642857 against 0.571429)
     figureKindTop5: pass (23 FIGURE questions in the reference's top 5 stay)
+  947 against 598 (selection outcome: judged against the default reference 598 (plan amendment 3)):
+    aggregateHitAt5: pass (hit@5 0.833333 against 0.785714)
+    nonFigureHitAt5: pass (non-figure-slice hit@5 0.766667 against 0.700000)
+    tickerHitAt5: pass (AAPL 0.928571 against 0.928571, MSFT 0.928571 against 0.785714, NVDA 0.642857 against 0.642857)
+    figureKindTop5: fail (left the top 5: nvda-01 (rank null, was 3))
 

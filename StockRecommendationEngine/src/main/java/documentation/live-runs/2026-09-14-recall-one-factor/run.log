@@ -133,10 +133,8 @@ Comparison and claims
   K3. Selection rule (comparison.txt section 7, derived): 627 against 598 fails the per-ticker and FIGURE top-5 criteria (claim C-637). 933 against 932 is
       printed for the record only and is not a selection outcome (X5).
   K3a. After amendment 2 (derived: property-diff.txt, comparison.txt section 7): 947 against 627 differs only in candidateCount, so the experiment claims
-      C-652 and C-654 name experiment-candidate-count-627-947.json and the ruleRow claim C-656 compares them: all four criteria met. 947 against 932 differs
-      in rerank, rerankCandidates and rerankedQuestions, the properties the plan's comparison of (c) with (b) varies; ruleRow claim C-655: aggregate,
-      non-figure and per-ticker hit@5 met, FIGURE top-5 not met (nvda-01, rank 3 in 932, no rank in 947). The plan's comparison does not meet the rule,
-      so no DECISION item is raised; the 627 comparison is between two reranked configurations, neither the defaults.
+      C-652 and C-654 name experiment-candidate-count-627-947.json. 947 against 932 is the plan's comparison of (c) with (b); ruleRow claim C-655.
+      (Revised in remediation round 1 under plan amendment 3: see "Remediation round 1"; the earlier text of this entry is in commit 32b100d.)
   K4a. nvda-02 and nvda-04 in 947 (comparison.txt section 6, observed): chunk 802 fused position 25, rerank input, reranked 4th, returned 4th, rank 4; chunk
       754 fused position 37, rerank input, reranked 11th, not returned, rank null.
   K4. nvda-02 and nvda-04 (comparison.txt section 6, observed from the evidence reports): 932 chunk 802 fused position 25, not a rerank input, not returned;
@@ -153,6 +151,28 @@ Comparison and claims
         6c3bb253761528eaf0e8d1e2bde39809c0fe427f537eb517693c6d92188844c0  property-diff.txt
         957da96a58e60510a313f350d02dc1f5fd191a086fbb8631a28fc2201565ee73  comparison.txt
         8e90bda990a3cc62312df3898a40511b049f2f9d261b26f92cc6115b3a45a9ed  claims.json
+
+Remediation round 1 (Scrutiny round 1 findings; plan amendment 3, 79b662c; no evaluation run, no application start, no model call)
+  R1. Amendment 3: selection outcomes are judged against the default reference 598. compare_one_factor.py no longer writes a ruleRow of 947 against 627
+      (a reranked configuration); that claim, C-656 in 32b100d, was removed and its id is not reused (RETIRED_IDS). It writes a ruleRow of 947 against
+      598 as C-657; its criteria are those the script computes from the two snapshots, and the claims check verifies them. comparison.txt section 7 labels
+      each row: 627 and 947 against 598 as selection outcomes; 947 against 932 as the plan's comparison, not a selection outcome; 947 against 627 as
+      printed for the record only, no claim; 933 against 932 as X5.
+  R2. property-diff.txt: retrieval_strategy is compared; rerankedQuestions and retrieval_strategy are named as outcome values, not settings, for the pairs
+      where reranking is on in one run and off in the other (947 against 932, and the added pair 947 against 598); each run's rerank-timeout-ms is printed
+      from the run logs (TIMEOUT_MS: 598 default per ../2026-09-13-evaluation-evidence/measurement/run.log, 627 4000 per the same log, 931 and 932 2000
+      per the warm-up lines above, 933 and 947 4000 per their overrides) and named in the X2 line where it differs.
+  R3. The free text of C-652 and C-654 states top-5 membership (what their topK checks read) instead of ranks. RAG.md (Settings bullet and a change-log
+      bullet) and Follow_Ups RAG-15 point to the generated block for positions, ranks, the fallback and the rule rows instead of restating them.
+  R4. python3 compare_one_factor.py twice -> exit 0 both; shasum -a 256 identical after each run (observed); no __pycache__ under src (find).
+        0c7be38990bc2d3158169ad7a0dcfd44da37eb91cbfde8097bc4838c22f47f67  property-diff.txt
+        9ae5e26e5bf7f2d7b9c48aadc454b58df47aed34f9c9805df99baba95f33235a  comparison.txt
+        c10cf818549d9b9a91e3e13a2ad8bbed5a7224f198c026634718dcc23904c351  claims.json
+  R5. ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> "CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md]
+      notGenerated=0", "CLAIMS_CHECK claimsFiles=4 documents=22 problems=0" (observed).
+  R6. New shell via env -i HOME PATH; set -a && source .env && set +a; the env grep of B1 -> 0. rm -rf target/surefire-reports; ./mvnw -q -o verify ->
+      exit 0, 20:12:50 to 20:13:05 (observed); 59 test classes, 542 tests, 0 failures, 0 errors, 28 skipped (derived: surefire XML sums);
+      "CLAIMS_CHECK claimsFiles=4 documents=22 problems=0" (observed). lsof -iTCP:8081 -sTCP:LISTEN -> 0 lines (observed).
 
 Build (after the repeat, in a new shell started with env -i HOME PATH, so no RAG_* or run variable was inherited; the same check before amendment 2, at
 19:52, also exited 0 with the same counts)

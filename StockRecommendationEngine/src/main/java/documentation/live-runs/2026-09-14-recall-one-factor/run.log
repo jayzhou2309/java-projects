@@ -200,3 +200,18 @@ Files committed in this directory
   evidence-931.json, evidence-932.json, evidence-933.json, evidence-947.json (step 8); reproduction-931.txt (X1); scoring-931.txt, scoring-932.txt,
   scoring-933.txt, scoring-947.txt (step 9); compare_one_factor.py, property-diff.txt, comparison.txt, claims.json (K1);
   experiment-candidate-count-598-932.json (K2), experiment-candidate-count-627-947.json (K3a); run.log.
+
+L5 (2fb94d7 and the collapse commit; text only, no app start, no evaluation, no model call)
+  2fb94d7, RAG.md: One-factor recall experiment, Settings bullet: the timeout pointer "the values from run.log" became "each run's value with its
+      source"; change log, plan amendment 2 bullet: "next bullet records ... after it" became "bullets after it record ... later"; amendment 3 bullet:
+      "from run.log" became a pointer to property-diff.txt and the low-findings bullet; a low-findings change-log bullet pointing to 75aa219 was added.
+  2fb94d7, experiment-candidate-count-598-932.json: the description's timeout wording "runs used the defaults (run.log)" became a pointer to
+      property-diff.txt for each value's source. run.log: the TIMEOUT_MS note gained "(source corrected in L1 below)".
+  Collapse commit, RAG.md: change log, the Milestone 2 bullets after the initial one (run c's outcome, amendment 2, amendment 3 and remediation round 1,
+      low findings) replaced by one pointer bullet to the generated block, this directory, the commits 32b100d, f98002f, 75aa219, 2fb94d7 and the collapse
+      commit, and this run.log. Runs bullet: "the candidate count, rerank-candidates, and rerank-timeout-ms were set with RAG_* variables" became
+      "settings not at their defaults were set with RAG_* variables", with a pointer to property-diff.txt; the fallback parenthesis became a pointer to
+      the run labels. Settings bullet: three restatements of which run had a fallback removed (pointers to comparison.txt and the block labels kept).
+  Checks: clean shell (env -i HOME PATH), .env exported, env grep for RAG_* and the enable flags -> 0; ./mvnw -q -o verify -> exit 0;
+      "CLAIMS_CHECK claimsFiles=4 documents=22 problems=0" (observed). python3 compare_one_factor.py -> exit 0; property-diff.txt, comparison.txt,
+      claims.json md5 unchanged; no __pycache__ (observed).

@@ -218,4 +218,6 @@ of nvda-09 with the never-retrieved questions is corrected above.
   superseded; RAG.md's Windows Why note and this plan's Why msft-05 bullet, kept and marked superseded, naming c9b2e5f for their
   earlier wording; corrected 2026-09-14, plan `2026-09-13-evaluation-evidence.md` Milestone 4b remediation round 1: this
   parenthesis grouped run.log's note, which names no commit, with the two that name c9b2e5f); and "its matched chunk's" in the
-  Milestone 1 change-log correction (its superseded note names chunks 805 and 466).
+  Milestone 1 change-log correction (its superseded note named chunks 805 and 466; corrected 2026-09-14 at the Milestone 4b remediation cap, Orchestrator, with Jay's approval:
+  remediation round 2 of Milestone 4b replaced that note's wording, including the chunk ids, with a description, so the
+  wording naming chunk 805 for nvda-01 and chunk 466 for msft-04 is readable at commit 43b1931, not in RAG.md at HEAD).

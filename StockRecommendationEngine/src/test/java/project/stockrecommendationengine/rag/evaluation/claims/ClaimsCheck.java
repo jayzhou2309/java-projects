@@ -44,7 +44,7 @@ public final class ClaimsCheck {
     static final List<String> BASES = List.of("observed", "derived", "inferred", "unknown", "experiment");
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
     static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
-            "candidateRecall", "removedAccepted", "notRecorded");
+            "candidateRecall", "removedAccepted", "blend", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -64,6 +64,7 @@ public final class ClaimsCheck {
             Map.entry("bestFusedPosition", Set.of("type", "report", "question", "expected")),
             Map.entry("candidateRecall", Set.of("type", "report", "k", "expected")),
             Map.entry("removedAccepted", Set.of("type", "report", "expected")),
+            Map.entry("blend", Set.of("type", "snapshot", "report", "k", "w", "questions", "metric", "expected")),
             Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
@@ -613,6 +614,7 @@ public final class ClaimsCheck {
                 case "bestFusedPosition" -> bestFusedPosition(claim, check, evaluation);
                 case "candidateRecall" -> candidateRecall(claim, check, evaluation);
                 case "removedAccepted" -> removedAccepted(claim, check, evaluation);
+                case "blend" -> blend(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -1150,6 +1152,184 @@ public final class ClaimsCheck {
         String in = "In " + reportReference(report) + ", diversification removed ";
         return counted.isEmpty() ? in + "no chunk holding an accepted phrase of any of the " + questions.size() + " questions."
                 : in + "a chunk holding an accepted phrase of " + counted.size() + " of the " + questions.size() + " questions: " + String.join(", ", counted) + ".";
+    }
+
+    private record BlendInput(long chunk, int fused, int reranked) {
+    }
+
+    // Template: "Blending reranked and fused positions in <Snapshot> at k <k> and w <w> (accepted chunks from <Report>), <question> ranks
+    // <ordinal>." | "..., <question> ranks outside the window of <n> results (no chunk holding an accepted phrase)." | "..., hit@5 over the <n>
+    // question(s) <ids> is <v> (<c> ranked 1 to 5)." | "..., MRR over the <n> question(s) <ids> is <v>."
+    /**
+     * A blended order recomputed from a traced snapshot (plan {@code 2026-09-14-rerank-blend.md}, Milestone 1): for each listed question, the
+     * trace's rerank inputs, each with fused position f and reranked position r, are ordered by {@code w / (k + r) + (1 - w) / (k + f)} descending
+     * (exact arithmetic; ties by smaller f), the fused chunks after the inputs keep fused order, and the window is the snapshot's window size. The
+     * rank is the 1-based position of the first window chunk the evidence report lists under an accepted phrase of the question, null when none.
+     * hit@5 and MRR follow RetrievalEvaluationService (hit@5 half up to six places; each 1/rank half up to twelve places, their sum over the
+     * listed questions half up to six places). Unreadable: a report whose snapshotId is not the snapshot's id, a question without a trace, a
+     * rerank outcome other than RERANKED, inputs that are not the first fused chunks with positions 1 to n, an input count other than
+     * min(fused, max(rerankCandidates, window)) when the snapshot records rerankCandidates, or unknown accepted phrases.
+     */
+    private String blend(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        String reportFile = requireText(check, "report");
+        JsonNode kNode = check.get("k");
+        if (kNode == null || !kNode.isIntegralNumber() || kNode.intValue() < 1) throw new Unreadable("check.k must be a positive integer, found " + kNode);
+        BigDecimal w = scale6(check.get("w"));
+        if (w == null || w.signum() < 0 || w.compareTo(BigDecimal.ONE) > 0) {
+            throw new Unreadable("check.w must be a number from 0 to 1 with at most six decimal places, found " + check.get("w"));
+        }
+        JsonNode questionsNode = check.get("questions");
+        if (questionsNode == null || !questionsNode.isArray() || questionsNode.isEmpty()) {
+            throw new Unreadable("check.questions must list at least one question id, found " + questionsNode);
+        }
+        List<String> questions = new ArrayList<>();
+        for (JsonNode q : questionsNode) {
+            if (!q.isString() || q.stringValue().isBlank() || questions.contains(q.stringValue())) {
+                throw new Unreadable("check.questions must list distinct non-blank question ids, found " + abbreviate(questionsNode.toString()));
+            }
+            questions.add(q.stringValue());
+        }
+        String metric = requireText(check, "metric");
+        JsonNode expected = check.get("expected");
+        BigDecimal expectedValue = null;
+        switch (metric) {
+            case "rank" -> {
+                if (questions.size() != 1) throw new Unreadable("check.metric rank takes exactly one question, found " + questions.size());
+                if (expected == null || !(expected.isNull() || expected.isIntegralNumber() && expected.intValue() >= 1)) {
+                    throw new Unreadable("check.expected must be a rank (positive integer) or null, found " + (expected == null ? "none" : expected));
+                }
+            }
+            case "hitAt5", "mrr" -> {
+                expectedValue = scale6(expected);
+                if (expectedValue == null) throw new Unreadable("check.expected must be a number with at most six decimal places, found " + expected);
+            }
+            default -> throw new Unreadable("check.metric must be rank, hitAt5, or mrr, found " + quote(metric));
+        }
+        int k = kNode.intValue();
+        evaluation.subject(metric + " at k " + k + ", w " + w.stripTrailingZeros().toPlainString() + " over " + questions.size()
+                + (questions.size() == 1 ? " question" : " questions") + " in " + snapshotFile);
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Loaded report = report(reportFile, evaluation);
+        if (snapshot.id() == null || snapshot.id() != report.json().get("snapshotId").longValue()) {
+            throw new Unreadable(reportFile + " is the evidence report of snapshot " + report.json().get("snapshotId").asString() + ", not of " + snapshotFile
+                    + " (snapshot " + snapshot.id() + ")");
+        }
+        Integer window = snapshot.windowSize();
+        if (window == null || window < 1) throw new Unreadable(snapshotFile + " records no window size");
+        JsonNode results = loaded.json().path("results");
+        JsonNode traces = results.isObject() ? results.path("traces") : loaded.json().path("traces");
+        JsonNode rerankCandidates = snapshot.properties() == null ? null : snapshot.properties().get("rerankCandidates");
+        Map<String, Integer> ranks = new LinkedHashMap<>();
+        for (String question : questions) {
+            snapshot.question(question);
+            JsonNode trace = null;
+            for (JsonNode entry : traces) {
+                if (question.equals(entry.path("id").asString(null))) trace = entry.get("trace");
+            }
+            if (trace == null || !trace.isObject()) throw new Unreadable("question " + question + " has no trace in " + snapshotFile);
+            ranks.put(question, blendedRank(question, trace, reportQuestion(report, question), k, w, window,
+                    rerankCandidates != null && rerankCandidates.isIntegralNumber() ? rerankCandidates.intValue() : null));
+        }
+        basis(claim, "derived", evaluation);
+        String lead = "Blending reranked and fused positions in " + snapshotReference(loaded, snapshot, null) + " at k " + k + " and w "
+                + w.stripTrailingZeros().toPlainString() + " (accepted chunks from " + reportReference(report) + "), ";
+        String over = " over the " + questions.size() + (questions.size() == 1 ? " question " : " questions ") + joinAnd(questions) + " is ";
+        switch (metric) {
+            case "rank" -> {
+                String question = questions.get(0);
+                Integer found = ranks.get(question);
+                Integer wanted = expected.isNull() ? null : expected.intValue();
+                if (!Objects.equals(found, wanted)) evaluation.differs("rank", String.valueOf(wanted), String.valueOf(found));
+                return lead + question + (found != null ? " ranks " + ordinal(found) + "."
+                        : " ranks outside the window of " + window + " results (no chunk holding an accepted phrase).");
+            }
+            case "hitAt5" -> {
+                long inside = ranks.values().stream().filter(r -> r != null && r <= 5).count();
+                BigDecimal found = BigDecimal.valueOf(inside).divide(BigDecimal.valueOf(questions.size()), 6, RoundingMode.HALF_UP);
+                if (found.compareTo(expectedValue) != 0) {
+                    List<String> outside = new ArrayList<>();
+                    ranks.forEach((q, r) -> { if (r == null || r > 5) outside.add(q + " (" + rankText(r) + ")"); });
+                    evaluation.differs("hit@5", expectedValue.toPlainString(), found.toPlainString() + " (" + inside + " of " + questions.size() + "; outside the top 5: "
+                            + (outside.isEmpty() ? "none" : String.join(", ", outside)) + ")");
+                }
+                return lead + "hit@5" + over + found.toPlainString() + " (" + inside + " ranked 1 to 5).";
+            }
+            default -> {
+                BigDecimal sum = BigDecimal.ZERO;
+                for (Integer r : ranks.values()) {
+                    if (r != null) sum = sum.add(BigDecimal.ONE.divide(BigDecimal.valueOf(r), 12, RoundingMode.HALF_UP));
+                }
+                BigDecimal found = sum.divide(BigDecimal.valueOf(questions.size()), 6, RoundingMode.HALF_UP);
+                if (found.compareTo(expectedValue) != 0) {
+                    List<String> listed = new ArrayList<>();
+                    ranks.forEach((q, r) -> listed.add(q + " " + rankText(r)));
+                    evaluation.differs("MRR", expectedValue.toPlainString(), found.toPlainString() + " (" + String.join(", ", listed) + ")");
+                }
+                return lead + "MRR" + over + found.toPlainString() + ".";
+            }
+        }
+    }
+
+    /** The question's rank in the blended window (see {@link #blend}); null when no window chunk holds an accepted phrase. */
+    private static Integer blendedRank(String question, JsonNode trace, JsonNode reportQuestion, int k, BigDecimal w, int window, Integer rerankCandidates) {
+        JsonNode rerank = trace.path("rerank");
+        String outcome = rerank.path("outcome").asString("none");
+        if (!outcome.equals("RERANKED")) throw new Unreadable("question " + question + " has rerank outcome " + outcome + ", not RERANKED, so no reranked positions to blend");
+        JsonNode fused = trace.path("fused");
+        Map<Integer, Long> byPosition = new HashMap<>();
+        for (JsonNode entry : fused) byPosition.put(entry.path("fusedPosition").asInt(-1), entry.path("chunkId").asLong(-1));
+        for (int position = 1; position <= fused.size(); position++) {
+            if (!byPosition.containsKey(position)) throw new Unreadable("question " + question + " has fused positions that are not 1 to " + fused.size());
+        }
+        List<BlendInput> inputs = new ArrayList<>();
+        Set<Integer> fusedSeen = new HashSet<>();
+        Set<Integer> rerankedSeen = new HashSet<>();
+        for (JsonNode candidate : rerank.path("candidates")) {
+            JsonNode f = candidate.get("fusedPosition");
+            JsonNode r = candidate.get("rerankedPosition");
+            if (f == null || !f.isIntegralNumber() || r == null || !r.isIntegralNumber()) {
+                throw new Unreadable("question " + question + " has a rerank input without integer fused and reranked positions: " + abbreviate(candidate.toString()));
+            }
+            inputs.add(new BlendInput(candidate.path("chunkId").asLong(-1), f.intValue(), r.intValue()));
+            fusedSeen.add(f.intValue());
+            rerankedSeen.add(r.intValue());
+        }
+        int n = inputs.size();
+        boolean positions = n > 0 && fusedSeen.size() == n && rerankedSeen.size() == n && fusedSeen.stream().allMatch(p -> p >= 1 && p <= n)
+                && rerankedSeen.stream().allMatch(p -> p >= 1 && p <= n) && inputs.stream().allMatch(i -> Objects.equals(byPosition.get(i.fused()), i.chunk()));
+        if (!positions) throw new Unreadable("question " + question + " has rerank inputs that are not the first fused chunks with fused and reranked positions 1 to " + n);
+        if (rerankCandidates != null && n != Math.min(fused.size(), Math.max(rerankCandidates, window))) {
+            throw new Unreadable("question " + question + " has " + n + " rerank inputs, expected min(fused " + fused.size() + ", max(rerankCandidates " + rerankCandidates
+                    + ", window " + window + "))");
+        }
+        JsonNode count = reportQuestion.get("acceptedPhraseCount");
+        if (count == null || !count.isObject() || !count.path("basis").asString("").equals("observed")) {
+            throw new Unreadable("question " + question + " has unknown accepted phrases in the report");
+        }
+        Set<Long> accepted = new HashSet<>();
+        for (JsonNode phraseNode : reportQuestion.path("phrases")) {
+            for (JsonNode chunkNode : phraseNode.path("chunks")) accepted.add(chunkNode.path("chunkId").asLong(-1));
+        }
+        BigDecimal kd = BigDecimal.valueOf(k);
+        BigDecimal rest = BigDecimal.ONE.subtract(w);
+        inputs.sort((a, b) -> {
+            // score = (w (k + f) + (1 - w) (k + r)) / ((k + r) (k + f)); compare a and b by cross-multiplying, higher first
+            BigDecimal numA = w.multiply(kd.add(BigDecimal.valueOf(a.fused()))).add(rest.multiply(kd.add(BigDecimal.valueOf(a.reranked()))));
+            BigDecimal denA = kd.add(BigDecimal.valueOf(a.reranked())).multiply(kd.add(BigDecimal.valueOf(a.fused())));
+            BigDecimal numB = w.multiply(kd.add(BigDecimal.valueOf(b.fused()))).add(rest.multiply(kd.add(BigDecimal.valueOf(b.reranked()))));
+            BigDecimal denB = kd.add(BigDecimal.valueOf(b.reranked())).multiply(kd.add(BigDecimal.valueOf(b.fused())));
+            int byScore = numB.multiply(denA).compareTo(numA.multiply(denB));
+            return byScore != 0 ? byScore : Integer.compare(a.fused(), b.fused());
+        });
+        List<Long> order = new ArrayList<>();
+        inputs.forEach(input -> order.add(input.chunk()));
+        for (int position = n + 1; position <= fused.size(); position++) order.add(byPosition.get(position));
+        for (int i = 0; i < Math.min(window, order.size()); i++) {
+            if (accepted.contains(order.get(i))) return i + 1;
+        }
+        return null;
     }
 
     /**

@@ -152,3 +152,20 @@ from the frozen comparison above.
   - Out of scope: quantized variants, other windows, candidate counts, or timeouts; any default change.
   - User-facing flow (UT): `GET /api/rag/evaluate/{id}` and `/evidence` for R, A, B equal the committed exports (evidence
     token fields with the matching model loaded); the rule rows and entering/leaving lists recomputed from live responses.
+- 2026-09-15, amendment 3 (Milestone 2, Scrutiny round 1): the pairs' fused candidate lists were not checked for identity.
+  Row B's (1368) fused lists, rerank inputs, and removals equal run R's (1366), and R's reranked order equals 947's, but
+  the documents pair B with 947 and do not say so; row A's (1367) fused order differs from 613's in five questions and its
+  rerank input set differs for nvda-14, with no same-session current-model run at row A's settings. No cause is stated for
+  the differences. Changes to Milestone 2:
+  - Run R_A: one more application start with the current model at row A's settings (`candidate-count` 40,
+    `rerank-candidates` 20, timeout 2,000 ms), traced, after the CPU-sharing wait. Row A is paired with R_A and row B
+    with R for every per-question, metric, entering/leaving, and scoring-time comparison; 613 and 947 stay as the recorded
+    earlier references (R's reproduction of 947 stays).
+  - G7. Per pair, a generated section and checked claims: fused-order identity per question, rerank input set identity
+    per question, and the input chunks' fused positions, naming every question that differs. A comparison sentence about
+    a question whose rerank input set differs within its pair is not written as a model comparison; such questions are
+    named and excluded from entering/leaving statements, and metrics are reported both over all questions and over the
+    questions with identical input sets.
+  - The two Milestone 1 low findings not fixed (the exclusion guard reads `yes`/`on`/`1` as true; the live test checks
+    only row 0 against native truncation) are logged in Follow_Ups rather than fixed.
+  - The selection rows against 598 stay per gte row (A, B).

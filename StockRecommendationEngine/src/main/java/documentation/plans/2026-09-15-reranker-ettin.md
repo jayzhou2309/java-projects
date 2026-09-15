@@ -112,3 +112,11 @@ from the frozen comparison above.
     ranking comparison stays one factor (the model); scoring time is reported, and no row is judged fit for production
     use by this plan. The reference rows keep their recorded timeouts.
   - E5 now requires the output to be one score per pair ([batch, 1]); a startup check fails otherwise.
+- 2026-09-15, amendment 2 (Milestone 1): the Boundaries finding that `CrossEncoderPairAssembler` rejects an all-type-0
+  template, carried into amendment 1, is wrong: its reader requires the first two specials to match sequence A's type and
+  the last to match B's, which 0, 0, 0 satisfies (checked on the downloaded gte tokenizer). The second model therefore runs
+  through the unchanged `OnnxCrossEncoderScorer` and `CrossEncoderPairAssembler`; the new files are its properties, file
+  checks, startup signature check, configuration with mutual exclusion, reranker subclass, passage tokenizer, and profile.
+  Two existing classes outside the Boundaries list changed: `FilingRetrievalProperties`' upper bound for
+  `rerank-timeout-ms` (default unchanged) so the amended timeout is accepted, and a default method on `PassageTokenizer`
+  so the evidence report uses the loaded model's max-length. Implemented in 336696b.

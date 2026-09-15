@@ -64,7 +64,7 @@ public final class ClaimsCheck {
             Map.entry("bestFusedPosition", Set.of("type", "report", "question", "expected")),
             Map.entry("candidateRecall", Set.of("type", "report", "k", "expected")),
             Map.entry("removedAccepted", Set.of("type", "report", "expected")),
-            Map.entry("blend", Set.of("type", "snapshot", "report", "k", "w", "questions", "metric", "expected")),
+            Map.entry("blend", Set.of("type", "snapshot", "report", "k", "w", "questions", "metric", "expected", "reference")),
             Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
@@ -1159,7 +1159,9 @@ public final class ClaimsCheck {
 
     // Template: "Blending reranked and fused positions in <Snapshot> at k <k> and w <w> (accepted chunks from <Report>), <question> ranks
     // <ordinal>." | "..., <question> ranks outside the window of <n> results (no chunk holding an accepted phrase)." | "..., hit@5 over the <n>
-    // question(s) <ids> is <v> (<c> ranked 1 to 5)." | "..., MRR over the <n> question(s) <ids> is <v>."
+    // question(s) <ids> is <v> (<c> ranked 1 to 5)." | "..., MRR over the <n> question(s) <ids> is <v>." | "..., top-5 membership of the <n>
+    // question(s) <ids> against the stored ranks of <Reference>: <a> inside the top 5 in both and <b> outside it in both; entering the top 5:
+    // <none | q (rank r to rank s), ...>; leaving the top 5: <none | ...>."
     /**
      * A blended order recomputed from a traced snapshot (plan {@code 2026-09-14-rerank-blend.md}, Milestone 1): for each listed question, the
      * trace's rerank inputs, each with fused position f and reranked position r, are ordered by {@code w / (k + r) + (1 - w) / (k + f)} descending
@@ -1168,7 +1170,10 @@ public final class ClaimsCheck {
      * hit@5 and MRR follow RetrievalEvaluationService (hit@5 half up to six places; each 1/rank half up to twelve places, their sum over the
      * listed questions half up to six places). Unreadable: a report whose snapshotId is not the snapshot's id, a question without a trace, a
      * rerank outcome other than RERANKED, inputs that are not the first fused chunks with positions 1 to n, an input count other than
-     * min(fused, max(rerankCandidates, window)) when the snapshot records rerankCandidates, or unknown accepted phrases.
+     * min(fused, max(rerankCandidates, window)) when the snapshot records rerankCandidates, unknown accepted phrases, an accepted phrase whose
+     * heldByStoredChunk is not true and observed, a fused, rerank input, or phrase chunk without an integer chunk id, or a fused chunk id listed
+     * twice. Metric top5Membership (since 2026-09-15) also reads a reference snapshot's stored ranks and compares, per listed question, whether the
+     * blended rank and the stored rank are in the top 5; expected lists the questions whose membership differs.
      */
     private String blend(Claim claim, JsonNode check, Evaluation evaluation) {
         String snapshotFile = requireText(check, "snapshot");
@@ -1204,7 +1209,24 @@ public final class ClaimsCheck {
                 expectedValue = scale6(expected);
                 if (expectedValue == null) throw new Unreadable("check.expected must be a number with at most six decimal places, found " + expected);
             }
-            default -> throw new Unreadable("check.metric must be rank, hitAt5, or mrr, found " + quote(metric));
+            case "top5Membership" -> {
+                if (blank(check.get("reference"))) throw new Unreadable("check.reference must name the reference snapshot file for metric top5Membership, found " + check.get("reference"));
+                boolean listed = expected != null && expected.isArray();
+                Set<String> seen = new HashSet<>();
+                if (listed) {
+                    for (JsonNode id : expected) {
+                        if (!id.isString() || !questions.contains(id.stringValue()) || !seen.add(id.stringValue())) listed = false;
+                    }
+                }
+                if (!listed) {
+                    throw new Unreadable("check.expected must list the distinct listed questions whose top-5 membership differs from the reference (an empty list for none), found "
+                            + (expected == null ? "none" : abbreviate(expected.toString())));
+                }
+            }
+            default -> throw new Unreadable("check.metric must be rank, hitAt5, mrr, or top5Membership, found " + quote(metric));
+        }
+        if (!metric.equals("top5Membership") && check.get("reference") != null) {
+            throw new Unreadable("check.reference is read only with metric top5Membership, found it with metric " + metric);
         }
         int k = kNode.intValue();
         evaluation.subject(metric + " at k " + k + ", w " + w.stripTrailingZeros().toPlainString() + " over " + questions.size()
@@ -1256,6 +1278,41 @@ public final class ClaimsCheck {
                 }
                 return lead + "hit@5" + over + found.toPlainString() + " (" + inside + " ranked 1 to 5).";
             }
+            case "top5Membership" -> {
+                String referenceFile = requireText(check, "reference");
+                Loaded referenceLoaded = load(referenceFile, directory, evaluation);
+                Snapshot reference = Snapshot.of(referenceFile, referenceLoaded.json());
+                int insideBoth = 0;
+                int outsideBoth = 0;
+                List<String> entering = new ArrayList<>();
+                List<String> leaving = new ArrayList<>();
+                List<String> differing = new ArrayList<>();
+                for (String question : questions) {
+                    reference.question(question);
+                    Integer stored = reference.rank(question);
+                    Integer blended = ranks.get(question);
+                    boolean was = stored != null && stored <= 5;
+                    boolean is = blended != null && blended <= 5;
+                    String move = question + " (" + rankText(stored) + " to " + rankText(blended) + ")";
+                    if (was && is) insideBoth++;
+                    else if (!was && !is) outsideBoth++;
+                    else {
+                        (is ? entering : leaving).add(move);
+                        differing.add(question);
+                    }
+                }
+                List<String> wanted = new ArrayList<>();
+                expected.forEach(id -> wanted.add(id.stringValue()));
+                if (!new HashSet<>(wanted).equals(new HashSet<>(differing))) {
+                    evaluation.differs("questions whose top-5 membership differs", wanted.isEmpty() ? "none" : String.join(", ", wanted),
+                            (differing.isEmpty() ? "none" : String.join(", ", differing)) + " (entering: " + (entering.isEmpty() ? "none" : String.join(", ", entering))
+                                    + "; leaving: " + (leaving.isEmpty() ? "none" : String.join(", ", leaving)) + ")");
+                }
+                return lead + "top-5 membership of the " + questions.size() + (questions.size() == 1 ? " question " : " questions ") + joinAnd(questions)
+                        + " against the stored ranks of " + snapshotReference(referenceLoaded, reference, null) + ": " + insideBoth + " inside the top 5 in both and "
+                        + outsideBoth + " outside it in both; entering the top 5: " + (entering.isEmpty() ? "none" : String.join(", ", entering))
+                        + "; leaving the top 5: " + (leaving.isEmpty() ? "none" : String.join(", ", leaving)) + ".";
+            }
             default -> {
                 BigDecimal sum = BigDecimal.ZERO;
                 for (Integer r : ranks.values()) {
@@ -1279,7 +1336,17 @@ public final class ClaimsCheck {
         if (!outcome.equals("RERANKED")) throw new Unreadable("question " + question + " has rerank outcome " + outcome + ", not RERANKED, so no reranked positions to blend");
         JsonNode fused = trace.path("fused");
         Map<Integer, Long> byPosition = new HashMap<>();
-        for (JsonNode entry : fused) byPosition.put(entry.path("fusedPosition").asInt(-1), entry.path("chunkId").asLong(-1));
+        Map<Long, Integer> positionOf = new HashMap<>();
+        for (JsonNode entry : fused) {
+            JsonNode chunk = entry.get("chunkId");
+            int position = entry.path("fusedPosition").asInt(-1);
+            if (chunk == null || !chunk.isIntegralNumber()) throw new Unreadable("question " + question + " has a fused chunk without an integer chunk id at fused position " + position);
+            Integer earlier = positionOf.putIfAbsent(chunk.longValue(), position);
+            if (earlier != null) {
+                throw new Unreadable("question " + question + " lists fused chunk id " + chunk.longValue() + " twice, at fused positions " + earlier + " and " + position);
+            }
+            byPosition.put(position, chunk.longValue());
+        }
         for (int position = 1; position <= fused.size(); position++) {
             if (!byPosition.containsKey(position)) throw new Unreadable("question " + question + " has fused positions that are not 1 to " + fused.size());
         }
@@ -1292,7 +1359,11 @@ public final class ClaimsCheck {
             if (f == null || !f.isIntegralNumber() || r == null || !r.isIntegralNumber()) {
                 throw new Unreadable("question " + question + " has a rerank input without integer fused and reranked positions: " + abbreviate(candidate.toString()));
             }
-            inputs.add(new BlendInput(candidate.path("chunkId").asLong(-1), f.intValue(), r.intValue()));
+            JsonNode chunk = candidate.get("chunkId");
+            if (chunk == null || !chunk.isIntegralNumber()) {
+                throw new Unreadable("question " + question + " has a rerank input without an integer chunk id at fused position " + f.intValue());
+            }
+            inputs.add(new BlendInput(chunk.longValue(), f.intValue(), r.intValue()));
             fusedSeen.add(f.intValue());
             rerankedSeen.add(r.intValue());
         }
@@ -1310,7 +1381,23 @@ public final class ClaimsCheck {
         }
         Set<Long> accepted = new HashSet<>();
         for (JsonNode phraseNode : reportQuestion.path("phrases")) {
-            for (JsonNode chunkNode : phraseNode.path("chunks")) accepted.add(chunkNode.path("chunkId").asLong(-1));
+            String phrase = quote(text(phraseNode, "phrase"));
+            JsonNode held = phraseNode.get("heldByStoredChunk");
+            if (held == null || !held.isObject() || !held.path("value").isBoolean() || !held.path("value").booleanValue()
+                    || !held.path("basis").asString("").equals("observed")) {
+                throw new Unreadable("question " + question + " has accepted phrase " + phrase + " whose heldByStoredChunk is not true and observed, found "
+                        + (held == null ? "none" : abbreviate(held.toString())));
+            }
+            if (!phraseNode.path("chunks").isArray() || phraseNode.path("chunks").isEmpty()) {
+                throw new Unreadable("question " + question + " has accepted phrase " + phrase + " held by a stored chunk but listing no chunk");
+            }
+            for (JsonNode chunkNode : phraseNode.path("chunks")) {
+                JsonNode chunk = chunkNode.get("chunkId");
+                if (chunk == null || !chunk.isIntegralNumber()) {
+                    throw new Unreadable("question " + question + " has accepted phrase " + phrase + " with a chunk without an integer chunk id");
+                }
+                accepted.add(chunk.longValue());
+            }
         }
         BigDecimal kd = BigDecimal.valueOf(k);
         BigDecimal rest = BigDecimal.ONE.subtract(w);

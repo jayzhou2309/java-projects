@@ -84,4 +84,11 @@ Frozen rules: see the script's docstring and the plan. The script states ranks a
   full-42 selection rule: meets the rule
   all 42 blended ranks [derived] as question 598/blended: aapl-01 1/1, aapl-02 1/1, aapl-03 2/2, aapl-04 1/1, aapl-05 1/1, aapl-06 2/2, aapl-07 1/1, aapl-08 1/1, aapl-09 8/9, aapl-10 1/1, aapl-11 1/1, aapl-12 1/1, aapl-13 1/1, aapl-14 1/1, msft-01 6/6, msft-02 2/2, msft-03 2/2, msft-04 4/4, msft-05 2/3, msft-06 1/1, msft-07 7/7, msft-08 null/10, msft-09 1/1, msft-10 1/1, msft-11 1/1, msft-12 2/2, msft-13 1/1, msft-14 1/1, nvda-01 3/4, nvda-02 null/null, nvda-03 1/1, nvda-04 null/null, nvda-05 10/null, nvda-06 1/1, nvda-07 null/null, nvda-08 5/3, nvda-09 null/null, nvda-10 1/2, nvda-11 1/1, nvda-12 5/1, nvda-13 1/1, nvda-14 1/1
 
-Checks: S1 and S2 hold as computed above; held-out result PASS.
+7. Top-5 membership at k 10, w 0.25 against 598 over the 42 questions [derived: blended ranks; observed: 598 stored ranks]
+  inside the top 5 in both 33; outside it in both 9
+  entering the top 5: none
+  leaving the top 5: none
+  held-out hit@5 equal to 598: yes; every full-42 hit@5 criterion equal to 598: yes
+  outcome: held-out PASS by equality with 598, not by exceeding it (tie, no gain)
+
+Checks: S1 and S2 hold as computed above; held-out result PASS (a tie with 598, not a gain).

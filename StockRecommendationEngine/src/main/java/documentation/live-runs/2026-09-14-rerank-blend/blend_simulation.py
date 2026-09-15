@@ -6,6 +6,7 @@ and its evidence report (primary: fused lists, rerank inputs with fused and rera
 and snapshot 598 (the default reference). Writes two files next to this script, replacing them:
   blend-simulation.txt  S1 split check, S2 reproduction checks, the six tuning rows, the chosen point, its held-out test, and the full-42 selection
                         rule against 598 beside it;
+                        and the top-5 membership over the 42 questions against 598 with the tie outcome;
   claims.json           the claims (ids from C-801) whose generated block stands in RAG.md, Retrieval Evaluation, Rerank blend simulation.
 No database, no application, no model. Output is deterministic: a re-run reproduces both files byte for byte. The script states ranks and metrics
 of a simulated order; it states no cause for any reranker move.
@@ -326,7 +327,7 @@ def main():
                f"outside the top 5 in both: {listed(outside_both)}",
                f"of the {len(figure_held)} held-out FIGURE questions ranked 1 to 5 in snapshot 598 ({', '.join(figure_held)}), "
                f"{len(figure_held) - len(leaving)} stay in the top 5 and {len(leaving)} leave it" + (f" ({', '.join(leaving)})" if leaving else "")]
-    claim("inferred", text=f"Held-out test at k {ck} and w {cw}: {'PASS' if passed else 'FAIL'}; " + "; ".join(decided) + ".", premises=held_premises)
+    held_test_id = claim("inferred", text=f"Held-out test at k {ck} and w {cw}: {'PASS' if passed else 'FAIL'}; " + "; ".join(decided) + ".", premises=held_premises)
 
     # Full-42 selection rule against 598, beside the held-out test
     p(f"6. Full-42 selection rule at k {ck}, w {cw} against 598 (reported beside the held-out test; it does not replace it)")
@@ -368,10 +369,33 @@ def main():
     p("  all 42 blended ranks [derived] as question 598/blended: " + ", ".join(f"{i} {fmt(ranks598[i])}/{fmt(all_blend[i])}" for i in ids))
     p("")
     criteria_text = "; ".join(f"{name} {b} against {r} ({'pass' if b >= r else 'fail'})" for name, b, r in crit)
-    claim("inferred", text=f"Full-42 selection rule at k {ck} and w {cw} against snapshot 598, beside the held-out test: {criteria_text}; FIGURE top-5 "
+    rule_id = claim("inferred", text=f"Full-42 selection rule at k {ck} and w {cw} against snapshot 598, beside the held-out test: {criteria_text}; FIGURE top-5 "
           + (f"pass, with 0 of its {len(figure_top5)} questions leaving the top 5" if not figure_leaving else f"fail, with {len(figure_leaving)} of its {len(figure_top5)} questions leaving the top 5: " + ", ".join(figure_leaving))
           + f"; the row {'meets' if rule_pass else 'does not meet'} the rule.", premises=rule_premises)
-    p(f"Checks: S1 and S2 hold as computed above; held-out result {'PASS' if passed else 'FAIL'}.")
+
+    # Top-5 membership against 598 over all 42 (added 2026-09-15 after Milestone 1's validation, Jay's decision: record the tie, no gain)
+    enter42 = [i for i in ids if not top5(ranks598[i]) and top5(all_blend[i])]
+    leave42 = [i for i in ids if top5(ranks598[i]) and not top5(all_blend[i])]
+    inside42 = sum(1 for i in ids if top5(ranks598[i]) and top5(all_blend[i]))
+    outside42 = sum(1 for i in ids if not top5(ranks598[i]) and not top5(all_blend[i]))
+    p(f"7. Top-5 membership at k {ck}, w {cw} against 598 over the {len(ids)} questions [derived: blended ranks; observed: 598 stored ranks]")
+    p(f"  inside the top 5 in both {inside42}; outside it in both {outside42}")
+    p("  entering the top 5: " + (", ".join(f"{i} {fmt(ranks598[i])}->{fmt(all_blend[i])}" for i in enter42) if enter42 else "none"))
+    p("  leaving the top 5: " + (", ".join(f"{i} {fmt(ranks598[i])}->{fmt(all_blend[i])}" for i in leave42) if leave42 else "none"))
+    membership_id = claim("derived", {"type": "blend", "snapshot": S947, "report": E947, "k": ck, "w": cw, "questions": ids, "metric": "top5Membership",
+                                      "reference": S598, "expected": enter42 + leave42})
+    held_equal = hb == hr
+    rule_equal = all(b == r for _, b, r in crit)
+    tie = passed and held_equal and rule_equal and not enter42 and not leave42
+    p(f"  held-out hit@5 equal to 598: {'yes' if held_equal else 'no'}; every full-42 hit@5 criterion equal to 598: {'yes' if rule_equal else 'no'}")
+    p(f"  outcome: {'held-out PASS by equality with 598, not by exceeding it (tie, no gain)' if tie else 'not a tie with 598; see sections 5 to 7'}")
+    p("")
+    if tie:
+        claim("inferred", text=f"At the chosen point k {ck} and w {cw}, the held-out hit@5 of {hb} and the aggregate, non-figure-slice, and per-ticker hit@5 "
+              f"criteria of the full-42 selection rule equal the values of snapshot 598, and {len(enter42) + len(leave42)} of the {len(ids)} questions enter or "
+              f"leave the top 5 against snapshot 598; the held-out PASS is a tie with the default reference and not a gain over it.",
+              premises=[held_test_id, rule_id, membership_id])
+    p(f"Checks: S1 and S2 hold as computed above; held-out result {'PASS' if passed else 'FAIL'}" + (" (a tie with 598, not a gain)." if tie else "."))
 
     if len(claims) > 99:
         raise Stop(f"{len(claims)} claims exceed the id range C-801 to C-899")
@@ -386,7 +410,7 @@ def main():
     lines = ["{",
              '  "description": "Rerank blend simulation over the traces of snapshot 947 (plan plans/2026-09-14-rerank-blend.md, Milestone 1), written by'
              ' blend_simulation.py: tuning hit@5 and MRR of the six grid points, the chosen point, its held-out test against snapshot 598, and the full-42'
-             ' selection rule against snapshot 598 beside it.",',
+             ' selection rule against snapshot 598 beside it, and the top-5 membership of the 42 questions at the chosen point against snapshot 598.",',
              '  "claims": [']
     for n, c in enumerate(claims):
         parts = [f'"id": "{c["id"]}"', f'"basis": "{c["basis"]}"']

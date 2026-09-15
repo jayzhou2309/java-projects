@@ -80,3 +80,8 @@ Correctness contract:
   not state the tie directly; the `blend` check does not refuse a phrase without a stored chunk; the frozen rule does not
   say whether "FIGURE" means kind or slice (the script uses kind; no outcome depends on it). Milestones 2 and 3 await
   Jay's decision.
+- 2026-09-15, decision: Jay decided not to run Milestones 2 and 3, because the held-out pass equals the default reference
+  rather than exceeding it; recorded as no gain (306fd32; Follow_Ups RAG-21 DONE). No re-tuning, further grid point, or
+  held-out metric of another grid point followed. The next retrieval step returns to Follow_Ups RAG-20 (raw-score fusion).
+  Scrutiny passed the close-out commit; low findings left open: the RAG.md "Why and question" bullet words the plan's
+  question more neutrally than the plan does, and `top5Membership` has no test for a missing or mismatched reference.

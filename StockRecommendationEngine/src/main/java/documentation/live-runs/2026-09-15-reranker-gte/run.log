@@ -138,3 +138,72 @@ Files committed in this directory by this milestone
   snapshot-1366-r-current-model-reproduction-of-947.json, snapshot-1367-a-gte-candidate-count-40-rerank-candidates-20.json,
   snapshot-1368-b-gte-candidate-count-200-rerank-candidates-40.json (step 7); evidence-1366.json, evidence-1367.json, evidence-1368.json (step 8);
   reproduction-1366.txt; scoring-1366.txt, scoring-1367.txt, scoring-1368.txt (step 9); compare_gte.py, property-diff.txt, comparison.txt, claims.json (K1); run.log.
+
+Remediation round 1 (plan amendment 3, after Scrutiny round 1), 2026-09-15 (times +08); branch reranker-ettin at 07388da plus this round's working tree
+  Scrutiny found the pairs' candidate lists before reranking not checked: 1367 against 613 differs in fused order and rerank inputs, 1368 against 947 in
+  fused order and input positions, undisclosed. This round adds run R_A, re-pairs row A with R_A and row B with R, and checks identity per pair (G7).
+  This section supersedes the pairing of K2 to K4 above (613 and 947 are now earlier references) and the claim ids of K3; no cause is stated here for
+  any difference between sessions.
+  Environment. 12:31:19: ps filtered on surefire|spring-boot:run|StockRecommendationEngineApplication -> no process; lsof on 8081 -> 0; .env grep for RAG_*
+    and the enable flags -> 0; retrieval_evaluations 49 rows, max id 1368 (observed). G6 before 12:31: shasum values appended to current-model-sha256.txt,
+    equal to G6 before above (observed).
+
+Run R_A (current model, settings of row A): snapshot 1401
+  Same per-run procedure (steps 1 to 10), a scratch script run_ra.sh (not committed), started in a shell from env -i HOME PATH.
+  env grep printed exactly RAG_CROSS_ENCODER_ENABLED=true RAG_RETRIEVAL_CANDIDATE_COUNT=40 RAG_RETRIEVAL_RERANK_CANDIDATES=20 RAG_RETRIEVAL_RERANK_TIMEOUT_MS=2000
+  SERVER_PORT=8081 (observed); listeners on 8081 before: 0.
+  cpu-wait before app start 12:31:57: clear after 0 s. "No active profile set, falling back to 1 default profile"; "Cross-encoder loaded: model=.../models/
+  cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=max-window/overlap=64/maxWindows=4"; "Started
+  StockRecommendationEngineApplication in 4.001 seconds" (observed).
+  warm-up HTTP 200 in 3.09 s, HYBRID_RRF_RERANKED, 5 results; "Reranking filing candidates: ticker=NVDA, candidates=20, timeoutMs=2000"; scoring candidates=20,
+  windows=44, topK=5, elapsedMs=1177 (observed).
+  cpu-wait before evaluate 12:32:07: clear after 0 s. loadavg { 2.55 2.63 3.47 }; after { 4.54 3.22 3.62 }.
+  evaluate HTTP 200 in 74.02 s, 560,414 bytes. "Evaluating retrieval: set=v2, questions=42, window=10, hybrid=null, rerank=true, trace=true";
+  "Retrieval evaluation stored: id=1401, hitAt1=0.500000, hitAt3=0.761905, hitAt5=0.785714, mrr=0.633135, misses=7, rerankedQuestions=42, rerankFallbackQuestions=0"
+  (observed). app.log counts: 43 "Query embedding completed"; 43 "Reranking filing candidates" lines, all candidates=20, timeoutMs=2000; 0 "Selecting evidence by
+  fused order"; 0 "Reranking failed"; 0 WARN or ERROR log lines (derived: grep -c / sort | uniq -c).
+  Evaluation scoring lines (topK=10, scoring-1401.txt): 42, elapsedMs 848 to 1,160, windows 35 to 48, total 1,746 (derived). Medians: comparison.txt, Row A.
+  GET snapshot HTTP 200 application/json 560,414 bytes; GET evidence HTTP 200 application/json 511,622 bytes -> evidence-1401.json 370,048 bytes
+  (parses_equal_numbers_as_written=True), both fetched with the current model loaded. row export exit 0, 364,834 bytes, 1 line
+  -> snapshot-1401-ra-current-model-candidate-count-40-rerank-candidates-20.json. Stopped 12:33:29: 0 listeners on 8081, JVM and mvnw not alive, 0
+  spring-boot:run processes (observed).
+  Database after: retrieval_evaluations 50 rows, max id 1401 (observed: psql); the one added row is 1401, and no row has an id from 1369 to 1400 (derived).
+  Embedding calls this round: 43 (42 evaluation + 1 warm-up) (derived: count of "Query embedding completed" in app.log). No chat model call.
+
+Identity and re-pairing (G7; comparison.txt section 5, derived)
+  R1. 1367 (row A) against 1401 (R_A) and 1368 (row B) against 1366 (R): fused order, rerank input set, rerank inputs' fused positions, and trace removed lists
+      identical for each of the 42 questions. R_A's fused lists equal 1367's, so no question is excluded and the metrics over the questions with identical input
+      sets equal the metrics over all questions.
+  R2. Earlier references, for the record: 1401 against 613, fused order differs in aapl-01, aapl-03, msft-07, nvda-09, nvda-14, rerank input set in nvda-14
+      (chunk 849 only in 613, 839 only in 1401), input positions in aapl-01, aapl-03, nvda-14; 1366 against 947, fused order differs in 20 questions, input
+      set in none, input positions in 7 (named in comparison.txt). 1401 ranks and matched chunks equal 613's for every question (comparison.txt section 4).
+  R3. Entering the top 5 against the same-session paired run: row A msft-04, msft-05, nvda-01, nvda-07, nvda-09; row B msft-05, nvda-01, nvda-07, nvda-09;
+      leaving none found in either row (comparison.txt, Row A and Row B).
+  R4. Scoring time pairs from the same session: row A with scoring-1401.txt, row B with scoring-1366.txt; 613's and 947's logs printed as earlier references
+      from other sessions (comparison.txt, Row A and Row B).
+  R5. Selection rule against 598 per row: unchanged by the pairing (it reads 598 and the row only); both rows meet it (ruleRow claims C-937 and C-971).
+
+Claims (claims.json, regenerated)
+  C1. The 65 claims of commit 31eae86 (C-901 to C-965) were removed and the ids reassigned in order from C-901: their row A claims read 613 and their row B
+      claims 947 as the paired run. No document other than RAG.md's generated block cited them (grep for C-9nn outside claims.json: only RAG.md block lines and
+      a GeneratedBlocksTests fixture string for C-999). Keeping them and numbering new claims from C-966 would have needed ids past C-999, the plan's range.
+      New file: 71 claims, C-901 to C-971: per row three candidateLists claims (new check type, RAG.md Claims, Check types; CandidateListsCheckTests), the
+      metrics of the paired run and the row, topK and candidate claims for each entering question, and the ruleRow claim.
+  C2. set -a && source .env && set +a && ./mvnw -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> "CLAIMS_GENERATE changed=1
+      [src/main/java/documentation/RAG.md] notGenerated=0", "CLAIMS_CHECK claimsFiles=7 documents=27 problems=0" (observed; run again after the labels changed
+      to "the same-session current model at the row A settings" and "... row B settings", same output).
+  C3. python3 compare_gte.py twice -> exit 0 both; shasum -a 256 after the first run, shasum -c after the second -> OK for the three files; no __pycache__ (observed):
+        e94087d7a70a9d3942846ff319dcadb6ea89a7ed577cc0c9c1d4587aa203424f  property-diff.txt
+        d7c54618a736c6bd6a975503637c15702b5be9c9d1a91600be234e8abb327bd9  comparison.txt
+        fb56b23b25ecf2b650e678c0afc231c79c1de9f8849968252fef04a531a1cf23  claims.json
+
+Milestone 1 low findings not fixed (plan amendment 3): logged as Follow_Ups RAG-24.
+
+Build and G6 after (remediation round 1)
+  B3. New shell via env -i HOME PATH; set -a && source .env && set +a; env grep for RAG_* and the enable flags -> 0 (observed). rm -rf target/surefire-reports;
+      ./mvnw -q -o verify -> exit 0, 12:42:42 to 12:42:55 (observed); 65 test classes, 581 tests, 0 failures, 0 errors, 32 skipped (derived: sum of the testsuite
+      attributes over target/surefire-reports/TEST-*.xml of this run); "CLAIMS_CHECK claimsFiles=7 documents=27 problems=0" (observed). lsof on 8081 -> 0 lines.
+  G6 after 12:43: shasum -a 256 models/cross-encoder-ms-marco-MiniLM-L-6-v2/* -> the two values of G6 before, identical (observed; appended to
+      current-model-sha256.txt).
+  Files added in this directory: snapshot-1401-ra-current-model-candidate-count-40-rerank-candidates-20.json (step 7), evidence-1401.json (step 8),
+      scoring-1401.txt (step 9); changed: compare_gte.py, property-diff.txt, comparison.txt, claims.json, current-model-sha256.txt, run.log.

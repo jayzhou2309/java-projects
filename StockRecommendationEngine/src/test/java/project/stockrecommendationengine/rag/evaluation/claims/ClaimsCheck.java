@@ -44,7 +44,7 @@ public final class ClaimsCheck {
     static final List<String> BASES = List.of("observed", "derived", "inferred", "unknown", "experiment");
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
     static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
-            "candidateRecall", "removedAccepted", "blend", "notRecorded");
+            "candidateRecall", "removedAccepted", "blend", "candidateLists", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -65,6 +65,7 @@ public final class ClaimsCheck {
             Map.entry("candidateRecall", Set.of("type", "report", "k", "expected")),
             Map.entry("removedAccepted", Set.of("type", "report", "expected")),
             Map.entry("blend", Set.of("type", "snapshot", "report", "k", "w", "questions", "metric", "expected", "reference")),
+            Map.entry("candidateLists", Set.of("type", "reference", "candidate", "compare", "expected")),
             Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
@@ -615,6 +616,7 @@ public final class ClaimsCheck {
                 case "candidateRecall" -> candidateRecall(claim, check, evaluation);
                 case "removedAccepted" -> removedAccepted(claim, check, evaluation);
                 case "blend" -> blend(claim, check, evaluation);
+                case "candidateLists" -> candidateLists(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -1327,6 +1329,142 @@ public final class ClaimsCheck {
                 return lead + "MRR" + over + found.toPlainString() + ".";
             }
         }
+    }
+
+    // Template: "Between <reference Snapshot> and <candidate Snapshot>, the <fused order|rerank input set> is (the fused positions of the rerank
+    // inputs are) identical for each of the <n> questions." | "..., the <...> differs (differ) for <m> of the <n> questions: <question>[ (<detail>)], ...." with a
+    // detail only for rerankInputSet: "only in snapshot <id>: chunks <ids>; only in snapshot <id>: chunks <ids>".
+    /**
+     * Whether two traced snapshots gave the same candidate lists per question (plan {@code 2026-09-15-reranker-ettin.md}, amendment 3, G7).
+     * {@code compare} {@code fusedOrder}: the trace's fused chunk ids ordered by fused position; {@code rerankInputSet}: the set of the trace's
+     * rerank input chunk ids; {@code rerankInputPositions}: each rerank input's chunk id with its fused position (a question whose input set
+     * differs also differs here). {@code expected} lists the distinct questions that differ (empty for none); true when exactly those differ.
+     * Unreadable: the two snapshots list different question ids, a question without a trace in either, a fused list or rerank input list that
+     * is not a list, a fused chunk or rerank input without an integer chunk id and fused position, or a chunk id listed twice in one list.
+     */
+    private String candidateLists(Claim claim, JsonNode check, Evaluation evaluation) {
+        String referenceFile = requireText(check, "reference");
+        String candidateFile = requireText(check, "candidate");
+        String compare = requireText(check, "compare");
+        String what = switch (compare) {
+            case "fusedOrder" -> "fused order";
+            case "rerankInputSet" -> "rerank input set";
+            case "rerankInputPositions" -> "fused positions of the rerank inputs";
+            default -> throw new Unreadable("check.compare must be fusedOrder, rerankInputSet, or rerankInputPositions, found " + quote(compare));
+        };
+        boolean plural = compare.equals("rerankInputPositions");
+        JsonNode expected = check.get("expected");
+        List<String> wanted = new ArrayList<>();
+        boolean listed = expected != null && expected.isArray();
+        if (listed) {
+            for (JsonNode id : expected) {
+                if (!id.isString() || id.stringValue().isBlank() || wanted.contains(id.stringValue())) listed = false;
+                else wanted.add(id.stringValue());
+            }
+        }
+        if (!listed) {
+            throw new Unreadable("check.expected must list the distinct question ids that differ (an empty list for none), found "
+                    + (expected == null ? "none" : abbreviate(expected.toString())));
+        }
+        evaluation.subject(compare + " of " + candidateFile + " against " + referenceFile);
+        Loaded referenceLoaded = load(referenceFile, directory, evaluation);
+        Snapshot reference = Snapshot.of(referenceFile, referenceLoaded.json());
+        Loaded candidateLoaded = load(candidateFile, directory, evaluation);
+        Snapshot candidate = Snapshot.of(candidateFile, candidateLoaded.json());
+        if (referenceLoaded.path().equals(candidateLoaded.path())) throw new Unreadable("check.reference and check.candidate name the same file " + referenceFile);
+        List<String> questions = new ArrayList<>();
+        reference.questions().forEach(q -> questions.add(q.path("id").asString("")));
+        List<String> candidateQuestions = new ArrayList<>();
+        candidate.questions().forEach(q -> candidateQuestions.add(q.path("id").asString("")));
+        if (!new HashSet<>(questions).equals(new HashSet<>(candidateQuestions)) || questions.size() != candidateQuestions.size()) {
+            throw new Unreadable(referenceFile + " and " + candidateFile + " list different questions");
+        }
+        for (String id : wanted) {
+            if (!questions.contains(id)) throw new Unreadable("check.expected lists " + id + ", which neither snapshot has");
+        }
+        Map<String, JsonNode> referenceTraces = traces(referenceLoaded, referenceFile);
+        Map<String, JsonNode> candidateTraces = traces(candidateLoaded, candidateFile);
+        List<String> differing = new ArrayList<>();
+        List<String> details = new ArrayList<>();
+        for (String question : questions) {
+            JsonNode a = referenceTraces.get(question);
+            JsonNode b = candidateTraces.get(question);
+            if (a == null) throw new Unreadable("question " + question + " has no trace in " + referenceFile);
+            if (b == null) throw new Unreadable("question " + question + " has no trace in " + candidateFile);
+            String detail = null;
+            boolean differs;
+            switch (compare) {
+                case "fusedOrder" -> differs = !new ArrayList<>(positions(a.get("fused"), question, "fused chunk", referenceFile).keySet())
+                        .equals(new ArrayList<>(positions(b.get("fused"), question, "fused chunk", candidateFile).keySet()));
+                case "rerankInputSet" -> {
+                    Set<Long> x = inputs(a, question, referenceFile).keySet();
+                    Set<Long> y = inputs(b, question, candidateFile).keySet();
+                    differs = !x.equals(y);
+                    if (differs) {
+                        List<Long> onlyX = x.stream().filter(c -> !y.contains(c)).sorted().toList();
+                        List<Long> onlyY = y.stream().filter(c -> !x.contains(c)).sorted().toList();
+                        detail = "only in snapshot " + reference.id() + ": " + chunks(onlyX) + "; only in snapshot " + candidate.id() + ": " + chunks(onlyY);
+                    }
+                }
+                default -> differs = !inputs(a, question, referenceFile).equals(inputs(b, question, candidateFile));
+            }
+            if (differs) {
+                differing.add(question);
+                details.add(detail == null ? question : question + " (" + detail + ")");
+            }
+        }
+        if (!new HashSet<>(wanted).equals(new HashSet<>(differing))) {
+            evaluation.differs("questions whose " + what + (plural ? " differ" : " differs"), wanted.isEmpty() ? "none" : String.join(", ", wanted),
+                    differing.isEmpty() ? "none" : String.join(", ", details));
+        }
+        basis(claim, "derived", evaluation);
+        String lead = "Between " + snapshotReference(referenceLoaded, reference, null) + " and " + snapshotReference(candidateLoaded, candidate, null) + ", the " + what;
+        return differing.isEmpty() ? lead + (plural ? " are" : " is") + " identical for each of the " + questions.size() + " questions."
+                : lead + (plural ? " differ" : " differs") + " for " + differing.size() + " of the " + questions.size() + " questions: " + String.join(", ", details) + ".";
+    }
+
+    /** Question id to trace object of a traced snapshot in either shape. */
+    private static Map<String, JsonNode> traces(Loaded loaded, String file) {
+        JsonNode results = loaded.json().path("results");
+        JsonNode traces = results.isObject() ? results.path("traces") : loaded.json().path("traces");
+        if (!traces.isArray()) throw new Unreadable(file + " records no traces");
+        Map<String, JsonNode> byQuestion = new HashMap<>();
+        for (JsonNode entry : traces) {
+            JsonNode trace = entry.get("trace");
+            if (trace != null && trace.isObject()) byQuestion.put(entry.path("id").asString(""), trace);
+        }
+        return byQuestion;
+    }
+
+    /** A trace's rerank inputs as chunk id to fused position, in input order. */
+    private static Map<Long, Integer> inputs(JsonNode trace, String question, String file) {
+        JsonNode rerank = trace.get("rerank");
+        return positions(rerank == null ? null : rerank.get("candidates"), question, "rerank input", file);
+    }
+
+    /** Chunk id to fused position for a list of trace entries, ordered by fused position. */
+    private static Map<Long, Integer> positions(JsonNode list, String question, String what, String file) {
+        if (list == null || !list.isArray()) throw new Unreadable("question " + question + " has no " + what + " list in " + file);
+        Map<Long, Integer> byChunk = new HashMap<>();
+        for (JsonNode entry : list) {
+            JsonNode chunk = entry.get("chunkId");
+            JsonNode position = entry.get("fusedPosition");
+            if (chunk == null || !chunk.isIntegralNumber() || position == null || !position.isIntegralNumber()) {
+                throw new Unreadable("question " + question + " has a " + what + " without an integer chunk id and fused position in " + file);
+            }
+            if (byChunk.put(chunk.longValue(), position.intValue()) != null) {
+                throw new Unreadable("question " + question + " lists " + what + " " + chunk.longValue() + " twice in " + file);
+            }
+        }
+        Map<Long, Integer> ordered = new LinkedHashMap<>();
+        byChunk.entrySet().stream().sorted(Map.Entry.<Long, Integer>comparingByValue().thenComparing(Map.Entry.comparingByKey()))
+                .forEach(e -> ordered.put(e.getKey(), e.getValue()));
+        return ordered;
+    }
+
+    private static String chunks(List<Long> ids) {
+        if (ids.isEmpty()) return "no chunk";
+        return (ids.size() == 1 ? "chunk " : "chunks ") + ids.stream().map(String::valueOf).collect(Collectors.joining(", "));
     }
 
     /** The question's rank in the blended window (see {@link #blend}); null when no window chunk holds an accepted phrase. */

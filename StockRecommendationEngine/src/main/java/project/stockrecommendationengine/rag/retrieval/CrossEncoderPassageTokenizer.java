@@ -15,7 +15,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * ({@code encode(text, false, false)}), so its token count for a text equals the scorer's. The native tokenizer reports character
  * spans as Unicode code point offsets (a supplementary character such as an emoji is one position; measured 2026-09-13,
  * {@code CrossEncoderPassageTokenizerLiveTests}); {@link CrossEncoderTokenPositions#utf16Spans} converts them to UTF-16 offsets. Constructed only by
- * {@link CrossEncoderConfiguration}, after the scorer, so the scorer's native-library checks and DJL runtime defaults already apply.
+ * {@link CrossEncoderConfiguration} and, for the second reranker model, {@link GteRerankerPassageTokenizer} (since 2026-09-15), in both
+ * cases after the scorer, so the scorer's native-library checks and DJL runtime defaults already apply.
  */
 final class CrossEncoderPassageTokenizer implements PassageTokenizer {
     private final HuggingFaceTokenizer tokenizer;

@@ -33,8 +33,12 @@ public class FilingRetrievalProperties {
     @Min(5) @Max(40)
     private int rerankCandidates = 20;
 
-    /** Longest wait for the reranker, in milliseconds; past it retrieval keeps the fused order and logs a WARN. */
-    @Min(100) @Max(60000)
+    /**
+     * Longest wait for the reranker, in milliseconds; past it retrieval keeps the fused order and logs a WARN. The upper bound was
+     * 60,000 until 2026-09-15, raised to 120,000 so profile {@code reranker-gte} can set the second model's frozen comparison timeout
+     * (plan {@code 2026-09-15-reranker-ettin.md}, amendment 1); the default is unchanged.
+     */
+    @Min(100) @Max(120000)
     private long rerankTimeoutMs = 2000;
 
     /**

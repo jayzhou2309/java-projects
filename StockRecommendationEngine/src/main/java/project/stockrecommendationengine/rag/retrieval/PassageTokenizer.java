@@ -17,6 +17,20 @@ public interface PassageTokenizer extends AutoCloseable {
      */
     String modelVersion();
 
+    /**
+     * The loaded model's {@code max-length} with the configuration key it was read from, when that is not
+     * {@code rag.retrieval.cross-encoder.max-length}; null (the default, and the current model's tokenizer) means the evidence report
+     * reads {@code rag.retrieval.cross-encoder.max-length} as before. Added 2026-09-15 for the second reranker model, whose window is
+     * configured under its own prefix.
+     */
+    default MaxLength maxLength() {
+        return null;
+    }
+
+    /** A {@code max-length} and the description of where it was read, as the evidence report names its source. */
+    record MaxLength(int value, String source) {
+    }
+
     /** Token character spans in token order, as UTF-16 offsets into the tokenized text, end exclusive. */
     record Tokens(int[] starts, int[] ends) {
         public Tokens {

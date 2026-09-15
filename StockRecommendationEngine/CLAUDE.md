@@ -41,7 +41,7 @@ one-line fix, a typo, or a question, just do it directly.
   assertions robust to pre-existing rows (future timestamps, unique tickers).
 - Opt-in live tests skip by design (`@EnabledIfSystemProperty`: `ibkr.live`, `ibkr.live.conid`,
   `ibkr.live.history`, `quant.live`, `rag.evaluation.live`, `rag.rerank.live`,
-  `rag.reproduction.run`); a green `verify` reports them as skipped (28 tests on 2026-09-14).
+  `rag.rerank.gte.live`, `rag.reproduction.run`); a green `verify` reports them as skipped (32 tests on 2026-09-15).
 - Running the app for a UT check: `SERVER_PORT=8081`, `INTEGRATION_ACCESS_TOKEN`
   of 32+ characters, `./mvnw -q -o spring-boot:run`, wait for
   `Started StockRecommendationEngineApplication`, stop with

@@ -156,7 +156,10 @@ public class RetrievalEvidenceService {
         private final Map<String, List<StoredChunk>> sectionChunks = new HashMap<>();
         private final Map<Long, PassageTokenizer.Tokens> chunkTokens = new HashMap<>();
         private final Map<String, RetrievalTrace> traces = new HashMap<>();
-        private final int maxLength = crossEncoder.getMaxLength();
+        /** The loaded model's max-length when its tokenizer reports one (the second reranker model), else the cross-encoder's as before. */
+        private final PassageTokenizer.MaxLength loadedMaxLength = tokenizer.map(PassageTokenizer::maxLength).orElse(null);
+        private final int maxLength = loadedMaxLength != null ? loadedMaxLength.value() : crossEncoder.getMaxLength();
+        private final String maxLengthSource = loadedMaxLength != null ? loadedMaxLength.source() : SOURCE_MAX_LENGTH;
         private RetrievalEvaluationSet set;
         private String setSource;
         private String setReason;
@@ -244,7 +247,7 @@ public class RetrievalEvidenceService {
             return new Settings(property("rerank", Boolean.class), property("rerankCandidates", Integer.class), property("reranker", String.class),
                     property("rerankerVersion", String.class),
                     tokenizer.isPresent() ? observed(loadedVersion, SOURCE_LOADED_MODEL) : unknown(CROSS_ENCODER_NOT_LOADED),
-                    property("rerankerScoring", String.class), passageScoring, overlap, maxWindows, observed(maxLength, SOURCE_MAX_LENGTH));
+                    property("rerankerScoring", String.class), passageScoring, overlap, maxWindows, observed(maxLength, maxLengthSource));
         }
 
         /** A snapshot property as recorded; unknown when the snapshot does not record it. */

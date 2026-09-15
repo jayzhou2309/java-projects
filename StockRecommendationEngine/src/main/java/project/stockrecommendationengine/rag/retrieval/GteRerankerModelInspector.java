@@ -15,7 +15,7 @@ import java.util.List;
  * optimisation) and applies {@link GteRerankerModelSignature#require} before {@link OnnxCrossEncoderScorer} loads the model for
  * scoring. The extra session is closed before the scorer's opens: on the development Mac, 2026-09-15, creating and closing a
  * session on the 598,803,940-byte model took 211 to 566 ms, and three sequential sessions peaked at a 973 MB process footprint
- * (scratch probe, recorded in RAG.md, Second reranker model). Used only by {@link GteRerankerConfiguration}.
+ * (scratch probe, recorded in documentation/live-runs/2026-09-15-reranker-gte/onnx-probe.txt, Probe3). Used only by {@link GteRerankerConfiguration}.
  */
 final class GteRerankerModelInspector {
     private GteRerankerModelInspector() {

@@ -1,0 +1,4 @@
+reference=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/src/main/java/documentation/live-runs/2026-09-14-recall-one-factor/snapshot-947-c-repeat-candidate-count-200-rerank-candidates-40-timeout-4000.json (snapshot 947)
+run=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/src/main/java/documentation/live-runs/2026-09-15-reranker-gte/snapshot-1366-r-current-model-reproduction-of-947.json (snapshot 1366)
+questions reference=42 run=42 traces=42
+problems=0

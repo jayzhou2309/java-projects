@@ -1,0 +1,140 @@
+Second reranker model comparison runs (plan documentation/plans/2026-09-15-reranker-ettin.md, Milestone 2 contract; Follow_Ups RAG-22), 2026-09-15 (times +08)
+Branch reranker-ettin at b4e617b plus this milestone's working tree (a Javadoc pointer in GteRerankerModelInspector; no code path change). Main worktree
+/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine. Development Mac, CPU (hw.ncpu 10). App port 8081. No chat model and no /api/recommendations call.
+Paired current-model runs: 613 (../2026-09-13-evaluation-evidence/measurement/, settings of row A) and 947 (../2026-09-14-recall-one-factor/, settings of row B);
+default reference 598 (../2026-09-13-evaluation-evidence/measurement/).
+Labels: observed = command output, a log line, or a file value quoted here; derived = computed (computation named). This log states no cause.
+app.log files (application stdout) are not committed; every line relied on below is quoted here or in the committed scoring-<id>.txt.
+
+Environment
+  E1. grep -cE '^(RAG_|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)' .env -> 0 (observed).
+  E2. 11:56: ps -ax filtered on surefire|spring-boot:run|StockRecommendationEngineApplication -> no process; lsof on 8081 -> 0 listeners; docker trading-postgres
+      retrieval_evaluations count 46, max id 1141 (observed).
+  G6 before. 11:56:08 shasum -a 256 models/cross-encoder-ms-marco-MiniLM-L-6-v2/* (observed; appended to current-model-sha256.txt):
+        5d3e70fd0c9ff14b9b5169a51e957b7a9c74897afd0a35ce4bd318150c1d4d4a  model.onnx
+        d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66  tokenizer.json
+
+Per-run procedure (a scratch script, run.sh, not committed, ran these commands in this order; the procedure of ../2026-09-14-recall-one-factor/run.log)
+  1. New shell via env -i HOME PATH; cd <project>; set -a; source .env; set +a; export SERVER_PORT=8081 INTEGRATION_ACCESS_TOKEN=<42-character random hex token,
+     openssl rand -hex 21, not recorded> plus the run's variables; env | grep -E '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|
+     WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE|SERVER_PORT)=' printed (per run below); lsof on 8081 -> 0 listeners before every start.
+  2. CPU sharing wait: ps -ax -o pid=,args= filtered on surefire|spring-boot:run|StockRecommendationEngineApplication, excluding this run's own mvnw and
+     application pids; poll every 30 s, up to 30 minutes; before the app start and before the evaluate call.
+  3. nohup ./mvnw -q -o spring-boot:run > app.log 2>&1 &; wait for "Started StockRecommendationEngineApplication"; the "Cross-encoder loaded" line (model path,
+     maxLength, batchSize, scoring) confirmed before evaluating.
+  4. Warm-up: curl -X POST http://localhost:8081/api/rag/retrieve -H "Authorization: Bearer <token>" -H 'Content-Type: application/json'
+       -d '{"ticker":"NVDA","query":"What was NVIDIA gross margin in fiscal 2026?","rerank":true}'; its "Reranking filing candidates" line (candidates, timeoutMs)
+     confirmed before evaluating.
+  5. CPU sharing wait, sysctl -n vm.loadavg, curl --max-time 3600 -X POST "http://localhost:8081/api/rag/evaluate?rerank=true&trace=true" -H "Authorization: Bearer <token>"
+     (one evaluate call per run).
+  6. curl GET /api/rag/evaluate/<id> and GET /api/rag/evaluate/<id>/evidence with the run's model still loaded (HTTP status and bytes below).
+  7. docker exec -i trading-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "select row_to_json(e) from retrieval_evaluations e where id = <id>"'
+     -> snapshot-<id>-<run>.json (the single output line with its newline, unaltered).
+  8. evidence-<id>.json: the fetched evidence body with whitespace (space, tab, CR, LF) outside JSON strings removed, one line plus a newline; a scratch script parsed
+     both texts with every number and constant kept as its written text and printed parses_equal_numbers_as_written=True for each.
+  9. grep -E 'Cross-encoder scoring completed|Reranking failed|Retrieval evaluation stored|WARN|ERROR' app.log -> scoring-<id>.txt (its WARNING lines are the JVM's
+     startup notices).
+  10. Stop: kill the port-8081 listener JVM by pid; 5 s later the mvnw pid if alive; pkill -f spring-boot:run; then lsof on 8081, both pids, and pgrep -f spring-boot:run.
+
+Run R (current model, settings of 947): snapshot 1366
+  env grep printed exactly RAG_CROSS_ENCODER_ENABLED=true RAG_RETRIEVAL_CANDIDATE_COUNT=200 RAG_RETRIEVAL_RERANK_CANDIDATES=40 RAG_RETRIEVAL_RERANK_TIMEOUT_MS=4000
+  SERVER_PORT=8081 (observed).
+  cpu-wait before app start 11:57:10: clear after 0 s. "Started StockRecommendationEngineApplication in 4.005 seconds"; "Cross-encoder loaded:
+  model=.../models/cross-encoder-ms-marco-MiniLM-L-6-v2/model.onnx, maxLength=512, batchSize=20, scoring=max-window/overlap=64/maxWindows=4" (observed).
+  warm-up HTTP 200 in 3.89 s, HYBRID_RRF_RERANKED, 5 results; "Reranking filing candidates: ticker=NVDA, candidates=40, timeoutMs=4000"; scoring candidates=40,
+  windows=88, topK=5, elapsedMs=2403 (observed).
+  cpu-wait before evaluate 11:57:24: clear after 0 s. loadavg { 2.83 2.88 3.31 }; after { 4.72 3.54 3.51 }.
+  evaluate HTTP 200 in 116.99 s, 1,403,242 bytes. "Evaluating retrieval: set=v2, questions=42, window=10, hybrid=null, rerank=true, trace=true";
+  "Retrieval evaluation stored: id=1366, hitAt1=0.523810, hitAt3=0.785714, hitAt5=0.833333, mrr=0.659921, misses=6, rerankedQuestions=42, rerankFallbackQuestions=0"
+  (observed). app.log counts: 43 "Query embedding completed"; 43 "Reranking filing candidates" lines, all candidates=40, timeoutMs=4000; 0 "Selecting evidence by
+  fused order"; 0 "Reranking failed"; 0 WARN or ERROR log lines (derived: grep -c / sort | uniq -c).
+  Evaluation scoring lines (topK=10, scoring-1366.txt): 42, elapsedMs 1,686 to 2,315, windows 70 to 92, total 3,443 (derived).
+  GET snapshot HTTP 200 application/json 1,403,242 bytes; GET evidence HTTP 200 application/json 517,771 bytes -> evidence-1366.json 373,539 bytes
+  (parses_equal_numbers_as_written=True). row export exit 0, 912,951 bytes, 1 line -> snapshot-1366-r-current-model-reproduction-of-947.json.
+  Stopped 11:59:29: 0 listeners on 8081, JVM and mvnw not alive, 0 spring-boot:run processes (observed).
+  Reproduction against 947: new shell (env -i HOME PATH), set -a && source .env && set +a (env grep for RAG_* and the enable flags -> 0); ./mvnw -q -o test
+    -Dtest=TraceReproductionFilesTests -Drag.reproduction.reference=<abs>/live-runs/2026-09-14-recall-one-factor/snapshot-947-c-repeat-candidate-count-200-rerank-candidates-40-timeout-4000.json
+    -Drag.reproduction.run=<abs>/live-runs/2026-09-15-reranker-gte/snapshot-1366-r-current-model-reproduction-of-947.json -Drag.reproduction.out=<abs>/.../reproduction-1366.txt
+    -> exit 0, "questions reference=42 run=42 traces=42", "problems=0" (observed: reproduction-1366.txt). A second comparison by compare_gte.py (comparison.txt
+    section 3): 0 rank or matched-chunk differences; hit_at_1, hit_at_3, hit_at_5, mrr equal as stored (derived). R reproduces 947, so rows A and B were run.
+
+Row A (gte model, settings of 613): snapshot 1367
+  env grep printed exactly RAG_RETRIEVAL_CANDIDATE_COUNT=40 RAG_RETRIEVAL_RERANK_CANDIDATES=20 SERVER_PORT=8081 SPRING_PROFILES_ACTIVE=reranker-gte (observed; the
+  candidate count and rerank-candidates equal the application.yaml defaults and were set explicitly; RAG_CROSS_ENCODER_ENABLED not set).
+  cpu-wait before app start 11:59:49: clear after 0 s. 'The following 1 profile is active: "reranker-gte"'; "GTE reranker files verified: model=.../models/
+  gte-reranker-modernbert-base/model.onnx, ..."; "Started StockRecommendationEngineApplication in 6.274 seconds"; "Cross-encoder loaded: model=.../models/
+  gte-reranker-modernbert-base/model.onnx, maxLength=512, batchSize=20, scoring=max-window/overlap=64/maxWindows=4" (observed).
+  warm-up HTTP 200 in 9.22 s, HYBRID_RRF_RERANKED, 5 results; "Reranking filing candidates: ticker=NVDA, candidates=20, timeoutMs=120000"; scoring candidates=20,
+  windows=47, topK=5, elapsedMs=7809 (observed).
+  cpu-wait before evaluate 12:00:07: clear after 1 s (the first poll found no other process). loadavg { 4.86 3.71 3.57 }; after { 5.96 5.55 4.52 }.
+  evaluate HTTP 200 in 323.21 s, 559,489 bytes. "Evaluating retrieval: set=v2, questions=42, window=10, hybrid=null, rerank=true, trace=true";
+  "Retrieval evaluation stored: id=1367, hitAt1=0.714286, hitAt3=0.857143, hitAt5=0.904762, mrr=0.792460, misses=4, rerankedQuestions=42, rerankFallbackQuestions=0"
+  (observed). app.log counts: 43 "Query embedding completed"; 43 "Reranking filing candidates" lines, all candidates=20, timeoutMs=120000; 0 "Selecting evidence by
+  fused order"; 0 "Reranking failed"; 0 WARN or ERROR log lines (derived).
+  Evaluation scoring lines (topK=10, scoring-1367.txt): 42, elapsedMs 5,281 to 8,609, windows 36 to 56, total 1,907 (derived). 613's (scoring-613.txt): 42, elapsedMs
+  958 to 1,840, windows 35 to 48, total 1,746 (derived). Medians: comparison.txt, Row A.
+  GET snapshot HTTP 200 application/json 559,489 bytes; GET evidence HTTP 200 application/json 473,196 bytes -> evidence-1367.json 346,539 bytes
+  (parses_equal_numbers_as_written=True; every chunkTokens value derived, settings.rerankerVersion c6d3226502ad). row export exit 0, 364,408 bytes, 1 line
+  -> snapshot-1367-a-gte-candidate-count-40-rerank-candidates-20.json. Stopped 12:05:38: 0 listeners on 8081, JVM and mvnw not alive, 0 spring-boot:run processes.
+
+Row B (gte model, settings of 947): snapshot 1368
+  env grep printed exactly RAG_RETRIEVAL_CANDIDATE_COUNT=200 RAG_RETRIEVAL_RERANK_CANDIDATES=40 SERVER_PORT=8081 SPRING_PROFILES_ACTIVE=reranker-gte (observed).
+  Started by nohup so the run outlived a tool call's time limit; same script.
+  cpu-wait before app start 12:05:48: clear after 0 s. profile "reranker-gte" active; "GTE reranker files verified"; "Started StockRecommendationEngineApplication in
+  7.022 seconds"; "Cross-encoder loaded: model=.../models/gte-reranker-modernbert-base/model.onnx, maxLength=512, batchSize=20,
+  scoring=max-window/overlap=64/maxWindows=4" (observed).
+  warm-up HTTP 200 in 16.66 s, HYBRID_RRF_RERANKED, 5 results; "Reranking filing candidates: ticker=NVDA, candidates=40, timeoutMs=120000"; scoring candidates=40,
+  windows=95, topK=5, elapsedMs=15060 (observed).
+  cpu-wait before evaluate 12:06:15: clear after 0 s. loadavg { 4.98 5.30 4.48 }; after { 6.61 6.56 5.65 }.
+  evaluate HTTP 200 in 591.22 s, 1,402,356 bytes. "Evaluating retrieval: set=v2, questions=42, window=10, hybrid=null, rerank=true, trace=true";
+  "Retrieval evaluation stored: id=1368, hitAt1=0.761905, hitAt3=0.880952, hitAt5=0.928571, mrr=0.831576, misses=2, rerankedQuestions=42, rerankFallbackQuestions=0"
+  (observed). app.log counts: 43 "Query embedding completed"; 43 "Reranking filing candidates" lines, all candidates=40, timeoutMs=120000; 0 "Selecting evidence by
+  fused order"; 0 "Reranking failed"; 0 WARN or ERROR log lines (derived).
+  Evaluation scoring lines (topK=10, scoring-1368.txt): 42, elapsedMs 10,423 to 17,815, windows 72 to 104, total 3,703 (derived). Run R's: see Run R above.
+  Medians: comparison.txt, Row B.
+  GET snapshot HTTP 200 application/json 1,402,356 bytes; GET evidence HTTP 200 application/json 475,199 bytes -> evidence-1368.json 347,446 bytes
+  (parses_equal_numbers_as_written=True; every chunkTokens value derived, settings.rerankerVersion c6d3226502ad). row export exit 0, 912,661 bytes, 1 line
+  -> snapshot-1368-b-gte-candidate-count-200-rerank-candidates-40.json. Stopped 12:16:15: 0 listeners on 8081, JVM and mvnw not alive, 0 spring-boot:run processes.
+
+Database: retrieval_evaluations 46 rows, max id 1141 before; 49 rows, max id 1368 after (rows 1366, 1367, 1368 added by these runs) (observed: psql).
+Embedding calls: 129 (3 x 42 evaluation + 3 warm-up) (derived: count of "Query embedding completed" over the three app.log files, 43 each).
+No fallback in any run (observed: properties.rerankFallbackQuestions 0; comparison.txt section 2), so neither row was repeated.
+
+Comparison and claims
+  K1. cd live-runs/2026-09-15-reranker-gte && python3 compare_gte.py -> exit 0; writes property-diff.txt, comparison.txt, claims.json. It reads only the committed
+      snapshots, evidence reports and scoring extracts it names, imports rule and fallbacks from ../2026-09-14-recall-one-factor/compare_one_factor.py and, through it,
+      best and fmt from ../2026-09-14-candidate-recall/candidate_recall.py.
+  K2. G1 (property-diff.txt, derived): 1366 against 947, no recorded property differs; 1367 against 613 and 1368 against 947, only reranker and rerankerVersion
+      differ; rerank-timeout-ms, not recorded, differs in both (each value with its source in property-diff.txt; plan amendment 1). 1367 and 1368 against 598 differ
+      in the allowed keys and the outcome values rerankedQuestions and retrieval_strategy.
+  K3. G3 (comparison.txt, last section, derived): row A and row B each meet the selection rule against 598 on all four criteria (ruleRow claims C-934 and C-965).
+      Plan: a row that meets the rule is a decision for Jay; Follow_Ups RAG-23 (DECISION). No default changed.
+  K4. Entering and leaving the top 5 against the paired run (comparison.txt, Row A and Row B, derived): row A entering msft-04, msft-05, nvda-01, nvda-07, nvda-09,
+      leaving none found; row B entering msft-05, nvda-01, nvda-07, nvda-09, leaving none found.
+  K5. set -a && source .env && set +a && ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> "CLAIMS_GENERATE changed=1
+      [src/main/java/documentation/RAG.md] notGenerated=0", "CLAIMS_CHECK claimsFiles=7 documents=27 problems=0" (observed). The first generation ran with the
+      markers unindented; they were indented to the bullet level and the generator run again (changed=1, problems=0, observed).
+
+Milestone 1 low findings (plan Status)
+  L1. GteRerankerModelInspector Javadoc: "(scratch probe, recorded in RAG.md, Second reranker model)" -> "(scratch probe, recorded in
+      documentation/live-runs/2026-09-15-reranker-gte/onnx-probe.txt, Probe3)"; onnx-probe.txt lines 56 to 59 hold the 566, 263, 211 ms and 973227736-byte values.
+  L2. RAG.md, Second reranker model, Scoring time and shutdown: the parenthesis quoting earlier, uncommitted test timings was removed; the values kept there are in
+      live-test.log lines 8 and 9.
+  K6. python3 compare_gte.py twice -> exit 0 both; shasum -a 256 after the first run, shasum -c after the second -> OK for the three files; no __pycache__ (observed):
+        4340a2da1f752dd31c9280dd76fa2a9b45433564690855c2891880a04cc0835b  property-diff.txt
+        021b35c3529b7565da9e32b764fdc178e8276b132bf9871a5ffb6ba7bedb187a  comparison.txt
+        a2d8b7d5e6bc19eb05ea967c0c4309365af315d77226d2a195c42882afbf22b6  claims.json
+
+Build
+  B1. New shell via env -i HOME PATH; set -a && source .env && set +a; env grep for RAG_* and the enable flags -> 0 (observed). rm -rf target/surefire-reports;
+      ./mvnw -q -o verify -> exit 0, 12:20:16 to 12:20:30 (observed); 64 test classes, 577 tests, 0 failures, 0 errors, 32 skipped (derived: sum of the testsuite
+      attributes over target/surefire-reports/TEST-*.xml of this run); "CLAIMS_CHECK claimsFiles=7 documents=27 problems=0" (observed: verify output).
+  B2. lsof -iTCP:8081 -sTCP:LISTEN -> 0 lines (observed).
+
+G6 after
+  12:20:42 shasum -a 256 models/cross-encoder-ms-marco-MiniLM-L-6-v2/* -> the two values of G6 before, identical (observed; appended to current-model-sha256.txt).
+
+Files committed in this directory by this milestone
+  snapshot-1366-r-current-model-reproduction-of-947.json, snapshot-1367-a-gte-candidate-count-40-rerank-candidates-20.json,
+  snapshot-1368-b-gte-candidate-count-200-rerank-candidates-40.json (step 7); evidence-1366.json, evidence-1367.json, evidence-1368.json (step 8);
+  reproduction-1366.txt; scoring-1366.txt, scoring-1367.txt, scoring-1368.txt (step 9); compare_gte.py, property-diff.txt, comparison.txt, claims.json (K1); run.log.

@@ -169,3 +169,9 @@ from the frozen comparison above.
   - The two Milestone 1 low findings not fixed (the exclusion guard reads `yes`/`on`/`1` as true; the live test checks
     only row 0 against native truncation) are logged in Follow_Ups rather than fixed.
   - The selection rows against 598 stay per gte row (A, B).
+- 2026-09-15, Milestone 2 closed: Scrutiny failed round 1 because the pairs' candidate lists before reranking were not
+  checked (amendment 3), passed after remediation (d12f100) with both pairs identical before reranking; UT passed. Both
+  gte rows meet the selection rule against 598 (RAG.md, Comparison with the current model); the decision is Follow_Ups
+  RAG-23 and no default changed. Open low findings: Follow_Ups RAG-24; in the block, row B's nvda-01 names each run's own
+  best accepted chunk, which differ between the two runs.
+- 2026-09-15, plan closed.

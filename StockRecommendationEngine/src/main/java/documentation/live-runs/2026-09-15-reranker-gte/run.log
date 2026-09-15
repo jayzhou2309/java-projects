@@ -107,7 +107,7 @@ Comparison and claims
   K2. G1 (property-diff.txt, derived): 1366 against 947, no recorded property differs; 1367 against 613 and 1368 against 947, only reranker and rerankerVersion
       differ; rerank-timeout-ms, not recorded, differs in both (each value with its source in property-diff.txt; plan amendment 1). 1367 and 1368 against 598 differ
       in the allowed keys and the outcome values rerankedQuestions and retrieval_strategy.
-  K3. G3 (comparison.txt, last section, derived): row A and row B each meet the selection rule against 598 on all four criteria (ruleRow claims C-934 and C-965).
+  K3. G3 (comparison.txt, last section, derived): row A and row B each meet the selection rule against 598 on all four criteria (ruleRow claims C-934 and C-965 in the numbering before Remediation round 1; current ids in claims.json).
       Plan: a row that meets the rule is a decision for Jay; Follow_Ups RAG-23 (DECISION). No default changed.
   K4. Entering and leaving the top 5 against the paired run (comparison.txt, Row A and Row B, derived): row A entering msft-04, msft-05, nvda-01, nvda-07, nvda-09,
       leaving none found; row B entering msft-05, nvda-01, nvda-07, nvda-09, leaving none found.

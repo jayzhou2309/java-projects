@@ -183,3 +183,16 @@ one-line fix, a typo, or a question, just do it directly.
   is the default; fixing a history note creates a new history note, so collapse to a pointer
   early; a user note folded into a document needs a committed record before the document
   cites it. Plan B (RAG-20) is gated. Plan in `documentation/plans/2026-09-14-retrieval-recall.md`.
+- 2026-09-15, rerank blend (RAG-21): split, grid, choice and held-out rules frozen in a commit
+  before any simulation (Jay's rule); the one held-out test passed by equalling the default
+  reference, recorded as no gain, and Jay stopped before implementation. Plan in
+  `documentation/plans/2026-09-14-rerank-blend.md`.
+- 2026-09-15, second reranker model (RAG-22): the first candidate's official ONNX file had no
+  scoring head (found by the Worker's startup probe before any code; amendment 1, Jay chose
+  gte-reranker-modernbert-base); the Orchestrator's premise that the assembler rejected the
+  new template was also wrong (amendment 2). M1 passed first round; M2 failed Scrutiny once
+  because the paired runs' candidate lists before reranking were never compared (a run from an
+  earlier session differed), passed after a same-session current-model run (amendment 3).
+  Lessons: probe a downloaded model's graph before designing around it; a model comparison
+  must check candidate-list identity per question, not only settings. Decision RAG-23 open.
+  Plan in `documentation/plans/2026-09-15-reranker-ettin.md`.

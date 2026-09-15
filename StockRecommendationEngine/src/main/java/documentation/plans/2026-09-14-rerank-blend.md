@@ -74,3 +74,9 @@ Correctness contract:
 
 - 2026-09-14: plan written; split, grid, blend, choice rule, and held-out rule frozen by this commit, before any
   simulation code or result.
+- 2026-09-15, Milestone 1: Scrutiny passed on the first round (05d15e8, c92b9a8). The frozen choice rule selected one grid
+  point and its single held-out test passed by the frozen rule; that pass and the whole-set selection row both equal the
+  default reference, with no question changing top-5 membership (claims C-843 and C-882). Low findings: the documents do
+  not state the tie directly; the `blend` check does not refuse a phrase without a stored chunk; the frozen rule does not
+  say whether "FIGURE" means kind or slice (the script uses kind; no outcome depends on it). Milestones 2 and 3 await
+  Jay's decision.

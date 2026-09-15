@@ -92,3 +92,23 @@ from the frozen comparison above.
 ## Status
 
 - 2026-09-15: plan written; approved by Jay, including the downloads listed in Milestone 1.
+- 2026-09-15, amendment 1 (Milestone 1 stopped before code): the approved `cross-encoder/ettin-reranker-32m-v1`
+  `onnx/model.onnx` loads under ONNX Runtime 1.29.0 but outputs `last_hidden_state` [batch, sequence, 384]; its scoring
+  head is in separate Sentence-Transformers module files, so it cannot score pairs as approved (the plan's premise that
+  three files suffice was wrong). Its three downloaded files stay unused under `models/cross-encoder-ettin-reranker-32m-v1/`
+  (gitignored); the current model's files were checked byte-identical before and after. Jay chose (2026-09-15) to test
+  `Alibaba-NLP/gte-reranker-modernbert-base` instead (Apache-2.0; `ModernBertForSequenceClassification`, 22 layers x 768;
+  checked at repository commit f7481e6055501a30fb19d090657df9ec1f79ab2c: BPE tokenizer with the same five-piece pair
+  template, every type id 0, `padding.pad_id` 50283, a truncation block). This amendment replaces, for the rest of the plan:
+  - the model: `Alibaba-NLP/gte-reranker-modernbert-base` at that commit, in `models/gte-reranker-modernbert-base/`, profile
+    file `src/main/resources/application-reranker-gte.yaml`, evidence under `live-runs/2026-09-15-reranker-gte/`; the
+    plan file keeps its name;
+  - the downloads (approved by Jay): `onnx/model.onnx` 598,803,940 bytes, LFS SHA-256
+    c6d3226502addbcd4d2cf273802957ebf8a2a6bf94037dcb9b1d95bfc01e5d93; `tokenizer.json` 3,583,499 bytes; `config.json`
+    1,333 bytes (reference only);
+  - the timeout for the new model's rows only: 120,000 ms in both rows, to avoid fallbacks. The architecture-derived cost
+    estimate is about ten times the current model per window, so the current timeouts would make most questions fall
+    back. The timeout decides only whether a question falls back, never the order of a completed reranking, so the
+    ranking comparison stays one factor (the model); scoring time is reported, and no row is judged fit for production
+    use by this plan. The reference rows keep their recorded timeouts.
+  - E5 now requires the output to be one score per pair ([batch, 1]); a startup check fails otherwise.

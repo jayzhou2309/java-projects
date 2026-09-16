@@ -11,18 +11,20 @@ import tools.jackson.databind.JsonNode;
  * alone: every cell is a value read from it with its basis, and nothing is looked up, computed, or added beyond layout. A value is
  * written {@code 10 (observed [3])} or {@code 480 (derived [7])}, citing the numbered source or rule listed at the end, or
  * {@code unknown: <reason>}; a null value is {@code none} ({@code not in the fused list} for a fused position, {@code not returned}
- * for a returned position); offsets are {@code [start, end)}.
+ * for a returned position, {@code not removed} for a removedRedundantWith); offsets are {@code [start, end)}. Entries of a removed list are
+ * plain values under the list's basis.
  */
 final class EvidenceMarkdownRenderer {
     private static final String[] SETTINGS = {"rerank", "rerankCandidates", "reranker", "rerankerVersion", "loadedModelVersion", "rerankerScoring",
             "passageScoring", "windowOverlapTokens", "maxWindows", "maxLength"};
     private static final String[] QUESTION_FIELDS = {"rank", "matchedChunkId", "retrievalStrategy", "error", "rerankOutcome", "fallbackReason",
-            "scoresNotRecorded", "fusedCount", "rerankInputCount", "queryTokens", "acceptedPhraseCount"};
+            "scoresNotRecorded", "fusedCount", "rerankInputCount", "queryTokens", "acceptedPhraseCount", "acceptedChunkRemoved"};
     private static final String[] TOKEN_COLUMNS = {"chunkTokens", "windowLength", "windowStarts"};
     private static final String[] OCCURRENCE_COLUMNS = {"characterSpan", "tokenSpan", "head", "windowsHoldingWholly"};
     private static final String[] CANDIDATE_COLUMNS = {"fusedPosition", "rerankInput", "rerankedPosition", "score", "windowCount", "windowScores",
-            "returnedPosition"};
+            "returnedPosition", "removedRedundantWith"};
     private static final String[] RANKED_COLUMNS = {"position", "fusedPosition", "score", "windowScores"};
+    private static final String[] REMOVED_COLUMNS = {"candidatePosition", "vectorRank", "keywordRank", "figureRank", "redundantWith"};
 
     private final StringBuilder out = new StringBuilder();
     private final Map<String, Integer> citations = new LinkedHashMap<>();
@@ -94,6 +96,28 @@ final class EvidenceMarkdownRenderer {
         } else {
             line("rankedAbove: " + cell("rankedAbove", above));
         }
+        removed(question.path("removed"));
+    }
+
+    private void removed(JsonNode removed) {
+        line("");
+        line("### Removed by diversification");
+        line("");
+        if (removed.isMissingNode() || removed.isNull() || "unknown".equals(text(removed.get("basis")))) {
+            line("removed: " + cell("removed", removed.isMissingNode() ? null : removed));
+            return;
+        }
+        List<JsonNode> entries = list(removed.get("value"));
+        line("removed: " + entries.size() + (entries.size() == 1 ? " chunk " : " chunks ") + basis(removed));
+        if (entries.isEmpty()) return;
+        line("");
+        header("Chunk", REMOVED_COLUMNS);
+        for (JsonNode entry : entries) {
+            List<String> cells = new ArrayList<>();
+            cells.add(text(entry.get("chunkId")));
+            for (String column : REMOVED_COLUMNS) cells.add(text(entry.get(column)));
+            tableRow(cells);
+        }
     }
 
     private void phrase(JsonNode phrase, int number, int count) {
@@ -146,6 +170,7 @@ final class EvidenceMarkdownRenderer {
             return switch (field) {
                 case "fusedPosition" -> "not in the fused list";
                 case "returnedPosition" -> "not returned";
+                case "removedRedundantWith" -> "not removed";
                 default -> "none";
             };
         }

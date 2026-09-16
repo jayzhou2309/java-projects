@@ -1,0 +1,14 @@
+{
+  "description": "The retrieval candidate count with reranking at 40 candidates between the traced run at the settings of snapshot 298 (627, committed under ../2026-09-13-evaluation-evidence/measurement/) and the repeat of run c of Milestone 2 (947, plan amendment 2): both ran with the cross-encoder loaded and rerank-timeout-ms 4000, and their recorded properties differ only in candidateCount (property-diff.txt). rerank-timeout-ms and max-length are not recorded in snapshots (run.log).",
+  "experiment": {
+    "factor": "candidateCount",
+    "settings": [
+      40,
+      200
+    ],
+    "snapshots": [
+      "../2026-09-13-evaluation-evidence/measurement/snapshot-627-traced-snapshot-298-rerank-candidates-40-timeout-4000.json",
+      "snapshot-947-c-repeat-candidate-count-200-rerank-candidates-40-timeout-4000.json"
+    ]
+  }
+}

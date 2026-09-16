@@ -1,0 +1,75 @@
+# ONNX graph probe, gte-reranker-modernbert-base, 2026-09-15 (scratch Java program on the project's ORT 1.29.0 and DJL tokenizers 0.38.0 jars, before any class was written)
+# Probe2: declared inputs and outputs, one pair each for a relevant and an irrelevant passage (tokenizer pair encoding, truncation and padding off), and two calls of 20 rows x 512 tokens (synthetic ids)
+    import ai.onnxruntime.*;
+    import ai.djl.huggingface.tokenizers.*;
+    import java.nio.file.*;
+    import java.util.*;
+    public class Probe2 {
+      public static void main(String[] a) throws Exception {
+        String dir = a[0];
+        OrtEnvironment env = OrtEnvironment.getEnvironment();
+        System.out.println("ORT version " + env.getVersion());
+        try (OrtSession s = env.createSession(dir + "/model.onnx", new OrtSession.SessionOptions());
+             HuggingFaceTokenizer tok = HuggingFaceTokenizer.builder().optTokenizerPath(Paths.get(dir + "/tokenizer.json")).optTruncation(false).optPadding(false).build()) {
+          for (NodeInfo n : s.getInputInfo().values()) System.out.println("input " + n.getName() + " " + n.getInfo());
+          for (NodeInfo n : s.getOutputInfo().values()) System.out.println("output " + n.getName() + " " + n.getInfo());
+          String q = "What was the company's total revenue in fiscal 2024?";
+          String[] ps = {"Total revenue for fiscal 2024 was $60.9 billion, up 126% from a year ago.",
+                         "The weather in Paris is mild in spring and many tourists visit the museums."};
+          for (String p : ps) {
+            Encoding e = tok.encode(q, p);
+            long[] ids = e.getIds(); long[] types = e.getTypeIds(); long[] mask = e.getAttentionMask();
+            System.out.println("ids " + Arrays.toString(ids)); System.out.println("types " + Arrays.toString(types));
+            Map<String, OnnxTensor> in = new LinkedHashMap<>();
+            in.put("input_ids", OnnxTensor.createTensor(env, new long[][]{ids}));
+            in.put("attention_mask", OnnxTensor.createTensor(env, new long[][]{mask}));
+            try (OrtSession.Result r = s.run(in)) { Object v = r.get(0).getValue(); System.out.println("run shape " + ((OnnxTensor) r.get(0)).getInfo() + " value " + Arrays.deepToString((Object[]) v)); }
+          }
+          // padded batch of 2 and a 20x512 timing
+          long[][] ids = new long[20][512]; long[][] mask = new long[20][512];
+          for (int i=0;i<20;i++){ ids[i][0]=50281; for(int j=1;j<511;j++){ids[i][j]=1000+(j%500);} ids[i][511]=50282; Arrays.fill(mask[i],1);}
+          for (int k=0;k<2;k++){
+            long t=System.nanoTime();
+            Map<String, OnnxTensor> in = new LinkedHashMap<>();
+            in.put("input_ids", OnnxTensor.createTensor(env, ids));
+            in.put("attention_mask", OnnxTensor.createTensor(env, mask));
+            try (OrtSession.Result r = s.run(in)) { System.out.println("batch20x512 shape " + ((OnnxTensor) r.get(0)).getInfo() + " ms " + (System.nanoTime()-t)/1_000_000); }
+          }
+        }
+      }
+    }
+## output
+ORT version 1.29.0
+input input_ids TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])
+input attention_mask TensorInfo(javaType=INT64,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,shape=[-1, -1],dimNames=[batch_size,sequence_length])
+output logits TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[-1, 1],dimNames=[batch_size,""])
+ids [50281, 1276, 369, 253, 2567, 434, 2264, 11784, 275, 17940, 1384, 1348, 32, 50282, 12481, 11784, 323, 17940, 1384, 1348, 369, 370, 1549, 15, 26, 6494, 13, 598, 17574, 6, 432, 247, 807, 3622, 15, 50282]
+types [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+run shape TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[1, 1]) value [[3.7687628]]
+ids [50281, 1276, 369, 253, 2567, 434, 2264, 11784, 275, 17940, 1384, 1348, 32, 50282, 510, 8588, 275, 7785, 310, 11134, 275, 7203, 285, 1142, 24359, 4143, 253, 34028, 15, 50282]
+types [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+run shape TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[1, 1]) value [[-2.75273]]
+batch20x512 shape TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[20, 1]) ms 4361
+batch20x512 shape TensorInfo(javaType=FLOAT,onnxType=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,shape=[20, 1]) ms 3827
+
+# Probe3: session create-and-close time on the model file by optimisation level, under /usr/bin/time -l (three sequential sessions)
+NO_OPT ms 566
+ALL_OPT ms 263
+NO_OPT ms 211
+973227736  peak memory footprint (bytes)
+
+## Probe3 source
+    import ai.onnxruntime.*;
+    public class Probe3 {
+      public static void main(String[] a) throws Exception {
+        OrtEnvironment env = OrtEnvironment.getEnvironment();
+        for (String lvl : new String[]{"NO_OPT","ALL_OPT","NO_OPT"}) {
+          long t=System.nanoTime();
+          try (OrtSession.SessionOptions o = new OrtSession.SessionOptions()) {
+            o.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.valueOf(lvl));
+            try (OrtSession s = env.createSession(a[0], o)) { s.getOutputInfo(); }
+          }
+          System.out.println(lvl+" ms "+(System.nanoTime()-t)/1_000_000);
+        }
+      }
+    }

@@ -37,6 +37,7 @@ Question: q1 alpha beta
 | rerankInputCount | 3 (observed [20]) |
 | queryTokens | 3 (derived [21]) |
 | acceptedPhraseCount | 2 (observed [22]) |
+| acceptedChunkRemoved | unknown: no trace of removals |
 
 ### Accepted phrase 1 of 2
 
@@ -49,10 +50,10 @@ heldByStoredChunk: true (observed [23])
 | 101 | 40 (derived [24]) | 14 (derived [25]) | 0, 14, 26 (derived [26]) | [60, 79) (derived [27]) | [12, 16) (derived [28]) | partly (derived [29]) | none (derived [30]) |
 | 102 | 6 (derived [24]) | 14 (derived [25]) | 0 (derived [26]) | [6, 27) (derived [27]) | [1, 5) (derived [28]) | wholly (derived [29]) | 1 (derived [30]) |
 
-| Chunk | fusedPosition | rerankInput | rerankedPosition | score | windowCount | windowScores | returnedPosition |
-|---|---|---|---|---|---|---|---|
-| 101 | 1 (observed [31]) | true (observed [32]) | 3 (observed [33]) | -0.5 (observed [34]) | 3 (observed [35]) | -0.5, -3.0, -2.0 (observed [36]) | not returned (observed [37]) |
-| 102 | 3 (observed [31]) | true (observed [32]) | 2 (observed [33]) | 1.25 (observed [34]) | 1 (observed [35]) | 1.25 (observed [36]) | 2 (observed [37]) |
+| Chunk | fusedPosition | rerankInput | rerankedPosition | score | windowCount | windowScores | returnedPosition | removedRedundantWith |
+|---|---|---|---|---|---|---|---|---|
+| 101 | 1 (observed [31]) | true (observed [32]) | 3 (observed [33]) | -0.5 (observed [34]) | 3 (observed [35]) | -0.5, -3.0, -2.0 (observed [36]) | not returned (observed [37]) | unknown: no trace of removals |
+| 102 | 3 (observed [31]) | true (observed [32]) | 2 (observed [33]) | 1.25 (observed [34]) | 1 (observed [35]) | 1.25 (observed [36]) | 2 (observed [37]) | unknown: no trace of removals |
 
 ### Accepted phrase 2 of 2
 
@@ -74,6 +75,10 @@ rankedAbove: 1 chunk (observed [40])
 |---|---|---|---|---|
 | 301 | 1 (observed [33]) | 2 (observed [41]) | 2.5 (observed [34]) | 2.5, -1.0 (observed [36]) |
 
+### Removed by diversification
+
+removed: unknown: no trace of removals
+
 ## Question q2 (MSFT, NARRATIVE)
 
 Question: q2 gamma
@@ -91,6 +96,7 @@ Question: q2 gamma
 | rerankInputCount | 2 (observed [20]) |
 | queryTokens | 2 (derived [21]) |
 | acceptedPhraseCount | 1 (observed [22]) |
+| acceptedChunkRemoved | unknown: no trace of removals |
 
 ### Accepted phrase 1 of 1
 
@@ -102,9 +108,9 @@ heldByStoredChunk: true (observed [23])
 |---|---|---|---|---|---|---|---|
 | 201 | 40 (derived [24]) | 15 (derived [25]) | 0, 15, 25 (derived [26]) | [150, 159) (derived [27]) | [30, 32) (derived [28]) | not (derived [29]) | 3 (derived [30]) |
 
-| Chunk | fusedPosition | rerankInput | rerankedPosition | score | windowCount | windowScores | returnedPosition |
-|---|---|---|---|---|---|---|---|
-| 201 | not in the fused list (observed [31]) | false (derived [42]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | not returned (observed [37]) |
+| Chunk | fusedPosition | rerankInput | rerankedPosition | score | windowCount | windowScores | returnedPosition | removedRedundantWith |
+|---|---|---|---|---|---|---|---|---|
+| 201 | not in the fused list (observed [31]) | false (derived [42]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | not returned (observed [37]) | unknown: no trace of removals |
 
 ### Ranked above the best accepted chunk
 
@@ -120,6 +126,10 @@ rankedAbove: 2 chunks (observed [45])
 |---|---|---|---|---|
 | 202 | 1 (observed [46]) | 1 (observed [19]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores |
 | 203 | 2 (observed [46]) | 2 (observed [19]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores |
+
+### Removed by diversification
+
+removed: unknown: no trace of removals
 
 ## Question q3 (NVDA, FIGURE)
 
@@ -138,6 +148,7 @@ Question: q3 delta epsilon
 | rerankInputCount | unknown: no trace for this question (its retrieval failed) |
 | queryTokens | 3 (derived [21]) |
 | acceptedPhraseCount | 1 (observed [22]) |
+| acceptedChunkRemoved | unknown: no trace for this question (its retrieval failed) |
 
 ### Accepted phrase 1 of 1
 
@@ -149,9 +160,9 @@ heldByStoredChunk: true (observed [23])
 |---|---|---|---|---|---|---|---|
 | 201 | 40 (derived [24]) | 14 (derived [25]) | 0, 14, 26 (derived [26]) | [150, 159) (derived [27]) | [30, 32) (derived [28]) | not (derived [29]) | 3 (derived [30]) |
 
-| Chunk | fusedPosition | rerankInput | rerankedPosition | score | windowCount | windowScores | returnedPosition |
-|---|---|---|---|---|---|---|---|
-| 201 | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) |
+| Chunk | fusedPosition | rerankInput | rerankedPosition | score | windowCount | windowScores | returnedPosition | removedRedundantWith |
+|---|---|---|---|---|---|---|---|---|
+| 201 | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) | unknown: no trace for this question (its retrieval failed) |
 
 ### Ranked above the best accepted chunk
 
@@ -162,6 +173,10 @@ heldByStoredChunk: true (observed [23])
 | bestAcceptedPosition | unknown: no trace for this question (its retrieval failed) |
 
 rankedAbove: unknown: no trace for this question (its retrieval failed)
+
+### Removed by diversification
+
+removed: unknown: no trace for this question (its retrieval failed)
 
 ## Sources and rules
 

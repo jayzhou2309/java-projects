@@ -1,0 +1,25 @@
+# Second reranker model: Alibaba-NLP/gte-reranker-modernbert-base on ONNX Runtime (CPU), for the frozen comparison against the
+# current model (plan documentation/plans/2026-09-15-reranker-ettin.md with amendment 1; RAG.md, Second reranker model).
+# Activate with SPRING_PROFILES_ACTIVE=reranker-gte. Reranking stays off by default: a request's "rerank": true (or ?rerank=true on
+# evaluate) uses this model. Startup fails when rag.retrieval.cross-encoder.enabled is also true (RAG_CROSS_ENCODER_ENABLED).
+# The files are not in git: download them into models/gte-reranker-modernbert-base/ as recorded in
+# documentation/live-runs/2026-09-15-reranker-gte/downloads.md.
+rag:
+  retrieval:
+    # 120,000 ms for this model's comparison rows, set here so the current model's runs (without this profile) keep 2,000 ms. The
+    # timeout decides only whether a question falls back to the fused order, never the order of a completed reranking (plan amendment 1).
+    rerank-timeout-ms: 120000
+    gte-reranker:
+      enabled: true
+      model-path: models/gte-reranker-modernbert-base/model.onnx
+      tokenizer-path: models/gte-reranker-modernbert-base/tokenizer.json
+      # SHA-256 of the files downloaded at repository commit f7481e6055501a30fb19d090657df9ec1f79ab2c; the model's first 12 hex
+      # characters (c6d3226502ad) are recorded as properties.rerankerVersion in evaluation snapshots.
+      model-sha256: c6d3226502addbcd4d2cf273802957ebf8a2a6bf94037dcb9b1d95bfc01e5d93
+      tokenizer-sha256: 2aea6ff4701d063e7e029b6be695a1659f2caaa2ae4fb0e8b18285818271becd
+      # Frozen comparison settings, equal to the current model's reference runs: the model is the one factor.
+      max-length: 512
+      batch-size: 20
+      passage-scoring: max-window
+      window-overlap-tokens: 64
+      max-windows: 4

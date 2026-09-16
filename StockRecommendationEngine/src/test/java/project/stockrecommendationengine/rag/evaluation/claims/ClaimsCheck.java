@@ -43,7 +43,8 @@ import tools.jackson.databind.json.JsonMapper;
 public final class ClaimsCheck {
     static final List<String> BASES = List.of("observed", "derived", "inferred", "unknown", "experiment");
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
-    static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "notRecorded");
+    static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
+            "candidateRecall", "removedAccepted", "blend", "candidateLists", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -52,15 +53,20 @@ public final class ClaimsCheck {
             + "|tickerHitAt5\\.([A-Z0-9.-]{1,16})");
     private static final Set<String> FILE_KEYS = Set.of("claims", "description", "labels");
     private static final Set<String> CLAIM_KEYS = Set.of("id", "basis", "block", "check", "text", "from", "experiment");
-    private static final Map<String, Set<String>> CHECK_KEYS = Map.of(
-            "rank", Set.of("type", "snapshot", "question", "expected"),
-            "topK", Set.of("type", "question", "k", "rows"),
-            "metric", Set.of("type", "snapshot", "metric", "expected"),
-            "ruleRow", Set.of("type", "reference", "candidate", "criteria"),
-            "phraseSpan", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected"),
-            "membership", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected"),
-            "candidate", Set.of("type", "report", "question", "chunk", "expected"),
-            "notRecorded", Set.of("type", "report", "path", "reason"));
+    private static final Map<String, Set<String>> CHECK_KEYS = Map.ofEntries(
+            Map.entry("rank", Set.of("type", "snapshot", "question", "expected")),
+            Map.entry("topK", Set.of("type", "question", "k", "rows")),
+            Map.entry("metric", Set.of("type", "snapshot", "metric", "expected")),
+            Map.entry("ruleRow", Set.of("type", "reference", "candidate", "criteria")),
+            Map.entry("phraseSpan", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected")),
+            Map.entry("membership", Set.of("type", "report", "question", "phrase", "chunk", "occurrence", "expected")),
+            Map.entry("candidate", Set.of("type", "report", "question", "chunk", "expected")),
+            Map.entry("bestFusedPosition", Set.of("type", "report", "question", "expected")),
+            Map.entry("candidateRecall", Set.of("type", "report", "k", "expected")),
+            Map.entry("removedAccepted", Set.of("type", "report", "expected")),
+            Map.entry("blend", Set.of("type", "snapshot", "report", "k", "w", "questions", "metric", "expected", "reference")),
+            Map.entry("candidateLists", Set.of("type", "reference", "candidate", "compare", "expected")),
+            Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
             "phraseSpan", List.of("tokenSpan", "characterSpan"),
@@ -606,6 +612,11 @@ public final class ClaimsCheck {
                 case "ruleRow" -> ruleRow(claim, check, evaluation);
                 case "phraseSpan", "membership" -> occurrence(claim, check, type, evaluation);
                 case "candidate" -> candidate(claim, check, evaluation);
+                case "bestFusedPosition" -> bestFusedPosition(claim, check, evaluation);
+                case "candidateRecall" -> candidateRecall(claim, check, evaluation);
+                case "removedAccepted" -> removedAccepted(claim, check, evaluation);
+                case "blend" -> blend(claim, check, evaluation);
+                case "candidateLists" -> candidateLists(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -968,6 +979,582 @@ public final class ClaimsCheck {
             });
         }
         return "In " + reportReference(report) + ", chunk " + chunk + ", which holds an accepted phrase of " + question + ", " + joinAnd(parts) + ".";
+    }
+
+    /** A question's smallest fused position over every chunk holding any of its accepted phrases; null position when none is fused. */
+    private record Best(Integer position, Long chunk, int holdingChunks) {
+    }
+
+    /**
+     * The best fused position of the question in the report (plan {@code 2026-09-14-retrieval-recall.md}, Milestone 1): the smallest
+     * {@code fusedPosition} over every chunk listed under any accepted phrase, null when no such chunk is in the fused list. Every chunk whose
+     * fused position is unknown, missing, or not an integer makes the value unreadable, naming the question and each such chunk; a question
+     * whose accepted phrases are unknown (its {@code acceptedPhraseCount} not observed, so the report lists no phrases) is unreadable too, so
+     * an unknown is never read as not fused.
+     */
+    private static Best best(JsonNode questionNode, String question) {
+        JsonNode count = questionNode.get("acceptedPhraseCount");
+        if (count == null || !count.isObject() || !count.path("basis").asString("").equals("observed")) {
+            throw new Unreadable("question " + question + " has unknown accepted phrases (acceptedPhraseCount " + (isUnknown(count) ? reason(count)
+                    : "has basis " + count.path("basis").asString("none")) + ")");
+        }
+        Integer position = null;
+        Long chunk = null;
+        Set<Long> holding = new LinkedHashSet<>();
+        Map<Long, String> unreadable = new LinkedHashMap<>();
+        for (JsonNode phraseNode : questionNode.path("phrases")) {
+            for (JsonNode candidate : phraseNode.path("chunks")) {
+                long id = candidate.path("chunkId").asLong(-1);
+                holding.add(id);
+                JsonNode value = candidate.get("fusedPosition");
+                if (value == null || !value.isObject()) {
+                    unreadable.putIfAbsent(id, "chunk " + id + " has no fusedPosition in the report");
+                    continue;
+                }
+                if (isUnknown(value)) {
+                    unreadable.putIfAbsent(id, "chunk " + id + " has an unknown fused position (" + reason(value) + ")");
+                    continue;
+                }
+                JsonNode found = value.get("value");
+                if (found == null || found.isNull()) continue;
+                if (!found.isIntegralNumber()) {
+                    unreadable.putIfAbsent(id, "chunk " + id + " has fused position " + render(found) + ", not an integer");
+                    continue;
+                }
+                if (position == null || found.intValue() < position) {
+                    position = found.intValue();
+                    chunk = id;
+                }
+            }
+        }
+        if (!unreadable.isEmpty()) throw new Unreadable("question " + question + " " + String.join(", ", unreadable.values()));
+        return new Best(position, chunk, holding.size());
+    }
+
+    // Template: "In <Report>, the best fused position of a chunk holding an accepted phrase of <question> is <n> (chunk <id>)." | "In <Report>,
+    // none of the <m> chunks holding an accepted phrase of <question> was in the fused list." ("the chunk" for one) | "In <Report>, no stored
+    // chunk holds an accepted phrase of <question>."
+    private String bestFusedPosition(Claim claim, JsonNode check, Evaluation evaluation) {
+        String reportFile = requireText(check, "report");
+        String question = requireText(check, "question");
+        JsonNode expected = check.get("expected");
+        if (expected == null || !(expected.isNull() || expected.isIntegralNumber() && expected.intValue() >= 1)) {
+            throw new Unreadable("check.expected must be a fused position (positive integer) or null, found " + (expected == null ? "none" : expected));
+        }
+        evaluation.subject("question " + question + " in " + reportFile);
+        Loaded report = report(reportFile, evaluation);
+        Best best = best(reportQuestion(report, question), question);
+        Integer wanted = expected.isNull() ? null : expected.intValue();
+        if (!Objects.equals(best.position(), wanted)) {
+            evaluation.differs("best fused position", String.valueOf(wanted), best.position() == null ? "null (not fused)" : best.position() + " (chunk " + best.chunk() + ")");
+        }
+        basis(claim, "derived", evaluation);
+        String in = "In " + reportReference(report) + ", ";
+        if (best.position() != null) return in + "the best fused position of a chunk holding an accepted phrase of " + question + " is " + best.position() + " (chunk " + best.chunk() + ").";
+        if (best.holdingChunks() == 0) return in + "no stored chunk holds an accepted phrase of " + question + ".";
+        return in + (best.holdingChunks() == 1 ? "the chunk" : "none of the " + best.holdingChunks() + " chunks") + " holding an accepted phrase of " + question + " was"
+                + (best.holdingChunks() == 1 ? " not" : "") + " in the fused list.";
+    }
+
+    // Template: "In <Report>, candidate recall@<k> is <share>: <n> of <total> questions have a chunk holding an accepted phrase at fused position
+    // <k> or earlier." | with k "all": "In <Report>, candidate recall over the whole fused list is <share>: <n> of <total> questions have a chunk
+    // holding an accepted phrase in the fused list." The share is n / total rounded half up to six decimal places.
+    private String candidateRecall(Claim claim, JsonNode check, Evaluation evaluation) {
+        String reportFile = requireText(check, "report");
+        JsonNode k = check.get("k");
+        boolean all = k != null && k.isString() && k.stringValue().equals("all");
+        if (!all && (k == null || !k.isIntegralNumber() || k.intValue() < 1)) throw new Unreadable("check.k must be a positive integer or \"all\", found " + k);
+        JsonNode expectedNode = check.get("expected");
+        BigDecimal expected = scale6(expectedNode);
+        if (expected == null) throw new Unreadable("check.expected must be a number with at most six decimal places, found " + expectedNode);
+        evaluation.subject("k " + (all ? "all" : k.intValue()) + " in " + reportFile);
+        Loaded report = report(reportFile, evaluation);
+        int total = 0;
+        int within = 0;
+        List<String> beyond = new ArrayList<>();
+        for (JsonNode questionNode : report.json().get("questions")) {
+            String question = questionNode.path("id").asString("");
+            Best best = best(questionNode, question);
+            total++;
+            if (best.position() != null && (all || best.position() <= k.intValue())) within++;
+            else beyond.add(question + " (" + (best.position() == null ? "not fused" : "fused position " + best.position()) + ")");
+        }
+        if (total == 0) throw new Unreadable(reportFile + " lists no questions");
+        BigDecimal share = BigDecimal.valueOf(within).divide(BigDecimal.valueOf(total), 6, RoundingMode.HALF_UP);
+        if (share.compareTo(expected) != 0) {
+            evaluation.differs("share", expected.toPlainString(), share.toPlainString() + " (" + within + " of " + total + "; not counted: " + String.join(", ", beyond) + ")");
+        }
+        basis(claim, "derived", evaluation);
+        String in = "In " + reportReference(report) + ", candidate recall";
+        return all ? in + " over the whole fused list is " + share.toPlainString() + ": " + within + " of " + total + " questions have a chunk holding an accepted phrase in the fused list."
+                : in + "@" + k.intValue() + " is " + share.toPlainString() + ": " + within + " of " + total + " questions have a chunk holding an accepted phrase at fused position "
+                + k.intValue() + " or earlier.";
+    }
+
+    // Template: "In <Report>, diversification removed no chunk holding an accepted phrase of any of the <total> questions." | "In <Report>,
+    // diversification removed a chunk holding an accepted phrase of <n> of the <total> questions: <question> (chunk <id>, redundant with chunk
+    // <id>), ...." (several removed holding chunks of one question are listed in its parentheses, separated by semicolons)
+    /**
+     * The number of the report's questions for which the trace's {@code removed} list (plan {@code 2026-09-14-retrieval-recall.md}, Milestone 3)
+     * holds a chunk listed under any accepted phrase of the question. Read from each question's {@code removed} list and its phrases' chunk ids,
+     * not from the report's {@code acceptedChunkRemoved} flag. A question whose removals are unknown or missing (a trace recorded before removals
+     * were traced says {@code no trace of removals}) or whose accepted phrases are unknown makes the claim unreadable, naming every such question,
+     * so an unknown is never counted as nothing removed. A failure names the count found and every counted question with its removed chunks.
+     */
+    private String removedAccepted(Claim claim, JsonNode check, Evaluation evaluation) {
+        String reportFile = requireText(check, "report");
+        JsonNode expected = check.get("expected");
+        if (expected == null || !expected.isIntegralNumber() || expected.intValue() < 0) {
+            throw new Unreadable("check.expected must be a question count (non-negative integer), found " + (expected == null ? "none" : expected));
+        }
+        evaluation.subject("removals in " + reportFile);
+        Loaded report = report(reportFile, evaluation);
+        JsonNode questions = report.json().get("questions");
+        if (questions == null || !questions.isArray() || questions.isEmpty()) throw new Unreadable(reportFile + " lists no questions");
+        List<String> unreadable = new ArrayList<>();
+        List<String> counted = new ArrayList<>();
+        for (JsonNode questionNode : questions) {
+            String question = questionNode.path("id").asString("");
+            JsonNode count = questionNode.get("acceptedPhraseCount");
+            if (count == null || !count.isObject() || !count.path("basis").asString("").equals("observed")) {
+                unreadable.add("question " + question + " has unknown accepted phrases (acceptedPhraseCount " + (isUnknown(count) ? reason(count)
+                        : "has basis " + (count == null ? "none" : count.path("basis").asString("none"))) + ")");
+                continue;
+            }
+            JsonNode removed = questionNode.get("removed");
+            if (removed == null || !removed.isObject() || !removed.has("basis")) {
+                unreadable.add("question " + question + " has no removed value in the report");
+                continue;
+            }
+            if (isUnknown(removed)) {
+                unreadable.add("question " + question + " has unknown removals (" + reason(removed) + ")");
+                continue;
+            }
+            JsonNode entries = removed.get("value");
+            if (entries == null || !entries.isArray()) {
+                unreadable.add("question " + question + " has removals " + (entries == null ? "none" : abbreviate(entries.toString())) + ", not a list");
+                continue;
+            }
+            Set<Long> holding = new LinkedHashSet<>();
+            for (JsonNode phraseNode : questionNode.path("phrases")) {
+                for (JsonNode chunkNode : phraseNode.path("chunks")) holding.add(chunkNode.path("chunkId").asLong(-1));
+            }
+            List<String> hits = new ArrayList<>();
+            for (JsonNode entry : entries) {
+                long chunk = entry.path("chunkId").asLong(-1);
+                if (holding.contains(chunk)) hits.add("chunk " + chunk + ", redundant with chunk " + render(entry.get("redundantWith")));
+            }
+            if (!hits.isEmpty()) counted.add(question + " (" + String.join("; ", hits) + ")");
+        }
+        if (!unreadable.isEmpty()) throw new Unreadable(String.join(", ", unreadable));
+        if (counted.size() != expected.intValue()) {
+            evaluation.differs("count", String.valueOf(expected.intValue()), counted.size() + " (" + (counted.isEmpty() ? "none" : String.join(", ", counted)) + ")");
+        }
+        basis(claim, "derived", evaluation);
+        String in = "In " + reportReference(report) + ", diversification removed ";
+        return counted.isEmpty() ? in + "no chunk holding an accepted phrase of any of the " + questions.size() + " questions."
+                : in + "a chunk holding an accepted phrase of " + counted.size() + " of the " + questions.size() + " questions: " + String.join(", ", counted) + ".";
+    }
+
+    private record BlendInput(long chunk, int fused, int reranked) {
+    }
+
+    // Template: "Blending reranked and fused positions in <Snapshot> at k <k> and w <w> (accepted chunks from <Report>), <question> ranks
+    // <ordinal>." | "..., <question> ranks outside the window of <n> results (no chunk holding an accepted phrase)." | "..., hit@5 over the <n>
+    // question(s) <ids> is <v> (<c> ranked 1 to 5)." | "..., MRR over the <n> question(s) <ids> is <v>." | "..., top-5 membership of the <n>
+    // question(s) <ids> against the stored ranks of <Reference>: <a> inside the top 5 in both and <b> outside it in both; entering the top 5:
+    // <none | q (rank r to rank s), ...>; leaving the top 5: <none | ...>."
+    /**
+     * A blended order recomputed from a traced snapshot (plan {@code 2026-09-14-rerank-blend.md}, Milestone 1): for each listed question, the
+     * trace's rerank inputs, each with fused position f and reranked position r, are ordered by {@code w / (k + r) + (1 - w) / (k + f)} descending
+     * (exact arithmetic; ties by smaller f), the fused chunks after the inputs keep fused order, and the window is the snapshot's window size. The
+     * rank is the 1-based position of the first window chunk the evidence report lists under an accepted phrase of the question, null when none.
+     * hit@5 and MRR follow RetrievalEvaluationService (hit@5 half up to six places; each 1/rank half up to twelve places, their sum over the
+     * listed questions half up to six places). Unreadable: a report whose snapshotId is not the snapshot's id, a question without a trace, a
+     * rerank outcome other than RERANKED, inputs that are not the first fused chunks with positions 1 to n, an input count other than
+     * min(fused, max(rerankCandidates, window)) when the snapshot records rerankCandidates, unknown accepted phrases, an accepted phrase whose
+     * heldByStoredChunk is not true and observed, a fused, rerank input, or phrase chunk without an integer chunk id, or a fused chunk id listed
+     * twice. Metric top5Membership (since 2026-09-15) also reads a reference snapshot's stored ranks and compares, per listed question, whether the
+     * blended rank and the stored rank are in the top 5; expected lists the questions whose membership differs.
+     */
+    private String blend(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        String reportFile = requireText(check, "report");
+        JsonNode kNode = check.get("k");
+        if (kNode == null || !kNode.isIntegralNumber() || kNode.intValue() < 1) throw new Unreadable("check.k must be a positive integer, found " + kNode);
+        BigDecimal w = scale6(check.get("w"));
+        if (w == null || w.signum() < 0 || w.compareTo(BigDecimal.ONE) > 0) {
+            throw new Unreadable("check.w must be a number from 0 to 1 with at most six decimal places, found " + check.get("w"));
+        }
+        JsonNode questionsNode = check.get("questions");
+        if (questionsNode == null || !questionsNode.isArray() || questionsNode.isEmpty()) {
+            throw new Unreadable("check.questions must list at least one question id, found " + questionsNode);
+        }
+        List<String> questions = new ArrayList<>();
+        for (JsonNode q : questionsNode) {
+            if (!q.isString() || q.stringValue().isBlank() || questions.contains(q.stringValue())) {
+                throw new Unreadable("check.questions must list distinct non-blank question ids, found " + abbreviate(questionsNode.toString()));
+            }
+            questions.add(q.stringValue());
+        }
+        String metric = requireText(check, "metric");
+        JsonNode expected = check.get("expected");
+        BigDecimal expectedValue = null;
+        switch (metric) {
+            case "rank" -> {
+                if (questions.size() != 1) throw new Unreadable("check.metric rank takes exactly one question, found " + questions.size());
+                if (expected == null || !(expected.isNull() || expected.isIntegralNumber() && expected.intValue() >= 1)) {
+                    throw new Unreadable("check.expected must be a rank (positive integer) or null, found " + (expected == null ? "none" : expected));
+                }
+            }
+            case "hitAt5", "mrr" -> {
+                expectedValue = scale6(expected);
+                if (expectedValue == null) throw new Unreadable("check.expected must be a number with at most six decimal places, found " + expected);
+            }
+            case "top5Membership" -> {
+                if (blank(check.get("reference"))) throw new Unreadable("check.reference must name the reference snapshot file for metric top5Membership, found " + check.get("reference"));
+                boolean listed = expected != null && expected.isArray();
+                Set<String> seen = new HashSet<>();
+                if (listed) {
+                    for (JsonNode id : expected) {
+                        if (!id.isString() || !questions.contains(id.stringValue()) || !seen.add(id.stringValue())) listed = false;
+                    }
+                }
+                if (!listed) {
+                    throw new Unreadable("check.expected must list the distinct listed questions whose top-5 membership differs from the reference (an empty list for none), found "
+                            + (expected == null ? "none" : abbreviate(expected.toString())));
+                }
+            }
+            default -> throw new Unreadable("check.metric must be rank, hitAt5, mrr, or top5Membership, found " + quote(metric));
+        }
+        if (!metric.equals("top5Membership") && check.get("reference") != null) {
+            throw new Unreadable("check.reference is read only with metric top5Membership, found it with metric " + metric);
+        }
+        int k = kNode.intValue();
+        evaluation.subject(metric + " at k " + k + ", w " + w.stripTrailingZeros().toPlainString() + " over " + questions.size()
+                + (questions.size() == 1 ? " question" : " questions") + " in " + snapshotFile);
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Loaded report = report(reportFile, evaluation);
+        if (snapshot.id() == null || snapshot.id() != report.json().get("snapshotId").longValue()) {
+            throw new Unreadable(reportFile + " is the evidence report of snapshot " + report.json().get("snapshotId").asString() + ", not of " + snapshotFile
+                    + " (snapshot " + snapshot.id() + ")");
+        }
+        Integer window = snapshot.windowSize();
+        if (window == null || window < 1) throw new Unreadable(snapshotFile + " records no window size");
+        JsonNode results = loaded.json().path("results");
+        JsonNode traces = results.isObject() ? results.path("traces") : loaded.json().path("traces");
+        JsonNode rerankCandidates = snapshot.properties() == null ? null : snapshot.properties().get("rerankCandidates");
+        Map<String, Integer> ranks = new LinkedHashMap<>();
+        for (String question : questions) {
+            snapshot.question(question);
+            JsonNode trace = null;
+            for (JsonNode entry : traces) {
+                if (question.equals(entry.path("id").asString(null))) trace = entry.get("trace");
+            }
+            if (trace == null || !trace.isObject()) throw new Unreadable("question " + question + " has no trace in " + snapshotFile);
+            ranks.put(question, blendedRank(question, trace, reportQuestion(report, question), k, w, window,
+                    rerankCandidates != null && rerankCandidates.isIntegralNumber() ? rerankCandidates.intValue() : null));
+        }
+        basis(claim, "derived", evaluation);
+        String lead = "Blending reranked and fused positions in " + snapshotReference(loaded, snapshot, null) + " at k " + k + " and w "
+                + w.stripTrailingZeros().toPlainString() + " (accepted chunks from " + reportReference(report) + "), ";
+        String over = " over the " + questions.size() + (questions.size() == 1 ? " question " : " questions ") + joinAnd(questions) + " is ";
+        switch (metric) {
+            case "rank" -> {
+                String question = questions.get(0);
+                Integer found = ranks.get(question);
+                Integer wanted = expected.isNull() ? null : expected.intValue();
+                if (!Objects.equals(found, wanted)) evaluation.differs("rank", String.valueOf(wanted), String.valueOf(found));
+                return lead + question + (found != null ? " ranks " + ordinal(found) + "."
+                        : " ranks outside the window of " + window + " results (no chunk holding an accepted phrase).");
+            }
+            case "hitAt5" -> {
+                long inside = ranks.values().stream().filter(r -> r != null && r <= 5).count();
+                BigDecimal found = BigDecimal.valueOf(inside).divide(BigDecimal.valueOf(questions.size()), 6, RoundingMode.HALF_UP);
+                if (found.compareTo(expectedValue) != 0) {
+                    List<String> outside = new ArrayList<>();
+                    ranks.forEach((q, r) -> { if (r == null || r > 5) outside.add(q + " (" + rankText(r) + ")"); });
+                    evaluation.differs("hit@5", expectedValue.toPlainString(), found.toPlainString() + " (" + inside + " of " + questions.size() + "; outside the top 5: "
+                            + (outside.isEmpty() ? "none" : String.join(", ", outside)) + ")");
+                }
+                return lead + "hit@5" + over + found.toPlainString() + " (" + inside + " ranked 1 to 5).";
+            }
+            case "top5Membership" -> {
+                String referenceFile = requireText(check, "reference");
+                Loaded referenceLoaded = load(referenceFile, directory, evaluation);
+                Snapshot reference = Snapshot.of(referenceFile, referenceLoaded.json());
+                int insideBoth = 0;
+                int outsideBoth = 0;
+                List<String> entering = new ArrayList<>();
+                List<String> leaving = new ArrayList<>();
+                List<String> differing = new ArrayList<>();
+                for (String question : questions) {
+                    reference.question(question);
+                    Integer stored = reference.rank(question);
+                    Integer blended = ranks.get(question);
+                    boolean was = stored != null && stored <= 5;
+                    boolean is = blended != null && blended <= 5;
+                    String move = question + " (" + rankText(stored) + " to " + rankText(blended) + ")";
+                    if (was && is) insideBoth++;
+                    else if (!was && !is) outsideBoth++;
+                    else {
+                        (is ? entering : leaving).add(move);
+                        differing.add(question);
+                    }
+                }
+                List<String> wanted = new ArrayList<>();
+                expected.forEach(id -> wanted.add(id.stringValue()));
+                if (!new HashSet<>(wanted).equals(new HashSet<>(differing))) {
+                    evaluation.differs("questions whose top-5 membership differs", wanted.isEmpty() ? "none" : String.join(", ", wanted),
+                            (differing.isEmpty() ? "none" : String.join(", ", differing)) + " (entering: " + (entering.isEmpty() ? "none" : String.join(", ", entering))
+                                    + "; leaving: " + (leaving.isEmpty() ? "none" : String.join(", ", leaving)) + ")");
+                }
+                return lead + "top-5 membership of the " + questions.size() + (questions.size() == 1 ? " question " : " questions ") + joinAnd(questions)
+                        + " against the stored ranks of " + snapshotReference(referenceLoaded, reference, null) + ": " + insideBoth + " inside the top 5 in both and "
+                        + outsideBoth + " outside it in both; entering the top 5: " + (entering.isEmpty() ? "none" : String.join(", ", entering))
+                        + "; leaving the top 5: " + (leaving.isEmpty() ? "none" : String.join(", ", leaving)) + ".";
+            }
+            default -> {
+                BigDecimal sum = BigDecimal.ZERO;
+                for (Integer r : ranks.values()) {
+                    if (r != null) sum = sum.add(BigDecimal.ONE.divide(BigDecimal.valueOf(r), 12, RoundingMode.HALF_UP));
+                }
+                BigDecimal found = sum.divide(BigDecimal.valueOf(questions.size()), 6, RoundingMode.HALF_UP);
+                if (found.compareTo(expectedValue) != 0) {
+                    List<String> listed = new ArrayList<>();
+                    ranks.forEach((q, r) -> listed.add(q + " " + rankText(r)));
+                    evaluation.differs("MRR", expectedValue.toPlainString(), found.toPlainString() + " (" + String.join(", ", listed) + ")");
+                }
+                return lead + "MRR" + over + found.toPlainString() + ".";
+            }
+        }
+    }
+
+    // Template: "Between <reference Snapshot> and <candidate Snapshot>, the <fused order|rerank input set> is (the fused positions of the rerank
+    // inputs are) identical for each of the <n> questions." | "..., the <...> differs (differ) for <m> of the <n> questions: <question>[ (<detail>)], ...." with a
+    // detail only for rerankInputSet: "only in snapshot <id>: chunks <ids>; only in snapshot <id>: chunks <ids>".
+    /**
+     * Whether two traced snapshots gave the same candidate lists per question (plan {@code 2026-09-15-reranker-ettin.md}, amendment 3, G7).
+     * {@code compare} {@code fusedOrder}: the trace's fused chunk ids ordered by fused position; {@code rerankInputSet}: the set of the trace's
+     * rerank input chunk ids; {@code rerankInputPositions}: each rerank input's chunk id with its fused position (a question whose input set
+     * differs also differs here). {@code expected} lists the distinct questions that differ (empty for none); true when exactly those differ.
+     * Unreadable: the two snapshots list different question ids, a question without a trace in either, a fused list or rerank input list that
+     * is not a list, a fused chunk or rerank input without an integer chunk id and fused position, or a chunk id listed twice in one list.
+     */
+    private String candidateLists(Claim claim, JsonNode check, Evaluation evaluation) {
+        String referenceFile = requireText(check, "reference");
+        String candidateFile = requireText(check, "candidate");
+        String compare = requireText(check, "compare");
+        String what = switch (compare) {
+            case "fusedOrder" -> "fused order";
+            case "rerankInputSet" -> "rerank input set";
+            case "rerankInputPositions" -> "fused positions of the rerank inputs";
+            default -> throw new Unreadable("check.compare must be fusedOrder, rerankInputSet, or rerankInputPositions, found " + quote(compare));
+        };
+        boolean plural = compare.equals("rerankInputPositions");
+        JsonNode expected = check.get("expected");
+        List<String> wanted = new ArrayList<>();
+        boolean listed = expected != null && expected.isArray();
+        if (listed) {
+            for (JsonNode id : expected) {
+                if (!id.isString() || id.stringValue().isBlank() || wanted.contains(id.stringValue())) listed = false;
+                else wanted.add(id.stringValue());
+            }
+        }
+        if (!listed) {
+            throw new Unreadable("check.expected must list the distinct question ids that differ (an empty list for none), found "
+                    + (expected == null ? "none" : abbreviate(expected.toString())));
+        }
+        evaluation.subject(compare + " of " + candidateFile + " against " + referenceFile);
+        Loaded referenceLoaded = load(referenceFile, directory, evaluation);
+        Snapshot reference = Snapshot.of(referenceFile, referenceLoaded.json());
+        Loaded candidateLoaded = load(candidateFile, directory, evaluation);
+        Snapshot candidate = Snapshot.of(candidateFile, candidateLoaded.json());
+        if (referenceLoaded.path().equals(candidateLoaded.path())) throw new Unreadable("check.reference and check.candidate name the same file " + referenceFile);
+        List<String> questions = new ArrayList<>();
+        reference.questions().forEach(q -> questions.add(q.path("id").asString("")));
+        List<String> candidateQuestions = new ArrayList<>();
+        candidate.questions().forEach(q -> candidateQuestions.add(q.path("id").asString("")));
+        if (!new HashSet<>(questions).equals(new HashSet<>(candidateQuestions)) || questions.size() != candidateQuestions.size()) {
+            throw new Unreadable(referenceFile + " and " + candidateFile + " list different questions");
+        }
+        for (String id : wanted) {
+            if (!questions.contains(id)) throw new Unreadable("check.expected lists " + id + ", which neither snapshot has");
+        }
+        Map<String, JsonNode> referenceTraces = traces(referenceLoaded, referenceFile);
+        Map<String, JsonNode> candidateTraces = traces(candidateLoaded, candidateFile);
+        List<String> differing = new ArrayList<>();
+        List<String> details = new ArrayList<>();
+        for (String question : questions) {
+            JsonNode a = referenceTraces.get(question);
+            JsonNode b = candidateTraces.get(question);
+            if (a == null) throw new Unreadable("question " + question + " has no trace in " + referenceFile);
+            if (b == null) throw new Unreadable("question " + question + " has no trace in " + candidateFile);
+            String detail = null;
+            boolean differs;
+            switch (compare) {
+                case "fusedOrder" -> differs = !new ArrayList<>(positions(a.get("fused"), question, "fused chunk", referenceFile).keySet())
+                        .equals(new ArrayList<>(positions(b.get("fused"), question, "fused chunk", candidateFile).keySet()));
+                case "rerankInputSet" -> {
+                    Set<Long> x = inputs(a, question, referenceFile).keySet();
+                    Set<Long> y = inputs(b, question, candidateFile).keySet();
+                    differs = !x.equals(y);
+                    if (differs) {
+                        List<Long> onlyX = x.stream().filter(c -> !y.contains(c)).sorted().toList();
+                        List<Long> onlyY = y.stream().filter(c -> !x.contains(c)).sorted().toList();
+                        detail = "only in snapshot " + reference.id() + ": " + chunks(onlyX) + "; only in snapshot " + candidate.id() + ": " + chunks(onlyY);
+                    }
+                }
+                default -> differs = !inputs(a, question, referenceFile).equals(inputs(b, question, candidateFile));
+            }
+            if (differs) {
+                differing.add(question);
+                details.add(detail == null ? question : question + " (" + detail + ")");
+            }
+        }
+        if (!new HashSet<>(wanted).equals(new HashSet<>(differing))) {
+            evaluation.differs("questions whose " + what + (plural ? " differ" : " differs"), wanted.isEmpty() ? "none" : String.join(", ", wanted),
+                    differing.isEmpty() ? "none" : String.join(", ", details));
+        }
+        basis(claim, "derived", evaluation);
+        String lead = "Between " + snapshotReference(referenceLoaded, reference, null) + " and " + snapshotReference(candidateLoaded, candidate, null) + ", the " + what;
+        return differing.isEmpty() ? lead + (plural ? " are" : " is") + " identical for each of the " + questions.size() + " questions."
+                : lead + (plural ? " differ" : " differs") + " for " + differing.size() + " of the " + questions.size() + " questions: " + String.join(", ", details) + ".";
+    }
+
+    /** Question id to trace object of a traced snapshot in either shape. */
+    private static Map<String, JsonNode> traces(Loaded loaded, String file) {
+        JsonNode results = loaded.json().path("results");
+        JsonNode traces = results.isObject() ? results.path("traces") : loaded.json().path("traces");
+        if (!traces.isArray()) throw new Unreadable(file + " records no traces");
+        Map<String, JsonNode> byQuestion = new HashMap<>();
+        for (JsonNode entry : traces) {
+            JsonNode trace = entry.get("trace");
+            if (trace != null && trace.isObject()) byQuestion.put(entry.path("id").asString(""), trace);
+        }
+        return byQuestion;
+    }
+
+    /** A trace's rerank inputs as chunk id to fused position, in input order. */
+    private static Map<Long, Integer> inputs(JsonNode trace, String question, String file) {
+        JsonNode rerank = trace.get("rerank");
+        return positions(rerank == null ? null : rerank.get("candidates"), question, "rerank input", file);
+    }
+
+    /** Chunk id to fused position for a list of trace entries, ordered by fused position. */
+    private static Map<Long, Integer> positions(JsonNode list, String question, String what, String file) {
+        if (list == null || !list.isArray()) throw new Unreadable("question " + question + " has no " + what + " list in " + file);
+        Map<Long, Integer> byChunk = new HashMap<>();
+        for (JsonNode entry : list) {
+            JsonNode chunk = entry.get("chunkId");
+            JsonNode position = entry.get("fusedPosition");
+            if (chunk == null || !chunk.isIntegralNumber() || position == null || !position.isIntegralNumber()) {
+                throw new Unreadable("question " + question + " has a " + what + " without an integer chunk id and fused position in " + file);
+            }
+            if (byChunk.put(chunk.longValue(), position.intValue()) != null) {
+                throw new Unreadable("question " + question + " lists " + what + " " + chunk.longValue() + " twice in " + file);
+            }
+        }
+        Map<Long, Integer> ordered = new LinkedHashMap<>();
+        byChunk.entrySet().stream().sorted(Map.Entry.<Long, Integer>comparingByValue().thenComparing(Map.Entry.comparingByKey()))
+                .forEach(e -> ordered.put(e.getKey(), e.getValue()));
+        return ordered;
+    }
+
+    private static String chunks(List<Long> ids) {
+        if (ids.isEmpty()) return "no chunk";
+        return (ids.size() == 1 ? "chunk " : "chunks ") + ids.stream().map(String::valueOf).collect(Collectors.joining(", "));
+    }
+
+    /** The question's rank in the blended window (see {@link #blend}); null when no window chunk holds an accepted phrase. */
+    private static Integer blendedRank(String question, JsonNode trace, JsonNode reportQuestion, int k, BigDecimal w, int window, Integer rerankCandidates) {
+        JsonNode rerank = trace.path("rerank");
+        String outcome = rerank.path("outcome").asString("none");
+        if (!outcome.equals("RERANKED")) throw new Unreadable("question " + question + " has rerank outcome " + outcome + ", not RERANKED, so no reranked positions to blend");
+        JsonNode fused = trace.path("fused");
+        Map<Integer, Long> byPosition = new HashMap<>();
+        Map<Long, Integer> positionOf = new HashMap<>();
+        for (JsonNode entry : fused) {
+            JsonNode chunk = entry.get("chunkId");
+            int position = entry.path("fusedPosition").asInt(-1);
+            if (chunk == null || !chunk.isIntegralNumber()) throw new Unreadable("question " + question + " has a fused chunk without an integer chunk id at fused position " + position);
+            Integer earlier = positionOf.putIfAbsent(chunk.longValue(), position);
+            if (earlier != null) {
+                throw new Unreadable("question " + question + " lists fused chunk id " + chunk.longValue() + " twice, at fused positions " + earlier + " and " + position);
+            }
+            byPosition.put(position, chunk.longValue());
+        }
+        for (int position = 1; position <= fused.size(); position++) {
+            if (!byPosition.containsKey(position)) throw new Unreadable("question " + question + " has fused positions that are not 1 to " + fused.size());
+        }
+        List<BlendInput> inputs = new ArrayList<>();
+        Set<Integer> fusedSeen = new HashSet<>();
+        Set<Integer> rerankedSeen = new HashSet<>();
+        for (JsonNode candidate : rerank.path("candidates")) {
+            JsonNode f = candidate.get("fusedPosition");
+            JsonNode r = candidate.get("rerankedPosition");
+            if (f == null || !f.isIntegralNumber() || r == null || !r.isIntegralNumber()) {
+                throw new Unreadable("question " + question + " has a rerank input without integer fused and reranked positions: " + abbreviate(candidate.toString()));
+            }
+            JsonNode chunk = candidate.get("chunkId");
+            if (chunk == null || !chunk.isIntegralNumber()) {
+                throw new Unreadable("question " + question + " has a rerank input without an integer chunk id at fused position " + f.intValue());
+            }
+            inputs.add(new BlendInput(chunk.longValue(), f.intValue(), r.intValue()));
+            fusedSeen.add(f.intValue());
+            rerankedSeen.add(r.intValue());
+        }
+        int n = inputs.size();
+        boolean positions = n > 0 && fusedSeen.size() == n && rerankedSeen.size() == n && fusedSeen.stream().allMatch(p -> p >= 1 && p <= n)
+                && rerankedSeen.stream().allMatch(p -> p >= 1 && p <= n) && inputs.stream().allMatch(i -> Objects.equals(byPosition.get(i.fused()), i.chunk()));
+        if (!positions) throw new Unreadable("question " + question + " has rerank inputs that are not the first fused chunks with fused and reranked positions 1 to " + n);
+        if (rerankCandidates != null && n != Math.min(fused.size(), Math.max(rerankCandidates, window))) {
+            throw new Unreadable("question " + question + " has " + n + " rerank inputs, expected min(fused " + fused.size() + ", max(rerankCandidates " + rerankCandidates
+                    + ", window " + window + "))");
+        }
+        JsonNode count = reportQuestion.get("acceptedPhraseCount");
+        if (count == null || !count.isObject() || !count.path("basis").asString("").equals("observed")) {
+            throw new Unreadable("question " + question + " has unknown accepted phrases in the report");
+        }
+        Set<Long> accepted = new HashSet<>();
+        for (JsonNode phraseNode : reportQuestion.path("phrases")) {
+            String phrase = quote(text(phraseNode, "phrase"));
+            JsonNode held = phraseNode.get("heldByStoredChunk");
+            if (held == null || !held.isObject() || !held.path("value").isBoolean() || !held.path("value").booleanValue()
+                    || !held.path("basis").asString("").equals("observed")) {
+                throw new Unreadable("question " + question + " has accepted phrase " + phrase + " whose heldByStoredChunk is not true and observed, found "
+                        + (held == null ? "none" : abbreviate(held.toString())));
+            }
+            if (!phraseNode.path("chunks").isArray() || phraseNode.path("chunks").isEmpty()) {
+                throw new Unreadable("question " + question + " has accepted phrase " + phrase + " held by a stored chunk but listing no chunk");
+            }
+            for (JsonNode chunkNode : phraseNode.path("chunks")) {
+                JsonNode chunk = chunkNode.get("chunkId");
+                if (chunk == null || !chunk.isIntegralNumber()) {
+                    throw new Unreadable("question " + question + " has accepted phrase " + phrase + " with a chunk without an integer chunk id");
+                }
+                accepted.add(chunk.longValue());
+            }
+        }
+        BigDecimal kd = BigDecimal.valueOf(k);
+        BigDecimal rest = BigDecimal.ONE.subtract(w);
+        inputs.sort((a, b) -> {
+            // score = (w (k + f) + (1 - w) (k + r)) / ((k + r) (k + f)); compare a and b by cross-multiplying, higher first
+            BigDecimal numA = w.multiply(kd.add(BigDecimal.valueOf(a.fused()))).add(rest.multiply(kd.add(BigDecimal.valueOf(a.reranked()))));
+            BigDecimal denA = kd.add(BigDecimal.valueOf(a.reranked())).multiply(kd.add(BigDecimal.valueOf(a.fused())));
+            BigDecimal numB = w.multiply(kd.add(BigDecimal.valueOf(b.fused()))).add(rest.multiply(kd.add(BigDecimal.valueOf(b.reranked()))));
+            BigDecimal denB = kd.add(BigDecimal.valueOf(b.reranked())).multiply(kd.add(BigDecimal.valueOf(b.fused())));
+            int byScore = numB.multiply(denA).compareTo(numA.multiply(denB));
+            return byScore != 0 ? byScore : Integer.compare(a.fused(), b.fused());
+        });
+        List<Long> order = new ArrayList<>();
+        inputs.forEach(input -> order.add(input.chunk()));
+        for (int position = n + 1; position <= fused.size(); position++) order.add(byPosition.get(position));
+        for (int i = 0; i < Math.min(window, order.size()); i++) {
+            if (accepted.contains(order.get(i))) return i + 1;
+        }
+        return null;
     }
 
     /**

@@ -1,0 +1,12 @@
+# 2026-09-15 11:43 +08 ./mvnw -q -o test -Dtest=GteRerankerLiveTests -Drag.rerank.gte.live=true (project .env exported; GTE_RERANKER lines and the surefire summary)
+GTE_RERANKER tokenizers single=DO_NOT_TRUNCATE/DO_NOT_PAD nativeTruncating=LONGEST_FIRST/DO_NOT_PAD maxLength=512 nativeWhole=DO_NOT_TRUNCATE/DO_NOT_PAD specialIds=[50281, 50282, 50282, 50283]
+GTE_RERANKER realText storedChunks=569 questionChunkPairs=66
+GTE_RERANKER rows checkedPairs=132 longQueryPairs=66 wholePairs=5 truncatedHeads=127 rows=396 maxRowWidth=512 minWindowBesideLongQuery=125 paddedBatchRows=150 mismatches=0
+GTE_RERANKER smoke handwritten relevant=3.7687628 irrelevant=-2.752727
+GTE_RERANKER smoke real question=aapl-01 holdingChunk=2.9859164 unrelatedChunk=1.186603
+GTE_RERANKER smoke paddingInvariance pairs=10 maxAbsDiff=0.0
+GTE_RERANKER timing chunks=20 windows=49 elapsedMs=7722 (single thread, longest stored chunks by characters, question aapl-01)
+GTE_RERANKER timing chunks=40 windows=95 elapsedMs=14242 (single thread, longest stored chunks by characters, question aapl-01)
+GTE_RERANKER boundary question=aapl-01 queryTokens=22 chunkTokens=1349 W=487 starts=[0, 423, 846, 862] phraseChars=[2017, 2025) tokenSpan=TokenSpan[start=484, end=490] holdingWholly=[2] phrase=969) (1,
+mvn exit 0
+tests="4" errors="0" skipped="0" failures="0" 

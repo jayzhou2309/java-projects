@@ -78,7 +78,7 @@ rag:
     # shorter than the requested topK; 5 to 40.
     rerank-candidates: 20
     # Longest wait for the reranker in milliseconds; on timeout or a reranker exception retrieval keeps the fused order (an Error still
-    # propagates); 100 to 60000.
+    # propagates); 100 to 120000 (60000 before 2026-09-15; profile reranker-gte sets 120000).
     rerank-timeout-ms: 2000
     # Local cross-encoder reranker (cross-encoder/ms-marco-MiniLM-L-6-v2 on ONNX Runtime, CPU; RAG.md, Cross-encoder reranker).
     # enabled only creates the reranker bean, verifies the files, and loads the model at startup; it does not turn reranking on

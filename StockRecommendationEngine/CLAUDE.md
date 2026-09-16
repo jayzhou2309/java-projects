@@ -41,7 +41,7 @@ one-line fix, a typo, or a question, just do it directly.
   assertions robust to pre-existing rows (future timestamps, unique tickers).
 - Opt-in live tests skip by design (`@EnabledIfSystemProperty`: `ibkr.live`, `ibkr.live.conid`,
   `ibkr.live.history`, `quant.live`, `rag.evaluation.live`, `rag.rerank.live`,
-  `rag.reproduction.run`); a green `verify` reports them as skipped (28 tests on 2026-09-14).
+  `rag.rerank.gte.live`, `rag.reproduction.run`); a green `verify` reports them as skipped (32 tests on 2026-09-15).
 - Running the app for a UT check: `SERVER_PORT=8081`, `INTEGRATION_ACCESS_TOKEN`
   of 32+ characters, `./mvnw -q -o spring-boot:run`, wait for
   `Started StockRecommendationEngineApplication`, stop with
@@ -170,3 +170,29 @@ one-line fix, a typo, or a question, just do it directly.
   lead-in; the Orchestrator's own plan text and cap fixes need the same validation
   (a W- id prefix it prescribed would have failed verify). Plan in
   `documentation/plans/2026-09-13-evaluation-evidence.md`.
+- 2026-09-14, candidate recall and diversification evidence (RAG-18, RAG-15): Plan A, four
+  milestones, from an external review checked against committed evidence first. M1 (recall
+  from traces) and M3 (diversification removals in traces) passed Scrutiny and UT on the first
+  round. M2 (one-factor candidate-count experiment) failed Scrutiny once on a selection row
+  judged against a reranked configuration (amendment 3: selection outcomes only against the
+  default reference), then passed with UT; its low-finding wording fixes failed two scoped
+  checks on change-log pointers and closed at the cap by collapsing them into one pointer
+  (Jay approved). M4 (`Project_Challenges.md`) failed Scrutiny twice on lessons attributed
+  beyond their sources, including a note of Jay's with no repository record until the plan
+  Status recorded it, and passed on round 2. Lessons: a rule row needs a named reference that
+  is the default; fixing a history note creates a new history note, so collapse to a pointer
+  early; a user note folded into a document needs a committed record before the document
+  cites it. Plan B (RAG-20) is gated. Plan in `documentation/plans/2026-09-14-retrieval-recall.md`.
+- 2026-09-15, rerank blend (RAG-21): split, grid, choice and held-out rules frozen in a commit
+  before any simulation (Jay's rule); the one held-out test passed by equalling the default
+  reference, recorded as no gain, and Jay stopped before implementation. Plan in
+  `documentation/plans/2026-09-14-rerank-blend.md`.
+- 2026-09-15, second reranker model (RAG-22): the first candidate's official ONNX file had no
+  scoring head (found by the Worker's startup probe before any code; amendment 1, Jay chose
+  gte-reranker-modernbert-base); the Orchestrator's premise that the assembler rejected the
+  new template was also wrong (amendment 2). M1 passed first round; M2 failed Scrutiny once
+  because the paired runs' candidate lists before reranking were never compared (a run from an
+  earlier session differed), passed after a same-session current-model run (amendment 3).
+  Lessons: probe a downloaded model's graph before designing around it; a model comparison
+  must check candidate-list identity per question, not only settings. Decision RAG-23 open.
+  Plan in `documentation/plans/2026-09-15-reranker-ettin.md`.

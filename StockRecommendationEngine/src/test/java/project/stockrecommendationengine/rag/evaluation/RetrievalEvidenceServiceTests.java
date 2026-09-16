@@ -56,6 +56,39 @@ class RetrievalEvidenceServiceTests {
     }
 
     @Test
+    void aTokenizerThatReportsItsModelsMaxLengthDecidesWAndNamesItsSourceInsteadOfTheCrossEncoderProperty() {
+        // The second reranker model's PassageTokenizer reports its own max-length (17 here; the cross-encoder property stays 20).
+        ScriptedWordTokenizer words = new ScriptedWordTokenizer(ScriptedEvidence.VERSION);
+        project.stockrecommendationengine.rag.retrieval.PassageTokenizer ownWindow = new project.stockrecommendationengine.rag.retrieval.PassageTokenizer() {
+            @Override
+            public Tokens tokenize(String text) {
+                return words.tokenize(text);
+            }
+
+            @Override
+            public String modelVersion() {
+                return words.modelVersion();
+            }
+
+            @Override
+            public MaxLength maxLength() {
+                return new MaxLength(17, "current configuration rag.retrieval.gte-reranker.max-length (snapshots do not record it)");
+            }
+        };
+        RetrievalEvidenceReport report = scripted.service(Optional.of(ownWindow)).report(ScriptedEvidence.tracedSnapshot());
+        assertThat(report.settings().maxLength()).isEqualTo(EvidenceValue.observed(17,
+                "current configuration rag.retrieval.gte-reranker.max-length (snapshots do not record it)"));
+        // Chunk 101 beside q1 (3 query tokens): W = 17 - 3 - 3 = 11, rows 0, 11, 22, 29 under overlap 0 and 4 windows.
+        ChunkEvidence c101 = chunk(question(report, "q1"), 0, 101);
+        assertThat(c101.windowLength()).isEqualTo(EvidenceValue.derived(11, RetrievalEvidenceService.RULE_WINDOW_LENGTH));
+        assertThat(c101.windowStarts().value()).containsExactly(0, 11, 22, 29);
+        // The default (the current model's tokenizer reports none) keeps the cross-encoder property and its source.
+        assertThat(words.maxLength()).isNull();
+        assertThat(scripted.service().report(ScriptedEvidence.tracedSnapshot()).settings().maxLength())
+                .isEqualTo(EvidenceValue.observed(20, RetrievalEvidenceService.SOURCE_MAX_LENGTH));
+    }
+
+    @Test
     void tokenSpansHeadMembershipAndWindowsEqualHandComputedValues() {
         RetrievalEvidenceReport report = scripted.service().report(ScriptedEvidence.tracedSnapshot());
         assertThat(report.settings().maxLength()).isEqualTo(EvidenceValue.observed(20, RetrievalEvidenceService.SOURCE_MAX_LENGTH));

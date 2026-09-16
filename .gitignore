@@ -5,3 +5,7 @@ Thumbs.db
 # Build output
 target/
 *.class
+
+# IDE
+.idea/
+*.iml

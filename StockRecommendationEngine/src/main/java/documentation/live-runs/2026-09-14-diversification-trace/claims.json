@@ -1,0 +1,6 @@
+{
+  "description": "Diversification removals in the retrieval trace (plan plans/2026-09-14-retrieval-recall.md, Milestone 3): the count of questions whose trace removed list, in the evidence report of the traced run at the settings of snapshot 598 with the cross-encoder loaded and reranking off (run.log), holds a chunk holding an accepted phrase of the question. Checked by the removedAccepted check type from each question's removed list and its accepted phrases' chunks.",
+  "claims": [
+    {"id": "C-701", "basis": "derived", "check": {"type": "removedAccepted", "report": "evidence-1108.json", "expected": 0}}
+  ]
+}

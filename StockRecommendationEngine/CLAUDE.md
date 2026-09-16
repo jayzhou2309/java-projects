@@ -170,3 +170,16 @@ one-line fix, a typo, or a question, just do it directly.
   lead-in; the Orchestrator's own plan text and cap fixes need the same validation
   (a W- id prefix it prescribed would have failed verify). Plan in
   `documentation/plans/2026-09-13-evaluation-evidence.md`.
+- 2026-09-14, candidate recall and diversification evidence (RAG-18, RAG-15): Plan A, four
+  milestones, from an external review checked against committed evidence first. M1 (recall
+  from traces) and M3 (diversification removals in traces) passed Scrutiny and UT on the first
+  round. M2 (one-factor candidate-count experiment) failed Scrutiny once on a selection row
+  judged against a reranked configuration (amendment 3: selection outcomes only against the
+  default reference), then passed with UT; its low-finding wording fixes failed two scoped
+  checks on change-log pointers and closed at the cap by collapsing them into one pointer
+  (Jay approved). M4 (`Project_Challenges.md`) failed Scrutiny twice on lessons attributed
+  beyond their sources, including a note of Jay's with no repository record until the plan
+  Status recorded it, and passed on round 2. Lessons: a rule row needs a named reference that
+  is the default; fixing a history note creates a new history note, so collapse to a pointer
+  early; a user note folded into a document needs a committed record before the document
+  cites it. Plan B (RAG-20) is gated. Plan in `documentation/plans/2026-09-14-retrieval-recall.md`.

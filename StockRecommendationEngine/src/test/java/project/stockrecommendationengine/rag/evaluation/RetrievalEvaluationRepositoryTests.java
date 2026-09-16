@@ -191,6 +191,42 @@ class RetrievalEvaluationRepositoryTests {
                 .containsExactlyInAnyOrder("questions", "tickerHitAt5", "misses", "slices");
     }
 
+    // Plan 2026-09-14-retrieval-recall, Milestone 3, D3: a trace's removed list round-trips; traces stored before it read back with it null.
+
+    @Test void removedListsRoundTripAndTheCommittedSnapshot598ReadsBackWithRemovedNull() throws Exception {
+        Instant base = Instant.now().plusSeconds(21600);
+        var results = List.of(new QuestionResult("aapl-01", "AAPL", Kind.FIGURE, 1, 7L, null, "HYBRID_RRF"),
+                new QuestionResult("aapl-02", "AAPL", Kind.FIGURE, 1, 8L, null, "HYBRID_RRF"));
+        var withRemovals = new RetrievalTrace(40, 40, null, List.of(new RetrievalTrace.FusedCandidate(7, 1, 1, 1, null)),
+                new RetrievalTrace.Rerank(RetrievalTrace.Outcome.OFF, null, null, null, null), List.of(7L),
+                List.of(new RetrievalTrace.RemovedCandidate(9, 2, 3, null, null, 7)));
+        var nothingRemoved = new RetrievalTrace(40, 40, null, List.of(new RetrievalTrace.FusedCandidate(8, 1, 1, 1, null)),
+                new RetrievalTrace.Rerank(RetrievalTrace.Outcome.OFF, null, null, null, null), List.of(8L), List.of());
+        var traces = List.of(new RetrievalEvaluation.QuestionTrace("aapl-01", withRemovals), new RetrievalEvaluation.QuestionTrace("aapl-02", nothingRemoved));
+        var saved = repository.save(new RetrievalEvaluation(null, base, "v2", 2, new BigDecimal("1.000000"), new BigDecimal("1.000000"),
+                new BigDecimal("1.000000"), new BigDecimal("1.000000"), 10, "HYBRID_RRF", Map.of("window", 10, "trace", true), results,
+                Map.of("AAPL", new BigDecimal("1.000000")), List.of(), null, traces));
+        var stored = repository.findById(saved.id()).orElseThrow();
+        assertThat(stored.traces()).isEqualTo(traces);
+        assertThat(stored.traces().get(1).trace().removed()).as("nothing removed stays an empty list").isNotNull().isEmpty();
+
+        var file = java.nio.file.Path.of("src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json");
+        var row = tools.jackson.databind.json.JsonMapper.builder().build().readTree(java.nio.file.Files.readString(file));
+        Long id = jdbc.queryForObject("""
+                INSERT INTO retrieval_evaluations (evaluated_at, set_version, question_count, hit_at_1, hit_at_3, hit_at_5, mrr,
+                    window_size, retrieval_strategy, properties, results)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb)) RETURNING id
+                """, Long.class, java.sql.Timestamp.from(base.plusSeconds(1)), row.get("set_version").asString(), row.get("question_count").asInt(),
+                row.get("hit_at_1").decimalValue(), row.get("hit_at_3").decimalValue(), row.get("hit_at_5").decimalValue(), row.get("mrr").decimalValue(),
+                row.get("window_size").asInt(), row.get("retrieval_strategy").asString(), row.get("properties").toString(), row.get("results").toString());
+        var legacy = repository.findById(id).orElseThrow();
+        assertThat(legacy.traces()).hasSize(42).allSatisfy(trace -> assertThat(trace.trace().removed()).as(trace.id()).isNull());
+        // Written back, the older traces gain no removed key.
+        var rewritten = repository.save(legacy.withId(null));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM retrieval_evaluations, jsonb_array_elements(results->'traces') t WHERE id = ? AND jsonb_exists(t->'trace', 'removed')",
+                Integer.class, rewritten.id())).isZero();
+    }
+
     @Test void aRowWithSlicesButNoNotInTop5ReadsBackWithoutAnExceptionAndANullList() {
         // As stored by the first slice version (snapshot 91): each slice carries missIds but no notInTop5.
         Long id = jdbc.queryForObject("""

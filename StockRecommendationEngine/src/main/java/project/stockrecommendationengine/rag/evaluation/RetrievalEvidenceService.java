@@ -28,6 +28,7 @@ import project.stockrecommendationengine.rag.retrieval.PassageTokenizer;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.FusedCandidate;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.Outcome;
+import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.RemovedCandidate;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.RerankedCandidate;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.DeserializationFeature;
@@ -53,6 +54,8 @@ import static project.stockrecommendationengine.rag.evaluation.EvidenceValue.unk
  * <li>Window starts and window membership also need a recorded, recognised {@code rerankerScoring}; head membership does not. They are
  * arithmetic on that scoring: rows that were scored only for a rerank input of a RERANKED trace, otherwise the rows the scoring would
  * score.</li>
+ * <li>Diversification removals come only from the trace's {@code removed} list; a trace recorded before removals were traced has none and
+ * every removal field is unknown with {@value #NO_TRACE_OF_REMOVALS}, never an empty list or false.</li>
  * </ul>
  */
 @Service
@@ -66,6 +69,7 @@ public class RetrievalEvidenceService {
     static final String NO_RERANKER_SCORING = "snapshot records no rerankerScoring";
     static final String PHRASE_NOT_MAPPED = "phrase position not mappable: the per-character normalisation differs from RetrievalEvaluationService.normalise";
     static final String NO_OVERLAPPING_TOKEN = "no token overlaps the phrase";
+    static final String NO_TRACE_OF_REMOVALS = "no trace of removals";
 
     static final String SOURCE_RESULTS = "snapshot results";
     static final String SOURCE_FUSED = "trace fused (null: not in the fused list)";
@@ -75,6 +79,8 @@ public class RetrievalEvidenceService {
     static final String SOURCE_OFF = "trace rerank outcome OFF (not reranked)";
     static final String SOURCE_HOLDING = "sec_filing_chunks at report time: chunks of the phrase's accession and section whose text contains the phrase"
             + " (RetrievalEvaluationService.matches)";
+    static final String SOURCE_REMOVED = "trace removed (empty: diversification removed no chunk)";
+    static final String SOURCE_REDUNDANT_WITH = "trace removed redundantWith (null: not removed by diversification)";
     static final String SOURCE_MAX_LENGTH = "current configuration rag.retrieval.cross-encoder.max-length (snapshots do not record it)";
     static final String SOURCE_LOADED_MODEL = "loaded cross-encoder model files";
 
@@ -97,6 +103,7 @@ public class RetrievalEvidenceService {
     static final String RULE_WINDOWS_HOLDING = "1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span"
             + " (empty: no row holds it wholly)" + ROWS_NOT_NECESSARILY_SCORED;
     static final String RULE_FALLBACK_INPUT = "fused position <= trace rerank inputCount (the reranker receives the first inputCount fused chunks)";
+    static final String RULE_ACCEPTED_REMOVED = "true when a stored chunk holding an accepted phrase of the question is in trace removed";
     static final String RULE_SET_BY_VERSION = "the bundled set whose version equals the snapshot's set_version (the snapshot records no properties.set)";
 
     static final String RERANKED_ORDER = "reranked order";
@@ -303,13 +310,18 @@ public class RetrievalEvidenceService {
             fusedCount = traceReason != null ? unknown(traceReason) : observed(trace.fused().size(), "trace fused");
 
             Ranking ranking = ranking(trace, rerankReason, phraseReason, holding);
+            String removedReason = traceReason != null ? traceReason : trace.removed() == null ? NO_TRACE_OF_REMOVALS : null;
+            EvidenceValue<List<RemovedCandidate>> removed = removedReason != null ? unknown(removedReason) : observed(trace.removed(), SOURCE_REMOVED);
+            EvidenceValue<Boolean> acceptedChunkRemoved = removedReason != null ? unknown(removedReason)
+                    : phraseReason != null ? unknown("accepted phrases unknown: " + phraseReason)
+                    : derived(trace.removed().stream().anyMatch(entry -> holding.contains(entry.chunkId())), RULE_ACCEPTED_REMOVED);
             return new QuestionEvidence(result.id(), result.ticker(), result.kind() == null ? null : result.kind().name(),
                     question == null ? null : question.question(), observed(result.rank(), SOURCE_RESULTS + " rank (null: no matching chunk in the window)"),
                     observed(result.matchedChunkId(), SOURCE_RESULTS + " matchedChunkId (null: no matching chunk in the window)"),
                     observed(result.retrievalStrategy(), SOURCE_RESULTS + " retrievalStrategy (null: retrieval error, or stored before the field)"),
                     observed(result.error(), SOURCE_RESULTS + " error (null: none)"), outcome, fallbackReason, scoresNotRecorded, fusedCount, inputCount,
                     queryTokensValue, question == null ? unknown(phraseReason) : observed(question.expected().size(), setSource), List.copyOf(phrases),
-                    ranking.name(), ranking.best(), ranking.bestPosition(), ranking.above());
+                    ranking.name(), ranking.best(), ranking.bestPosition(), ranking.above(), removed, acceptedChunkRemoved);
         }
 
         private boolean holds(StoredChunk chunk, ExpectedPassage passage) {
@@ -358,7 +370,7 @@ public class RetrievalEvidenceService {
                     tokens == null ? unknown(tokenReason) : derived(windowLength, RULE_WINDOW_LENGTH),
                     starts == null ? unknown(windowReason) : derived(Arrays.stream(starts).boxed().toList(), RULE_WINDOW_STARTS), List.copyOf(occurrences),
                     candidate.fusedPosition(), candidate.rerankInput(), candidate.rerankedPosition(), candidate.score(), candidate.windowCount(),
-                    candidate.windowScores(), candidate.returnedPosition());
+                    candidate.windowScores(), candidate.returnedPosition(), redundantWith(chunk.id(), trace, rerankReason));
         }
     }
 
@@ -408,6 +420,14 @@ public class RetrievalEvidenceService {
                         orUnknown(reranked.windowScores(), "trace rerank candidates windowScores", notRecorded), returnedPosition);
             }
         };
+    }
+
+    /** The kept chunk that made {@code chunkId} redundant, from the trace's removed list; unknown without a trace or a removed list. */
+    private static EvidenceValue<Long> redundantWith(long chunkId, RetrievalTrace trace, String traceReason) {
+        if (trace == null) return unknown(traceReason);
+        if (trace.removed() == null) return unknown(NO_TRACE_OF_REMOVALS);
+        return observed(trace.removed().stream().filter(entry -> entry.chunkId() == chunkId).map(RemovedCandidate::redundantWith).findFirst().orElse(null),
+                SOURCE_REDUNDANT_WITH);
     }
 
     private static String fallbackNoScores(RetrievalTrace.Rerank rerank) {

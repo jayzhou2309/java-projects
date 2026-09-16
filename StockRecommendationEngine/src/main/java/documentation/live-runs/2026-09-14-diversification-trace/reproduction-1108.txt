@@ -1,0 +1,4 @@
+reference=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json (snapshot 598)
+run=/Users/jayzhou/Documents/GitHub/java-projects/StockRecommendationEngine/src/main/java/documentation/live-runs/2026-09-14-diversification-trace/snapshot-1108-traced-settings-of-598-rerank-off.json (snapshot 1108)
+questions reference=42 run=42 traces=42
+problems=0

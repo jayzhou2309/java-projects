@@ -10,6 +10,7 @@ import project.stockrecommendationengine.rag.ingestion.FilingEmbeddingService;
 import project.stockrecommendationengine.rag.repository.FilingRetrievalRepository;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.FusedCandidate;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.Outcome;
+import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.RemovedCandidate;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace.RerankedCandidate;
 
 import java.lang.reflect.RecordComponent;
@@ -32,7 +33,11 @@ import static org.mockito.Mockito.*;
  * scripted rerankers: the traced and untraced paths return identical responses for rerank off, on, timeout, reranker exception,
  * and invalid evidence; the reranker is invoked exactly once per retrieval, through the same method on both paths, so a reranker whose
  * two methods disagree still returns identical results traced and untraced; a fallback records its reason and no scores; and the
- * trace's fused positions, leg ranks, rerank order, and returned ids agree with what retrieval actually did.
+ * trace's fused positions, leg ranks, rerank order, and returned ids agree with what retrieval actually did. Plan 2026-09-14-retrieval-recall,
+ * Milestone 3, D1 and D2: the scripted legs include a chunk repeating a kept chunk's text, one contained in it, and one overlapping half of
+ * it, and every scenario's trace records exactly those removals with the kept chunk that made each redundant; every position of the list
+ * before diversification is in the fused list or the removed list once; ordinary 500-character neighbours of 4,000-character chunks are
+ * kept.
  */
 class FilingRetrievalServiceTraceTests {
     /** Holds a figure ("64,377"), so the figure leg runs at the default figure weight. */
@@ -44,8 +49,13 @@ class FilingRetrievalServiceTraceTests {
     private FilingRetrievalProperties properties;
     private final List<FilingRetrievalService> services = new ArrayList<>();
 
-    // Scripted legs. Vector: 1, 2, 3, 2 (repeat), 4, 5, 6, 7. Keyword: 3, 8, 1, 9. Figure: 8, 10. Chunk 9 repeats chunk 1's text
-    // in the same filing and section, so diversification removes it.
+    // Scripted legs. Vector: 1, 2, 3, 2 (repeat), 4, 5, 6, 7. Keyword: 3, 8, 1, 9, 11, 12. Figure: 8, 10. Chunk 9 repeats chunk 1's
+    // text in the same filing and section, chunk 11 is contained in it, and chunk 12 overlaps more than half of it, so diversification
+    // removes all three.
+    /** 260 characters of SHARED: contained in chunk 1's text and at least 200 characters long. */
+    private static final String CONTAINED = SHARED.substring(40, 300);
+    /** SHARED from character 100 then a distinct tail: its first 235 characters are chunk 1's last 235, at least half of chunk 1's text. */
+    private static final String HALF_OVERLAP = SHARED.substring(100) + "A distinct continuation about operating expenses and cash flows. ".repeat(3);
     private final Map<Long, RetrievedFilingChunk> chunks = new HashMap<>();
     private List<RetrievedFilingChunk> vectorLeg;
     private List<RetrievedFilingChunk> keywordLeg;
@@ -68,8 +78,10 @@ class FilingRetrievalServiceTraceTests {
         chunks.put(8L, chunk(8, 0.60, "c8"));
         chunks.put(9L, chunk(9, 0.50, SHARED));
         chunks.put(10L, chunk(10, 0.70, "c10"));
+        chunks.put(11L, chunk(11, 0.40, CONTAINED));
+        chunks.put(12L, chunk(12, 0.30, HALF_OVERLAP));
         vectorLeg = ids(1, 2, 3, 2, 4, 5, 6, 7);
-        keywordLeg = ids(3, 8, 1, 9);
+        keywordLeg = ids(3, 8, 1, 9, 11, 12);
         figureLeg = ids(8, 10);
         when(repository.findSimilarChunks(any(), any(), anyInt())).thenAnswer(inv -> vectorLeg);
         when(repository.findKeywordChunks(any(), any(), any(), anyInt())).thenAnswer(inv -> keywordLeg);
@@ -81,8 +93,14 @@ class FilingRetrievalServiceTraceTests {
         services.forEach(FilingRetrievalService::shutdownRerankExecutor);
     }
 
-    /** Fused order by weighted RRF: 8, 1, 3, then 2 and 10 tie on score (2 wins on similarity), 4, 5, 6, 7, 9; 9 is diversified away. */
+    /**
+     * Fused order by weighted RRF: 8, 1, 3, then 2 and 10 tie on score (2 wins on similarity), 4, 5, 6, 7, 9, 11, 12; 9, 11, and 12 are
+     * diversified away as redundant with chunk 1.
+     */
     private static final List<Long> FUSED = List.of(8L, 1L, 3L, 2L, 10L, 4L, 5L, 6L, 7L);
+    /** The removals of the fused list: positions 10, 11, 12 before diversification, keyword ranks 4, 5, 6, each redundant with chunk 1. */
+    private static final List<RemovedCandidate> REMOVED = List.of(new RemovedCandidate(9, 10, null, 4, null, 1),
+            new RemovedCandidate(11, 11, null, 5, null, 1), new RemovedCandidate(12, 12, null, 6, null, 1));
 
     // C1: identical responses and one reranker invocation per traced retrieval.
 
@@ -185,6 +203,7 @@ class FilingRetrievalServiceTraceTests {
         assertThat(reranker.scoredCalls.get()).isEqualTo(2);
         assertThat(reranker.rerankCalls.get()).isZero();
         assertThat(calls.get()).isEqualTo(2);
+        assertFusedTrace(traced.trace(), untraced);
     }
 
     @Test
@@ -203,6 +222,7 @@ class FilingRetrievalServiceTraceTests {
             assertThat(traced.trace().rerank()).isEqualTo(new RetrievalTrace.Rerank(Outcome.FALLBACK, "invalidEvidence", 5, null, null));
             assertThat(reranker.scoredCalls.get()).isEqualTo(2);
             assertThat(reranker.rerankCalls.get()).isZero();
+            assertFusedTrace(traced.trace(), untraced);
         }
     }
 
@@ -344,6 +364,7 @@ class FilingRetrievalServiceTraceTests {
         assertThat(untraced.results()).isEmpty();
         assertThat(traced.trace().rerank()).isEqualTo(new RetrievalTrace.Rerank(Outcome.FALLBACK, "noCandidates", 0, null, null));
         assertThat(traced.trace().fused()).isEmpty();
+        assertThat(traced.trace().removed()).as("nothing removed is an empty list, not null").isEmpty();
         assertThat(traced.trace().returnedChunkIds()).isEmpty();
         assertThat(traced.trace().vectorCandidates()).isZero();
         assertThat(traced.trace().keywordCandidates()).isZero();
@@ -359,7 +380,7 @@ class FilingRetrievalServiceTraceTests {
         var traced = service.retrieveTraced(request(3, null));
         RetrievalTrace trace = traced.trace();
         assertThat(trace.vectorCandidates()).isEqualTo(8);
-        assertThat(trace.keywordCandidates()).isEqualTo(4);
+        assertThat(trace.keywordCandidates()).isEqualTo(6);
         assertThat(trace.figureCandidates()).isEqualTo(2);
         // Hand-computed from the scripted legs; vector ranks count the repeated chunk 2 once, at its first position.
         assertThat(trace.fused()).containsExactly(
@@ -372,7 +393,8 @@ class FilingRetrievalServiceTraceTests {
                 new FusedCandidate(5, 7, 5, null, null),
                 new FusedCandidate(6, 8, 6, null, null),
                 new FusedCandidate(7, 9, 7, null, null));
-        assertThat(traced.response().candidatesRetrieved()).as("chunk 9 was fused, then diversified away").isEqualTo(10);
+        assertThat(traced.response().candidatesRetrieved()).as("chunks 9, 11, and 12 were fused, then diversified away").isEqualTo(12);
+        assertThat(trace.removed()).containsExactlyElementsOf(REMOVED);
 
         // No figure in the query: the figure leg does not run, so its size and ranks are null.
         var yearOnly = service.retrieveTraced(new RetrievalRequest("AAPL", "net sales in fiscal 2025", null, null, null, null, 3, null, null, null));
@@ -389,6 +411,8 @@ class FilingRetrievalServiceTraceTests {
                 new FusedCandidate(1, 1, 1, null, null), new FusedCandidate(2, 2, 2, null, null), new FusedCandidate(3, 3, 3, null, null),
                 new FusedCandidate(4, 4, 4, null, null), new FusedCandidate(5, 5, 5, null, null), new FusedCandidate(6, 6, 6, null, null),
                 new FusedCandidate(7, 7, 7, null, null));
+        // The vector list repeats chunk 2 at position 4; that entry is removed as redundant with the chunk 2 kept at position 2.
+        assertThat(vectorOnly.trace().removed()).containsExactly(new RemovedCandidate(2, 4, 2, null, null, 2));
 
         // A failing keyword search: FILTERED_VECTOR, keyword and figure legs null (the figure leg is not attempted).
         when(repository.findKeywordChunks(any(), any(), any(), anyInt())).thenThrow(new IllegalStateException("index"));
@@ -430,11 +454,82 @@ class FilingRetrievalServiceTraceTests {
         assertThat(service(null).retrieveTraced(request(3, null)).response()).isNotNull();
     }
 
-    /** C2 invariants of the fused list: positions 1..n without gaps, in the diversified order, and the returned ids. */
+    /**
+     * C2 invariants of the fused list: positions 1..n without gaps, in the diversified order, and the returned ids; D1: the removals of the
+     * scripted legs, and D2 over the fused list before diversification.
+     */
     private void assertFusedTrace(RetrievalTrace trace, RetrievalResponse response) {
         assertThat(trace.fused()).extracting(FusedCandidate::fusedPosition).containsExactlyElementsOf(IntStream.rangeClosed(1, trace.fused().size()).boxed().toList());
         assertThat(trace.fused()).extracting(FusedCandidate::chunkId).containsExactlyElementsOf(FUSED);
         assertThat(trace.returnedChunkIds()).containsExactlyElementsOf(response.results().stream().map(RetrievedFilingChunk::chunkId).toList());
+        assertThat(trace.removed()).containsExactlyElementsOf(REMOVED);
+        assertPartition(trace, FilingRetrievalService.fuse(List.of(new FilingRetrievalService.FusionLeg(vectorLeg, 1.0),
+                new FilingRetrievalService.FusionLeg(keywordLeg, 0.5), new FilingRetrievalService.FusionLeg(figureLeg, 1.0)), 60));
+    }
+
+    /**
+     * D2: every position of {@code beforeDiversification} is either in the fused list (in order) or in the removed list, exactly once; each
+     * removed entry names its own chunk at its position; and its redundant-with chunk is in the fused list at a position smaller than the
+     * removed chunk's position before diversification.
+     */
+    private static void assertPartition(RetrievalTrace trace, List<RetrievedFilingChunk> beforeDiversification) {
+        Map<Integer, RemovedCandidate> removedByPosition = new HashMap<>();
+        for (RemovedCandidate removed : trace.removed()) {
+            assertThat(removedByPosition.put(removed.candidatePosition(), removed)).as("position %d removed once", removed.candidatePosition()).isNull();
+        }
+        List<Long> kept = new ArrayList<>();
+        for (int position = 1; position <= beforeDiversification.size(); position++) {
+            RetrievedFilingChunk chunk = beforeDiversification.get(position - 1);
+            RemovedCandidate removed = removedByPosition.remove(position);
+            if (removed == null) {
+                kept.add(chunk.chunkId());
+                continue;
+            }
+            assertThat(removed.chunkId()).isEqualTo(chunk.chunkId());
+            long redundantWith = removed.redundantWith();
+            FusedCandidate keeper = trace.fused().stream().filter(f -> f.chunkId() == redundantWith).findFirst().orElse(null);
+            assertThat(keeper).as("chunk %d's redundant-with chunk %d is in the fused list", removed.chunkId(), redundantWith).isNotNull();
+            assertThat(keeper.fusedPosition()).as("kept before the chunk it made redundant").isLessThan(position);
+        }
+        assertThat(removedByPosition).as("removed positions outside the list before diversification").isEmpty();
+        assertThat(trace.fused()).extracting(FusedCandidate::chunkId).containsExactlyElementsOf(kept);
+    }
+
+    @Test
+    void ordinaryNeighboursAreKeptAndContainedAndHalfOverlappingChunksAreRemovedWithTheirKeptChunk() {
+        // 4,000-character chunks as FilingChunker cuts them: 21 is [0, 4000); 22 its neighbour [3500, 7000) (the chunker's 500-character
+        // overlap); 23 overlaps 21 by 2,500 characters, more than half; 24 [500, 3000) is contained in 21; 25 repeats 21's text in another
+        // section; 26 repeats it in another filing. Only 23 and 24 are redundant.
+        String text = IntStream.range(0, 1500).mapToObj(i -> "w" + i).reduce((a, b) -> a + " " + b).orElseThrow().substring(0, 7000);
+        chunks.put(21L, chunk(21, 0.9, text.substring(0, 4000)));
+        chunks.put(22L, chunk(22, 0.8, text.substring(3500, 7000)));
+        chunks.put(23L, chunk(23, 0.7, text.substring(1500, 5500)));
+        chunks.put(24L, chunk(24, 0.6, text.substring(500, 3000)));
+        chunks.put(25L, new RetrievedFilingChunk(25L, 1L, "AAPL", "0000320193", "0000320193-25-000079", "10-K", LocalDate.parse("2025-10-31"), null,
+                "ITEM_1A", "Risk Factors", 25, text.substring(0, 4000), "https://example.invalid/25", 0.5));
+        chunks.put(26L, new RetrievedFilingChunk(26L, 2L, "AAPL", "0000320193", "0000320193-24-000123", "10-K", LocalDate.parse("2024-11-01"), null,
+                "ITEM_7", "MD&A", 26, text.substring(0, 4000), "https://example.invalid/26", 0.4));
+        vectorLeg = ids(21, 22, 23, 24, 25, 26);
+        keywordLeg = ids(26); // hybrid fused order: 26, 21, 22, 23, 24, 25
+        figureLeg = List.of();
+        var service = service(new CountingReranker(new CrossEncoderReranker(new WindowTableScorer(Map.of()), "v")));
+        for (Boolean hybrid : new Boolean[] {true, false}) {
+            for (Boolean rerank : new Boolean[] {false, true}) {
+                var request = new RetrievalRequest("AAPL", QUERY, null, null, null, null, 3, null, hybrid, rerank);
+                RetrievalResponse untraced = service.retrieve(request);
+                var traced = service.retrieveTraced(request);
+                assertThat(traced.response()).as("hybrid %s rerank %s", hybrid, rerank).isEqualTo(untraced);
+                RetrievalTrace trace = traced.trace();
+                assertThat(trace.fused()).extracting(FusedCandidate::chunkId).as("neighbour 22 and the other section and filing are kept")
+                        .containsExactly(hybrid ? new Long[] {26L, 21L, 22L, 25L} : new Long[] {21L, 22L, 25L, 26L});
+                assertThat(trace.removed()).containsExactly(hybrid
+                        ? new RemovedCandidate[] {new RemovedCandidate(23, 4, 3, null, null, 21), new RemovedCandidate(24, 5, 4, null, null, 21)}
+                        : new RemovedCandidate[] {new RemovedCandidate(23, 3, 3, null, null, 21), new RemovedCandidate(24, 4, 4, null, null, 21)});
+                List<RetrievedFilingChunk> before = hybrid ? FilingRetrievalService.fuse(List.of(new FilingRetrievalService.FusionLeg(vectorLeg, 1.0),
+                        new FilingRetrievalService.FusionLeg(keywordLeg, 0.5), new FilingRetrievalService.FusionLeg(figureLeg, 1.0)), 60) : vectorLeg;
+                assertPartition(trace, before);
+            }
+        }
     }
 
     /**

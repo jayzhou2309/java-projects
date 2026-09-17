@@ -401,12 +401,12 @@ lines.append("")
 lines.append("10. F9 storage per point [observed: storage-S<n>.json, written by storage.sql; sizes as pg_* functions reported them at run time, dead tuples included]")
 fields = ["chunks", "contentChars", "meanChunkChars", "maxChunkChars", "minChunkChars", "tokenCountSum", "maxTokenCount", "totalRelationBytes", "heapBytes", "toastBytes", "indexesBytes",
           "liveTuples", "deadTuples", "storeVersions"]
-lines.append("  %-20s %-40s %-40s %-40s" % ("field", "S0 (before the rebuild)", "S1 (rebuilt at 1000 / 125)", "S2 (after the rollback)"))
+lines.append("  %-43s %-40s %-40s %-40s" % ("field", "S0 (before the rebuild)", "S1 (rebuilt at 1000 / 125)", "S2 (after the rollback)"))
 for f in fields:
-    lines.append("  %-20s %-40s %-40s %-40s" % (f, fmt(storage["storage-S0.json"][f]), fmt(storage["storage-S1.json"][f]), fmt(storage["storage-S2.json"][f])))
+    lines.append("  %-43s %-40s %-40s %-40s" % (f, fmt(storage["storage-S0.json"][f]), fmt(storage["storage-S1.json"][f]), fmt(storage["storage-S2.json"][f])))
 for idx in storage["storage-S0.json"]["indexes"]:
     name = idx["name"]
-    lines.append("  %-20s %-40s %-40s %-40s" % ("index " + name[:14], *[fmt(next(i["bytes"] for i in storage[s]["indexes"] if i["name"] == name)) for s in ("storage-S0.json", "storage-S1.json", "storage-S2.json")]))
+    lines.append("  %-43s %-40s %-40s %-40s" % ("index " + name, *[fmt(next(i["bytes"] for i in storage[s]["indexes"] if i["name"] == name)) for s in ("storage-S0.json", "storage-S1.json", "storage-S2.json")]))
 lines.append("  chunks per filing (filingId: S0 / S1 / S2): " + ", ".join("%d: %s / %s / %s" % (fid, *[fmt(path_value(storage[s], "filingsDetail[filingId=%d].chunks" % fid)) for s in ("storage-S0.json", "storage-S1.json", "storage-S2.json")]) for fid in FILINGS))
 lines.append("  no index exists on the embedding column (pg_indexes at run time: the listed indexes are all of sec_filing_chunks); the content_tsv GIN index is idx_sec_filing_chunks_content_tsv.")
 w("comparison.txt", "\n".join(lines) + "\n")
@@ -477,6 +477,7 @@ claim("inferred", b, text="R1 does not hold on the rebuilt store: two accepted p
 # diagnostic runs and rule rows for the record
 b = "diagnostic"
 diag_ids = []
+membership_ids = {}
 for k in ("1613", "1614"):
     for m, col in (("hitAt1", "hit_at_1"), ("hitAt5", "hit_at_5"), ("mrr", "mrr")):
         diag_ids.append(claim("observed", b, {"type": "metric", "snapshot": RUNS[k][0], "metric": m, "expected": num(metric(k, col))}))
@@ -491,13 +492,15 @@ for ref, cand in (("1611", "1613"), ("1612", "1614")):
         claim("experiment", b, {"type": "metric", "snapshot": RUNS[cand][0], "metric": m, "expected": num(metric(cand, col))},
               text="With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking %s in both and the other recorded settings equal, the %s of %s is %s the %s of %s (a record, not a selection outcome)" % (rerank, name, LABELS[cand], direction, name, LABELS[ref]), experiment=exp)
     entering, leaving = membership(ref, cand)
+    membership_ids[(ref, cand)] = []
     for q in leaving:
-        claim("experiment", b, {"type": "topK", "question": q, "k": 5, "rows": [{"snapshot": RUNS[ref][0], "expected": "inside"}, {"snapshot": RUNS[cand][0], "expected": "outside"}]},
-              text="With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking %s in both and the other recorded settings equal, %s left the top 5" % (rerank, q), experiment=exp)
+        membership_ids[(ref, cand)].append(claim("experiment", b, {"type": "topK", "question": q, "k": 5, "rows": [{"snapshot": RUNS[ref][0], "expected": "inside"}, {"snapshot": RUNS[cand][0], "expected": "outside"}]},
+              text="With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking %s in both and the other recorded settings equal, %s left the top 5" % (rerank, q), experiment=exp))
     for q in entering:
-        claim("experiment", b, {"type": "topK", "question": q, "k": 5, "rows": [{"snapshot": RUNS[ref][0], "expected": "outside"}, {"snapshot": RUNS[cand][0], "expected": "inside"}]},
-              text="With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking %s in both and the other recorded settings equal, %s entered the top 5" % (rerank, q), experiment=exp)
-claim("inferred", b, text="For the record and not as a selection outcome (R1 failed): against the baseline with reranking off, the diagnostic run with reranking off has a lower hit@5 and a lower MRR, and more questions left the top 5 than entered it; the floors test did not run on the rebuilt store", frm=diag_ids[:8] + ids_base[:2])
+        membership_ids[(ref, cand)].append(claim("experiment", b, {"type": "topK", "question": q, "k": 5, "rows": [{"snapshot": RUNS[ref][0], "expected": "outside"}, {"snapshot": RUNS[cand][0], "expected": "inside"}]},
+              text="With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking %s in both and the other recorded settings equal, %s entered the top 5" % (rerank, q), experiment=exp))
+# premises: D0's hit@5 and MRR (diag_ids[1:3]), B0's hit@5 and MRR (ids_base[:2]), and the leaving and entering claims of D0 against B0 (remediation round 1, finding 3)
+claim("inferred", b, text="For the record and not as a selection outcome (R1 failed): against the baseline with reranking off, the diagnostic run with reranking off has a lower hit@5 and a lower MRR, and more questions left the top 5 than entered it; the floors test did not run on the rebuilt store", frm=diag_ids[1:3] + ids_base[:2] + membership_ids[("1611", "1613")])
 
 # ranks (F7)
 b = "ranks"
@@ -567,12 +570,17 @@ for fid in (5, 7, 8, 288):
     key_ids.append(claim("observed", b, {"type": "fileValue", "file": "filings-S2.json", "path": "[filingId=%d].createdAt" % fid, "expected": path_value(load("filings-S2.json"), "[filingId=%d].createdAt" % fid)}))
 for cid in (11970, 11972, 11974):
     key_ids.append(claim("observed", b, {"type": "fileValue", "file": "chunks-S2.json", "path": "[id=%d].sectionKey" % cid, "expected": exports["chunks-S2.json"][cid]["sectionKey"]}))
-claim("inferred", b, text="The five AAPL 8-K chunks of filings 5, 7, and 8 (ingested 2026-09-10) have the same text before the rebuild and after the rollback and a section key with the sub-item after it (ITEM_2_02 for ITEM_2, ITEM_9_01 for ITEM_9, ITEM_5_02 for ITEM_5), while the MSFT 8-Ks ingested 2026-09-12 carried sub-item keys before the rebuild; so the parser in the tree at rebuild time keys 8-K items with the sub-item, and the 2026-09-10 ingestion did not (derived from the exports on identical text)", frm=key_ids)
+claim("inferred", b, text="The five AAPL 8-K chunks of filings 5, 7, and 8 (ingested 2026-09-10) have the same text before the rebuild and after the rollback and a section key with the sub-item after it (ITEM_2_02 for ITEM_2, ITEM_9_01 for ITEM_9, ITEM_5_02 for ITEM_5), while the MSFT 8-Ks ingested 2026-09-12 carried sub-item keys before the rebuild; so the parser in the tree at rebuild time keys 8-K items with the sub-item, and the 2026-09-10 ingestion did not (the keys, lengths, heads, and ingestion dates are the observed claims listed; this reading of them is inferred, not computed by a check)", frm=key_ids)
 claim("inferred", b, text="A parser change between 2026-09-10 and 2026-09-12 (FilingHtmlParser commits 2ed3275 and 19876f2 in that interval, its comment saying the sub-item is kept in the key) is the inferred and untested reading of the key change: the isolating experiment, re-parsing filing 5 at commit 6e4719a, was not run", frm=key_ids)
 claim("inferred", b, text="aapl-08's not-held phrase is independent of the chunk size: the phrase is held by a stored chunk under the matching rule neither at the rebuilt size nor at the stored size after a rebuild with this parser, since the set names section ITEM_2 and the store keys it ITEM_2_02, and the post-rollback report at the stored size records it not held (the held-phrases claims); aapl-13's not-held phrase at the rebuilt store lies across a chunk boundary of the stored cut at the smaller size, and Milestone 1's diagnostic recorded aapl-13 as the one split phrase at its smallest re-split size (its sizeTable claim at that size)", frm=key_ids + r1_ids)
 
 # decision
-claim("inferred", "decision", text="The selection rule was not applied: R1 failed, the rebuilt store was rolled back, the defaults stay at chunk size 4000 and overlap 125 times 4, and the decision on a further size or on the aapl-08 section key is recorded as DECISION RAG-27 for Jay", frm=r1_ids + roll_ids[:1])
+claim("inferred", "decision", text="The selection rule was not applied: R1 failed, the rebuilt store was rolled back, the defaults stay at chunk size 4000 and overlap 500, and the decision on a further size or on the aapl-08 section key is recorded as DECISION RAG-27 for Jay", frm=r1_ids + roll_ids[:1])
+
+# F9, each index's size (remediation round 1, finding 4): one claim per store point listing the indexes of sec_filing_chunks with their bytes,
+# in block store; appended here, after the decision, so that the ids C-1201 to C-1512 written before this round do not move (C-1513 to C-1515).
+for sfile in ("storage-S0.json", "storage-S1.json", "storage-S2.json"):
+    claim("observed", "store", {"type": "fileValue", "file": sfile, "path": "indexes", "expected": storage[sfile]["indexes"]})
 
 labels = {}
 for k in ORDER:

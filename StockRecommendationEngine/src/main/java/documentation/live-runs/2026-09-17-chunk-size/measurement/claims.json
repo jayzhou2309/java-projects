@@ -1672,16 +1672,21 @@
    "block": "diagnostic",
    "text": "For the record and not as a selection outcome (R1 failed): against the baseline with reranking off, the diagnostic run with reranking off has a lower hit@5 and a lower MRR, and more questions left the top 5 than entered it; the floors test did not run on the rebuilt store",
    "from": [
-    "C-1272",
     "C-1273",
     "C-1274",
-    "C-1275",
-    "C-1276",
-    "C-1277",
-    "C-1278",
-    "C-1279",
     "C-1201",
-    "C-1202"
+    "C-1202",
+    "C-1288",
+    "C-1289",
+    "C-1290",
+    "C-1291",
+    "C-1292",
+    "C-1293",
+    "C-1294",
+    "C-1295",
+    "C-1296",
+    "C-1297",
+    "C-1298"
    ]
   },
   {
@@ -4580,7 +4585,7 @@
    "id": "C-1509",
    "basis": "inferred",
    "block": "keys",
-   "text": "The five AAPL 8-K chunks of filings 5, 7, and 8 (ingested 2026-09-10) have the same text before the rebuild and after the rollback and a section key with the sub-item after it (ITEM_2_02 for ITEM_2, ITEM_9_01 for ITEM_9, ITEM_5_02 for ITEM_5), while the MSFT 8-Ks ingested 2026-09-12 carried sub-item keys before the rebuild; so the parser in the tree at rebuild time keys 8-K items with the sub-item, and the 2026-09-10 ingestion did not (derived from the exports on identical text)",
+   "text": "The five AAPL 8-K chunks of filings 5, 7, and 8 (ingested 2026-09-10) have the same text before the rebuild and after the rollback and a section key with the sub-item after it (ITEM_2_02 for ITEM_2, ITEM_9_01 for ITEM_9, ITEM_5_02 for ITEM_5), while the MSFT 8-Ks ingested 2026-09-12 carried sub-item keys before the rebuild; so the parser in the tree at rebuild time keys 8-K items with the sub-item, and the 2026-09-10 ingestion did not (the keys, lengths, heads, and ingestion dates are the observed claims listed; this reading of them is inferred, not computed by a check)",
    "from": [
     "C-1477",
     "C-1478",
@@ -4704,7 +4709,7 @@
    "id": "C-1512",
    "basis": "inferred",
    "block": "decision",
-   "text": "The selection rule was not applied: R1 failed, the rebuilt store was rolled back, the defaults stay at chunk size 4000 and overlap 125 times 4, and the decision on a further size or on the aapl-08 section key is recorded as DECISION RAG-27 for Jay",
+   "text": "The selection rule was not applied: R1 failed, the rebuilt store was rolled back, the defaults stay at chunk size 4000 and overlap 500, and the decision on a further size or on the aapl-08 section key is recorded as DECISION RAG-27 for Jay",
    "from": [
     "C-1267",
     "C-1268",
@@ -4712,6 +4717,126 @@
     "C-1270",
     "C-1468"
    ]
+  },
+  {
+   "id": "C-1513",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "indexes",
+    "expected": [
+     {
+      "name": "idx_sec_filing_chunks_content_tsv",
+      "bytes": 753664
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing",
+      "bytes": 16384
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing_section",
+      "bytes": 32768
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_key",
+      "bytes": 16384
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_title",
+      "bytes": 32768
+     },
+     {
+      "name": "sec_filing_chunks_pkey",
+      "bytes": 40960
+     },
+     {
+      "name": "uq_sec_filing_chunk",
+      "bytes": 49152
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1514",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "indexes",
+    "expected": [
+     {
+      "name": "idx_sec_filing_chunks_content_tsv",
+      "bytes": 1458176
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing_section",
+      "bytes": 49152
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_key",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_title",
+      "bytes": 40960
+     },
+     {
+      "name": "sec_filing_chunks_pkey",
+      "bytes": 81920
+     },
+     {
+      "name": "uq_sec_filing_chunk",
+      "bytes": 131072
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1515",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "indexes",
+    "expected": [
+     {
+      "name": "idx_sec_filing_chunks_content_tsv",
+      "bytes": 1736704
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing_section",
+      "bytes": 57344
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_key",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_title",
+      "bytes": 40960
+     },
+     {
+      "name": "sec_filing_chunks_pkey",
+      "bytes": 90112
+     },
+     {
+      "name": "uq_sec_filing_chunk",
+      "bytes": 131072
+     }
+    ]
+   }
   }
  ]
 }

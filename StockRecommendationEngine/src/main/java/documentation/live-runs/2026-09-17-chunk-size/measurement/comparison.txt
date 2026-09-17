@@ -87,27 +87,27 @@ Labels: [observed] a value as stored (file and field named); [derived] computed 
   P0                    359.5  526   1271  282   16924    -       -     -     -     -         17.033816 0
 
 10. F9 storage per point [observed: storage-S<n>.json, written by storage.sql; sizes as pg_* functions reported them at run time, dead tuples included]
-  field                S0 (before the rebuild)                  S1 (rebuilt at 1000 / 125)               S2 (after the rollback)                 
-  chunks               569                                      1917                                     569                                     
-  contentChars         1486993                                  1553652                                  1486993                                 
-  meanChunkChars       2613.3                                   810.5                                    2613.3                                  
-  maxChunkChars        4000                                     1000                                     4000                                    
-  minChunkChars        5                                        5                                        5                                       
-  tokenCountSum        371954                                   389139                                   371954                                  
-  maxTokenCount        1000                                     250                                      1000                                    
-  totalRelationBytes   9068544                                  22544384                                 23216128                                
-  heapBytes            548864                                   3178496                                  3416064                                 
-  toastBytes           7553024                                  17498112                                 17588224                                
-  indexesBytes         966656                                   1867776                                  2211840                                 
-  liveTuples           569                                      1917                                     569                                     
-  deadTuples           132                                      52                                       199                                     
-  storeVersions        [sections-v2-context-v2]                 [sections-v2-context-v2-chunk1000-125]   [sections-v2-context-v2-chunk4000-500]  
-  index idx_sec_filing 753664                                   1458176                                  1736704                                 
-  index idx_sec_filing 16384                                    40960                                    40960                                   
-  index idx_sec_filing 32768                                    49152                                    57344                                   
-  index idx_sec_filing 16384                                    40960                                    40960                                   
-  index idx_sec_filing 32768                                    40960                                    40960                                   
-  index sec_filing_chu 40960                                    81920                                    90112                                   
-  index uq_sec_filing_ 49152                                    131072                                   131072                                  
+  field                                       S0 (before the rebuild)                  S1 (rebuilt at 1000 / 125)               S2 (after the rollback)                 
+  chunks                                      569                                      1917                                     569                                     
+  contentChars                                1486993                                  1553652                                  1486993                                 
+  meanChunkChars                              2613.3                                   810.5                                    2613.3                                  
+  maxChunkChars                               4000                                     1000                                     4000                                    
+  minChunkChars                               5                                        5                                        5                                       
+  tokenCountSum                               371954                                   389139                                   371954                                  
+  maxTokenCount                               1000                                     250                                      1000                                    
+  totalRelationBytes                          9068544                                  22544384                                 23216128                                
+  heapBytes                                   548864                                   3178496                                  3416064                                 
+  toastBytes                                  7553024                                  17498112                                 17588224                                
+  indexesBytes                                966656                                   1867776                                  2211840                                 
+  liveTuples                                  569                                      1917                                     569                                     
+  deadTuples                                  132                                      52                                       199                                     
+  storeVersions                               [sections-v2-context-v2]                 [sections-v2-context-v2-chunk1000-125]   [sections-v2-context-v2-chunk4000-500]  
+  index idx_sec_filing_chunks_content_tsv     753664                                   1458176                                  1736704                                 
+  index idx_sec_filing_chunks_filing          16384                                    40960                                    40960                                   
+  index idx_sec_filing_chunks_filing_section  32768                                    49152                                    57344                                   
+  index idx_sec_filing_chunks_section_key     16384                                    40960                                    40960                                   
+  index idx_sec_filing_chunks_section_title   32768                                    40960                                    40960                                   
+  index sec_filing_chunks_pkey                40960                                    81920                                    90112                                   
+  index uq_sec_filing_chunk                   49152                                    131072                                   131072                                  
   chunks per filing (filingId: S0 / S1 / S2): 3: 76 / 277 / 76, 4: 31 / 108 / 31, 5: 2 / 2 / 2, 6: 32 / 110 / 32, 7: 2 / 2 / 2, 8: 1 / 3 / 1, 109: 163 / 478 / 163, 110: 95 / 287 / 95, 161: 115 / 451 / 115, 162: 47 / 192 / 47, 288: 2 / 3 / 2, 324: 2 / 2 / 2, 325: 1 / 2 / 1
   no index exists on the embedding column (pg_indexes at run time: the listed indexes are all of sec_filing_chunks); the content_tsv GIN index is idx_sec_filing_chunks_content_tsv.

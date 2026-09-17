@@ -172,3 +172,49 @@ Verify
       in that filing and section"), a state of the shared database and not of this milestone's code; "CLAIMS_CHECK claimsFiles=9 documents=28 problems=0"
       (observed). claims.json: 312 claims, C-1201 to C-1512; compare_chunk_size.py reproduces its files byte for byte (md5 before and after a re-run); no
       __pycache__. lsof -iTCP:8081 -sTCP:LISTEN -> 0 lines (observed). git diff --stat ec560cc -- src/main/java/project src/main/resources -> empty (observed).
+
+Remediation round 1 (Scrutiny findings on Milestone 3), 2026-09-17 (times +08); worktree branch chunk-size at ba3dbff when the round started
+No application start, no rebuild, no evaluation, no model call; the database was read with psql only (select statements). Labels as above.
+  M1. filings-S2.json provenance (finding 2). The file was first written at 13:54:20 on 2026-09-17 (its modification time before this round: the write-up phase,
+      after the S2 storage snapshot of 12:17:33), by a psql query that was not committed. filings.sql is now committed with the same columns (filingId, ticker,
+      filingType, accessionNo, filingDate, createdAt, updatedAt, processingVersion, ingestionStatus; times as UTC), ordered by id. Run at 14:14:47:
+      docker exec -i trading-postgres psql ... -tA -f - < filings.sql > <scratch>/filings-S2.regenerated.json -> psql exit 0; cmp against the committed
+      filings-S2.json -> exit 0 (identical; 3,896 bytes each; md5 c98f302a082ce7ddb310b2d3052ab27b for both); the regenerated file was copied over the
+      committed one (no content change) (observed). The values are the database's current sec_filings rows (read at 14:05: 13 rows, processing_version
+      sections-v2-context-v2-chunk4000-500 and EMBEDDED on each, updated_at 04:14:47Z to 04:17:03Z; filing_rebuild_runs 32 rows; sec_filing_chunks 569 rows,
+      ids 11406 to 11974) (observed: psql). What fixes the store state at the rollback point S2: filing-rebuild-runs-after-rollback.json (32 rows, the 13
+      rollback rebuilds SUCCEEDED at that version) and storage-S2.json (recordedAt 04:17:33Z, 13 filings EMBEDDED, storeVersions
+      [sections-v2-context-v2-chunk4000-500]); the file's updated_at values lie inside the rollback window of C2 (12:14:25 to 12:17:03) and the rebuild-run
+      count is unchanged since C2, so the rows the file holds are the rows of S2 (derived from those files and the counts above).
+  M2. comparison.txt (finding 4): compare_chunk_size.py's storage table (section 10) printed index names cut to 14 characters ("index idx_sec_filing"); the
+      first column is widened from 20 to 43 characters and the name is printed whole, so the seven index rows read idx_sec_filing_chunks_content_tsv,
+      idx_sec_filing_chunks_filing, idx_sec_filing_chunks_filing_section, idx_sec_filing_chunks_section_key, idx_sec_filing_chunks_section_title,
+      sec_filing_chunks_pkey, uq_sec_filing_chunk with their bytes at S0, S1, S2 (observed: the regenerated file). Values unchanged.
+  M3. claims.json edits, by the script (findings 3, 4, 5, 7): before any edit the committed script reproduced the committed claims.json and comparison.txt byte
+      for byte (git status clean after a run; md5 b428b59429ed96ee2784588476ef62b0 and 97be5f98de0f3ec619ce1f961e017249) (observed). Then: C-1315's premises
+      are D0's hit@5 and MRR (C-1273, C-1274), B0's (C-1201, C-1202), and the leaving and entering claims of D0 against B0 (C-1288 to C-1298); C-1272 and
+      C-1275 to C-1279 dropped. C-1509's text no longer calls itself derived: it says the keys, lengths, heads, and ingestion dates are the observed claims
+      listed and that the reading is inferred, not computed by a check (basis inferred, unchanged); the RAG.md Outcome prose and Follow_Ups RAG-29 carry the
+      same label. C-1512 says "overlap 500". C-1513, C-1514, C-1515 (block store, observed, fileValue on storage-S<n>.json path indexes) list the seven
+      indexes with their bytes at S0, S1, S2; they are appended after the decision claim in the script so the ids C-1201 to C-1512 do not move. 315 claims,
+      C-1201 to C-1515, ids unique (observed: python over the file). No measured number, snapshot, evidence report, log window, or export changed.
+  M4. Generation: ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true. The first run reported problems=1: C-1509 "no check" (absolute
+      wording in free text); reworded to "not computed by a check". The second run: CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md]
+      notGenerated=0; CLAIMS_CHECK claimsFiles=9 documents=28 problems=0; a plain check run afterwards printed the same CLAIMS_CHECK line (observed). The
+      store block of RAG.md gains the three index bullets; the diagnostic, keys, and decision blocks carry the reworded C-1315, C-1509, and C-1512.
+  M5. Prose (findings 1, 5, 6, 7): Project_Challenges.md, the chunk-size entry: the key change is stated as observed (unchanged text between the 2026-09-10
+      store and both rebuilds), "at any size" is limited to the two measured sizes (4,000 / 500 and 1,000 / 125), and the lesson labels the parser-change
+      reading as inferred and untested. RAG.md, Outcome: "(derived from the exports on identical text)" is replaced by the inferred label with what is
+      observed named; "at any chunk size" reads "at either measured size (1,000 / 125 and 4,000 / 500; a further size is not measured)"; the Evidence bullet
+      names filings.sql. Follow_Ups RAG-29: "after any rebuild" and "at any chunk size" limited to the two rebuilds; the two opt-in live tests
+      (RetrievalEvaluationTraceLiveTests, RetrievalEvidenceLiveTests, both under -Drag.evaluation.live=true) are recorded as "would fail" from the exports
+      (chunk ids 297, 459's chunks, 460, 515, 571 do not exist in chunks-S2.json, whose ids are 11406 to 11974) and as not run this round (they call the
+      embedding API); the "derived:" label on the parser sentence reads inferred, as in the claim.
+  M6. Verify: see V5 below.
+  V5. Verify of this round, after the last edit (14:19:04 to 14:19:16): rm -rf target/surefire-reports; set -a && source .env && set +a (env grep for RAG_* and
+      the enable flags -> 0); ./mvnw -q -o verify -> exit 1 (observed). 70 test classes, 627 tests, 2 failures, 0 errors, 37 skipped (derived: surefire XML
+      sums); the two failures are the RetrievalEvaluationSetTests methods of V2 (aapl-08, ITEM_2, "0 chunks in that filing and section"), the shared-database
+      state of RAG-29 and not this round's edits; "CLAIMS_CHECK claimsFiles=9 documents=28 problems=0" (observed). claims.json md5 c0f2b74ffb955afbfbcc6499e085f4b4
+      and comparison.txt md5 a60d9b44219debced9b05c76ab4c2917 after a further run of compare_chunk_size.py, equal to the files verify read (observed); no
+      __pycache__. lsof -iTCP:8081 -sTCP:LISTEN -> 0 lines (observed). git diff --stat ba3dbff -- src/main/java/project src/main/resources src/test -> empty
+      (observed): no code change in this round.

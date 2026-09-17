@@ -176,3 +176,10 @@ Correctness contract:
   stored 4,000, 33 at 2,000, 37 at 1,000, 35 at 500 with one split phrase (aapl-13), so 500 is excluded and no remaining
   size beats 4,000. Under the plan's boundaries no rebuild follows; Milestones 2 and 3 do not start unless Jay amends
   the rule or the scope. Validation of Milestone 1 pending.
+- 2026-09-17, Milestone 1 closed: Scrutiny PASS on every contract item (independent recount of the 401 lines, the size
+  table recomputed, the rule re-applied, all 44 claims read against their lines, checker code reviewed); UT PASS (own
+  script reproduced the table; three chunkSize lines replayed against the live model byte for byte; `verify` exit 0,
+  37 skipped, port 8081 free). One low finding, a stale contract reference in RAG.md, fixed in 034657c and passed a
+  scoped Scrutiny check. CLAUDE.md's skipped count (32) is updated at plan close-out. Decision open for Jay: close with
+  the measurement, override the size rule and run Milestones 2 and 3 at a named size, or replan around rerank-time
+  passage cuts.

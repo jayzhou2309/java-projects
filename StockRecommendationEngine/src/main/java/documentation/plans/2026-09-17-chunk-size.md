@@ -119,6 +119,10 @@ Correctness contract:
 - E3. A new snapshot's `properties` carry `chunkMaxChars`, `chunkOverlapChars`, `storeVersions`; an old snapshot read
   back reports them null, not an error.
 - E4. Existing stored filings stay complete and retrievable (`isComplete` does not depend on the version string).
+- E5 (amendment 3). Section awareness and metadata are unchanged at any size: no piece spans two parsed sections, and
+  every piece carries the section key, section title, section chunk index, start and end character offsets within
+  the section, and token count exactly as the stored chunks do today; a unit test proves it at 1,000 / 125 on a
+  multi-section fixture, and the rebuild path stores the same columns.
 - Commands: `./mvnw -q -o verify`.
 - Out of scope: any rebuild; changing defaults.
 - User-facing flow (UT): app on 8081 at defaults; `POST /api/rag/evaluate` runs and its snapshot shows the three new
@@ -183,3 +187,10 @@ Correctness contract:
   scoped Scrutiny check. CLAUDE.md's skipped count (32) is updated at plan close-out. Decision open for Jay: close with
   the measurement, override the size rule and run Milestones 2 and 3 at a named size, or replan around rerank-time
   passage cuts.
+- 2026-09-17, amendment 3 (Jay, after Milestone 1): Jay overrides the size rule's "none" outcome and chooses a rebuild
+  at 1,000 / 125 characters, on the reasoning (inferred, not measured) that the vector and keyword legs, which the
+  diagnostic does not score, decide whether nvda-04's chunk reaches the reranker at all. The selection rule of
+  Milestone 3 (R1 to R5 against B0, with F7 to F9) is unchanged and decides whether the store stays. Jay asked that
+  chunking stay section-aware with its metadata: chunks are already cut within parsed sections and carry section key,
+  title, index, offsets, and token count; Milestone 2 contract E5 makes that an explicit check at the new size.
+  Adding heading text into chunk content would be a second factor and is out of this plan. Milestone 2 starts.

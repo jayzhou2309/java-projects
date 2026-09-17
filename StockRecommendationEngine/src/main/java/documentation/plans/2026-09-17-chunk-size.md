@@ -202,3 +202,15 @@ Correctness contract:
   569 chunks; retrieve smoke check green; port 8081 free). Two low notes recorded by Scrutiny, no fix required: the
   bounds are stated both in the properties annotations and in the chunker's guard; RAG.md calls the half-size rule
   class-level while it is an `@AssertTrue` method. Milestone 3 starts at the size of amendment 3 (1,000 / 125).
+- 2026-09-17, Milestone 3 handed off (25c1cd4, 1dba3f0, 1b16ee9; the Worker's session was cut by a usage limit after
+  the rollback and resumed for the write-up). B0 (1611) and B1 (1612) reproduced 598 and 613. The rebuild at 1,000 /
+  125 gave 1,917 chunks; R1 failed (55 of 57 phrases held: aapl-13 split across a piece boundary, aapl-08 keyed
+  ITEM_2_02 by the current parser where the set names ITEM_2), so no selection row exists; D0 (1613) and D1 (1614) are
+  diagnostic records only, taken after R1 failed to satisfy F7 and F8 (a deviation the Orchestrator accepts); the
+  rollback rebuilt 4,000 / 500 (569 chunks) and P0 (1615) equals B0 on 41 questions. F6 does not hold for aapl-08:
+  the rollback re-parses under the parser in the tree, which keys 8-K items with the sub-item, so a rollback is not a
+  restore of section keys. Consequences: `verify` is exit 1 on the shared database (RetrievalEvaluationSetTests,
+  aapl-08 in sets v1 and v2) and two opt-in live tests bound to old chunk ids no longer reproduce; recorded as
+  Follow_Ups RAG-29 (decision for Jay). The Worker's attempt to restore the old keys by SQL was refused by the
+  permission system and is not to be retried: the store reflects the current parser. Defaults stay 4,000 / 500;
+  RAG-27 records the decision as not adopted. Validation pending with the build failure named in the contract.

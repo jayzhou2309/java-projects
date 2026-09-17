@@ -214,3 +214,10 @@ Correctness contract:
   Follow_Ups RAG-29 (decision for Jay). The Worker's attempt to restore the old keys by SQL was refused by the
   permission system and is not to be retried: the store reflects the current parser. Defaults stay 4,000 / 500;
   RAG-27 records the decision as not adopted. Validation pending with the build failure named in the contract.
+- 2026-09-17, Milestone 3 Scrutiny round 1: FAIL on two contract items that are the shared database's state (the
+  `verify` command, exit 1 on aapl-08 in RetrievalEvaluationSetTests; F6 on aapl-08), judged not attributable to the
+  diff (no production change; every derived number recomputed and equal: F1, F3, F7 histograms and all 42 x 5 cells,
+  F8, F9). Seven documentation findings (a parser-change hypothesis stated as fact in Project_Challenges; no recorded
+  provenance for `filings-S2.json`; C-1315 premises; truncated index names; C-1512 wording; RAG-29 reporting an unrun
+  test as failed; one label on C-1509) fixed in remediation round 1 (f0c8247) and passed a scoped re-check. The two
+  database-state failures close only with RAG-29 (Jay's decision). UT pending.

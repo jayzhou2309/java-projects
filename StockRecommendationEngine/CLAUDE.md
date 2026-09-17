@@ -41,7 +41,8 @@ one-line fix, a typo, or a question, just do it directly.
   assertions robust to pre-existing rows (future timestamps, unique tickers).
 - Opt-in live tests skip by design (`@EnabledIfSystemProperty`: `ibkr.live`, `ibkr.live.conid`,
   `ibkr.live.history`, `quant.live`, `rag.evaluation.live`, `rag.rerank.live`,
-  `rag.rerank.gte.live`, `rag.reproduction.run`); a green `verify` reports them as skipped (32 tests on 2026-09-15).
+  `rag.rerank.gte.live`, `rag.reproduction.run`); a green `verify` reports them as skipped (37 tests on 2026-09-17, the five methods of
+  `CrossEncoderAnswerVisibilityLiveTests` included).
 - Running the app for a UT check: `SERVER_PORT=8081`, `INTEGRATION_ACCESS_TOKEN`
   of 32+ characters, `./mvnw -q -o spring-boot:run`, wait for
   `Started StockRecommendationEngineApplication`, stop with
@@ -196,3 +197,14 @@ one-line fix, a typo, or a question, just do it directly.
   Lessons: probe a downloaded model's graph before designing around it; a model comparison
   must check candidate-list identity per question, not only settings. Decision RAG-23 open.
   Plan in `documentation/plans/2026-09-15-reranker-ettin.md`.
+- 2026-09-17, chunk size (RAG-15 lever 2, RAG-25, RAG-26, RAG-27, RAG-29): three milestones. M1 (the
+  answer-visibility diagnostic over set v2) passed Scrutiny and UT first round; its frozen size rule chose
+  none, and Jay overrode it (amendment 3) for a rebuild at 1,000 / 125. M2 (configurable chunk size,
+  recorded in snapshots and the processing version) passed first round. M3 rebuilt the store, and the R1
+  gate failed there (55 of 57 accepted phrases held): one phrase split at a chunk boundary of the smaller
+  cut, and one under an 8-K section key the re-parse now writes with its sub-item; the rollback rebuild
+  at 4,000 / 500 restored the text but not those keys, so the post-rollback run differs from the baseline
+  on aapl-08 and the database-backed set test fails until the set entry or the keys are resolved
+  (RAG-29). Lessons: a rebuild re-parses with the parser in the tree, so a rollback is not a restore;
+  export keys and text before any rebuild; a hard gate on held phrases has to be checked at the stored
+  size too. Plan in `documentation/plans/2026-09-17-chunk-size.md`.

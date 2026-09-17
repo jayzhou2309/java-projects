@@ -55,6 +55,9 @@ class QuestionEqualityCheckTests {
         Files.writeString(m.resolve("errored.json"), snapshot(1801, result(1, 10), result(2, 20), result(null, null)).replace("\"id\": \"q3\", \"kind\": \"NARRATIVE\", \"error\": null", "\"id\": \"q3\", \"kind\": \"NARRATIVE\", \"error\": \"IllegalStateException: boom\""));
         Files.writeString(m.resolve("half.json"), snapshot(1802, result(1, null), result(2, 20), result(null, null)));
         Files.writeString(m.resolve("fewer.json"), snapshot(1803, result(1, 10), result(2, 20), result(null, null)).replace("\"id\": \"q3\"", "\"id\": \"q9\""));
+        // twice-q1.json lists [q1, q1, q2] and twice-q2.json [q1, q2, q2]: equal id sets and sizes, with a second entry per duplicate that holds another rank
+        Files.writeString(m.resolve("twice-q1.json"), snapshot(1804, result(1, 10), result(5, 20), result(2, 20)).replace("\"id\": \"q2\"", "\"id\": \"q1\"").replace("\"id\": \"q3\"", "\"id\": \"q2\""));
+        Files.writeString(m.resolve("twice-q2.json"), snapshot(1805, result(1, 10), result(2, 20), result(7, 20)).replace("\"id\": \"q3\"", "\"id\": \"q2\""));
         Files.writeString(m.resolve("hashes-a.json"), HASHES_A);
         Files.writeString(m.resolve("hashes-a2.json"), HASHES_A2);
         Files.writeString(m.resolve("hashes-other.json"), HASHES_OTHER);
@@ -123,9 +126,11 @@ class QuestionEqualityCheckTests {
                 + check("C-009", "half.json", "rank", "", "[]") + ","
                 + check("C-010", "rebuilt.json", "rankAndMatchedContent", EXPORTS.replace("hashes-a2.json", "not-hashes.json"), "[]") + ","
                 + check("C-011", "rebuilt.json", "rankAndMatchedContent", EXPORTS.replace("hashes-a2.json", "hashes-a.json"), "[]") + ","
-                + check("C-012", "same.json", "rank", ", \"questions\": [\"q1\"]", "[]") + "]}");
+                + check("C-012", "same.json", "rank", ", \"questions\": [\"q1\"]", "[]") + ","
+                + check("C-013", "twice-q2.json", "rank", "", "[]").replace("\"reference\": \"a.json\"", "\"reference\": \"twice-q1.json\"") + ","
+                + check("C-014", "twice-q2.json", "rank", "", "[]") + "]}");
         ClaimsCheck.Result result = ClaimsCheck.evaluate(claims, temp);
-        assertThat(result.problems()).hasSize(12);
+        assertThat(result.problems()).hasSize(14);
         assertThat(result.problems().get(0)).contains("C-001").contains("check.compare must be rank, rankAndMatchedChunk, or rankAndMatchedContent, found \"matchedChunk\"");
         assertThat(result.problems().get(1)).contains("C-002").contains("check.referenceChunks and check.candidateChunks are required with compare rankAndMatchedContent and refused otherwise");
         assertThat(result.problems().get(2)).contains("C-003").contains("check.referenceChunks and check.candidateChunks are required with compare rankAndMatchedContent and refused otherwise");
@@ -138,5 +143,8 @@ class QuestionEqualityCheckTests {
         assertThat(result.problems().get(9)).contains("C-010").contains("not-hashes.json holds a chunk without an integer id, filingId, chunkIndex, and chars and a contentMd5");
         assertThat(result.problems().get(10)).contains("C-011").contains("matched chunk 110 of q1 is not in the chunk-hash export hashes-a.json");
         assertThat(result.problems().get(11)).contains("C-012").contains("questions");
+        // equal id sets and sizes ([q1, q1, q2] against [q1, q2, q2]): refused for the duplicate, naming the id and the file, on either side
+        assertThat(result.problems().get(12)).contains("C-013").contains("twice-q1.json lists question q1 twice");
+        assertThat(result.problems().get(13)).contains("C-014").contains("twice-q2.json lists question q2 twice");
     }
 }

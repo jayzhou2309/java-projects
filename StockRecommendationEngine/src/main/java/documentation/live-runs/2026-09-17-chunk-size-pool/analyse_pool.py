@@ -15,6 +15,10 @@ settings of each application start, of which rerank-timeout-ms is recorded nowhe
   experiment-*.json   the experiment files of the one-factor pairs;   claims.json   the claims (ids C-1601 on; the claims added in remediation
                       round 1 take the ids after the last id of the first version, C-1984, so that no earlier id moves, and are printed in
                       their blocks before the inferred claim that uses them).
+                      Remediation round 2: no id moved and no claim was added; the inferred claims' sentences name, clause by clause,
+                      the file a part rests on when it follows from no premise (runs.txt, grid.txt, rollback.txt, run.log, the plan,
+                      Follow_Ups), and their premises gained the choice claims (held-out test), the default reference's stored metrics
+                      (rollback), and the storage export before the rebuild (decision).
 No database, no application, no model. Numbers are parsed as written (Decimal). Output is deterministic: a re-run reproduces the files byte for
 byte. The script states ranks, positions, counts, times and sizes; it states no cause.
 
@@ -602,6 +606,12 @@ def claim(basis, block, check=None, text=None, frm=None, experiment=None, append
     return c["id"]
 
 
+# Remediation round 2: the parts of an inferred sentence that follow from no premise name the file they rest on (none of these is read by a check).
+UNREAD = "not read by a check"
+RUNS_TXT = "runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, %s)" % UNREAD
+PLAN_DESIGN = "the plan's frozen design, %s" % UNREAD
+
+
 def compare(a, b):
     return "below" if a < b else ("equal to" if a == b else "above")
 
@@ -635,8 +645,8 @@ rep_ids.append(claim("derived", b, {"type": "rankHistogram", "snapshot": DEFAULT
 ref1615_by_id = {q["id"]: q for q in ref1615["results"]["questions"]}
 rep_differing = [q for q in set_ids if (ref1615_by_id[q]["rank"], ref1615_by_id[q]["matchedChunkId"]) != (DEFAULT.by_id[q]["rank"], DEFAULT.by_id[q]["matchedChunkId"])]
 rep_ids.append(claim("derived", b, {"type": "questionEquality", "reference": REF_1615, "candidate": DEFAULT.file, "compare": "rankAndMatchedChunk", "expected": rep_differing}, appended=True))
-claim("inferred", b, text="The default reference (store A, pool 40, reranking off) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, the same rank histogram, and %s; the TraceReproductionFilesTests output reproduction-%d.txt (problems=0; a text file, not read by a check) records G2's comparison as run at the time; the runs continued (run.log)"
-      % ("the same stored rank and matched chunk id per question" if not rep_differing else "a stored rank or matched chunk id that differs for %s" % ", ".join(rep_differing), DEFAULT.id), frm=rep_ids)
+claim("inferred", b, text="The default reference (snapshot %d; that it is the run on store A at pool 40 with reranking off is in %s) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, the same rank histogram, and %s; the TraceReproductionFilesTests output reproduction-%d.txt (problems=0; a text file, %s) records the comparison as run at the time; this comparison is the plan's reproduction condition G2 (the plan's correctness contract, %s), and that the runs continued after it is in run.log (%s)"
+      % (DEFAULT.id, RUNS_TXT, "the same stored rank and matched chunk id per question" if not rep_differing else "a stored rank or matched chunk id that differs for %s" % ", ".join(rep_differing), DEFAULT.id, UNREAD, UNREAD, UNREAD), frm=rep_ids)
 
 # grid (G3, G5)
 b = "grid"
@@ -677,9 +687,9 @@ for key in sorted(chosen):
     store, state = key
     pools = [p for p in POOLS if (store, p, state) in grid and (store, p, state) not in excluded]
     frm = [grid_ids[(store, p, state)][k] for p in pools for k in ("tun5", "tunmrr")]
-    listing = "; ".join("pool %d tuning hit@5 %s and tuning MRR %s" % ((p,) + tuning_metrics(grid[(store, p, state)])[2:4]) for p in pools)
-    choice_ids[key] = claim("inferred", b, text="By the frozen choice rule (highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool), the chosen pool on %s with reranking %s is %d: %s"
-                            % (STORE_NAMES[store], state, chosen[key].pool, listing), frm=frm)
+    listing = "; ".join("pool %d (snapshot %d) tuning hit@5 %s and tuning MRR %s" % ((p, grid[(store, p, state)].id) + tuning_metrics(grid[(store, p, state)])[2:4]) for p in pools)
+    choice_ids[key] = claim("inferred", b, text="By the frozen choice rule (%s: highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool; that the 28 ids the premises list are the tuning questions is the plan's frozen split), the chosen pool on %s with reranking %s is %d (snapshot %d): %s; which snapshot is the run of which store, pool, and reranker state is in %s"
+                            % (PLAN_DESIGN, STORE_NAMES[store], state, chosen[key].pool, chosen[key].id, listing, RUNS_TXT), frm=frm)
 
 # reported runs: metrics, histograms
 b = "reported"
@@ -717,6 +727,7 @@ if HAS_B:
     for state in STATES:
         bp, ap, hb, hd, ha, outcome, deciding = test[state]
         frm = [held_ids[bp.id], held_ids[DEFAULT.id]] + ([held_ids[ap.id]] if ap.id != DEFAULT.id else [])
+        chosen_frm = [choice_ids[("B", state)], choice_ids[("A", state)]]  # remediation round 2: "chosen point" follows from the choice claims
         parts = []
         for ref, ref_name in ((DEFAULT, "the default reference"), (ap, "store A's chosen point (pool %d)" % ap.pool)):
             if ref is ap and ap.id == DEFAULT.id:
@@ -725,8 +736,8 @@ if HAS_B:
             frm += [member_ids[(q, ref.id, bp.id)] for q in e + l]
             parts.append("against %s, held-out questions inside the top 5 at store B's point only: %s; inside the top 5 at %s only: %s" % (ref_name, ", ".join(e) or "not found", ref_name, ", ".join(l) or "not found"))
         same = " (store A's chosen point with reranking off is the default reference)" if ap.id == DEFAULT.id else ""
-        test_ids[state] = claim("inferred", b, text="Held-out test with reranking %s: %s. Held-out hit@5 over the 14 held-out questions of store B's chosen point (pool %d, snapshot %d) is %s, against %s for the default reference (snapshot %d) and %s for store A's chosen point (pool %d, snapshot %d)%s; the frozen rule passes when the first value is at least the other two; %s"
-                                % (state, outcome, bp.pool, bp.id, hb, hd, DEFAULT.id, ha, ap.pool, ap.id, same, "; ".join(parts)), frm=list(dict.fromkeys(frm)))
+        test_ids[state] = claim("inferred", b, text="Held-out test with reranking %s: %s. Held-out hit@5 over the 14 held-out questions of store B's chosen point (pool %d, snapshot %d) is %s, against %s for the default reference (snapshot %d) and %s for store A's chosen point (pool %d, snapshot %d)%s; the two chosen points are those of the choice claims among the premises; the frozen held-out rule (%s) passes when the first value is at least the other two, and that the 14 ids the premises list are the held-out questions is the plan's frozen split; %s; the premises state the top-5 membership of the questions these lists name, and that the lists are complete over the 14 held-out questions is in grid.txt section 4 (written by analyse_pool.py from the stored ranks; a text file, %s)"
+                                % (state, outcome, bp.pool, bp.id, hb, hd, DEFAULT.id, ha, ap.pool, ap.id, same, PLAN_DESIGN, "; ".join(parts), UNREAD), frm=list(dict.fromkeys(frm + chosen_frm)))
 
     # every question not at rank 1 at B's chosen points, with the chunks above it (G6)
     b = "ranks"
@@ -764,10 +775,11 @@ for r in runs:
 
 # storage (G7)
 b = "storage"
+storage_ids = {}
 for p in points:
     for field in STORAGE_FIELDS:
         v = storage[p][field]
-        claim("observed", b, {"type": "fileValue", "file": "storage-%s.json" % p, "path": field, "expected": v if isinstance(v, list) else dec(v)})
+        storage_ids[(p, field)] = claim("observed", b, {"type": "fileValue", "file": "storage-%s.json" % p, "path": field, "expected": v if isinstance(v, list) else dec(v)})
 
 # phrase gate (G4)
 b = "gate"
@@ -776,7 +788,7 @@ for f in gate_files:
     gate_ids.append(claim("derived", b, {"type": "heldPhrases", "report": f, "expected": {"phrases": gate[f][0], "held": gate[f][1]}}))
 if gate_file in gate:
     ok = gate[gate_file][2] == ["aapl-08/0"]
-    claim("inferred", b, text="The phrase gate on store B %s: the default reference's report read against store B records 56 of the 57 accepted phrases held by a stored chunk, the one not held being aapl-08's (exempt under the frozen gate, Follow_Ups RAG-29); the direct query held_phrases.py records the same counts in held-phrases-B.txt (a text file, not read by a check); store B's grid runs followed" % ("holds" if ok else "does not hold"), frm=gate_ids[-1:]) if ok else \
+    claim("inferred", b, text="The phrase gate on store B %s: the default reference's report read against store B records 56 of the 57 accepted phrases held by a stored chunk, the one not held being aapl-08's; the gate is the frozen one (%s: 56 of 57 held, with aapl-08's phrase exempt; the aapl-08 item is Follow_Ups RAG-29, %s); that the application read this report against store B is in run.log (%s); the direct query held_phrases.py records the same counts in held-phrases-B.txt (a text file, %s); that store B's grid runs followed is in run.log (%s)" % ("holds" if ok else "does not hold", PLAN_DESIGN, UNREAD, UNREAD, UNREAD, UNREAD), frm=gate_ids[-1:]) if ok else \
         claim("inferred", b, text="The phrase gate on store B does not hold (not held: %s), so store B's grid was not run and the store was rebuilt back" % ", ".join(gate[gate_file][2]), frm=gate_ids[-1:])
 
 # rollback (G8)
@@ -798,14 +810,19 @@ if POST:
     assert set(roll_differing) <= set(diff_rank + diff_content)
     roll_ids.append(claim("derived", b, {"type": "questionEquality", "reference": DEFAULT.file, "candidate": POST.file, "compare": "rankAndMatchedContent",
                                          "referenceChunks": "chunk-hashes-A.json", "candidateChunks": "chunk-hashes-A2.json", "expected": roll_differing}, appended=True))
-    claim("inferred", b, text="After the rollback rebuild the store is at sections-v2-context-v2-chunk4000-500 with 569 chunks, and the post-rollback run %s (chunk ids differ after a rebuild; the check reads the md5 the two exports record, not the chunk text); rollback.txt, written by analyse_pool.py and not read by a check, adds the first characters of the matched chunks (content differing there: %s) and the comparison of the two stores chunk by chunk; G8 %s"
-          % ("equals the default reference per question in stored rank and in the matched chunk's filing, chunk index, length, and content md5 for the 42 questions" if not roll_differing
-             else "differs from the default reference in stored rank or matched chunk for %s" % ", ".join(roll_differing),
-             ", ".join(diff_content) or "not found", "holds" if not diff_rank and not diff_content and not roll_differing else "does not hold"), frm=roll_ids)
+    default_metric_ids = [grid_ids[("A", 40, "off")]["hit5"], grid_ids[("A", 40, "off")]["mrr"]]  # remediation round 2: the default reference's side of "the same stored hit@5 and MRR"
+    same_metrics = all(DEFAULT.snapshot[col] == POST.snapshot[col] for col in ("hit_at_5", "mrr")) and hist[DEFAULT.id] == hist[POST.id]
+    claim("inferred", b, text="The storage export storage-A2.json records the store at sections-v2-context-v2-chunk4000-500 with 569 chunks and %s content characters (that this export and chunk-hashes-A2.json were written after the rollback rebuild, and chunk-hashes-A.json before the rebuild to store B, is in run.log, %s); the post-rollback run (snapshot %d; that it ran after the rollback rebuild at the default reference's settings is in run.log and %s) %s the default reference's stored hit@5, MRR, and rank histogram, and it %s (the check reads the md5 the two exports record, not the chunk text); rollback.txt, written by analyse_pool.py and %s, states that chunk ids differ after a rebuild and adds the first characters of the matched chunks (content differing there: %s) and the comparison of the two stores chunk by chunk; G8 %s, G8 being the plan's rollback condition (the plan's correctness contract, %s): the store at that one version with 569 chunks, and the post-rollback run equal to the default reference per question in rank and matched chunk content"
+          % (storage["A2"]["contentChars"], UNREAD, POST.id, RUNS_TXT, "has" if same_metrics else "does not have",
+             "equals the default reference per question in stored rank and in the matched chunk's filing, chunk index, length, and content md5 for the 42 questions" if not roll_differing
+             else "differs from the default reference in stored rank or matched chunk for %s" % ", ".join(roll_differing), UNREAD,
+             ", ".join(diff_content) or "not found", "holds" if not diff_rank and not diff_content and not roll_differing else "does not hold", UNREAD), frm=roll_ids + default_metric_ids)
 
 # decision
 if HAS_B and POST:
-    claim("inferred", "decision", text="The held-out test of store B's chosen point is %s with reranking off and %s with reranking on; under the frozen design a further grid, size, overlap, or split does not follow in this plan; the store is back at 4000 / 500 (the chunk count, store version, and content length of the storage export after the rollback), and whether to adopt a size and pool is DECISION RAG-30 for Jay" % (test["off"][5], test["on"][5]), frm=[test_ids["off"], test_ids["on"]] + store_ids)
+    before_ids = [storage_ids[("A", field)] for field in ("chunks", "storeVersions", "contentChars")]  # remediation round 2: "back" compares with the export before the rebuild
+    back = all(storage["A"][field] == storage["A2"][field] for field in ("chunks", "storeVersions", "contentChars"))
+    claim("inferred", "decision", text="The held-out test of store B's chosen point is %s with reranking off and %s with reranking on; that a further grid, size, overlap, or split does not follow in this plan is %s; the store %s back at 4000 / 500 (the chunk count, store version, and content length of the storage export after the rollback against those of the export before the rebuild; when the two exports were written is in run.log, %s), and that whether to adopt a size and pool is DECISION RAG-30 for Jay is the plan's frozen design and Follow_Ups RAG-30 (%s)" % (test["off"][5], test["on"][5], PLAN_DESIGN, "is" if back else "is not", UNREAD, UNREAD), frm=[test_ids["off"], test_ids["on"]] + store_ids + before_ids)
 
 assert next_id[0] == APPENDED_FIRST_ID, "the first version's claims end at C-%d, found C-%d: an earlier id moved" % (APPENDED_FIRST_ID - 1, next_id[0] - 1)
 assert appended_id[0] - 1 <= LAST_ID, "claim ids past C-%d: %d" % (LAST_ID, appended_id[0] - 1)

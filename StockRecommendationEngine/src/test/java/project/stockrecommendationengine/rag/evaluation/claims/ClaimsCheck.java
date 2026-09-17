@@ -878,7 +878,7 @@ public final class ClaimsCheck {
      * objects with {@code id}, {@code filingId}, {@code chunkIndex}, {@code chars}, and {@code contentMd5}, written by chunk-hashes.sql from the
      * store each run retrieved from), compared by those four values, for two runs on stores whose chunk ids differ. {@code expected} lists the
      * distinct questions that differ (empty for none); true when exactly those differ. Unreadable: the snapshots list different questions, a
-     * question with a retrieval error, a rank that is not a positive integer, a rank without a matched chunk id or the reverse, the two export
+     * snapshot lists a question id twice (one entry per id is read; remediation round 2), a question with a retrieval error, a rank that is not a positive integer, a rank without a matched chunk id or the reverse, the two export
      * keys given with another compare or missing with rankAndMatchedContent, a file that is not such an export, or a matched chunk absent from
      * its export. The check reads no chunk text: equal content rests on the md5 the export records.
      */
@@ -916,6 +916,8 @@ public final class ClaimsCheck {
         reference.questions().forEach(q -> questions.add(q.path("id").asString("")));
         List<String> candidateQuestions = new ArrayList<>();
         candidate.questions().forEach(q -> candidateQuestions.add(q.path("id").asString("")));
+        refuseDuplicateQuestion(questions, referenceFile);
+        refuseDuplicateQuestion(candidateQuestions, candidateFile);
         if (!new HashSet<>(questions).equals(new HashSet<>(candidateQuestions)) || questions.size() != candidateQuestions.size()) {
             throw new Unreadable(referenceFile + " and " + candidateFile + " list different questions");
         }
@@ -974,6 +976,14 @@ public final class ClaimsCheck {
         String lead = "Between " + snapshotReference(referenceLoaded, reference, null) + " and " + snapshotReference(candidateLoaded, candidate, null) + ", " + what;
         return differing.isEmpty() ? lead + (plural ? " are" : " is") + " identical for each of the " + questions.size() + " questions."
                 : lead + (plural ? " differ" : " differs") + " for " + differing.size() + " of the " + questions.size() + " questions: " + String.join(", ", details) + ".";
+    }
+
+    /** questionEquality reads one entry per question id, so a snapshot listing an id twice is refused: its later entry would go uncompared. */
+    private static void refuseDuplicateQuestion(List<String> ids, String file) {
+        Set<String> seen = new HashSet<>();
+        for (String id : ids) {
+            if (!seen.add(id)) throw new Unreadable(file + " lists question " + id + " twice");
+        }
     }
 
     /** The stored rank of a question for questionEquality: null or a positive integer, and no retrieval error. */

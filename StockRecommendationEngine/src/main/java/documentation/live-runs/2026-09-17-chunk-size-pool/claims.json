@@ -132,7 +132,7 @@
    "id": "C-1608",
    "basis": "inferred",
    "block": "reproduction",
-   "text": "The default reference (store A, pool 40, reranking off) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, the same rank histogram, and the same stored rank and matched chunk id per question; the TraceReproductionFilesTests output reproduction-1777.txt (problems=0; a text file, not read by a check) records G2's comparison as run at the time; the runs continued (run.log)",
+   "text": "The default reference (snapshot 1777; that it is the run on store A at pool 40 with reranking off is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, the same rank histogram, and the same stored rank and matched chunk id per question; the TraceReproductionFilesTests output reproduction-1777.txt (problems=0; a text file, not read by a check) records the comparison as run at the time; this comparison is the plan's reproduction condition G2 (the plan's correctness contract, not read by a check), and that the runs continued after it is in run.log (not read by a check)",
    "from": [
     "C-1601",
     "C-1602",
@@ -1912,7 +1912,7 @@
    "id": "C-1673",
    "basis": "inferred",
    "block": "choice",
-   "text": "By the frozen choice rule (highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool), the chosen pool on store A (4000 / 500) with reranking off is 100: pool 40 tuning hit@5 0.714286 and tuning MRR 0.604464; pool 100 tuning hit@5 0.714286 and tuning MRR 0.633036; pool 200 tuning hit@5 0.714286 and tuning MRR 0.633036; pool 250 tuning hit@5 0.714286 and tuning MRR 0.633036",
+   "text": "By the frozen choice rule (the plan's frozen design, not read by a check: highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool; that the 28 ids the premises list are the tuning questions is the plan's frozen split), the chosen pool on store A (4000 / 500) with reranking off is 100 (snapshot 1778): pool 40 (snapshot 1777) tuning hit@5 0.714286 and tuning MRR 0.604464; pool 100 (snapshot 1778) tuning hit@5 0.714286 and tuning MRR 0.633036; pool 200 (snapshot 1779) tuning hit@5 0.714286 and tuning MRR 0.633036; pool 250 (snapshot 1780) tuning hit@5 0.714286 and tuning MRR 0.633036; which snapshot is the run of which store, pool, and reranker state is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)",
    "from": [
     "C-1611",
     "C-1612",
@@ -1928,7 +1928,7 @@
    "id": "C-1674",
    "basis": "inferred",
    "block": "choice",
-   "text": "By the frozen choice rule (highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool), the chosen pool on store A (4000 / 500) with reranking on is 100: pool 40 tuning hit@5 0.714286 and tuning MRR 0.584921; pool 100 tuning hit@5 0.750000 and tuning MRR 0.589881; pool 200 tuning hit@5 0.750000 and tuning MRR 0.589881; pool 250 tuning hit@5 0.750000 and tuning MRR 0.589881",
+   "text": "By the frozen choice rule (the plan's frozen design, not read by a check: highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool; that the 28 ids the premises list are the tuning questions is the plan's frozen split), the chosen pool on store A (4000 / 500) with reranking on is 100 (snapshot 1782): pool 40 (snapshot 1781) tuning hit@5 0.714286 and tuning MRR 0.584921; pool 100 (snapshot 1782) tuning hit@5 0.750000 and tuning MRR 0.589881; pool 200 (snapshot 1783) tuning hit@5 0.750000 and tuning MRR 0.589881; pool 250 (snapshot 1784) tuning hit@5 0.750000 and tuning MRR 0.589881; which snapshot is the run of which store, pool, and reranker state is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)",
    "from": [
     "C-1627",
     "C-1628",
@@ -1944,7 +1944,7 @@
    "id": "C-1675",
    "basis": "inferred",
    "block": "choice",
-   "text": "By the frozen choice rule (highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool), the chosen pool on store B (1650 / 250) with reranking off is 40: pool 40 tuning hit@5 0.714286 and tuning MRR 0.631930; pool 100 tuning hit@5 0.714286 and tuning MRR 0.631930; pool 200 tuning hit@5 0.714286 and tuning MRR 0.631930; pool 250 tuning hit@5 0.714286 and tuning MRR 0.631930",
+   "text": "By the frozen choice rule (the plan's frozen design, not read by a check: highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool; that the 28 ids the premises list are the tuning questions is the plan's frozen split), the chosen pool on store B (1650 / 250) with reranking off is 40 (snapshot 1786): pool 40 (snapshot 1786) tuning hit@5 0.714286 and tuning MRR 0.631930; pool 100 (snapshot 1787) tuning hit@5 0.714286 and tuning MRR 0.631930; pool 200 (snapshot 1788) tuning hit@5 0.714286 and tuning MRR 0.631930; pool 250 (snapshot 1789) tuning hit@5 0.714286 and tuning MRR 0.631930; which snapshot is the run of which store, pool, and reranker state is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)",
    "from": [
     "C-1643",
     "C-1644",
@@ -1960,7 +1960,7 @@
    "id": "C-1676",
    "basis": "inferred",
    "block": "choice",
-   "text": "By the frozen choice rule (highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool), the chosen pool on store B (1650 / 250) with reranking on is 40: pool 40 tuning hit@5 0.714286 and tuning MRR 0.526786; pool 100 tuning hit@5 0.714286 and tuning MRR 0.526786; pool 200 tuning hit@5 0.714286 and tuning MRR 0.526786; pool 250 tuning hit@5 0.714286 and tuning MRR 0.526786",
+   "text": "By the frozen choice rule (the plan's frozen design, not read by a check: highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool; that the 28 ids the premises list are the tuning questions is the plan's frozen split), the chosen pool on store B (1650 / 250) with reranking on is 40 (snapshot 1790): pool 40 (snapshot 1790) tuning hit@5 0.714286 and tuning MRR 0.526786; pool 100 (snapshot 1791) tuning hit@5 0.714286 and tuning MRR 0.526786; pool 200 (snapshot 1792) tuning hit@5 0.714286 and tuning MRR 0.526786; pool 250 (snapshot 1793) tuning hit@5 0.714286 and tuning MRR 0.526786; which snapshot is the run of which store, pool, and reranker state is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)",
    "from": [
     "C-1659",
     "C-1660",
@@ -3485,7 +3485,7 @@
    "id": "C-1769",
    "basis": "inferred",
    "block": "heldout",
-   "text": "Held-out test with reranking off: FAIL. Held-out hit@5 over the 14 held-out questions of store B's chosen point (pool 40, snapshot 1786) is 0.714286, against 0.857143 for the default reference (snapshot 1777) and 0.857143 for store A's chosen point (pool 100, snapshot 1778); the frozen rule passes when the first value is at least the other two; against the default reference, held-out questions inside the top 5 at store B's point only: msft-07; inside the top 5 at the default reference only: aapl-14, msft-02, msft-04; against store A's chosen point (pool 100), held-out questions inside the top 5 at store B's point only: msft-07; inside the top 5 at store A's chosen point (pool 100) only: aapl-14, msft-02, msft-04",
+   "text": "Held-out test with reranking off: FAIL. Held-out hit@5 over the 14 held-out questions of store B's chosen point (pool 40, snapshot 1786) is 0.714286, against 0.857143 for the default reference (snapshot 1777) and 0.857143 for store A's chosen point (pool 100, snapshot 1778); the two chosen points are those of the choice claims among the premises; the frozen held-out rule (the plan's frozen design, not read by a check) passes when the first value is at least the other two, and that the 14 ids the premises list are the held-out questions is the plan's frozen split; against the default reference, held-out questions inside the top 5 at store B's point only: msft-07; inside the top 5 at the default reference only: aapl-14, msft-02, msft-04; against store A's chosen point (pool 100), held-out questions inside the top 5 at store B's point only: msft-07; inside the top 5 at store A's chosen point (pool 100) only: aapl-14, msft-02, msft-04; the premises state the top-5 membership of the questions these lists name, and that the lists are complete over the 14 held-out questions is in grid.txt section 4 (written by analyse_pool.py from the stored ranks; a text file, not read by a check)",
    "from": [
     "C-1765",
     "C-1759",
@@ -3497,14 +3497,16 @@
     "C-1736",
     "C-1738",
     "C-1739",
-    "C-1740"
+    "C-1740",
+    "C-1675",
+    "C-1673"
    ]
   },
   {
    "id": "C-1770",
    "basis": "inferred",
    "block": "heldout",
-   "text": "Held-out test with reranking on: FAIL. Held-out hit@5 over the 14 held-out questions of store B's chosen point (pool 40, snapshot 1790) is 0.785714, against 0.857143 for the default reference (snapshot 1777) and 0.928571 for store A's chosen point (pool 100, snapshot 1782); the frozen rule passes when the first value is at least the other two; against the default reference, held-out questions inside the top 5 at store B's point only: msft-07; inside the top 5 at the default reference only: msft-04, nvda-11; against store A's chosen point (pool 100), held-out questions inside the top 5 at store B's point only: not found; inside the top 5 at store A's chosen point (pool 100) only: msft-04, nvda-11",
+   "text": "Held-out test with reranking on: FAIL. Held-out hit@5 over the 14 held-out questions of store B's chosen point (pool 40, snapshot 1790) is 0.785714, against 0.857143 for the default reference (snapshot 1777) and 0.928571 for store A's chosen point (pool 100, snapshot 1782); the two chosen points are those of the choice claims among the premises; the frozen held-out rule (the plan's frozen design, not read by a check) passes when the first value is at least the other two, and that the 14 ids the premises list are the held-out questions is the plan's frozen split; against the default reference, held-out questions inside the top 5 at store B's point only: msft-07; inside the top 5 at the default reference only: msft-04, nvda-11; against store A's chosen point (pool 100), held-out questions inside the top 5 at store B's point only: not found; inside the top 5 at store A's chosen point (pool 100) only: msft-04, nvda-11; the premises state the top-5 membership of the questions these lists name, and that the lists are complete over the 14 held-out questions is in grid.txt section 4 (written by analyse_pool.py from the stored ranks; a text file, not read by a check)",
    "from": [
     "C-1767",
     "C-1759",
@@ -3513,7 +3515,9 @@
     "C-1748",
     "C-1751",
     "C-1755",
-    "C-1758"
+    "C-1758",
+    "C-1676",
+    "C-1674"
    ]
   },
   {
@@ -6536,7 +6540,7 @@
    "id": "C-1975",
    "basis": "inferred",
    "block": "gate",
-   "text": "The phrase gate on store B holds: the default reference's report read against store B records 56 of the 57 accepted phrases held by a stored chunk, the one not held being aapl-08's (exempt under the frozen gate, Follow_Ups RAG-29); the direct query held_phrases.py records the same counts in held-phrases-B.txt (a text file, not read by a check); store B's grid runs followed",
+   "text": "The phrase gate on store B holds: the default reference's report read against store B records 56 of the 57 accepted phrases held by a stored chunk, the one not held being aapl-08's; the gate is the frozen one (the plan's frozen design, not read by a check: 56 of 57 held, with aapl-08's phrase exempt; the aapl-08 item is Follow_Ups RAG-29, not read by a check); that the application read this report against store B is in run.log (not read by a check); the direct query held_phrases.py records the same counts in held-phrases-B.txt (a text file, not read by a check); that store B's grid runs followed is in run.log (not read by a check)",
    "from": [
     "C-1974"
    ]
@@ -6658,7 +6662,7 @@
    "id": "C-1983",
    "basis": "inferred",
    "block": "rollback",
-   "text": "After the rollback rebuild the store is at sections-v2-context-v2-chunk4000-500 with 569 chunks, and the post-rollback run equals the default reference per question in stored rank and in the matched chunk's filing, chunk index, length, and content md5 for the 42 questions (chunk ids differ after a rebuild; the check reads the md5 the two exports record, not the chunk text); rollback.txt, written by analyse_pool.py and not read by a check, adds the first characters of the matched chunks (content differing there: not found) and the comparison of the two stores chunk by chunk; G8 holds",
+   "text": "The storage export storage-A2.json records the store at sections-v2-context-v2-chunk4000-500 with 569 chunks and 1486993 content characters (that this export and chunk-hashes-A2.json were written after the rollback rebuild, and chunk-hashes-A.json before the rebuild to store B, is in run.log, not read by a check); the post-rollback run (snapshot 1794; that it ran after the rollback rebuild at the default reference's settings is in run.log and runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)) has the default reference's stored hit@5, MRR, and rank histogram, and it equals the default reference per question in stored rank and in the matched chunk's filing, chunk index, length, and content md5 for the 42 questions (the check reads the md5 the two exports record, not the chunk text); rollback.txt, written by analyse_pool.py and not read by a check, states that chunk ids differ after a rebuild and adds the first characters of the matched chunks (content differing there: not found) and the comparison of the two stores chunk by chunk; G8 holds, G8 being the plan's rollback condition (the plan's correctness contract, not read by a check): the store at that one version with 569 chunks, and the post-rollback run equal to the default reference per question in rank and matched chunk content",
    "from": [
     "C-1976",
     "C-1977",
@@ -6667,20 +6671,25 @@
     "C-1980",
     "C-1981",
     "C-1982",
-    "C-1986"
+    "C-1986",
+    "C-1609",
+    "C-1610"
    ]
   },
   {
    "id": "C-1984",
    "basis": "inferred",
    "block": "decision",
-   "text": "The held-out test of store B's chosen point is FAIL with reranking off and FAIL with reranking on; under the frozen design a further grid, size, overlap, or split does not follow in this plan; the store is back at 4000 / 500 (the chunk count, store version, and content length of the storage export after the rollback), and whether to adopt a size and pool is DECISION RAG-30 for Jay",
+   "text": "The held-out test of store B's chosen point is FAIL with reranking off and FAIL with reranking on; that a further grid, size, overlap, or split does not follow in this plan is the plan's frozen design, not read by a check; the store is back at 4000 / 500 (the chunk count, store version, and content length of the storage export after the rollback against those of the export before the rebuild; when the two exports were written is in run.log, not read by a check), and that whether to adopt a size and pool is DECISION RAG-30 for Jay is the plan's frozen design and Follow_Ups RAG-30 (not read by a check)",
    "from": [
     "C-1769",
     "C-1770",
     "C-1980",
     "C-1981",
-    "C-1982"
+    "C-1982",
+    "C-1940",
+    "C-1949",
+    "C-1941"
    ]
   }
  ]

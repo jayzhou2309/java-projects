@@ -1,0 +1,28 @@
+ROLLBACK_START 12:14:25
+ROLLBACK filing=3 http=200 seconds=22.098989
+ROLLBACK filing=3 start=12:14:25 end=12:14:47 embeddedChunkLines=76 response={"filingId":3,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"1b32900c-65f5-4d85-9810-a1ed9d5674e9","chunks":76}
+ROLLBACK filing=4 http=200 seconds=8.243477
+ROLLBACK filing=4 start=12:14:47 end=12:14:55 embeddedChunkLines=31 response={"filingId":4,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"25caf17a-7742-44c6-a1a8-7822448bef3b","chunks":31}
+ROLLBACK filing=5 http=200 seconds=0.635784
+ROLLBACK filing=5 start=12:14:55 end=12:14:56 embeddedChunkLines=2 response={"filingId":5,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"5b1d2ed5-0b5e-4c0c-b1b4-7569a688bb3d","chunks":2}
+ROLLBACK filing=6 http=200 seconds=8.736947
+ROLLBACK filing=6 start=12:14:56 end=12:15:05 embeddedChunkLines=32 response={"filingId":6,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"b3cb7880-49d8-4050-8f23-165020df3ca1","chunks":32}
+ROLLBACK filing=7 http=200 seconds=0.638124
+ROLLBACK filing=7 start=12:15:05 end=12:15:06 embeddedChunkLines=2 response={"filingId":7,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"796e9800-fc51-4cb3-b123-30f752ee975c","chunks":2}
+ROLLBACK filing=8 http=200 seconds=0.286632
+ROLLBACK filing=8 start=12:15:06 end=12:15:06 embeddedChunkLines=1 response={"filingId":8,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"e49be20f-091d-444c-ae13-efff0676b469","chunks":1}
+ROLLBACK filing=109 http=200 seconds=44.951774
+ROLLBACK filing=109 start=12:15:06 end=12:15:51 embeddedChunkLines=163 response={"filingId":109,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"aaa95cf4-6f6f-4672-bff1-eaab7190e473","chunks":163}
+ROLLBACK filing=110 http=200 seconds=25.315148
+ROLLBACK filing=110 start=12:15:51 end=12:16:16 embeddedChunkLines=95 response={"filingId":110,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"bb221e34-646d-4951-ab24-b9b78fd9efdb","chunks":95}
+ROLLBACK filing=161 http=200 seconds=31.997926
+ROLLBACK filing=161 start=12:16:16 end=12:16:48 embeddedChunkLines=115 response={"filingId":161,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"f775f213-ac03-4e38-aaf4-ff3807bbf330","chunks":115}
+ROLLBACK filing=162 http=200 seconds=12.671251
+ROLLBACK filing=162 start=12:16:48 end=12:17:01 embeddedChunkLines=47 response={"filingId":162,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"d909858c-8723-45f6-a0c8-208837cb9628","chunks":47}
+ROLLBACK filing=288 http=200 seconds=0.720276
+ROLLBACK filing=288 start=12:17:01 end=12:17:02 embeddedChunkLines=2 response={"filingId":288,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"55bb6f9c-eff4-4d1e-9739-8c9ef351d432","chunks":2}
+ROLLBACK filing=324 http=200 seconds=0.691982
+ROLLBACK filing=324 start=12:17:02 end=12:17:02 embeddedChunkLines=2 response={"filingId":324,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"65b0f14e-cc72-49f4-84a8-96fcae8f6a46","chunks":2}
+ROLLBACK filing=325 http=200 seconds=0.278846
+ROLLBACK filing=325 start=12:17:02 end=12:17:03 embeddedChunkLines=1 response={"filingId":325,"outcome":"SUCCEEDED","processingVersion":"sections-v2-context-v2-chunk4000-500","runId":"483d9607-4899-41eb-831f-2f1d698718ab","chunks":1}
+ROLLBACK_END 12:17:03

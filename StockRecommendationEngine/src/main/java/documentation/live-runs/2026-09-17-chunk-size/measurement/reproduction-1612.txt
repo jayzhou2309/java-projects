@@ -1,0 +1,7 @@
+reference=/Users/jayzhou/Documents/GitHub/java-projects-chunk-size/StockRecommendationEngine/src/main/java/documentation/live-runs/2026-09-13-evaluation-evidence/measurement/snapshot-613-traced-snapshot-297-rerank-candidates-20.json (snapshot 613)
+run=/Users/jayzhou/Documents/GitHub/java-projects-chunk-size/StockRecommendationEngine/src/main/java/documentation/live-runs/2026-09-17-chunk-size/measurement/snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json (snapshot 1612)
+questions reference=42 run=42 traces=42
+exempt property chunkMaxChars: run records 4000 (absent from the reference, not compared)
+exempt property chunkOverlapChars: run records 500 (absent from the reference, not compared)
+exempt property storeVersions: run records [sections-v2-context-v2] (absent from the reference, not compared)
+problems=0

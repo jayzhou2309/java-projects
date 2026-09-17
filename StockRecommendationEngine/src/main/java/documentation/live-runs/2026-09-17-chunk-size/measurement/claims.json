@@ -1,0 +1,4717 @@
+{
+ "description": "Chunk-size measurement (plan plans/2026-09-17-chunk-size.md, Milestone 3), written by compare_chunk_size.py: the baselines B0 (1611) and B1 (1612) at the stored size; storage and per-filing chunk counts before the rebuild (S0), after it (S1, 1000 / 125) and after the rollback (S2, 4000 / 500); R1 by the evidence reports; the diagnostic runs D0 (1613) and D1 (1614) on the rebuilt store, their metrics and top-5 membership against the baselines as experiment claims for the record (R1 failed, so no run is a selection candidate); the rank histogram of every run and the chunks returned above every question not at rank 1; nvda-02 and nvda-04; latency per run; the post-rollback run P0 (1615) against B0; and the decision. No claim states why a rank, a time, or a size changed.",
+ "labels": {
+  "snapshot-1611-b0-stored-size-4000-500-rerank-off.json": "the baseline with reranking off",
+  "evidence-1611.json": "the baseline with reranking off",
+  "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json": "the diagnostic run on the rebuilt store with reranking off",
+  "evidence-1613.json": "the diagnostic run on the rebuilt store with reranking off",
+  "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json": "the baseline with reranking on",
+  "evidence-1612.json": "the baseline with reranking on",
+  "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json": "the diagnostic run on the rebuilt store with reranking on",
+  "evidence-1614.json": "the diagnostic run on the rebuilt store with reranking on",
+  "snapshot-1615-p0-post-rollback-4000-500-rerank-off.json": "the post-rollback run",
+  "evidence-1615.json": "the post-rollback run",
+  "evidence-1611-against-S1.json": "the baseline's report read against the rebuilt store",
+  "filings-S2.json": "the filings export after the rollback",
+  "chunks-S0.json": "the chunk export before the rebuild",
+  "chunks-S1.json": "the chunk export of the rebuilt store",
+  "chunks-S2.json": "the chunk export after the rollback",
+  "storage-S0.json": "storage before the rebuild",
+  "storage-S1.json": "storage after the rebuild",
+  "storage-S2.json": "storage after the rollback",
+  "latency-1611.json": "the latency of the baseline with reranking off",
+  "latency-1612.json": "the latency of the baseline with reranking on",
+  "latency-1613.json": "the latency of the diagnostic run with reranking off",
+  "latency-1614.json": "the latency of the diagnostic run with reranking on",
+  "latency-1615.json": "the latency of the post-rollback run"
+ },
+ "claims": [
+  {
+   "id": "C-1201",
+   "basis": "observed",
+   "block": "baselines",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-1202",
+   "basis": "observed",
+   "block": "baselines",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.655187"
+   }
+  },
+  {
+   "id": "C-1203",
+   "basis": "observed",
+   "block": "baselines",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "metric": "hitAt5",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-1204",
+   "basis": "observed",
+   "block": "baselines",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "metric": "mrr",
+    "expected": "0.633135"
+   }
+  },
+  {
+   "id": "C-1205",
+   "basis": "inferred",
+   "block": "baselines",
+   "text": "The baseline with reranking off reproduces snapshot 598 and the baseline with reranking on reproduces snapshot 613 per question in rank and matched chunk (TraceReproductionFilesTests, problems=0 in reproduction-1611.txt and reproduction-1612.txt, with the three properties those references predate exempt), so F1 holds and the rebuild followed",
+   "from": [
+    "C-1201",
+    "C-1202",
+    "C-1203",
+    "C-1204"
+   ]
+  },
+  {
+   "id": "C-1206",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "chunks",
+    "expected": 569
+   }
+  },
+  {
+   "id": "C-1207",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "contentChars",
+    "expected": 1486993
+   }
+  },
+  {
+   "id": "C-1208",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "meanChunkChars",
+    "expected": 2613.3
+   }
+  },
+  {
+   "id": "C-1209",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "maxChunkChars",
+    "expected": 4000
+   }
+  },
+  {
+   "id": "C-1210",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "tokenCountSum",
+    "expected": 371954
+   }
+  },
+  {
+   "id": "C-1211",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "totalRelationBytes",
+    "expected": 9068544
+   }
+  },
+  {
+   "id": "C-1212",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "heapBytes",
+    "expected": 548864
+   }
+  },
+  {
+   "id": "C-1213",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "toastBytes",
+    "expected": 7553024
+   }
+  },
+  {
+   "id": "C-1214",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "indexesBytes",
+    "expected": 966656
+   }
+  },
+  {
+   "id": "C-1215",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "indexes[name=idx_sec_filing_chunks_content_tsv].bytes",
+    "expected": 753664
+   }
+  },
+  {
+   "id": "C-1216",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "storeVersions",
+    "expected": [
+     "sections-v2-context-v2"
+    ]
+   }
+  },
+  {
+   "id": "C-1217",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "chunks",
+    "expected": 1917
+   }
+  },
+  {
+   "id": "C-1218",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "contentChars",
+    "expected": 1553652
+   }
+  },
+  {
+   "id": "C-1219",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "meanChunkChars",
+    "expected": 810.5
+   }
+  },
+  {
+   "id": "C-1220",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "maxChunkChars",
+    "expected": 1000
+   }
+  },
+  {
+   "id": "C-1221",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "tokenCountSum",
+    "expected": 389139
+   }
+  },
+  {
+   "id": "C-1222",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "totalRelationBytes",
+    "expected": 22544384
+   }
+  },
+  {
+   "id": "C-1223",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "heapBytes",
+    "expected": 3178496
+   }
+  },
+  {
+   "id": "C-1224",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "toastBytes",
+    "expected": 17498112
+   }
+  },
+  {
+   "id": "C-1225",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "indexesBytes",
+    "expected": 1867776
+   }
+  },
+  {
+   "id": "C-1226",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "indexes[name=idx_sec_filing_chunks_content_tsv].bytes",
+    "expected": 1458176
+   }
+  },
+  {
+   "id": "C-1227",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "storeVersions",
+    "expected": [
+     "sections-v2-context-v2-chunk1000-125"
+    ]
+   }
+  },
+  {
+   "id": "C-1228",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "chunks",
+    "expected": 569
+   }
+  },
+  {
+   "id": "C-1229",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "contentChars",
+    "expected": 1486993
+   }
+  },
+  {
+   "id": "C-1230",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "meanChunkChars",
+    "expected": 2613.3
+   }
+  },
+  {
+   "id": "C-1231",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "maxChunkChars",
+    "expected": 4000
+   }
+  },
+  {
+   "id": "C-1232",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "tokenCountSum",
+    "expected": 371954
+   }
+  },
+  {
+   "id": "C-1233",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "totalRelationBytes",
+    "expected": 23216128
+   }
+  },
+  {
+   "id": "C-1234",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "heapBytes",
+    "expected": 3416064
+   }
+  },
+  {
+   "id": "C-1235",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "toastBytes",
+    "expected": 17588224
+   }
+  },
+  {
+   "id": "C-1236",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "indexesBytes",
+    "expected": 2211840
+   }
+  },
+  {
+   "id": "C-1237",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "indexes[name=idx_sec_filing_chunks_content_tsv].bytes",
+    "expected": 1736704
+   }
+  },
+  {
+   "id": "C-1238",
+   "basis": "observed",
+   "block": "store",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S2.json",
+    "path": "storeVersions",
+    "expected": [
+     "sections-v2-context-v2-chunk4000-500"
+    ]
+   }
+  },
+  {
+   "id": "C-1239",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=3].chunks",
+    "expected": 76
+   }
+  },
+  {
+   "id": "C-1240",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=4].chunks",
+    "expected": 31
+   }
+  },
+  {
+   "id": "C-1241",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=5].chunks",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1242",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=6].chunks",
+    "expected": 32
+   }
+  },
+  {
+   "id": "C-1243",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=7].chunks",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1244",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=8].chunks",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1245",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=109].chunks",
+    "expected": 163
+   }
+  },
+  {
+   "id": "C-1246",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=110].chunks",
+    "expected": 95
+   }
+  },
+  {
+   "id": "C-1247",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=161].chunks",
+    "expected": 115
+   }
+  },
+  {
+   "id": "C-1248",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=162].chunks",
+    "expected": 47
+   }
+  },
+  {
+   "id": "C-1249",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=288].chunks",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1250",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=324].chunks",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1251",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "filingsDetail[filingId=325].chunks",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1252",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S0.json",
+    "path": "embeddedFilings",
+    "expected": 13
+   }
+  },
+  {
+   "id": "C-1253",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=3].chunks",
+    "expected": 277
+   }
+  },
+  {
+   "id": "C-1254",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=4].chunks",
+    "expected": 108
+   }
+  },
+  {
+   "id": "C-1255",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=5].chunks",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1256",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=6].chunks",
+    "expected": 110
+   }
+  },
+  {
+   "id": "C-1257",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=7].chunks",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1258",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=8].chunks",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-1259",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=109].chunks",
+    "expected": 478
+   }
+  },
+  {
+   "id": "C-1260",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=110].chunks",
+    "expected": 287
+   }
+  },
+  {
+   "id": "C-1261",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=161].chunks",
+    "expected": 451
+   }
+  },
+  {
+   "id": "C-1262",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=162].chunks",
+    "expected": 192
+   }
+  },
+  {
+   "id": "C-1263",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=288].chunks",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-1264",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=324].chunks",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1265",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "filingsDetail[filingId=325].chunks",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1266",
+   "basis": "observed",
+   "block": "filings",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-S1.json",
+    "path": "embeddedFilings",
+    "expected": 13
+   }
+  },
+  {
+   "id": "C-1267",
+   "basis": "derived",
+   "block": "r1",
+   "check": {
+    "type": "heldPhrases",
+    "report": "evidence-1611.json",
+    "expected": {
+     "phrases": 57,
+     "held": 57
+    }
+   }
+  },
+  {
+   "id": "C-1268",
+   "basis": "derived",
+   "block": "r1",
+   "check": {
+    "type": "heldPhrases",
+    "report": "evidence-1611-against-S1.json",
+    "expected": {
+     "phrases": 57,
+     "held": 55
+    }
+   }
+  },
+  {
+   "id": "C-1269",
+   "basis": "derived",
+   "block": "r1",
+   "check": {
+    "type": "heldPhrases",
+    "report": "evidence-1613.json",
+    "expected": {
+     "phrases": 57,
+     "held": 55
+    }
+   }
+  },
+  {
+   "id": "C-1270",
+   "basis": "derived",
+   "block": "r1",
+   "check": {
+    "type": "heldPhrases",
+    "report": "evidence-1615.json",
+    "expected": {
+     "phrases": 57,
+     "held": 56
+    }
+   }
+  },
+  {
+   "id": "C-1271",
+   "basis": "inferred",
+   "block": "r1",
+   "text": "R1 does not hold on the rebuilt store: two accepted phrases of set v2 are held by a stored chunk in the baseline's report before the rebuild and not held after it, under the application's own rule; so under the plan the candidate run N0 did not run for the rule, the store was rebuilt back at the stored size, and the diagnostic runs on the rebuilt store are records without a selection outcome",
+   "from": [
+    "C-1267",
+    "C-1268",
+    "C-1269",
+    "C-1270"
+   ]
+  },
+  {
+   "id": "C-1272",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "metric": "hitAt1",
+    "expected": "0.452381"
+   }
+  },
+  {
+   "id": "C-1273",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1274",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.554856"
+   }
+  },
+  {
+   "id": "C-1275",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "metric": "slices.nonFigure.hitAt5",
+    "expected": "0.700000"
+   }
+  },
+  {
+   "id": "C-1276",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "metric": "tickerHitAt5.AAPL",
+    "expected": "0.642857"
+   }
+  },
+  {
+   "id": "C-1277",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "metric": "tickerHitAt5.MSFT",
+    "expected": "0.928571"
+   }
+  },
+  {
+   "id": "C-1278",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "metric": "tickerHitAt5.NVDA",
+    "expected": "0.571429"
+   }
+  },
+  {
+   "id": "C-1279",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "metric": "hitAt1",
+    "expected": "0.452381"
+   }
+  },
+  {
+   "id": "C-1280",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "metric": "hitAt5",
+    "expected": "0.690476"
+   }
+  },
+  {
+   "id": "C-1281",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "metric": "mrr",
+    "expected": "0.554563"
+   }
+  },
+  {
+   "id": "C-1282",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "metric": "slices.nonFigure.hitAt5",
+    "expected": "0.733333"
+   }
+  },
+  {
+   "id": "C-1283",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "metric": "tickerHitAt5.AAPL",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1284",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "metric": "tickerHitAt5.MSFT",
+    "expected": "1.000000"
+   }
+  },
+  {
+   "id": "C-1285",
+   "basis": "observed",
+   "block": "diagnostic",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "metric": "tickerHitAt5.NVDA",
+    "expected": "0.357143"
+   }
+  },
+  {
+   "id": "C-1286",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, the hit@5 of the diagnostic run on the rebuilt store with reranking off is below the hit@5 of the baseline with reranking off (a record, not a selection outcome)",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1287",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, the MRR of the diagnostic run on the rebuilt store with reranking off is below the MRR of the baseline with reranking off (a record, not a selection outcome)",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.554856"
+   }
+  },
+  {
+   "id": "C-1288",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, aapl-08 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "aapl-08",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1289",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, aapl-12 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "aapl-12",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1290",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, aapl-13 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "aapl-13",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1291",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, aapl-14 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "aapl-14",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1292",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, msft-04 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "msft-04",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1293",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, nvda-03 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-03",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1294",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, nvda-08 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-08",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1295",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, msft-01 entered the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "msft-01",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1296",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, msft-07 entered the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "msft-07",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1297",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, msft-08 entered the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "msft-08",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1298",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, nvda-02 entered the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-02",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1299",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, the hit@5 of the diagnostic run on the rebuilt store with reranking on is below the hit@5 of the baseline with reranking on (a record, not a selection outcome)",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "metric": "hitAt5",
+    "expected": "0.690476"
+   }
+  },
+  {
+   "id": "C-1300",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, the MRR of the diagnostic run on the rebuilt store with reranking on is below the MRR of the baseline with reranking on (a record, not a selection outcome)",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "metric": "mrr",
+    "expected": "0.554563"
+   }
+  },
+  {
+   "id": "C-1301",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, aapl-08 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "aapl-08",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1302",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, aapl-11 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "aapl-11",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1303",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, aapl-13 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "aapl-13",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1304",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, aapl-14 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "aapl-14",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1305",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, nvda-03 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-03",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1306",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, nvda-08 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-08",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1307",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, nvda-10 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-10",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1308",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, nvda-11 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-11",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1309",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, nvda-14 left the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-14",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1310",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, aapl-09 entered the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "aapl-09",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1311",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, msft-04 entered the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "msft-04",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1312",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, msft-05 entered the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "msft-05",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1313",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, nvda-07 entered the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-07",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1314",
+   "basis": "experiment",
+   "block": "diagnostic",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, nvda-09 entered the top 5",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "topK",
+    "question": "nvda-09",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1315",
+   "basis": "inferred",
+   "block": "diagnostic",
+   "text": "For the record and not as a selection outcome (R1 failed): against the baseline with reranking off, the diagnostic run with reranking off has a lower hit@5 and a lower MRR, and more questions left the top 5 than entered it; the floors test did not run on the rebuilt store",
+   "from": [
+    "C-1272",
+    "C-1273",
+    "C-1274",
+    "C-1275",
+    "C-1276",
+    "C-1277",
+    "C-1278",
+    "C-1279",
+    "C-1201",
+    "C-1202"
+   ]
+  },
+  {
+   "id": "C-1316",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "expected": {
+     "1": 23,
+     "2": 6,
+     "8": 1,
+     "6": 1,
+     "4": 1,
+     "7": 1,
+     "notInWindow": 5,
+     "3": 1,
+     "10": 1,
+     "5": 2
+    }
+   }
+  },
+  {
+   "id": "C-1317",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "expected": {
+     "5": 4,
+     "1": 19,
+     "2": 5,
+     "notInWindow": 9,
+     "7": 1,
+     "3": 1,
+     "6": 1,
+     "9": 1,
+     "4": 1
+    }
+   }
+  },
+  {
+   "id": "C-1318",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "expected": {
+     "1": 21,
+     "3": 2,
+     "2": 9,
+     "notInWindow": 7,
+     "10": 1,
+     "8": 1,
+     "5": 1
+    }
+   }
+  },
+  {
+   "id": "C-1319",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "expected": {
+     "5": 2,
+     "1": 19,
+     "notInWindow": 8,
+     "4": 2,
+     "8": 1,
+     "2": 4,
+     "3": 2,
+     "6": 3,
+     "10": 1
+    }
+   }
+  },
+  {
+   "id": "C-1320",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "expected": {
+     "1": 22,
+     "2": 6,
+     "notInWindow": 6,
+     "8": 1,
+     "6": 1,
+     "4": 1,
+     "7": 1,
+     "3": 1,
+     "10": 1,
+     "5": 2
+    }
+   }
+  },
+  {
+   "id": "C-1321",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "aapl-03",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     278
+    ]
+   }
+  },
+  {
+   "id": "C-1322",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "aapl-06",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     241
+    ]
+   }
+  },
+  {
+   "id": "C-1323",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "aapl-09",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     244,
+     272,
+     222,
+     273,
+     267,
+     279,
+     292
+    ]
+   }
+  },
+  {
+   "id": "C-1324",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "msft-01",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     517,
+     637,
+     518,
+     635,
+     642
+    ]
+   }
+  },
+  {
+   "id": "C-1325",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "msft-02",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     516
+    ]
+   }
+  },
+  {
+   "id": "C-1326",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "msft-03",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     642
+    ]
+   }
+  },
+  {
+   "id": "C-1327",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "msft-04",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     514,
+     573,
+     518
+    ]
+   }
+  },
+  {
+   "id": "C-1328",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "msft-05",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     633
+    ]
+   }
+  },
+  {
+   "id": "C-1329",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "msft-07",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     460,
+     514,
+     516,
+     637,
+     459,
+     638
+    ]
+   }
+  },
+  {
+   "id": "C-1330",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "msft-08",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     514,
+     642,
+     643,
+     517,
+     518,
+     645,
+     637,
+     519,
+     516,
+     644
+    ]
+   }
+  },
+  {
+   "id": "C-1331",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "msft-12",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     645
+    ]
+   }
+  },
+  {
+   "id": "C-1332",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-01",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     806,
+     852
+    ]
+   }
+  },
+  {
+   "id": "C-1333",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-02",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     806,
+     852,
+     805,
+     851,
+     881,
+     873,
+     745,
+     876,
+     800,
+     744
+    ]
+   }
+  },
+  {
+   "id": "C-1334",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-04",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     852,
+     851,
+     805,
+     872,
+     863,
+     873,
+     806,
+     745,
+     862,
+     861
+    ]
+   }
+  },
+  {
+   "id": "C-1335",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-05",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     742,
+     745,
+     743,
+     744,
+     747,
+     746,
+     876,
+     800,
+     750
+    ]
+   }
+  },
+  {
+   "id": "C-1336",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-07",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     800,
+     783,
+     898,
+     761,
+     876,
+     750,
+     763,
+     779,
+     777,
+     744
+    ]
+   }
+  },
+  {
+   "id": "C-1337",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-08",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     881,
+     806,
+     805,
+     851
+    ]
+   }
+  },
+  {
+   "id": "C-1338",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-09",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     873,
+     881,
+     876,
+     852,
+     806,
+     800,
+     805,
+     872,
+     745,
+     851
+    ]
+   }
+  },
+  {
+   "id": "C-1339",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-12",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     844,
+     838,
+     826,
+     806
+    ]
+   }
+  },
+  {
+   "id": "C-1340",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "aapl-01",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9629,
+     9810,
+     9630,
+     9809
+    ]
+   }
+  },
+  {
+   "id": "C-1341",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "aapl-07",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9690
+    ]
+   }
+  },
+  {
+   "id": "C-1342",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "aapl-08",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9874,
+     9624,
+     9812,
+     9813,
+     9801,
+     9810,
+     9809,
+     9777,
+     9767,
+     9816
+    ]
+   }
+  },
+  {
+   "id": "C-1343",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "aapl-09",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9706,
+     9621,
+     9771,
+     9813,
+     9792,
+     9624
+    ]
+   }
+  },
+  {
+   "id": "C-1344",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "aapl-10",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9810
+    ]
+   }
+  },
+  {
+   "id": "C-1345",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "aapl-11",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9630
+    ]
+   }
+  },
+  {
+   "id": "C-1346",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "aapl-12",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9632,
+     9813,
+     9815,
+     9630,
+     9816,
+     9814,
+     9631,
+     9629,
+     9811,
+     9673
+    ]
+   }
+  },
+  {
+   "id": "C-1347",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "aapl-13",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9811,
+     9777,
+     9778,
+     9809,
+     9630,
+     9810,
+     9629,
+     9812,
+     9813,
+     9631
+    ]
+   }
+  },
+  {
+   "id": "C-1348",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "aapl-14",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9816,
+     9813,
+     9634,
+     9812,
+     9811,
+     9795,
+     9810,
+     9809,
+     9624,
+     9630
+    ]
+   }
+  },
+  {
+   "id": "C-1349",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "msft-01",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10602
+    ]
+   }
+  },
+  {
+   "id": "C-1350",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "msft-02",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10222,
+     10581
+    ]
+   }
+  },
+  {
+   "id": "C-1351",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "msft-04",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10594,
+     10561,
+     10412,
+     10602,
+     10230,
+     10213,
+     10207,
+     10223,
+     10582,
+     10211
+    ]
+   }
+  },
+  {
+   "id": "C-1352",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "msft-05",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10553,
+     11399,
+     10594,
+     10230
+    ]
+   }
+  },
+  {
+   "id": "C-1353",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "msft-07",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10025
+    ]
+   }
+  },
+  {
+   "id": "C-1354",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-01",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11279,
+     11144,
+     11003,
+     11189
+    ]
+   }
+  },
+  {
+   "id": "C-1355",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-03",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11212,
+     11207,
+     11208,
+     11032,
+     11184,
+     10988,
+     11121,
+     11326,
+     11224,
+     11279
+    ]
+   }
+  },
+  {
+   "id": "C-1356",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-04",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11144,
+     11015,
+     11184,
+     11275,
+     11187,
+     11279,
+     11208,
+     11221,
+     11288,
+     10776
+    ]
+   }
+  },
+  {
+   "id": "C-1357",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-05",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10756,
+     10772,
+     10771,
+     10781,
+     10761,
+     10815,
+     10776,
+     10765,
+     11380,
+     10767
+    ]
+   }
+  },
+  {
+   "id": "C-1358",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-07",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11380,
+     10940,
+     10850,
+     11341,
+     11287
+    ]
+   }
+  },
+  {
+   "id": "C-1359",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-08",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11310,
+     11187,
+     11018,
+     11019,
+     11277,
+     11278,
+     11311,
+     11279
+    ]
+   }
+  },
+  {
+   "id": "C-1360",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-09",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11288,
+     11279,
+     10995,
+     11003,
+     11187,
+     10994,
+     11310,
+     11275,
+     11277,
+     11309
+    ]
+   }
+  },
+  {
+   "id": "C-1361",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-10",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10804,
+     10998,
+     10930
+    ]
+   }
+  },
+  {
+   "id": "C-1362",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-11",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11015,
+     11183,
+     11279,
+     11184
+    ]
+   }
+  },
+  {
+   "id": "C-1363",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "aapl-02",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     280,
+     279
+    ]
+   }
+  },
+  {
+   "id": "C-1364",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "aapl-05",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     191
+    ]
+   }
+  },
+  {
+   "id": "C-1365",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "aapl-09",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     267,
+     222,
+     233,
+     244,
+     297,
+     279,
+     277,
+     273,
+     278,
+     269
+    ]
+   }
+  },
+  {
+   "id": "C-1366",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "msft-01",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     518
+    ]
+   }
+  },
+  {
+   "id": "C-1367",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "msft-02",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     516
+    ]
+   }
+  },
+  {
+   "id": "C-1368",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "msft-04",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     514,
+     516,
+     573,
+     637,
+     635,
+     642,
+     518,
+     645,
+     512,
+     641
+    ]
+   }
+  },
+  {
+   "id": "C-1369",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "msft-05",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     1064,
+     640,
+     635,
+     637,
+     573,
+     516,
+     518,
+     514,
+     574
+    ]
+   }
+  },
+  {
+   "id": "C-1370",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "msft-07",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     460
+    ]
+   }
+  },
+  {
+   "id": "C-1371",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "msft-08",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     518
+    ]
+   }
+  },
+  {
+   "id": "C-1372",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "msft-11",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     646,
+     518
+    ]
+   }
+  },
+  {
+   "id": "C-1373",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "msft-12",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     645
+    ]
+   }
+  },
+  {
+   "id": "C-1374",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "msft-14",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     637
+    ]
+   }
+  },
+  {
+   "id": "C-1375",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-01",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     852,
+     873,
+     864,
+     851,
+     842,
+     881,
+     872,
+     857,
+     800,
+     863
+    ]
+   }
+  },
+  {
+   "id": "C-1376",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-02",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     852,
+     873,
+     851,
+     881,
+     805,
+     800,
+     863,
+     872,
+     880,
+     879
+    ]
+   }
+  },
+  {
+   "id": "C-1377",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-04",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     755,
+     844,
+     864,
+     872,
+     853,
+     852,
+     851,
+     873,
+     842,
+     863
+    ]
+   }
+  },
+  {
+   "id": "C-1378",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-05",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     745,
+     742,
+     876,
+     806,
+     744,
+     800,
+     783,
+     747,
+     743,
+     875
+    ]
+   }
+  },
+  {
+   "id": "C-1379",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-07",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     898,
+     783,
+     800,
+     744,
+     876,
+     875,
+     761
+    ]
+   }
+  },
+  {
+   "id": "C-1380",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-09",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     873,
+     872,
+     881,
+     863,
+     851,
+     864,
+     800,
+     871,
+     852,
+     880
+    ]
+   }
+  },
+  {
+   "id": "C-1381",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-10",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     781
+    ]
+   }
+  },
+  {
+   "id": "C-1382",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-11",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     852,
+     881,
+     873,
+     851
+    ]
+   }
+  },
+  {
+   "id": "C-1383",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-12",
+    "chunks": "chunks-S0.json",
+    "expected": [
+     852
+    ]
+   }
+  },
+  {
+   "id": "C-1384",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "aapl-01",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9629,
+     9810,
+     9674,
+     9632
+    ]
+   }
+  },
+  {
+   "id": "C-1385",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "aapl-08",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9874,
+     9625,
+     9801,
+     9813,
+     9779,
+     9815,
+     9663,
+     9816,
+     9819,
+     9624
+    ]
+   }
+  },
+  {
+   "id": "C-1386",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "aapl-09",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9620,
+     9791,
+     9813,
+     9771
+    ]
+   }
+  },
+  {
+   "id": "C-1387",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "aapl-10",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9810,
+     9813,
+     9629
+    ]
+   }
+  },
+  {
+   "id": "C-1388",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "aapl-11",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9630,
+     9813,
+     9632,
+     9809,
+     9634,
+     9629,
+     9811
+    ]
+   }
+  },
+  {
+   "id": "C-1389",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "aapl-12",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9632,
+     9815,
+     9813
+    ]
+   }
+  },
+  {
+   "id": "C-1390",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "aapl-13",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9811,
+     9810,
+     9809,
+     9813,
+     9812,
+     9630,
+     9629,
+     9766,
+     9778,
+     9674
+    ]
+   }
+  },
+  {
+   "id": "C-1391",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "aapl-14",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     9816,
+     9634,
+     9813,
+     9815,
+     9811,
+     9693,
+     9809,
+     9810,
+     9766,
+     9779
+    ]
+   }
+  },
+  {
+   "id": "C-1392",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "msft-01",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10594
+    ]
+   }
+  },
+  {
+   "id": "C-1393",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "msft-02",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10222
+    ]
+   }
+  },
+  {
+   "id": "C-1394",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "msft-03",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10590,
+     10587
+    ]
+   }
+  },
+  {
+   "id": "C-1395",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "msft-05",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11399,
+     10594
+    ]
+   }
+  },
+  {
+   "id": "C-1396",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "msft-07",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10025
+    ]
+   }
+  },
+  {
+   "id": "C-1397",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "msft-14",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10571
+    ]
+   }
+  },
+  {
+   "id": "C-1398",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-01",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11144,
+     11277,
+     11189,
+     11236,
+     11207,
+     11279,
+     11187,
+     11310,
+     11018,
+     11184
+    ]
+   }
+  },
+  {
+   "id": "C-1399",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-02",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11187,
+     11189,
+     11279,
+     11277,
+     11017
+    ]
+   }
+  },
+  {
+   "id": "C-1400",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-03",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11079,
+     11212,
+     11032,
+     11207,
+     10988,
+     11326,
+     11228,
+     11208,
+     11077,
+     11236
+    ]
+   }
+  },
+  {
+   "id": "C-1401",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-04",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11207,
+     11144,
+     11236,
+     11279,
+     11153,
+     11189,
+     11275,
+     11221,
+     11015,
+     11288
+    ]
+   }
+  },
+  {
+   "id": "C-1402",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-05",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11288,
+     10756,
+     11380,
+     10994,
+     10774,
+     10771,
+     10815,
+     10767,
+     10781,
+     10760
+    ]
+   }
+  },
+  {
+   "id": "C-1403",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-08",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11310,
+     11018,
+     11277,
+     11278,
+     11311,
+     11187,
+     11279,
+     11189,
+     11019
+    ]
+   }
+  },
+  {
+   "id": "C-1404",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-10",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     10804,
+     10930,
+     11368,
+     10998,
+     11300
+    ]
+   }
+  },
+  {
+   "id": "C-1405",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-11",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11189,
+     11184,
+     11309,
+     11183,
+     11279
+    ]
+   }
+  },
+  {
+   "id": "C-1406",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-14",
+    "chunks": "chunks-S1.json",
+    "expected": [
+     11236,
+     11277,
+     11310,
+     11144,
+     11275,
+     11279,
+     11018,
+     11189,
+     11187,
+     11313
+    ]
+   }
+  },
+  {
+   "id": "C-1407",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1408",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1409",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1611.json",
+    "question": "nvda-02",
+    "chunk": 802,
+    "expected": {
+     "fusedPosition": 41,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1410",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1411",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1412",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1611.json",
+    "question": "nvda-04",
+    "chunk": 754,
+    "expected": {
+     "fusedPosition": 54,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1413",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1414",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 11003
+   }
+  },
+  {
+   "id": "C-1415",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1613.json",
+    "question": "nvda-02",
+    "chunk": 11002,
+    "expected": {
+     "fusedPosition": 10,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1416",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1613.json",
+    "question": "nvda-02",
+    "chunk": 11003,
+    "expected": {
+     "fusedPosition": 1,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1417",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1418",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1419",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1613.json",
+    "question": "nvda-04",
+    "chunk": 10813,
+    "expected": {
+     "fusedPosition": 47,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1420",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1421",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1422",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1612.json",
+    "question": "nvda-02",
+    "chunk": 802,
+    "expected": {
+     "fusedPosition": 41,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1423",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1424",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1425",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1612.json",
+    "question": "nvda-04",
+    "chunk": 754,
+    "expected": {
+     "fusedPosition": 54,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1426",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-02",
+    "expected": 6
+   }
+  },
+  {
+   "id": "C-1427",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-02",
+    "expected": 11003
+   }
+  },
+  {
+   "id": "C-1428",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1614.json",
+    "question": "nvda-02",
+    "chunk": 11002,
+    "expected": {
+     "fusedPosition": 10,
+     "rerankInput": true,
+     "rerankedPosition": 19
+    }
+   }
+  },
+  {
+   "id": "C-1429",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1614.json",
+    "question": "nvda-02",
+    "chunk": 11003,
+    "expected": {
+     "fusedPosition": 1,
+     "rerankInput": true,
+     "rerankedPosition": 6
+    }
+   }
+  },
+  {
+   "id": "C-1430",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1431",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1614-d1-diagnostic-rebuilt-1000-125-rerank-candidates-20.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1432",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1614.json",
+    "question": "nvda-04",
+    "chunk": 10813,
+    "expected": {
+     "fusedPosition": 47,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1433",
+   "basis": "experiment",
+   "block": "nvda",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, the best fused position of a chunk holding an accepted phrase of nvda-02 in the diagnostic run on the rebuilt store with reranking off is stated by the check beside the position of the same question's holding chunk in the baseline with reranking off",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "bestFusedPosition",
+    "report": "evidence-1613.json",
+    "question": "nvda-02",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1434",
+   "basis": "experiment",
+   "block": "nvda",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking off in both and the other recorded settings equal, the best fused position of a chunk holding an accepted phrase of nvda-04 in the diagnostic run on the rebuilt store with reranking off is stated by the check beside the position of the same question's holding chunk in the baseline with reranking off",
+   "experiment": {
+    "file": "experiment-chunk-size-1611-1613.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "bestFusedPosition",
+    "report": "evidence-1613.json",
+    "question": "nvda-04",
+    "expected": 47
+   }
+  },
+  {
+   "id": "C-1435",
+   "basis": "experiment",
+   "block": "nvda",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, the best fused position of a chunk holding an accepted phrase of nvda-02 in the diagnostic run on the rebuilt store with reranking on is stated by the check beside the position of the same question's holding chunk in the baseline with reranking on",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "bestFusedPosition",
+    "report": "evidence-1614.json",
+    "question": "nvda-02",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1436",
+   "basis": "experiment",
+   "block": "nvda",
+   "text": "With the rebuilt store at chunk size 1000 and overlap 125 against the stored 4000 and 500, reranking on in both and the other recorded settings equal, the best fused position of a chunk holding an accepted phrase of nvda-04 in the diagnostic run on the rebuilt store with reranking on is stated by the check beside the position of the same question's holding chunk in the baseline with reranking on",
+   "experiment": {
+    "file": "experiment-chunk-size-1612-1614.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "bestFusedPosition",
+    "report": "evidence-1614.json",
+    "question": "nvda-04",
+    "expected": 47
+   }
+  },
+  {
+   "id": "C-1437",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1611.json",
+    "path": "retrievalMs.median",
+    "expected": 320
+   }
+  },
+  {
+   "id": "C-1438",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1611.json",
+    "path": "retrievalMs.p95",
+    "expected": 517
+   }
+  },
+  {
+   "id": "C-1439",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1611.json",
+    "path": "retrievalMs.max",
+    "expected": 705
+   }
+  },
+  {
+   "id": "C-1440",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1611.json",
+    "path": "wallSeconds",
+    "expected": 15.214932
+   }
+  },
+  {
+   "id": "C-1441",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1611.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1442",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1613.json",
+    "path": "retrievalMs.median",
+    "expected": 344
+   }
+  },
+  {
+   "id": "C-1443",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1613.json",
+    "path": "retrievalMs.p95",
+    "expected": 467
+   }
+  },
+  {
+   "id": "C-1444",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1613.json",
+    "path": "retrievalMs.max",
+    "expected": 576
+   }
+  },
+  {
+   "id": "C-1445",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1613.json",
+    "path": "wallSeconds",
+    "expected": 15.308138
+   }
+  },
+  {
+   "id": "C-1446",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1613.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1447",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1612.json",
+    "path": "retrievalMs.median",
+    "expected": 1515
+   }
+  },
+  {
+   "id": "C-1448",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1612.json",
+    "path": "retrievalMs.p95",
+    "expected": 1726
+   }
+  },
+  {
+   "id": "C-1449",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1612.json",
+    "path": "retrievalMs.max",
+    "expected": 1895
+   }
+  },
+  {
+   "id": "C-1450",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1612.json",
+    "path": "wallSeconds",
+    "expected": 63.81261
+   }
+  },
+  {
+   "id": "C-1451",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1612.json",
+    "path": "rerankMs.median",
+    "expected": 1175.5
+   }
+  },
+  {
+   "id": "C-1452",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1612.json",
+    "path": "rerankMs.p95",
+    "expected": 1319
+   }
+  },
+  {
+   "id": "C-1453",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1612.json",
+    "path": "rerankMs.max",
+    "expected": 1563
+   }
+  },
+  {
+   "id": "C-1454",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1612.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1455",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1614.json",
+    "path": "retrievalMs.median",
+    "expected": 621.5
+   }
+  },
+  {
+   "id": "C-1456",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1614.json",
+    "path": "retrievalMs.p95",
+    "expected": 747
+   }
+  },
+  {
+   "id": "C-1457",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1614.json",
+    "path": "retrievalMs.max",
+    "expected": 767
+   }
+  },
+  {
+   "id": "C-1458",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1614.json",
+    "path": "wallSeconds",
+    "expected": 26.635819
+   }
+  },
+  {
+   "id": "C-1459",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1614.json",
+    "path": "rerankMs.median",
+    "expected": 266
+   }
+  },
+  {
+   "id": "C-1460",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1614.json",
+    "path": "rerankMs.p95",
+    "expected": 317
+   }
+  },
+  {
+   "id": "C-1461",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1614.json",
+    "path": "rerankMs.max",
+    "expected": 418
+   }
+  },
+  {
+   "id": "C-1462",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1614.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1463",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1615.json",
+    "path": "retrievalMs.median",
+    "expected": 359.5
+   }
+  },
+  {
+   "id": "C-1464",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1615.json",
+    "path": "retrievalMs.p95",
+    "expected": 526
+   }
+  },
+  {
+   "id": "C-1465",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1615.json",
+    "path": "retrievalMs.max",
+    "expected": 1271
+   }
+  },
+  {
+   "id": "C-1466",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1615.json",
+    "path": "wallSeconds",
+    "expected": 17.033816
+   }
+  },
+  {
+   "id": "C-1467",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1615.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1468",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1469",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.631378"
+   }
+  },
+  {
+   "id": "C-1470",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "aapl-08",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1471",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+    "question": "aapl-08",
+    "expected": 297
+   }
+  },
+  {
+   "id": "C-1472",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "question": "aapl-08",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1473",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "question": "aapl-08",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1474",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1611.json",
+    "question": "aapl-08",
+    "chunk": 297,
+    "expected": {
+     "fusedPosition": 1
+    }
+   }
+  },
+  {
+   "id": "C-1475",
+   "basis": "derived",
+   "block": "rollback",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "question": "aapl-08",
+    "chunks": "chunks-S2.json",
+    "expected": [
+     11513,
+     11491,
+     11495,
+     11493,
+     11494,
+     11406,
+     11482,
+     11483,
+     11440,
+     11484
+    ]
+   }
+  },
+  {
+   "id": "C-1476",
+   "basis": "inferred",
+   "block": "rollback",
+   "text": "After the rollback rebuild the post-rollback run equals the baseline with reranking off in rank and matched chunk content for the other questions of the set (comparison.txt, section 8) and differs for aapl-08, whose accepted phrase is held by a chunk whose section key the re-parse now records as ITEM_2_02 where the set names ITEM_2; so F6 does not hold for that one question, and the store stays at the stored size with the code defaults unchanged",
+   "from": [
+    "C-1468",
+    "C-1469",
+    "C-1470",
+    "C-1471",
+    "C-1472",
+    "C-1473",
+    "C-1474",
+    "C-1475"
+   ]
+  },
+  {
+   "id": "C-1477",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=297].sectionKey",
+    "expected": "ITEM_2"
+   }
+  },
+  {
+   "id": "C-1478",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=297].chars",
+    "expected": 581
+   }
+  },
+  {
+   "id": "C-1479",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11513].sectionKey",
+    "expected": "ITEM_2_02"
+   }
+  },
+  {
+   "id": "C-1480",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11513].chars",
+    "expected": 581
+   }
+  },
+  {
+   "id": "C-1481",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11513].head",
+    "expected": "On July 30, 2026, Apple Inc. (\u201cApple\u201d) issued a press release regarding Apple\u2019s "
+   }
+  },
+  {
+   "id": "C-1482",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=298].sectionKey",
+    "expected": "ITEM_9"
+   }
+  },
+  {
+   "id": "C-1483",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=298].chars",
+    "expected": 482
+   }
+  },
+  {
+   "id": "C-1484",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11514].sectionKey",
+    "expected": "ITEM_9_01"
+   }
+  },
+  {
+   "id": "C-1485",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11514].chars",
+    "expected": 482
+   }
+  },
+  {
+   "id": "C-1486",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11514].head",
+    "expected": "(d)Exhibits. Exhibit Number Exhibit Description 99.1 Press release issued by App"
+   }
+  },
+  {
+   "id": "C-1487",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=331].sectionKey",
+    "expected": "ITEM_2"
+   }
+  },
+  {
+   "id": "C-1488",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=331].chars",
+    "expected": 584
+   }
+  },
+  {
+   "id": "C-1489",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11547].sectionKey",
+    "expected": "ITEM_2_02"
+   }
+  },
+  {
+   "id": "C-1490",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11547].chars",
+    "expected": 584
+   }
+  },
+  {
+   "id": "C-1491",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11547].head",
+    "expected": "On April 30, 2026, Apple Inc. (\u201cApple\u201d) issued a press release regarding Apple\u2019s"
+   }
+  },
+  {
+   "id": "C-1492",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=332].sectionKey",
+    "expected": "ITEM_9"
+   }
+  },
+  {
+   "id": "C-1493",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=332].chars",
+    "expected": 484
+   }
+  },
+  {
+   "id": "C-1494",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11548].sectionKey",
+    "expected": "ITEM_9_01"
+   }
+  },
+  {
+   "id": "C-1495",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11548].chars",
+    "expected": 484
+   }
+  },
+  {
+   "id": "C-1496",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11548].head",
+    "expected": "(d)Exhibits. Exhibit Number Exhibit Description 99.1 Press release issued by App"
+   }
+  },
+  {
+   "id": "C-1497",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=333].sectionKey",
+    "expected": "ITEM_5"
+   }
+  },
+  {
+   "id": "C-1498",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S0.json",
+    "path": "[id=333].chars",
+    "expected": 2040
+   }
+  },
+  {
+   "id": "C-1499",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11549].sectionKey",
+    "expected": "ITEM_5_02"
+   }
+  },
+  {
+   "id": "C-1500",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11549].chars",
+    "expected": 2040
+   }
+  },
+  {
+   "id": "C-1501",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11549].head",
+    "expected": "Departure of Directors or Certain Officers; Election of Directors; Appointment o"
+   }
+  },
+  {
+   "id": "C-1502",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "filings-S2.json",
+    "path": "[filingId=5].createdAt",
+    "expected": "2026-09-10T00:22:08Z"
+   }
+  },
+  {
+   "id": "C-1503",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "filings-S2.json",
+    "path": "[filingId=7].createdAt",
+    "expected": "2026-09-10T00:22:18Z"
+   }
+  },
+  {
+   "id": "C-1504",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "filings-S2.json",
+    "path": "[filingId=8].createdAt",
+    "expected": "2026-09-10T00:22:19Z"
+   }
+  },
+  {
+   "id": "C-1505",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "filings-S2.json",
+    "path": "[filingId=288].createdAt",
+    "expected": "2026-09-12T01:45:36Z"
+   }
+  },
+  {
+   "id": "C-1506",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11970].sectionKey",
+    "expected": "ITEM_7_01"
+   }
+  },
+  {
+   "id": "C-1507",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11972].sectionKey",
+    "expected": "ITEM_2_02"
+   }
+  },
+  {
+   "id": "C-1508",
+   "basis": "observed",
+   "block": "keys",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks-S2.json",
+    "path": "[id=11974].sectionKey",
+    "expected": "ITEM_5_02"
+   }
+  },
+  {
+   "id": "C-1509",
+   "basis": "inferred",
+   "block": "keys",
+   "text": "The five AAPL 8-K chunks of filings 5, 7, and 8 (ingested 2026-09-10) have the same text before the rebuild and after the rollback and a section key with the sub-item after it (ITEM_2_02 for ITEM_2, ITEM_9_01 for ITEM_9, ITEM_5_02 for ITEM_5), while the MSFT 8-Ks ingested 2026-09-12 carried sub-item keys before the rebuild; so the parser in the tree at rebuild time keys 8-K items with the sub-item, and the 2026-09-10 ingestion did not (derived from the exports on identical text)",
+   "from": [
+    "C-1477",
+    "C-1478",
+    "C-1479",
+    "C-1480",
+    "C-1481",
+    "C-1482",
+    "C-1483",
+    "C-1484",
+    "C-1485",
+    "C-1486",
+    "C-1487",
+    "C-1488",
+    "C-1489",
+    "C-1490",
+    "C-1491",
+    "C-1492",
+    "C-1493",
+    "C-1494",
+    "C-1495",
+    "C-1496",
+    "C-1497",
+    "C-1498",
+    "C-1499",
+    "C-1500",
+    "C-1501",
+    "C-1502",
+    "C-1503",
+    "C-1504",
+    "C-1505",
+    "C-1506",
+    "C-1507",
+    "C-1508"
+   ]
+  },
+  {
+   "id": "C-1510",
+   "basis": "inferred",
+   "block": "keys",
+   "text": "A parser change between 2026-09-10 and 2026-09-12 (FilingHtmlParser commits 2ed3275 and 19876f2 in that interval, its comment saying the sub-item is kept in the key) is the inferred and untested reading of the key change: the isolating experiment, re-parsing filing 5 at commit 6e4719a, was not run",
+   "from": [
+    "C-1477",
+    "C-1478",
+    "C-1479",
+    "C-1480",
+    "C-1481",
+    "C-1482",
+    "C-1483",
+    "C-1484",
+    "C-1485",
+    "C-1486",
+    "C-1487",
+    "C-1488",
+    "C-1489",
+    "C-1490",
+    "C-1491",
+    "C-1492",
+    "C-1493",
+    "C-1494",
+    "C-1495",
+    "C-1496",
+    "C-1497",
+    "C-1498",
+    "C-1499",
+    "C-1500",
+    "C-1501",
+    "C-1502",
+    "C-1503",
+    "C-1504",
+    "C-1505",
+    "C-1506",
+    "C-1507",
+    "C-1508"
+   ]
+  },
+  {
+   "id": "C-1511",
+   "basis": "inferred",
+   "block": "keys",
+   "text": "aapl-08's not-held phrase is independent of the chunk size: the phrase is held by a stored chunk under the matching rule neither at the rebuilt size nor at the stored size after a rebuild with this parser, since the set names section ITEM_2 and the store keys it ITEM_2_02, and the post-rollback report at the stored size records it not held (the held-phrases claims); aapl-13's not-held phrase at the rebuilt store lies across a chunk boundary of the stored cut at the smaller size, and Milestone 1's diagnostic recorded aapl-13 as the one split phrase at its smallest re-split size (its sizeTable claim at that size)",
+   "from": [
+    "C-1477",
+    "C-1478",
+    "C-1479",
+    "C-1480",
+    "C-1481",
+    "C-1482",
+    "C-1483",
+    "C-1484",
+    "C-1485",
+    "C-1486",
+    "C-1487",
+    "C-1488",
+    "C-1489",
+    "C-1490",
+    "C-1491",
+    "C-1492",
+    "C-1493",
+    "C-1494",
+    "C-1495",
+    "C-1496",
+    "C-1497",
+    "C-1498",
+    "C-1499",
+    "C-1500",
+    "C-1501",
+    "C-1502",
+    "C-1503",
+    "C-1504",
+    "C-1505",
+    "C-1506",
+    "C-1507",
+    "C-1508",
+    "C-1267",
+    "C-1268",
+    "C-1269",
+    "C-1270"
+   ]
+  },
+  {
+   "id": "C-1512",
+   "basis": "inferred",
+   "block": "decision",
+   "text": "The selection rule was not applied: R1 failed, the rebuilt store was rolled back, the defaults stay at chunk size 4000 and overlap 125 times 4, and the decision on a further size or on the aapl-08 section key is recorded as DECISION RAG-27 for Jay",
+   "from": [
+    "C-1267",
+    "C-1268",
+    "C-1269",
+    "C-1270",
+    "C-1468"
+   ]
+  }
+ ]
+}

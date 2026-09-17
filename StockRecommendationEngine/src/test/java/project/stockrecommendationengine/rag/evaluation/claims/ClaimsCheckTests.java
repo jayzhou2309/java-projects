@@ -172,7 +172,7 @@ class ClaimsCheckTests {
                 name + " C-007 [format]: text expected none on basis observed (its sentence is rendered from its check), found \"An observed claim using notRecorded.\"",
                 name + " C-007 [notRecorded]: check type notRecorded expected basis unknown, found observed",
                 name + " C-008 [format]: check expected an object with a type, found none",
-                name + " C-009 [format]: check type expected one of rank, topK, metric, ruleRow, phraseSpan, membership, candidate, bestFusedPosition, candidateRecall, removedAccepted, blend, candidateLists, notRecorded, found \"median\"",
+                name + " C-009 [format]: check type expected one of rank, topK, metric, ruleRow, phraseSpan, membership, candidate, bestFusedPosition, candidateRecall, removedAccepted, blend, candidateLists, diagnosticLine, diagnosticCount, sizeTable, sizeChoice, notRecorded, found \"median\"",
                 name + " C-010 [experiment]: experiment expected an object with file and factor, found none",
                 name + " C-011 [topK]: unknown key \"rank\" in row 1",
                 name + " C-011 [topK]: row 2 expected an object {snapshot, expected}, found 3",

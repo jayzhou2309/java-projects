@@ -44,7 +44,7 @@ public final class ClaimsCheck {
     static final List<String> BASES = List.of("observed", "derived", "inferred", "unknown", "experiment");
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
     static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
-            "candidateRecall", "removedAccepted", "blend", "candidateLists", "notRecorded");
+            "candidateRecall", "removedAccepted", "blend", "candidateLists", "diagnosticLine", "diagnosticCount", "sizeTable", "sizeChoice", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -66,12 +66,17 @@ public final class ClaimsCheck {
             Map.entry("removedAccepted", Set.of("type", "report", "expected")),
             Map.entry("blend", Set.of("type", "snapshot", "report", "k", "w", "questions", "metric", "expected", "reference")),
             Map.entry("candidateLists", Set.of("type", "reference", "candidate", "compare", "expected")),
+            Map.entry("diagnosticLine", Set.of("type", "output", "experiment", "line", "question", "chunk", "sizeChars", "field", "expected")),
+            Map.entry("diagnosticCount", Set.of("type", "output", "experiment", "sizeChars", "expected")),
+            Map.entry("sizeTable", Set.of("type", "output", "sizeChars", "expected")),
+            Map.entry("sizeChoice", Set.of("type", "output", "stored", "candidates", "expected")),
             Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
             "phraseSpan", List.of("tokenSpan", "characterSpan"),
             "membership", List.of("head", "windowsHoldingWholly"),
-            "candidate", List.of("fusedPosition", "rerankInput", "rerankedPosition"));
+            "candidate", List.of("fusedPosition", "rerankInput", "rerankedPosition"),
+            "sizeTable", List.of("phrases", "firstRanked", "split", "unseen"));
     private static final Set<String> EXPERIMENT_REFERENCE_KEYS = Set.of("file", "factor");
     private static final Set<String> EXPERIMENT_FILE_KEYS = Set.of("experiment", "description");
     private static final Set<String> EXPERIMENT_KEYS = Set.of("factor", "settings", "snapshots");
@@ -617,6 +622,10 @@ public final class ClaimsCheck {
                 case "removedAccepted" -> removedAccepted(claim, check, evaluation);
                 case "blend" -> blend(claim, check, evaluation);
                 case "candidateLists" -> candidateLists(claim, check, evaluation);
+                case "diagnosticLine" -> diagnosticLine(claim, check, evaluation);
+                case "diagnosticCount" -> diagnosticCount(claim, check, evaluation);
+                case "sizeTable" -> sizeTable(claim, check, evaluation);
+                case "sizeChoice" -> sizeChoice(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -1726,10 +1735,287 @@ public final class ClaimsCheck {
             }
         });
         if (read instanceof String error) throw new Unreadable(error);
-        Loaded loaded = new Loaded(resolved, relative, (JsonNode) read);
+        if (!(read instanceof JsonNode json)) throw new Unreadable("file " + relative + " was read as diagnostic output by another check, not as JSON evidence");
+        Loaded loaded = new Loaded(resolved, relative, json);
         referenced.add(resolved);
         if (evaluation != null) evaluation.references.add(loaded);
         return loaded;
+    }
+
+    /**
+     * The file's {@code ANSWER_VISIBILITY} lines ({@link DiagnosticOutput}), read once per resolved path; the path must lie inside the
+     * evidence root. Recorded on the evaluation as a reference with no snapshot id, so an experiment claim reading it is refused.
+     */
+    private DiagnosticOutput diagnostic(String relative, Evaluation evaluation) {
+        Path resolved = resolve(relative, directory);
+        Object read = files.computeIfAbsent(resolved, path -> {
+            try {
+                return DiagnosticOutput.parse(Files.readString(path));
+            } catch (IOException failure) {
+                return "file " + relative + " cannot be read: " + firstLine(failure.getMessage());
+            }
+        });
+        if (read instanceof String error) throw new Unreadable(error);
+        if (!(read instanceof DiagnosticOutput output)) throw new Unreadable("file " + relative + " was read as JSON evidence by another check, not as diagnostic output");
+        if (output.lines().isEmpty()) throw new Unreadable("file " + relative + " holds no ANSWER_VISIBILITY line");
+        referenced.add(resolved);
+        evaluation.references.add(new Loaded(resolved, relative, JSON.createObjectNode()));
+        return output;
+    }
+
+    /** "the diagnostic output <path as written>" or "<label> (the diagnostic output <path as written>)". */
+    private String outputReference(String relative) {
+        String label = labels.get(resolve(relative, directory));
+        String reference = "the diagnostic output " + relative;
+        return label == null ? reference : label + " (" + reference + ")";
+    }
+
+    /**
+     * The one line of the experiment matching the selectors; none or several is unreadable, naming the count found. With a line number, that
+     * line, which must be a line of the experiment and match the other selectors.
+     */
+    private static DiagnosticOutput.Line oneLine(DiagnosticOutput output, String relative, String experiment, Integer number, String question, Long chunk, Integer sizeChars) {
+        List<DiagnosticOutput.Line> lines = output.select(experiment, question, chunk, sizeChars).stream().filter(line -> number == null || line.number() == number).toList();
+        if (lines.size() != 1) {
+            throw new Unreadable(relative + " has " + (lines.isEmpty() ? "no " + experiment + " line" : lines.size() + " " + experiment + " lines") + " matching "
+                    + selectors(number, question, chunk, sizeChars) + (lines.isEmpty() ? "" : " (lines " + lines.stream().map(line -> String.valueOf(line.number())).collect(Collectors.joining(", ")) + ")")
+                    + ", expected exactly one");
+        }
+        return lines.get(0);
+    }
+
+    private static String selectors(Integer number, String question, Long chunk, Integer sizeChars) {
+        List<String> parts = new ArrayList<>();
+        if (number != null) parts.add("line " + number);
+        if (question != null) parts.add("question " + question);
+        if (chunk != null) parts.add("chunk " + chunk);
+        if (sizeChars != null) parts.add(sizeChars + " characters");
+        return parts.isEmpty() ? "no selector" : String.join(", ", parts);
+    }
+
+    /** "the <experiment>[ TOTALS] line[ of <question>][, chunk <chunk>][, at <n> characters]". */
+    private static String lineDescription(String experiment, boolean totals, String question, Long chunk, Integer sizeChars) {
+        return "the " + experiment + (totals ? " TOTALS" : "") + " line" + (question == null ? "" : " of " + question) + (chunk == null ? "" : ", chunk " + chunk)
+                + (sizeChars == null ? "" : ", at " + sizeChars + " characters");
+    }
+
+    // Template (RAG.md, Claims, Sentences): "Line <n> of <Output>, the <experiment>[ TOTALS] line[ of <question>][, chunk <id>][, at <size>
+    // characters], records <field> <value as printed>."
+    /**
+     * One field of one printed line, compared as printed: a number expected against a value that reads as a number by numeric value,
+     * anything else as text against the printed text (a boolean as {@code true} or {@code false}, a list with its brackets, a quoted phrase
+     * with its quotes). The selectors (a line number, the question, the chunk, the size) must match exactly one line of the experiment.
+     */
+    private String diagnosticLine(Claim claim, JsonNode check, Evaluation evaluation) {
+        String outputFile = requireText(check, "output");
+        String experiment = requireText(check, "experiment");
+        String field = requireText(check, "field");
+        Integer number = optionalSize(check, "line");
+        String question = optionalText(check, "question");
+        Long chunk = optionalLong(check, "chunk");
+        Integer sizeChars = optionalSize(check, "sizeChars");
+        JsonNode expected = check.get("expected");
+        if (expected == null || expected.isNull() || expected.isArray() || expected.isObject()) {
+            throw new Unreadable("check.expected must be a number, string, or boolean as the line prints it, found " + (expected == null ? "none" : expected));
+        }
+        evaluation.subject(field + " of " + lineDescription(experiment, false, question, chunk, sizeChars) + (number == null ? "" : " (line " + number + ")") + " in " + outputFile);
+        DiagnosticOutput output = diagnostic(outputFile, evaluation);
+        DiagnosticOutput.Line line = oneLine(output, outputFile, experiment, number, question, chunk, sizeChars);
+        String value = line.field(field);
+        if (value == null) throw new Unreadable("line " + line.number() + " has no field " + field + " (its fields: " + String.join(", ", line.fields().keySet()) + ")");
+        if (!printedEquals(expected, value)) evaluation.differs(field, render(expected), value + " (line " + line.number() + ")");
+        basis(claim, "observed", evaluation);
+        return "Line " + line.number() + " of " + outputReference(outputFile) + ", " + lineDescription(experiment, line.fields().containsKey("TOTALS"), question, chunk, sizeChars)
+                + ", records " + field + " " + value + ".";
+    }
+
+    /** A number against a printed number by value; otherwise the rendered expectation against the printed text. */
+    private static boolean printedEquals(JsonNode expected, String printed) {
+        if (expected.isNumber()) {
+            try {
+                return expected.decimalValue().compareTo(new BigDecimal(printed)) == 0;
+            } catch (NumberFormatException notANumber) {
+                return false;
+            }
+        }
+        return render(expected).equals(printed);
+    }
+
+    // Template: "<Output> holds <n> <experiment> lines naming a question[ at <size> characters]."
+    /** The number of the experiment's lines that name a question (the setup line and a TOTALS line are not counted), at one size when given. */
+    private String diagnosticCount(Claim claim, JsonNode check, Evaluation evaluation) {
+        String outputFile = requireText(check, "output");
+        String experiment = requireText(check, "experiment");
+        Integer sizeChars = optionalSize(check, "sizeChars");
+        JsonNode expected = check.get("expected");
+        if (expected == null || !expected.isIntegralNumber() || expected.intValue() < 0) {
+            throw new Unreadable("check.expected must be a line count (non-negative integer), found " + (expected == null ? "none" : expected));
+        }
+        evaluation.subject(experiment + " lines" + (sizeChars == null ? "" : " at " + sizeChars + " characters") + " in " + outputFile);
+        DiagnosticOutput output = diagnostic(outputFile, evaluation);
+        long count = output.select(experiment, null, null, sizeChars).stream().filter(DiagnosticOutput.Line::measurement).count();
+        if (count != expected.intValue()) evaluation.differs("count", String.valueOf(expected.intValue()), String.valueOf(count));
+        basis(claim, "derived", evaluation);
+        return capitalize(outputReference(outputFile)) + " holds " + count + " " + experiment + " lines naming a question" + (sizeChars == null ? "" : " at " + sizeChars + " characters") + ".";
+    }
+
+    /** The counts of the frozen size rule at one size (plan {@code 2026-09-17-chunk-size.md}), over the chunkSize lines at that size. */
+    private record SizeCounts(int sizeChars, Integer overlapChars, int phrases, int firstRanked, int split, int unseen, List<String> notFirst,
+            List<String> splitPhrases, List<String> unseenPhrases) {
+    }
+
+    /**
+     * Over the chunkSize lines at {@code sizeChars}: a line is one located phrase; first-ranked when its {@code bestRank} is 1; split when it
+     * prints {@code noPieceHoldsPhrase=true} or {@code piecesHoldingPhrase=0}; unseen when it is not split and no holder prints
+     * {@code phraseSeen=true}. A line that is neither split nor prints an integer {@code bestRank} is unreadable, as is a size with no line.
+     */
+    private static SizeCounts sizeCounts(DiagnosticOutput output, String relative, int sizeChars) {
+        List<DiagnosticOutput.Line> lines = output.select("chunkSize", null, null, sizeChars).stream().filter(DiagnosticOutput.Line::measurement).toList();
+        if (lines.isEmpty()) throw new Unreadable(relative + " has no chunkSize line at " + sizeChars + " characters");
+        int firstRanked = 0;
+        int split = 0;
+        int unseen = 0;
+        Integer overlap = null;
+        List<String> notFirst = new ArrayList<>();
+        List<String> splitPhrases = new ArrayList<>();
+        List<String> unseenPhrases = new ArrayList<>();
+        for (DiagnosticOutput.Line line : lines) {
+            String phrase = line.field("question") + " (stored chunk " + line.field("storedChunk") + ", line " + line.number() + ")";
+            if ("true".equals(line.field("noPieceHoldsPhrase")) || "0".equals(line.field("piecesHoldingPhrase"))) {
+                split++;
+                splitPhrases.add(phrase);
+                continue;
+            }
+            String printedOverlap = line.field("overlapChars");
+            if (printedOverlap != null) {
+                int value = parseInt(printedOverlap, "overlapChars on line " + line.number());
+                if (overlap != null && overlap != value) throw new Unreadable("overlapChars differs among the chunkSize lines at " + sizeChars + " characters (" + overlap + " and " + value + " on line " + line.number() + ")");
+                overlap = value;
+            }
+            String bestRank = line.field("bestRank");
+            if (bestRank == null) throw new Unreadable("line " + line.number() + " prints neither bestRank nor noPieceHoldsPhrase=true");
+            int rank = parseInt(bestRank, "bestRank on line " + line.number());
+            if (rank == 1) firstRanked++;
+            else notFirst.add(phrase + " bestRank " + rank);
+            if (line.holders().stream().noneMatch(holder -> "true".equals(holder.get("phraseSeen")))) {
+                unseen++;
+                unseenPhrases.add(phrase);
+            }
+        }
+        return new SizeCounts(sizeChars, overlap, lines.size(), firstRanked, split, unseen, notFirst, splitPhrases, unseenPhrases);
+    }
+
+    private static int parseInt(String printed, String what) {
+        try {
+            return Integer.parseInt(printed);
+        } catch (NumberFormatException notAnInteger) {
+            throw new Unreadable(what + " expected an integer, found " + printed);
+        }
+    }
+
+    // Template: "At <size> characters[ (overlap <o>)], <Output> records <p> phrases: <f> with the holding piece ranked first in its section
+    // pool, <s> split by a piece boundary, and <u> whose holding pieces are seen by no scored row."
+    /** The size rule's counts at one size; every expected field is required, and a failure names the phrases behind each differing count. */
+    private String sizeTable(Claim claim, JsonNode check, Evaluation evaluation) {
+        String outputFile = requireText(check, "output");
+        Integer sizeChars = optionalSize(check, "sizeChars");
+        if (sizeChars == null) throw new Unreadable("check.sizeChars must be a positive integer, found none");
+        JsonNode expected = expected(check, "sizeTable");
+        for (String key : EXPECTED_KEYS.get("sizeTable")) {
+            JsonNode value = expected.get(key);
+            if (value == null || !value.isIntegralNumber() || value.intValue() < 0) throw new Unreadable("check.expected." + key + " must be a non-negative integer, found " + value);
+        }
+        evaluation.subject(sizeChars + " characters in " + outputFile);
+        DiagnosticOutput output = diagnostic(outputFile, evaluation);
+        SizeCounts counts = sizeCounts(output, outputFile, sizeChars);
+        if (counts.phrases() != expected.get("phrases").intValue()) evaluation.differs("phrases", expected.get("phrases").toString(), String.valueOf(counts.phrases()));
+        if (counts.firstRanked() != expected.get("firstRanked").intValue()) {
+            evaluation.differs("firstRanked", expected.get("firstRanked").toString(), counts.firstRanked() + (counts.notFirst().isEmpty() ? "" : " (not first: " + String.join(", ", counts.notFirst()) + ")"));
+        }
+        if (counts.split() != expected.get("split").intValue()) {
+            evaluation.differs("split", expected.get("split").toString(), counts.split() + (counts.split() == 0 ? "" : " (" + String.join(", ", counts.splitPhrases()) + ")"));
+        }
+        if (counts.unseen() != expected.get("unseen").intValue()) {
+            evaluation.differs("unseen", expected.get("unseen").toString(), counts.unseen() + (counts.unseen() == 0 ? "" : " (" + String.join(", ", counts.unseenPhrases()) + ")"));
+        }
+        basis(claim, "derived", evaluation);
+        return "At " + sizeChars + " characters" + (counts.overlapChars() == null ? "" : " (overlap " + counts.overlapChars() + ")") + ", " + outputReference(outputFile) + " records "
+                + counts.phrases() + " phrases: " + counts.firstRanked() + " with the holding piece ranked first in its section pool, " + counts.split()
+                + " split by a piece boundary, and " + counts.unseen() + " whose holding pieces are seen by no scored row.";
+    }
+
+    // Template: "Under the frozen size rule over <Output> (first-ranked phrases: <size> characters <n>, ...; split phrases: <size> characters <n>,
+    // ...; a size with a split phrase is excluded), the chosen size is <size> characters." | "..., no size is chosen: no remaining size has more
+    // first-ranked phrases than the stored <size> characters." | "..., no size is chosen: no candidate size remains."
+    /**
+     * The frozen size-choice rule of plan {@code 2026-09-17-chunk-size.md}, computed from the chunkSize lines: among the candidate sizes
+     * without a split phrase, the one with the most first-ranked phrases, the larger on a tie; none when no remaining size has more
+     * first-ranked phrases than the stored size. {@code expected} is the chosen size or the string {@code none}.
+     */
+    private String sizeChoice(Claim claim, JsonNode check, Evaluation evaluation) {
+        String outputFile = requireText(check, "output");
+        Integer stored = optionalSize(check, "stored");
+        if (stored == null) throw new Unreadable("check.stored must be a positive integer, found none");
+        JsonNode candidatesNode = check.get("candidates");
+        if (candidatesNode == null || !candidatesNode.isArray() || candidatesNode.isEmpty()) throw new Unreadable("check.candidates must list at least one size, found " + candidatesNode);
+        List<Integer> candidates = new ArrayList<>();
+        for (JsonNode candidate : candidatesNode) {
+            if (!candidate.isIntegralNumber() || candidate.intValue() < 1) throw new Unreadable("check.candidates must hold positive integers, found " + candidate);
+            if (candidate.intValue() == stored || candidates.contains(candidate.intValue())) throw new Unreadable("check.candidates must be distinct sizes other than the stored " + stored + ", found " + candidatesNode);
+            candidates.add(candidate.intValue());
+        }
+        JsonNode expected = check.get("expected");
+        boolean none = expected != null && expected.isString() && expected.stringValue().equals("none");
+        if (!none && (expected == null || !expected.isIntegralNumber() || !candidates.contains(expected.intValue()))) {
+            throw new Unreadable("check.expected must be one of the candidate sizes or \"none\", found " + (expected == null ? "none given" : expected));
+        }
+        evaluation.subject("stored " + stored + ", candidates " + candidates + " in " + outputFile);
+        DiagnosticOutput output = diagnostic(outputFile, evaluation);
+        SizeCounts storedCounts = sizeCounts(output, outputFile, stored);
+        List<SizeCounts> all = new ArrayList<>();
+        all.add(storedCounts);
+        SizeCounts best = null;
+        for (int candidate : candidates) {
+            SizeCounts counts = sizeCounts(output, outputFile, candidate);
+            all.add(counts);
+            if (counts.split() > 0) continue;
+            if (best == null || counts.firstRanked() > best.firstRanked() || counts.firstRanked() == best.firstRanked() && counts.sizeChars() > best.sizeChars()) best = counts;
+        }
+        Integer chosen = best != null && best.firstRanked() > storedCounts.firstRanked() ? best.sizeChars() : null;
+        Integer wanted = none ? null : expected.intValue();
+        if (!Objects.equals(chosen, wanted)) {
+            evaluation.differs("chosen size", wanted == null ? "none" : String.valueOf(wanted), (chosen == null ? "none" : String.valueOf(chosen)) + " (first-ranked: "
+                    + all.stream().map(c -> c.sizeChars() + " " + c.firstRanked()).collect(Collectors.joining(", ")) + "; split: "
+                    + all.stream().map(c -> c.sizeChars() + " " + c.split()).collect(Collectors.joining(", ")) + ")");
+        }
+        basis(claim, "derived", evaluation);
+        String counts = "first-ranked phrases: " + all.stream().map(c -> c.sizeChars() + " characters " + c.firstRanked()).collect(Collectors.joining(", "))
+                + "; split phrases: " + all.stream().map(c -> c.sizeChars() + " characters " + c.split()).collect(Collectors.joining(", ")) + "; a size with a split phrase is excluded";
+        String start = "Under the frozen size rule over " + outputReference(outputFile) + " (" + counts + "), ";
+        if (chosen != null) return start + "the chosen size is " + chosen + " characters.";
+        if (best == null) return start + "no size is chosen: no candidate size remains.";
+        return start + "no size is chosen: no remaining size has more first-ranked phrases than the stored " + stored + " characters.";
+    }
+
+    private static String optionalText(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null) return null;
+        if (!value.isString() || value.stringValue().isBlank()) throw new Unreadable("check." + field + " must be a non-blank string, found " + value);
+        return value.stringValue();
+    }
+
+    private static Long optionalLong(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null) return null;
+        if (!value.isIntegralNumber()) throw new Unreadable("check." + field + " must be an integer, found " + value);
+        return value.longValue();
+    }
+
+    private static Integer optionalSize(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null) return null;
+        if (!value.isIntegralNumber() || value.intValue() < 1) throw new Unreadable("check." + field + " must be a positive integer, found " + value);
+        return value.intValue();
     }
 
     private Path resolve(String relative, Path base) {

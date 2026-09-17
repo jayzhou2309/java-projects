@@ -43,7 +43,7 @@ chat model call in this plan; rebuilds and evaluation runs make embedding calls 
   quarter of today's text. Changing that top-k or the prompt is out of scope; if the new size is kept, it is recorded
   as a DECISION item for Jay.
 - Evidence rule RAG-14 applies to every write-up: claims in `claims.json`, generated blocks in RAG.md, labels on every
-  claim. Claim ids: Milestone 1 uses C-1001 to C-1199, Milestone 3 uses C-1201 to C-1499 (C-971 is the highest in use).
+  claim. Claim ids: Milestone 1 uses C-1001 to C-1199, Milestone 3 uses C-1201 to C-1499 (the highest id in use is C-971).
 - Documentation conventions: bullet style, dated change-log bullet per milestone, live evidence under
   `documentation/live-runs/2026-09-17-chunk-size/`, Follow_Ups items with stable ids, PRD phase table and CLAUDE.md
   loop history at the end.

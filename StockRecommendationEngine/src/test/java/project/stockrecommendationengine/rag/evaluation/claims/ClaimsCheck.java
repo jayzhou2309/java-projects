@@ -48,7 +48,7 @@ public final class ClaimsCheck {
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
     static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
             "candidateRecall", "removedAccepted", "blend", "candidateLists", "diagnosticLine", "diagnosticCount", "sizeTable", "sizeChoice", "matchedChunk",
-            "rankHistogram", "rankedAbove", "fileValue", "heldPhrases", "notRecorded");
+            "rankHistogram", "rankedAbove", "fileValue", "heldPhrases", "subsetMetric", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -79,6 +79,7 @@ public final class ClaimsCheck {
             Map.entry("rankedAbove", Set.of("type", "snapshot", "question", "chunks", "expected")),
             Map.entry("fileValue", Set.of("type", "file", "path", "expected")),
             Map.entry("heldPhrases", Set.of("type", "report", "expected")),
+            Map.entry("subsetMetric", Set.of("type", "snapshot", "questions", "metric", "expected")),
             Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
@@ -670,6 +671,7 @@ public final class ClaimsCheck {
                 case "rankedAbove" -> rankedAbove(claim, check, evaluation);
                 case "fileValue" -> fileValue(claim, check, evaluation);
                 case "heldPhrases" -> heldPhrases(claim, check, evaluation);
+                case "subsetMetric" -> subsetMetric(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -795,6 +797,71 @@ public final class ClaimsCheck {
         parts.add(outside == 0 ? "none ranks outside the window" + window
                 : outside + " rank outside the window" + window + " (no matching chunk" + (errors == 0 ? "" : ", " + errors + " with a retrieval error") + ")");
         return "In " + snapshotReference(loaded, snapshot, null) + ", of the " + total + " questions " + joinAnd(parts) + ".";
+    }
+
+    // Template (RAG.md, Claims, Sentences): "From the stored ranks of <Snapshot>, <name> over the <n> questions <ids> is <value> (<c> ranked 1 to <k>)."
+    // for hit@1, hit@3, hit@5 ("ranked 1st" for hit@1), and "From the stored ranks of <Snapshot>, MRR over the <n> questions <ids> is <value>."
+    /**
+     * A metric over a listed subset of a snapshot's questions, computed from their stored ranks (since 2026-09-17, plan
+     * 2026-09-17-chunk-size-pool.md Milestone 1: the tuning and held-out questions of a split). {@code metric} is hitAt1, hitAt3, hitAt5, or mrr,
+     * computed as RetrievalEvaluationService computes them (questions ranked 1 to k divided by the listed questions, half up to six places; each
+     * 1/rank half up to twelve places, their sum divided by the listed questions half up to six places, a null rank counting 0). The check reads
+     * stored ranks only; which split, slice, or ticker the list stands for is not read.
+     */
+    private String subsetMetric(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        JsonNode questionsNode = check.get("questions");
+        if (questionsNode == null || !questionsNode.isArray() || questionsNode.isEmpty()) {
+            throw new Unreadable("check.questions must list at least one question id, found " + questionsNode);
+        }
+        List<String> questions = new ArrayList<>();
+        for (JsonNode q : questionsNode) {
+            if (!q.isString() || q.stringValue().isBlank() || questions.contains(q.stringValue())) {
+                throw new Unreadable("check.questions must list distinct non-blank question ids, found " + abbreviate(questionsNode.toString()));
+            }
+            questions.add(q.stringValue());
+        }
+        String metric = requireText(check, "metric");
+        if (!Set.of("hitAt1", "hitAt3", "hitAt5", "mrr").contains(metric)) throw new Unreadable("check.metric must be hitAt1, hitAt3, hitAt5, or mrr, found " + quote(metric));
+        BigDecimal expected = scale6(check.get("expected"));
+        if (expected == null) throw new Unreadable("check.expected must be a number with at most six decimal places, found " + check.get("expected"));
+        evaluation.subject(metric + " over " + questions.size() + (questions.size() == 1 ? " question" : " questions") + " of " + snapshotFile);
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Map<String, Integer> ranks = new LinkedHashMap<>();
+        for (String question : questions) {
+            JsonNode rank = snapshot.question(question).get("rank");
+            if (rank != null && !rank.isNull() && !(rank.isIntegralNumber() && rank.intValue() > 0)) {
+                throw new Unreadable("question " + question + " records a rank that is not a positive integer: " + rank);
+            }
+            ranks.put(question, snapshot.rank(question));
+        }
+        basis(claim, "derived", evaluation);
+        String lead = "From the stored ranks of " + snapshotReference(loaded, snapshot, null) + ", ";
+        String over = " over the " + questions.size() + (questions.size() == 1 ? " question " : " questions ") + joinAnd(questions) + " is ";
+        if (metric.equals("mrr")) {
+            BigDecimal sum = BigDecimal.ZERO;
+            for (Integer r : ranks.values()) {
+                if (r != null) sum = sum.add(BigDecimal.ONE.divide(BigDecimal.valueOf(r), 12, RoundingMode.HALF_UP));
+            }
+            BigDecimal found = sum.divide(BigDecimal.valueOf(questions.size()), 6, RoundingMode.HALF_UP);
+            if (found.compareTo(expected) != 0) {
+                List<String> listed = new ArrayList<>();
+                ranks.forEach((q, r) -> listed.add(q + " " + rankText(r)));
+                evaluation.differs("MRR", expected.toPlainString(), found.toPlainString() + " (" + String.join(", ", listed) + ")");
+            }
+            return lead + "MRR" + over + found.toPlainString() + ".";
+        }
+        int k = Integer.parseInt(metric.substring("hitAt".length()));
+        long inside = ranks.values().stream().filter(r -> r != null && r <= k).count();
+        BigDecimal found = BigDecimal.valueOf(inside).divide(BigDecimal.valueOf(questions.size()), 6, RoundingMode.HALF_UP);
+        if (found.compareTo(expected) != 0) {
+            List<String> outside = new ArrayList<>();
+            ranks.forEach((q, r) -> { if (r == null || r > k) outside.add(q + " (" + rankText(r) + ")"); });
+            evaluation.differs(metricName(metric), expected.toPlainString(), found.toPlainString() + " (" + inside + " of " + questions.size() + "; outside the top " + k + ": "
+                    + (outside.isEmpty() ? "none" : String.join(", ", outside)) + ")");
+        }
+        return lead + metricName(metric) + over + found.toPlainString() + " (" + inside + (k == 1 ? " ranked 1st)." : " ranked 1 to " + k + ")."); 
     }
 
     /** Rank keys in numeric order with notInWindow last. */

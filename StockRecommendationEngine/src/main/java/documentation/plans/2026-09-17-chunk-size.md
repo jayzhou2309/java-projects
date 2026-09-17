@@ -194,3 +194,11 @@ Correctness contract:
   chunking stay section-aware with its metadata: chunks are already cut within parsed sections and carry section key,
   title, index, offsets, and token count; Milestone 2 contract E5 makes that an explicit check at the new size.
   Adding heading text into chunk content would be a second factor and is out of this plan. Milestone 2 starts.
+- 2026-09-17, Milestone 2 closed (1ba6c23 fixture, 99c694d change): Scrutiny PASS on E1 to E5 with no findings (the
+  fixture re-derived from the old rule independently; the chunker run against the replica on an eleven-section edge
+  fixture at eleven size and overlap pairs; startup refusal of an over-half overlap shown by experiment); UT PASS
+  (snapshot 1610 at defaults records chunkMaxChars 4000, chunkOverlapChars 500, storeVersions
+  [sections-v2-context-v2] equal to the store; snapshots 598 and 947 read back with the keys unknown; store untouched at
+  569 chunks; retrieve smoke check green; port 8081 free). Two low notes recorded by Scrutiny, no fix required: the
+  bounds are stated both in the properties annotations and in the chunker's guard; RAG.md calls the half-size rule
+  class-level while it is an `@AssertTrue` method. Milestone 3 starts at the size of amendment 3 (1,000 / 125).

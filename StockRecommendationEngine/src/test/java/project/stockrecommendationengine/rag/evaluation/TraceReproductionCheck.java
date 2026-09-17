@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionResult;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionTrace;
 import project.stockrecommendationengine.rag.retrieval.RetrievalTrace;
@@ -22,7 +23,10 @@ import tools.jackson.databind.JsonNode;
  * <li>every question whose retrieval errored, with the error;</li>
  * <li>every run property that differs from the reference: each property of the reference must be present with an equal value, and the
  * run may carry no property the reference lacks except {@value #EXEMPT_PROPERTY}, which must be {@code true} (the reference predates
- * traces, so it has none).</li>
+ * traces, so it has none), and except the properties the caller names as exempt ({@link #problems(JsonNode, RetrievalEvaluation, Set)}),
+ * each of which the run must carry (since 2026-09-17, plan {@code 2026-09-17-chunk-size.md} Milestone 3: snapshots stored before that
+ * date record no {@code chunkMaxChars}, {@code chunkOverlapChars}, or {@code storeVersions}, so a run reproducing one carries three
+ * properties the reference lacks; naming them keeps every other property compared).</li>
  * </ol>
  */
 final class TraceReproductionCheck {
@@ -34,6 +38,15 @@ final class TraceReproductionCheck {
 
     /** Every problem, in the order of the class description; empty when the run reproduces the reference. */
     static List<String> problems(JsonNode reference, RetrievalEvaluation run) {
+        return problems(reference, run, Set.of());
+    }
+
+    /**
+     * As {@link #problems(JsonNode, RetrievalEvaluation)}, with {@code exempt} the run properties the reference may lack: each must be
+     * present in the run (absent is a problem) and is otherwise not compared; a property both record is compared whether or not it is
+     * named here.
+     */
+    static List<String> problems(JsonNode reference, RetrievalEvaluation run, Set<String> exempt) {
         List<String> problems = new ArrayList<>();
         String label = "snapshot " + reference.get("id").asString();
 
@@ -89,7 +102,7 @@ final class TraceReproductionCheck {
         }
         for (Map.Entry<String, Object> property : properties.entrySet()) {
             String key = property.getKey();
-            if (referenceProperties.has(key)) continue;
+            if (referenceProperties.has(key) || exempt.contains(key)) continue;
             if (EXEMPT_PROPERTY.equals(key)) {
                 if (!Boolean.TRUE.equals(property.getValue())) problems.add("property trace: expected true, run " + property.getValue());
             } else {
@@ -97,6 +110,9 @@ final class TraceReproductionCheck {
             }
         }
         if (!properties.containsKey(EXEMPT_PROPERTY)) problems.add("property trace: expected true, absent from the run");
+        for (String key : exempt) {
+            if (!properties.containsKey(key)) problems.add("property " + key + ": exempt from the comparison with " + label + " but absent from the run");
+        }
         return problems;
     }
 

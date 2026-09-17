@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import tools.jackson.core.JacksonException;
@@ -44,7 +47,8 @@ public final class ClaimsCheck {
     static final List<String> BASES = List.of("observed", "derived", "inferred", "unknown", "experiment");
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
     static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
-            "candidateRecall", "removedAccepted", "blend", "candidateLists", "diagnosticLine", "diagnosticCount", "sizeTable", "sizeChoice", "notRecorded");
+            "candidateRecall", "removedAccepted", "blend", "candidateLists", "diagnosticLine", "diagnosticCount", "sizeTable", "sizeChoice", "matchedChunk",
+            "rankHistogram", "rankedAbove", "fileValue", "heldPhrases", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -70,16 +74,22 @@ public final class ClaimsCheck {
             Map.entry("diagnosticCount", Set.of("type", "output", "experiment", "sizeChars", "expected")),
             Map.entry("sizeTable", Set.of("type", "output", "sizeChars", "expected")),
             Map.entry("sizeChoice", Set.of("type", "output", "stored", "candidates", "expected")),
+            Map.entry("matchedChunk", Set.of("type", "snapshot", "question", "expected")),
+            Map.entry("rankHistogram", Set.of("type", "snapshot", "expected")),
+            Map.entry("rankedAbove", Set.of("type", "snapshot", "question", "chunks", "expected")),
+            Map.entry("fileValue", Set.of("type", "file", "path", "expected")),
+            Map.entry("heldPhrases", Set.of("type", "report", "expected")),
             Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
             "phraseSpan", List.of("tokenSpan", "characterSpan"),
             "membership", List.of("head", "windowsHoldingWholly"),
             "candidate", List.of("fusedPosition", "rerankInput", "rerankedPosition"),
-            "sizeTable", List.of("phrases", "firstRanked", "split", "unseen"));
+            "sizeTable", List.of("phrases", "firstRanked", "split", "unseen"),
+            "heldPhrases", List.of("phrases", "held"));
     private static final Set<String> EXPERIMENT_REFERENCE_KEYS = Set.of("file", "factor");
     private static final Set<String> EXPERIMENT_FILE_KEYS = Set.of("experiment", "description");
-    private static final Set<String> EXPERIMENT_KEYS = Set.of("factor", "settings", "snapshots");
+    private static final Set<String> EXPERIMENT_KEYS = Set.of("factor", "settings", "snapshots", "coupled");
     private static final Map<String, String> CRITERION_NAMES = Map.of("aggregateHitAt5", "aggregate hit@5", "nonFigureHitAt5", "non-figure hit@5",
             "tickerHitAt5", "per-ticker hit@5", "figureKindTop5", "FIGURE top-5");
 
@@ -525,6 +535,22 @@ public final class ClaimsCheck {
         if (snapshotFiles == null || !snapshotFiles.isArray() || snapshotFiles.size() != 2 || !snapshotFiles.get(0).isString() || !snapshotFiles.get(1).isString()) {
             found.add(experimentFile + " snapshots expected two committed snapshot files, one per setting, found " + (snapshotFiles == null ? "none" : abbreviate(snapshotFiles.toString())));
         }
+        // Since 2026-09-17 (plan 2026-09-17-chunk-size.md, Milestone 3): recorded properties that change together with the factor, each of which
+        // must differ between the two snapshots and is named in the rendered sentence; the factor itself may not be listed.
+        List<String> coupled = new ArrayList<>();
+        JsonNode declaredCoupled = declared.get("coupled");
+        if (declaredCoupled != null) {
+            if (!declaredCoupled.isArray()) {
+                found.add(experimentFile + " coupled expected a list of recorded property names that change with the factor, found " + abbreviate(declaredCoupled.toString()));
+            } else {
+                for (JsonNode name : declaredCoupled) {
+                    if (!name.isString() || name.stringValue().isBlank()) found.add(experimentFile + " coupled expected property names, found " + name);
+                    else if (name.stringValue().equals(factor)) found.add(experimentFile + " coupled expected properties other than the factor, found the factor " + factor);
+                    else if (coupled.contains(name.stringValue())) found.add(experimentFile + " coupled lists " + name.stringValue() + " twice");
+                    else coupled.add(name.stringValue());
+                }
+            }
+        }
         if (!found.isEmpty()) {
             found.forEach(problem -> problems.add(label + problem));
             return null;
@@ -568,11 +594,23 @@ public final class ClaimsCheck {
                 found.add(experimentFile + " snapshots expected to differ in " + factor + ", found " + render(firstValue) + " in both");
             }
         }
+        List<String> coupledRendered = new ArrayList<>();
+        for (String key : coupled) {
+            JsonNode a = recorded.get(0).get(key);
+            JsonNode b = recorded.get(1).get(key);
+            if (a == null || b == null) {
+                found.add(experimentFile + " coupled property " + key + " expected a property both snapshots record, found " + (a == null ? first : second) + " not recording it");
+            } else if (sameValue(a, b)) {
+                found.add(experimentFile + " snapshots expected to differ in the coupled property " + key + ", found " + render(a) + " in both");
+            } else {
+                coupledRendered.add(key + " " + render(a) + " against " + render(b));
+            }
+        }
         List<String> others = new ArrayList<>();
         Set<String> keys = new LinkedHashSet<>(recorded.get(0).keySet());
         keys.addAll(recorded.get(1).keySet());
         for (String key : keys) {
-            if (key.equals(factor)) continue;
+            if (key.equals(factor) || coupled.contains(key)) continue;
             JsonNode a = recorded.get(0).get(key);
             JsonNode b = recorded.get(1).get(key);
             if (a == null || b == null || !sameValue(a, b)) {
@@ -580,14 +618,15 @@ public final class ClaimsCheck {
             }
         }
         if (!others.isEmpty()) {
-            found.add(experimentFile + " snapshots " + first + " and " + second + " expected to differ only in " + factor + ", found " + others.size()
+            found.add(experimentFile + " snapshots " + first + " and " + second + " expected to differ only in " + factor + (coupled.isEmpty() ? "" : " and the coupled " + String.join(", ", coupled)) + ", found " + others.size()
                     + (others.size() == 1 ? " other recorded property differing: " : " other recorded properties differing: ") + String.join(", ", others));
         }
         if (!found.isEmpty()) {
             found.forEach(problem -> problems.add(label + problem));
             return null;
         }
-        String rendered = factor + " " + render(settings.get(0)) + " in snapshot " + ids.get(0) + " against " + render(settings.get(1)) + " in snapshot " + ids.get(1);
+        String rendered = factor + " " + render(settings.get(0)) + " in snapshot " + ids.get(0) + " against " + render(settings.get(1)) + " in snapshot " + ids.get(1)
+                + (coupledRendered.isEmpty() ? "" : ", with it " + joinAnd(coupledRendered));
         return new Experiment(experimentFile, snapshots, ids, rendered);
     }
 
@@ -626,6 +665,11 @@ public final class ClaimsCheck {
                 case "diagnosticCount" -> diagnosticCount(claim, check, evaluation);
                 case "sizeTable" -> sizeTable(claim, check, evaluation);
                 case "sizeChoice" -> sizeChoice(claim, check, evaluation);
+                case "matchedChunk" -> matchedChunk(claim, check, evaluation);
+                case "rankHistogram" -> rankHistogram(claim, check, evaluation);
+                case "rankedAbove" -> rankedAbove(claim, check, evaluation);
+                case "fileValue" -> fileValue(claim, check, evaluation);
+                case "heldPhrases" -> heldPhrases(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -671,6 +715,242 @@ public final class ClaimsCheck {
         Unreadable(String message) {
             super(message);
         }
+    }
+
+    // Template (RAG.md, Claims, Sentences): "<Snapshot> records chunk <id> as the matched chunk of <question>." | "<Snapshot> records no matched
+    // chunk for <question> (no matching chunk in the window)." | "<Snapshot> records a retrieval error for <question> and no matched chunk."
+    /** The question's stored matchedChunkId (since 2026-09-17, plan 2026-09-17-chunk-size.md Milestone 3), an integer or null. */
+    private String matchedChunk(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        String question = requireText(check, "question");
+        evaluation.subject("matched chunk of " + question + " in " + snapshotFile);
+        JsonNode expected = check.get("expected");
+        if (expected == null || !(expected.isNull() || expected.isIntegralNumber())) {
+            throw new Unreadable("check.expected must be a chunk id (integer) or null, found " + (expected == null ? "none" : expected));
+        }
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Long found = snapshot.matchedChunkId(question);
+        Long wanted = expected.isNull() ? null : expected.longValue();
+        if (!Objects.equals(found, wanted)) evaluation.differs("matchedChunkId", String.valueOf(wanted), String.valueOf(found));
+        basis(claim, "observed", evaluation);
+        String reference = capitalize(snapshotReference(loaded, snapshot, null));
+        if (found != null) return reference + " records chunk " + found + " as the matched chunk of " + question + ".";
+        if (snapshot.error(question) != null) return reference + " records a retrieval error for " + question + " and no matched chunk.";
+        return reference + " records no matched chunk for " + question + " (no matching chunk in the window).";
+    }
+
+    // Template: "In <Snapshot>, of the <total> questions <n> rank 1st, <n> 2nd, ..., and <n> rank outside the window[ of <w> results] (no matching
+    // chunk[, <e> with a retrieval error])." (only ranks that occur, ascending; with no question outside, the last clause is "and none ranks outside
+    // the window[ of <w> results]").
+    /**
+     * The rank histogram of a snapshot (since 2026-09-17): how many questions are stored at each rank and how many have no rank. {@code expected}
+     * is an object whose keys are ranks (positive integers as strings) or {@code notInWindow}, each a non-negative integer; a key absent from it
+     * counts as 0, and every rank that occurs must be listed, so the claim states the whole histogram.
+     */
+    private String rankHistogram(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        evaluation.subject("rank histogram of " + snapshotFile);
+        JsonNode expected = check.get("expected");
+        if (expected == null || !expected.isObject()) {
+            throw new Unreadable("check.expected must be an object of counts keyed by rank or notInWindow, found " + (expected == null ? "none" : abbreviate(expected.toString())));
+        }
+        Map<String, Integer> wanted = new TreeMap<>(RANK_KEYS);
+        for (Map.Entry<String, JsonNode> entry : expected.properties()) {
+            String key = entry.getKey();
+            if (!(key.equals("notInWindow") || key.matches("[1-9]\\d*"))) throw new Unreadable("check.expected key \"" + key + "\" is neither a rank nor notInWindow");
+            if (!entry.getValue().isIntegralNumber() || entry.getValue().intValue() < 0) throw new Unreadable("check.expected." + key + " must be a non-negative count, found " + entry.getValue());
+            wanted.put(key, entry.getValue().intValue());
+        }
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Map<String, Integer> found = new TreeMap<>(RANK_KEYS);
+        int total = 0;
+        int errors = 0;
+        for (JsonNode question : snapshot.questions()) {
+            total++;
+            JsonNode rank = question.get("rank");
+            String key = rank == null || rank.isNull() ? "notInWindow" : rank.isIntegralNumber() && rank.intValue() > 0 ? rank.asString() : null;
+            if (key == null) throw new Unreadable("question " + question.path("id").asString("(no id)") + " records a rank that is not a positive integer: " + rank);
+            found.merge(key, 1, Integer::sum);
+            JsonNode error = question.get("error");
+            if (key.equals("notInWindow") && error != null && !error.isNull()) errors++;
+        }
+        Set<String> keys = new TreeSet<>(RANK_KEYS);
+        keys.addAll(wanted.keySet());
+        keys.addAll(found.keySet());
+        for (String key : keys) {
+            int w = wanted.getOrDefault(key, 0);
+            int f = found.getOrDefault(key, 0);
+            if (w != f) evaluation.differs(key.equals("notInWindow") ? "not in the window" : "rank " + key, String.valueOf(w), String.valueOf(f));
+        }
+        basis(claim, "derived", evaluation);
+        List<String> parts = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : found.entrySet()) {
+            if (entry.getKey().equals("notInWindow")) continue;
+            parts.add(entry.getValue() + " rank " + ordinal(Integer.parseInt(entry.getKey())));
+        }
+        int outside = found.getOrDefault("notInWindow", 0);
+        String window = snapshot.windowSize() == null ? "" : " of " + snapshot.windowSize() + " results";
+        parts.add(outside == 0 ? "none ranks outside the window" + window
+                : outside + " rank outside the window" + window + " (no matching chunk" + (errors == 0 ? "" : ", " + errors + " with a retrieval error") + ")");
+        return "In " + snapshotReference(loaded, snapshot, null) + ", of the " + total + " questions " + joinAnd(parts) + ".";
+    }
+
+    /** Rank keys in numeric order with notInWindow last. */
+    private static final Comparator<String> RANK_KEYS = (a, b) -> {
+        if (a.equals(b)) return 0;
+        if (a.equals("notInWindow")) return 1;
+        if (b.equals("notInWindow")) return -1;
+        return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+    };
+
+    // Template: "In <Snapshot>, the <n> chunks returned above <question>'s matched chunk <m> (rank <r>) are chunk <id> (<sectionKey>, "<head>"),
+    // ...; sections and text from <Chunks>." | "In <Snapshot>, no chunk is returned above <question>'s matched chunk <m> (rank 1)." | "In <Snapshot>,
+    // the <n> chunks returned for <question>, none of them a matched chunk, are ...; sections and text from <Chunks>." ("chunk" and "is" for one)
+    /**
+     * The chunks returned above a question's matched chunk (since 2026-09-17, plan 2026-09-17-chunk-size.md Milestone 3, F7): from the
+     * question's trace, its {@code returnedChunkIds} before the stored rank (all of them when the rank is null), each joined by id to the
+     * committed chunk export {@code chunks} (a JSON array of objects with {@code id}, {@code sectionKey}, and {@code head}, the first characters
+     * of the stored text, written by chunks.sql from the store the run retrieved from) for its section and text. {@code expected} lists the
+     * chunk ids in returned order (empty for a question at rank 1); true when equal. Unreadable when the question has no trace or returned
+     * list, the returned chunk at the stored rank is not the matched chunk, or a returned chunk is absent from the export. The check reads no
+     * score and states nothing about why a chunk ranks where it does.
+     */
+    private String rankedAbove(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        String question = requireText(check, "question");
+        String chunksFile = requireText(check, "chunks");
+        evaluation.subject("chunks returned above the matched chunk of " + question + " in " + snapshotFile);
+        JsonNode expected = check.get("expected");
+        if (expected == null || !expected.isArray()) throw new Unreadable("check.expected must be a list of chunk ids in returned order, found " + (expected == null ? "none" : abbreviate(expected.toString())));
+        List<Long> wanted = new ArrayList<>();
+        for (JsonNode id : expected) {
+            if (!id.isIntegralNumber()) throw new Unreadable("check.expected must list chunk ids (integers), found " + id);
+            wanted.add(id.longValue());
+        }
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Loaded chunks = load(chunksFile, directory, evaluation);
+        if (!chunks.json().isArray()) throw new Unreadable(chunksFile + " is not a chunk export (a JSON array of chunks)");
+        Map<Long, JsonNode> byId = new HashMap<>();
+        for (JsonNode chunk : chunks.json()) {
+            JsonNode id = chunk.get("id");
+            if (id == null || !id.isIntegralNumber()) throw new Unreadable(chunksFile + " holds a chunk without an integer id: " + abbreviate(chunk.toString()));
+            byId.put(id.longValue(), chunk);
+        }
+        Integer rank = snapshot.rank(question);
+        Long matched = snapshot.matchedChunkId(question);
+        if (snapshot.error(question) != null) throw new Unreadable("question " + question + " records a retrieval error: " + snapshot.error(question));
+        JsonNode trace = snapshot.trace(question);
+        if (trace == null) throw new Unreadable("question " + question + " has no trace in " + snapshotFile);
+        JsonNode returned = trace.get("returnedChunkIds");
+        if (returned == null || !returned.isArray()) throw new Unreadable("the trace of " + question + " records no returnedChunkIds list");
+        List<Long> returnedIds = new ArrayList<>();
+        for (JsonNode id : returned) {
+            if (!id.isIntegralNumber()) throw new Unreadable("the trace of " + question + " records a returned chunk id that is not an integer: " + id);
+            returnedIds.add(id.longValue());
+        }
+        int above = rank == null ? returnedIds.size() : rank - 1;
+        if (rank != null && (rank > returnedIds.size() || !Objects.equals(returnedIds.get(rank - 1), matched))) {
+            throw new Unreadable("question " + question + " records rank " + rank + " and matched chunk " + matched + ", but the trace returns "
+                    + (rank > returnedIds.size() ? "only " + returnedIds.size() + " chunks" : "chunk " + returnedIds.get(rank - 1) + " at that rank"));
+        }
+        List<Long> foundIds = returnedIds.subList(0, above);
+        if (!foundIds.equals(wanted)) evaluation.differs("chunks above", wanted.toString(), foundIds.toString());
+        List<String> parts = new ArrayList<>();
+        for (Long id : foundIds) {
+            JsonNode chunk = byId.get(id);
+            if (chunk == null) throw new Unreadable("returned chunk " + id + " is not in the chunk export " + chunksFile);
+            parts.add("chunk " + id + " (" + chunk.path("sectionKey").asString("no section") + ", \"" + chunk.path("head").asString("") + "\")");
+        }
+        basis(claim, "derived", evaluation);
+        String reference = snapshotReference(loaded, snapshot, null);
+        String source = "; sections and text from " + fileReference(chunks, "the chunk export");
+        if (rank != null && above == 0) return "In " + reference + ", no chunk is returned above " + question + "'s matched chunk " + matched + " (rank 1).";
+        if (rank == null) {
+            return "In " + reference + ", the " + counted(foundIds.size(), "chunk") + " returned for " + question + ", none of them a matched chunk, "
+                    + (foundIds.size() == 1 ? "is " : "are ") + joinAnd(parts) + source + ".";
+        }
+        return "In " + reference + ", the " + counted(foundIds.size(), "chunk") + " returned above " + question + "'s matched chunk " + matched + " (rank " + rank + ") "
+                + (foundIds.size() == 1 ? "is " : "are ") + joinAnd(parts) + source + ".";
+    }
+
+    private static String counted(int n, String noun) {
+        return n + " " + noun + (n == 1 ? "" : "s");
+    }
+
+    /** "<what> <path as written>" or "<label> (<what> <path as written>)". */
+    private String fileReference(Loaded loaded, String what) {
+        String label = labels.get(loaded.path());
+        String reference = what + " " + loaded.written();
+        return label == null ? reference : label + " (" + reference + ")";
+    }
+
+    // Template: "In <File>, <path> is <value>." with <File> "the file <path as written>" or "<label> (the file <path as written>)" and the value
+    // as render writes it (a string without quotes, a list with brackets, null as null).
+    /**
+     * One value of a committed JSON file by path (since 2026-09-17, plan 2026-09-17-chunk-size.md Milestone 3, F8 and F9): {@code path} as
+     * ReportPath reads it; {@code expected} any JSON value, compared as sameValue compares (numbers by value, lists element by element). A path
+     * naming nothing is unreadable. The check reads the file as it is on disk and states nothing about how the value was produced; the file's
+     * own description and the run log say that.
+     */
+    private String fileValue(Claim claim, JsonNode check, Evaluation evaluation) {
+        String file = requireText(check, "file");
+        String path = requireText(check, "path");
+        evaluation.subject(path + " in " + file);
+        if (!check.has("expected")) throw new Unreadable("check.expected is required (the value the file holds at the path)");
+        JsonNode expected = check.get("expected");
+        Loaded loaded = load(file, directory, evaluation);
+        JsonNode found = ReportPath.resolve(loaded.json(), path);
+        if (found == null) throw new Unreadable("path " + path + " names nothing in " + file);
+        if (!sameValue(expected, found)) evaluation.differs("value", shown(expected, found), shown(found, expected));
+        basis(claim, "observed", evaluation);
+        return "In " + fileReference(loaded, "the file") + ", " + path + " is " + render(found) + ".";
+    }
+
+    // Template: "In <Report>, <held> of the <phrases> accepted phrases are held by a stored chunk[; not held: <question> "<phrase>", ...]."
+    /**
+     * The R1 gate of plan 2026-09-17-chunk-size.md (since 2026-09-17): over every accepted phrase of every question of an evidence report,
+     * how many record {@code heldByStoredChunk} observed true. {@code expected: {phrases, held}}, both non-negative integers; true when both
+     * counts equal. A phrase whose value is not an observed boolean makes the claim unreadable, naming it, so an unknown is never counted as
+     * held or as not held. The report evaluates the rule against the store at report time (Evidence report, Limits), which the run log
+     * ties to the store the run retrieved from.
+     */
+    private String heldPhrases(Claim claim, JsonNode check, Evaluation evaluation) {
+        String reportFile = requireText(check, "report");
+        evaluation.subject("accepted phrases held by a stored chunk in " + reportFile);
+        JsonNode expected = expected(check, "heldPhrases");
+        for (String key : EXPECTED_KEYS.get("heldPhrases")) {
+            JsonNode value = expected.get(key);
+            if (value == null || !value.isIntegralNumber() || value.intValue() < 0) throw new Unreadable("check.expected." + key + " must be a non-negative count, found " + value);
+        }
+        for (String key : expected.propertyNames()) {
+            if (!EXPECTED_KEYS.get("heldPhrases").contains(key)) throw new Unreadable("unknown expected field \"" + key + "\" (one of phrases, held)");
+        }
+        Loaded report = report(reportFile, evaluation);
+        int phrases = 0;
+        int held = 0;
+        List<String> notHeld = new ArrayList<>();
+        for (JsonNode question : report.json().get("questions")) {
+            String id = question.path("id").asString("(no id)");
+            JsonNode list = question.get("phrases");
+            if (list == null || !list.isArray()) throw new Unreadable("question " + id + " lists no phrases");
+            for (JsonNode phrase : list) {
+                phrases++;
+                JsonNode value = phrase.get("heldByStoredChunk");
+                if (value == null || !value.isObject() || !"observed".equals(value.path("basis").asString(null)) || !value.path("value").isBoolean()) {
+                    throw new Unreadable("question " + id + " phrase \"" + phrase.path("phrase").asString("") + "\": heldByStoredChunk is not an observed boolean ("
+                            + (value == null ? "not in the report" : abbreviate(value.toString())) + ")");
+                }
+                if (value.get("value").booleanValue()) held++;
+                else notHeld.add(id + " \"" + phrase.path("phrase").asString("") + "\"");
+            }
+        }
+        if (phrases != expected.get("phrases").intValue()) evaluation.differs("phrases", expected.get("phrases").asString(), String.valueOf(phrases));
+        if (held != expected.get("held").intValue()) evaluation.differs("held", expected.get("held").asString(), String.valueOf(held) + (notHeld.isEmpty() ? "" : " (not held: " + String.join(", ", notHeld) + ")"));
+        basis(claim, "derived", evaluation);
+        return "In " + reportReference(report) + ", " + held + " of the " + phrases + " accepted phrases are held by a stored chunk" + (notHeld.isEmpty() ? "" : "; not held: " + String.join(", ", notHeld)) + ".";
     }
 
     // Template (RAG.md, Claims, Sentences): "<Snapshot> ranks <question> <ordinal>." | "<Snapshot> ranks <question> outside its window[ of <n>

@@ -128,6 +128,34 @@ class TraceReproductionCheckTests {
                 "property rerankTimeoutMs: absent from snapshot 297, run 4000"));
     }
 
+    @Test
+    void namedExemptPropertiesTheReferenceLacksAreAllowedWhenPresentAndComparedWhenBothRecordThem() {
+        // Plan 2026-09-17-chunk-size.md, Milestone 3: a run against a store that records chunkMaxChars, chunkOverlapChars, and storeVersions
+        // reproduces a reference stored before those properties existed, so the caller names them; everything else stays compared.
+        RetrievalEvaluation base = run(results -> results, Map.of());
+        Map<String, Object> properties = new LinkedHashMap<>(base.properties());
+        properties.put("chunkMaxChars", 4000);
+        properties.put("chunkOverlapChars", 500);
+        properties.put("storeVersions", List.of("sections-v2-context-v2"));
+        RetrievalEvaluation run = new RetrievalEvaluation(base.id(), base.evaluatedAt(), base.setVersion(), base.questionCount(), base.hitAt1(),
+                base.hitAt3(), base.hitAt5(), base.mrr(), base.window(), base.retrievalStrategy(), properties, base.results(), base.tickerHitAt5(),
+                base.misses(), base.slices(), base.traces());
+        java.util.Set<String> exempt = new java.util.LinkedHashSet<>(List.of("chunkMaxChars", "chunkOverlapChars", "storeVersions"));
+        assertThat(TraceReproductionCheck.problems(reference, run)).containsExactly(
+                "property chunkMaxChars: absent from snapshot 297, run 4000",
+                "property chunkOverlapChars: absent from snapshot 297, run 500",
+                "property storeVersions: absent from snapshot 297, run [sections-v2-context-v2]");
+        assertThat(TraceReproductionCheck.problems(reference, run, exempt)).isEmpty();
+        // An exempt property the run does not carry is still a problem, and an exempt name the reference also records is still compared.
+        properties.remove("storeVersions");
+        properties.put("rerankCandidates", 40);
+        assertThat(TraceReproductionCheck.problems(reference, run, new java.util.LinkedHashSet<>(List.of("storeVersions", "rerankCandidates")))).containsExactly(
+                "property rerankCandidates: snapshot 297 20, run 40",
+                "property chunkMaxChars: absent from snapshot 297, run 4000",
+                "property chunkOverlapChars: absent from snapshot 297, run 500",
+                "property storeVersions: exempt from the comparison with snapshot 297 but absent from the run");
+    }
+
     private String failure(RetrievalEvaluation run) {
         Throwable thrown = catchThrowable(() -> TraceReproductionCheck.assertReproduces(reference, run));
         assertThat(thrown).isInstanceOf(AssertionError.class);

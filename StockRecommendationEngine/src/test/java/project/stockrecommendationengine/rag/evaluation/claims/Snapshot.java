@@ -56,6 +56,28 @@ record Snapshot(String file, Long id, String setVersion, Integer questionCount, 
         return rank == null || rank.isNull() ? null : rank.intValue();
     }
 
+    /** The question's stored matched chunk id; null when it has no matching chunk in the window or errored. Throws when the question is absent. */
+    Long matchedChunkId(String id) {
+        JsonNode chunk = question(id).get("matchedChunkId");
+        return chunk == null || chunk.isNull() ? null : chunk.longValue();
+    }
+
+    /**
+     * The question's stored trace ({@code traces[].trace} in the API shape, {@code results.traces[].trace} in the row export), or null when
+     * the snapshot stores no traces, none for the question, or a null trace (since 2026-09-17, plan {@code 2026-09-17-chunk-size.md}).
+     */
+    JsonNode trace(String id) {
+        JsonNode traces = aggregate.path("traces").isArray() ? aggregate.get("traces") : aggregate.path("results").path("traces");
+        if (!traces.isArray()) return null;
+        for (JsonNode entry : traces) {
+            if (id.equals(entry.path("id").asString(null))) {
+                JsonNode trace = entry.get("trace");
+                return trace == null || trace.isNull() ? null : trace;
+            }
+        }
+        return null;
+    }
+
     /** The question's stored error text; null when none is recorded. */
     String error(String id) {
         JsonNode error = question(id).get("error");

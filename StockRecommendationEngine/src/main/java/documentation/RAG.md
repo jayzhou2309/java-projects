@@ -203,8 +203,8 @@
         * rrf-figure-weight: 1.0 (weight of the figure ranking, chunks holding every number in the query; 0 leaves that leg off; 1.0 since the 2026-09-12 fusion tuning, snapshot 51: the leg runs only for queries that carry a figure, which none of the evaluation set's questions do).
     * Validation
         * default-top-k must be between 1 and 20.
-        * candidate-count must be between 20 and 200.
-        * keyword-candidate-count must be between 20 and 200.
+        * candidate-count must be between 20 and 400 (200 before 2026-09-17; raised for the pool grid of plan `plans/2026-09-17-chunk-size-pool.md`, default unchanged; FilingRetrievalPropertiesBoundsTests).
+        * keyword-candidate-count must be between 20 and 400 (200 before 2026-09-17, as candidate-count).
         * rrf-k must be between 1 and 1000.
         * rrf-vector-weight, rrf-keyword-weight, and rrf-figure-weight must be between 0 and 10.
         * rerank-candidates must be between 5 and 40.

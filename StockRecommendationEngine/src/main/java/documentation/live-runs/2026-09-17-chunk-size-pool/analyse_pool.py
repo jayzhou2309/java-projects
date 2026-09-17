@@ -12,7 +12,9 @@ settings of each application start, of which rerank-timeout-ms is recorded nowhe
   rank-table.txt      per question the rank and matched chunk in the reported runs, and every question not at rank 1 with the chunks above it;
   rank-histogram.txt  questions per rank in the reported runs;
   latency.txt         per-run latency of every run;   storage.txt   the three storage points;   rollback.txt   the rollback equality (G8);
-  experiment-*.json   the experiment files of the one-factor pairs;   claims.json   the claims (ids C-1601 on).
+  experiment-*.json   the experiment files of the one-factor pairs;   claims.json   the claims (ids C-1601 on; the claims added in remediation
+                      round 1 take the ids after the last id of the first version, C-1984, so that no earlier id moves, and are printed in
+                      their blocks before the inferred claim that uses them).
 No database, no application, no model. Numbers are parsed as written (Decimal). Output is deterministic: a re-run reproduces the files byte for
 byte. The script states ranks, positions, counts, times and sizes; it states no cause.
 
@@ -23,9 +25,11 @@ Frozen rules (plan, section "Frozen design"; copied here, not changed):
             repeat is the grid point; when it also records one the pool is excluded from the choice.
   held-out  once per chosen store-B point, on the 14 held-out questions: PASS if its held-out hit@5 is at least that of the default reference
             (A / 40 / off) and at least that of store A's chosen point of the same reranker state; otherwise FAIL.
-  Held-out metrics are computed only for the default reference and the four chosen points. (The table prints each grid run's stored 42-question
-  metrics beside its tuning metrics, as the plan lists; the script computes no held-out value for an unchosen point and the choice reads the
-  tuning columns only.)
+  Held-out metrics are computed only for the default reference and the four chosen points. (grid.txt, section 1, prints the stored 42-question
+  metrics beside the tuning metrics for all sixteen grid runs. That goes beyond the plan's Reported list, which names 42-question metrics for the
+  default reference, the four chosen points, and the latency reference only, and it lets a reader derive the held-out count of an unchosen point
+  by subtraction. The choice used the tuning values only, and the script computes no held-out metric for an unchosen point. Corrected in
+  remediation round 1: this note said the table printed them "as the plan lists".)
 Metrics mirror RetrievalEvaluationService: hit@k = questions ranked 1 to k / questions, half up to six places; MRR = sum of 1/rank (each half up
 to twelve places, null counted 0) / questions, half up to six places. The script confirms both against every snapshot's stored metrics first.
 """
@@ -48,6 +52,7 @@ FOCUS = ["nvda-02", "nvda-04"]
 FILINGS = [3, 4, 5, 6, 7, 8, 109, 110, 161, 162, 288, 324, 325]
 FIRST_ID = 1601
 LAST_ID = 1999
+APPENDED_FIRST_ID = 1985  # remediation round 1: claims added after the first version (C-1601 to C-1984) take ids from here
 STORE_NAMES = {"A": "store A (4000 / 500)", "B": "store B (1650 / 250)", "A2": "the store after the rollback (4000 / 500)"}
 CHUNKS = {"A": "chunks-A.json", "B": "chunks-B.json", "A2": "chunks-A2.json"}
 STORAGE_FIELDS = ["chunks", "contentChars", "meanChunkChars", "maxChunkChars", "tokenCountSum", "totalRelationBytes", "heapBytes", "toastBytes", "indexesBytes",
@@ -578,9 +583,13 @@ claims = []
 next_id = [FIRST_ID]
 
 
-def claim(basis, block, check=None, text=None, frm=None, experiment=None):
-    c = {"id": "C-%d" % next_id[0], "basis": basis, "block": block}
-    next_id[0] += 1
+appended_id = [APPENDED_FIRST_ID]
+
+
+def claim(basis, block, check=None, text=None, frm=None, experiment=None, appended=False):
+    counter = appended_id if appended else next_id
+    c = {"id": "C-%d" % counter[0], "basis": basis, "block": block}
+    counter[0] += 1
     if text is not None:
         c["text"] = text
     if frm is not None:
@@ -623,7 +632,11 @@ for q in ref1615["results"]["questions"]:
     h1615[k] = h1615.get(k, 0) + 1
 rep_ids.append(claim("derived", b, {"type": "rankHistogram", "snapshot": REF_1615, "expected": h1615}))
 rep_ids.append(claim("derived", b, {"type": "rankHistogram", "snapshot": DEFAULT.file, "expected": hist[DEFAULT.id]}))
-claim("inferred", b, text="The default reference (store A, pool 40, reranking off) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, and the same rank histogram; G2's per-question comparison of rank and matched chunk is the TraceReproductionFilesTests output reproduction-%d.txt (problems=0; a text file, not read by a check); the runs continued" % DEFAULT.id, frm=rep_ids)
+ref1615_by_id = {q["id"]: q for q in ref1615["results"]["questions"]}
+rep_differing = [q for q in set_ids if (ref1615_by_id[q]["rank"], ref1615_by_id[q]["matchedChunkId"]) != (DEFAULT.by_id[q]["rank"], DEFAULT.by_id[q]["matchedChunkId"])]
+rep_ids.append(claim("derived", b, {"type": "questionEquality", "reference": REF_1615, "candidate": DEFAULT.file, "compare": "rankAndMatchedChunk", "expected": rep_differing}, appended=True))
+claim("inferred", b, text="The default reference (store A, pool 40, reranking off) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, the same rank histogram, and %s; the TraceReproductionFilesTests output reproduction-%d.txt (problems=0; a text file, not read by a check) records G2's comparison as run at the time; the runs continued (run.log)"
+      % ("the same stored rank and matched chunk id per question" if not rep_differing else "a stored rank or matched chunk id that differs for %s" % ", ".join(rep_differing), DEFAULT.id), frm=rep_ids)
 
 # grid (G3, G5)
 b = "grid"
@@ -769,7 +782,6 @@ if gate_file in gate:
 # rollback (G8)
 if POST:
     b = "rollback"
-    roll_ids = [claim("derived", b, {"type": "candidateLists", "reference": DEFAULT.file, "candidate": POST.file, "compare": "fusedOrder", "expected": []}) if False else None]
     roll_ids = []
     for r in (DEFAULT, POST):
         roll_ids.append(claim("derived", b, {"type": "rankHistogram", "snapshot": r.file, "expected": hist[r.id]}))
@@ -779,14 +791,24 @@ if POST:
         v = storage["A2"][field]
         roll_ids.append(claim("observed", b, {"type": "fileValue", "file": "storage-A2.json", "path": field, "expected": v if isinstance(v, list) else dec(v)}))
     diff_rank, diff_content, same, same_store = rollback
-    claim("inferred", b, text="After the rollback rebuild the store is at sections-v2-context-v2-chunk4000-500 with 569 chunks, and the post-rollback run equals the default reference per question in rank and in matched chunk content for %d of the 42 questions (rollback.txt, written by analyse_pool.py and not read by a check: filing, chunk index, length, md5 of the content, and first characters of the matched chunks; chunk ids differ after a rebuild); rank differing: %s; content differing: %s; G8 %s"
-          % (same, ", ".join(diff_rank) or "not found", ", ".join(diff_content) or "not found", "holds" if not diff_rank and not diff_content else "does not hold"), frm=roll_ids)
+    store_ids = list(roll_ids[-3:])
+    hash_by_id = {p: {c["id"]: (c["filingId"], c["chunkIndex"], c["chars"], c["contentMd5"]) for c in load("chunk-hashes-%s.json" % p)} for p in ("A", "A2")}
+    roll_differing = [q for q in set_ids if DEFAULT.by_id[q]["rank"] != POST.by_id[q]["rank"] or (DEFAULT.by_id[q]["matchedChunkId"] is not None and
+                      hash_by_id["A"][DEFAULT.by_id[q]["matchedChunkId"]] != hash_by_id["A2"][POST.by_id[q]["matchedChunkId"]])]
+    assert set(roll_differing) <= set(diff_rank + diff_content)
+    roll_ids.append(claim("derived", b, {"type": "questionEquality", "reference": DEFAULT.file, "candidate": POST.file, "compare": "rankAndMatchedContent",
+                                         "referenceChunks": "chunk-hashes-A.json", "candidateChunks": "chunk-hashes-A2.json", "expected": roll_differing}, appended=True))
+    claim("inferred", b, text="After the rollback rebuild the store is at sections-v2-context-v2-chunk4000-500 with 569 chunks, and the post-rollback run %s (chunk ids differ after a rebuild; the check reads the md5 the two exports record, not the chunk text); rollback.txt, written by analyse_pool.py and not read by a check, adds the first characters of the matched chunks (content differing there: %s) and the comparison of the two stores chunk by chunk; G8 %s"
+          % ("equals the default reference per question in stored rank and in the matched chunk's filing, chunk index, length, and content md5 for the 42 questions" if not roll_differing
+             else "differs from the default reference in stored rank or matched chunk for %s" % ", ".join(roll_differing),
+             ", ".join(diff_content) or "not found", "holds" if not diff_rank and not diff_content and not roll_differing else "does not hold"), frm=roll_ids)
 
 # decision
 if HAS_B and POST:
-    claim("inferred", "decision", text="The held-out test of store B's chosen point is %s with reranking off and %s with reranking on; under the frozen design a further grid, size, overlap, or split does not follow in this plan; the store is back at 4000 / 500, the defaults are unchanged, and whether to adopt a size and pool is DECISION RAG-30 for Jay" % (test["off"][5], test["on"][5]), frm=[test_ids["off"], test_ids["on"]])
+    claim("inferred", "decision", text="The held-out test of store B's chosen point is %s with reranking off and %s with reranking on; under the frozen design a further grid, size, overlap, or split does not follow in this plan; the store is back at 4000 / 500 (the chunk count, store version, and content length of the storage export after the rollback), and whether to adopt a size and pool is DECISION RAG-30 for Jay" % (test["off"][5], test["on"][5]), frm=[test_ids["off"], test_ids["on"]] + store_ids)
 
-assert next_id[0] - 1 <= LAST_ID, "claim ids past C-%d: %d" % (LAST_ID, next_id[0] - 1)
+assert next_id[0] == APPENDED_FIRST_ID, "the first version's claims end at C-%d, found C-%d: an earlier id moved" % (APPENDED_FIRST_ID - 1, next_id[0] - 1)
+assert appended_id[0] - 1 <= LAST_ID, "claim ids past C-%d: %d" % (LAST_ID, appended_id[0] - 1)
 labels = {DEFAULT.file: "the default reference", LATREF.file: "the latency reference", REF_1615: "the previous plan's post-rollback run"}
 if POST:
     labels[POST.file] = "the post-rollback run"
@@ -801,12 +823,14 @@ if gate_file in gate:
     labels[gate_file] = "the default reference's report read against the rebuilt store"
 if HAS_B:
     labels[CHUNKS["B"]] = "the chunk export of the rebuilt store"
+labels["chunk-hashes-A.json"] = "the content hashes before the rebuild"
+labels["chunk-hashes-A2.json"] = "the content hashes after the rollback"
 used = json.dumps(claims)
 labels = {k: v for k, v in labels.items() if json.dumps(k)[1:-1] in used}
 doc = {"description": "Chunk size and candidate pool (plan plans/2026-09-17-chunk-size-pool.md, Milestone 1), written by analyse_pool.py: the reproduction of snapshot 1615; the grid of pools 40, 100, 200, 250 with reranking off and on (40 inputs, 4000 ms) on store A (4000 / 500) and store B (1650 / 250) with stored and tuning metrics, pool pairs and store pairs as one-factor experiment claims; the choice per store and reranker state on the 28 tuning questions; the held-out test of store B's chosen points on the 14 held-out questions; metrics, rank histograms, and top-5 membership of the reported runs; the chunks above every question not at rank 1 at store B's chosen points; nvda-02 and nvda-04 in every grid run; latency of every run; storage at three points; the phrase gate; and the rollback. No claim states why a rank, a time, or a size changed.",
        "labels": labels, "claims": claims}
 out["claims.json"] = json.dumps(doc, indent=1) + "\n"
-print("claims %d (C-%d to C-%d)" % (len(claims), FIRST_ID, next_id[0] - 1))
+print("claims %d (C-%d to C-%d)" % (len(claims), FIRST_ID, appended_id[0] - 1))
 
 
 for name, text in out.items():

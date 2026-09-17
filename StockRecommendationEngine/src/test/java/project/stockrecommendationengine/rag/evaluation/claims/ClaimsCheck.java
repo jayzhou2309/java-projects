@@ -48,7 +48,7 @@ public final class ClaimsCheck {
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
     static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
             "candidateRecall", "removedAccepted", "blend", "candidateLists", "diagnosticLine", "diagnosticCount", "sizeTable", "sizeChoice", "matchedChunk",
-            "rankHistogram", "rankedAbove", "fileValue", "heldPhrases", "subsetMetric", "notRecorded");
+            "rankHistogram", "rankedAbove", "fileValue", "heldPhrases", "subsetMetric", "questionEquality", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -80,6 +80,7 @@ public final class ClaimsCheck {
             Map.entry("fileValue", Set.of("type", "file", "path", "expected")),
             Map.entry("heldPhrases", Set.of("type", "report", "expected")),
             Map.entry("subsetMetric", Set.of("type", "snapshot", "questions", "metric", "expected")),
+            Map.entry("questionEquality", Set.of("type", "reference", "candidate", "compare", "referenceChunks", "candidateChunks", "expected")),
             Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
@@ -672,6 +673,7 @@ public final class ClaimsCheck {
                 case "fileValue" -> fileValue(claim, check, evaluation);
                 case "heldPhrases" -> heldPhrases(claim, check, evaluation);
                 case "subsetMetric" -> subsetMetric(claim, check, evaluation);
+                case "questionEquality" -> questionEquality(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -862,6 +864,147 @@ public final class ClaimsCheck {
                     + (outside.isEmpty() ? "none" : String.join(", ", outside)) + ")");
         }
         return lead + metricName(metric) + over + found.toPlainString() + " (" + inside + (k == 1 ? " ranked 1st)." : " ranked 1 to " + k + ")."); 
+    }
+
+    // Template (RAG.md, Claims, Sentences): "Between <reference Snapshot> and <candidate Snapshot>, <what> is (are) identical for each of the <n>
+    // questions." | "..., <what> differs (differ) for <m> of the <n> questions: <question> (<detail>), ...." with <what> "the stored rank", "the
+    // stored rank and matched chunk id", or "the stored rank and the matched chunk's filing, chunk index, length, and content md5 (from <File> and
+    // <File>)", and a detail naming both sides' rank, matched chunk id, or matched chunk entry.
+    /**
+     * Whether two snapshots store the same result per question (since 2026-09-17, plan 2026-09-17-chunk-size-pool.md Milestone 1, remediation
+     * round 1: G2 and G8 state a per-question equality). {@code compare} {@code rank}: the stored ranks; {@code rankAndMatchedChunk}: the stored
+     * ranks and matched chunk ids (two runs on one store); {@code rankAndMatchedContent}: the stored ranks and, for a question with a matched
+     * chunk, the entries of the two matched chunks in the chunk-hash exports {@code referenceChunks} and {@code candidateChunks} (JSON arrays of
+     * objects with {@code id}, {@code filingId}, {@code chunkIndex}, {@code chars}, and {@code contentMd5}, written by chunk-hashes.sql from the
+     * store each run retrieved from), compared by those four values, for two runs on stores whose chunk ids differ. {@code expected} lists the
+     * distinct questions that differ (empty for none); true when exactly those differ. Unreadable: the snapshots list different questions, a
+     * question with a retrieval error, a rank that is not a positive integer, a rank without a matched chunk id or the reverse, the two export
+     * keys given with another compare or missing with rankAndMatchedContent, a file that is not such an export, or a matched chunk absent from
+     * its export. The check reads no chunk text: equal content rests on the md5 the export records.
+     */
+    private String questionEquality(Claim claim, JsonNode check, Evaluation evaluation) {
+        String referenceFile = requireText(check, "reference");
+        String candidateFile = requireText(check, "candidate");
+        String compare = requireText(check, "compare");
+        if (!Set.of("rank", "rankAndMatchedChunk", "rankAndMatchedContent").contains(compare)) {
+            throw new Unreadable("check.compare must be rank, rankAndMatchedChunk, or rankAndMatchedContent, found " + quote(compare));
+        }
+        boolean content = compare.equals("rankAndMatchedContent");
+        if (content != (check.has("referenceChunks") && check.has("candidateChunks")) || (!content && (check.has("referenceChunks") || check.has("candidateChunks")))) {
+            throw new Unreadable("check.referenceChunks and check.candidateChunks are required with compare rankAndMatchedContent and refused otherwise");
+        }
+        JsonNode expected = check.get("expected");
+        List<String> wanted = new ArrayList<>();
+        boolean listed = expected != null && expected.isArray();
+        if (listed) {
+            for (JsonNode id : expected) {
+                if (!id.isString() || id.stringValue().isBlank() || wanted.contains(id.stringValue())) listed = false;
+                else wanted.add(id.stringValue());
+            }
+        }
+        if (!listed) {
+            throw new Unreadable("check.expected must list the distinct question ids that differ (an empty list for none), found "
+                    + (expected == null ? "none" : abbreviate(expected.toString())));
+        }
+        evaluation.subject(compare + " of " + candidateFile + " against " + referenceFile);
+        Loaded referenceLoaded = load(referenceFile, directory, evaluation);
+        Snapshot reference = Snapshot.of(referenceFile, referenceLoaded.json());
+        Loaded candidateLoaded = load(candidateFile, directory, evaluation);
+        Snapshot candidate = Snapshot.of(candidateFile, candidateLoaded.json());
+        if (referenceLoaded.path().equals(candidateLoaded.path())) throw new Unreadable("check.reference and check.candidate name the same file " + referenceFile);
+        List<String> questions = new ArrayList<>();
+        reference.questions().forEach(q -> questions.add(q.path("id").asString("")));
+        List<String> candidateQuestions = new ArrayList<>();
+        candidate.questions().forEach(q -> candidateQuestions.add(q.path("id").asString("")));
+        if (!new HashSet<>(questions).equals(new HashSet<>(candidateQuestions)) || questions.size() != candidateQuestions.size()) {
+            throw new Unreadable(referenceFile + " and " + candidateFile + " list different questions");
+        }
+        for (String id : wanted) {
+            if (!questions.contains(id)) throw new Unreadable("check.expected lists " + id + ", which neither snapshot has");
+        }
+        Loaded referenceChunks = null;
+        Loaded candidateChunks = null;
+        Map<Long, String> referenceEntries = null;
+        Map<Long, String> candidateEntries = null;
+        if (content) {
+            String referenceChunksFile = requireText(check, "referenceChunks");
+            String candidateChunksFile = requireText(check, "candidateChunks");
+            referenceChunks = load(referenceChunksFile, directory, evaluation);
+            candidateChunks = load(candidateChunksFile, directory, evaluation);
+            referenceEntries = hashEntries(referenceChunks, referenceChunksFile);
+            candidateEntries = hashEntries(candidateChunks, candidateChunksFile);
+        }
+        List<String> differing = new ArrayList<>();
+        List<String> details = new ArrayList<>();
+        for (String question : questions) {
+            Integer a = storedRank(reference, question, referenceFile);
+            Integer b = storedRank(candidate, question, candidateFile);
+            Long chunkA = reference.matchedChunkId(question);
+            Long chunkB = candidate.matchedChunkId(question);
+            if ((a == null) != (chunkA == null)) throw new Unreadable("question " + question + " records " + rankText(a) + " and matched chunk " + chunkA + " in " + referenceFile);
+            if ((b == null) != (chunkB == null)) throw new Unreadable("question " + question + " records " + rankText(b) + " and matched chunk " + chunkB + " in " + candidateFile);
+            String detail = null;
+            if (!Objects.equals(a, b)) {
+                detail = rankText(a) + " in snapshot " + reference.id() + ", " + rankText(b) + " in snapshot " + candidate.id();
+            } else if (a != null && compare.equals("rankAndMatchedChunk") && !chunkA.equals(chunkB)) {
+                detail = "matched chunk " + chunkA + " in snapshot " + reference.id() + ", " + chunkB + " in snapshot " + candidate.id();
+            } else if (a != null && content) {
+                String entryA = referenceEntries.get(chunkA);
+                String entryB = candidateEntries.get(chunkB);
+                if (entryA == null) throw new Unreadable("matched chunk " + chunkA + " of " + question + " is not in the chunk-hash export " + check.get("referenceChunks").stringValue());
+                if (entryB == null) throw new Unreadable("matched chunk " + chunkB + " of " + question + " is not in the chunk-hash export " + check.get("candidateChunks").stringValue());
+                if (!entryA.equals(entryB)) detail = "matched chunk " + chunkA + " is " + entryA + " in snapshot " + reference.id() + ", matched chunk " + chunkB + " is " + entryB + " in snapshot " + candidate.id();
+            }
+            if (detail != null) {
+                differing.add(question);
+                details.add(question + " (" + detail + ")");
+            }
+        }
+        if (!new HashSet<>(wanted).equals(new HashSet<>(differing))) {
+            evaluation.differs("questions that differ", wanted.isEmpty() ? "none" : String.join(", ", wanted), differing.isEmpty() ? "none" : String.join(", ", details));
+        }
+        basis(claim, "derived", evaluation);
+        String what = switch (compare) {
+            case "rank" -> "the stored rank";
+            case "rankAndMatchedChunk" -> "the stored rank and matched chunk id";
+            default -> "the stored rank and the matched chunk's filing, chunk index, length, and content md5 (from " + fileReference(referenceChunks, "the chunk-hash export")
+                    + " and " + fileReference(candidateChunks, "the chunk-hash export") + ")";
+        };
+        boolean plural = !compare.equals("rank");
+        String lead = "Between " + snapshotReference(referenceLoaded, reference, null) + " and " + snapshotReference(candidateLoaded, candidate, null) + ", " + what;
+        return differing.isEmpty() ? lead + (plural ? " are" : " is") + " identical for each of the " + questions.size() + " questions."
+                : lead + (plural ? " differ" : " differs") + " for " + differing.size() + " of the " + questions.size() + " questions: " + String.join(", ", details) + ".";
+    }
+
+    /** The stored rank of a question for questionEquality: null or a positive integer, and no retrieval error. */
+    private static Integer storedRank(Snapshot snapshot, String question, String file) {
+        if (snapshot.error(question) != null) throw new Unreadable("question " + question + " records a retrieval error in " + file + ": " + snapshot.error(question));
+        JsonNode rank = snapshot.question(question).get("rank");
+        if (rank != null && !rank.isNull() && !(rank.isIntegralNumber() && rank.intValue() > 0)) {
+            throw new Unreadable("question " + question + " records a rank that is not a positive integer in " + file + ": " + rank);
+        }
+        return snapshot.rank(question);
+    }
+
+    /** Chunk id to "filing <f> chunk <i>, <n> characters, md5 <h>" of a chunk-hash export. */
+    private static Map<Long, String> hashEntries(Loaded loaded, String file) {
+        if (!loaded.json().isArray()) throw new Unreadable(file + " is not a chunk-hash export (a JSON array of chunks)");
+        Map<Long, String> entries = new HashMap<>();
+        for (JsonNode chunk : loaded.json()) {
+            JsonNode id = chunk.get("id");
+            JsonNode filing = chunk.get("filingId");
+            JsonNode index = chunk.get("chunkIndex");
+            JsonNode chars = chunk.get("chars");
+            JsonNode md5 = chunk.get("contentMd5");
+            if (id == null || !id.isIntegralNumber() || filing == null || !filing.isIntegralNumber() || index == null || !index.isIntegralNumber()
+                    || chars == null || !chars.isIntegralNumber() || md5 == null || !md5.isString() || md5.stringValue().isBlank()) {
+                throw new Unreadable(file + " holds a chunk without an integer id, filingId, chunkIndex, and chars and a contentMd5: " + abbreviate(chunk.toString()));
+            }
+            if (entries.put(id.longValue(), "filing " + filing.longValue() + " chunk " + index.longValue() + ", " + chars.longValue() + " characters, md5 " + md5.stringValue()) != null) {
+                throw new Unreadable(file + " lists chunk " + id.longValue() + " twice");
+            }
+        }
+        return entries;
     }
 
     /** Rank keys in numeric order with notInWindow last. */

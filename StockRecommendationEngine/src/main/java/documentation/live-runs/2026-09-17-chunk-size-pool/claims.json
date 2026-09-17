@@ -13,7 +13,9 @@
   "storage-B.json": "storage of the rebuilt store",
   "storage-A2.json": "storage after the rollback",
   "evidence-1777-against-B.json": "the default reference's report read against the rebuilt store",
-  "chunks-B.json": "the chunk export of the rebuilt store"
+  "chunks-B.json": "the chunk export of the rebuilt store",
+  "chunk-hashes-A.json": "the content hashes before the rebuild",
+  "chunk-hashes-A2.json": "the content hashes after the rollback"
  },
  "claims": [
   {
@@ -115,10 +117,22 @@
    }
   },
   {
+   "id": "C-1985",
+   "basis": "derived",
+   "block": "reproduction",
+   "check": {
+    "type": "questionEquality",
+    "reference": "../2026-09-17-chunk-size/measurement/snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "candidate": "snapshot-1777-a-pool-40-rerank-off.json",
+    "compare": "rankAndMatchedChunk",
+    "expected": []
+   }
+  },
+  {
    "id": "C-1608",
    "basis": "inferred",
    "block": "reproduction",
-   "text": "The default reference (store A, pool 40, reranking off) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, and the same rank histogram; G2's per-question comparison of rank and matched chunk is the TraceReproductionFilesTests output reproduction-1777.txt (problems=0; a text file, not read by a check); the runs continued",
+   "text": "The default reference (store A, pool 40, reranking off) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, the same rank histogram, and the same stored rank and matched chunk id per question; the TraceReproductionFilesTests output reproduction-1777.txt (problems=0; a text file, not read by a check) records G2's comparison as run at the time; the runs continued (run.log)",
    "from": [
     "C-1601",
     "C-1602",
@@ -126,7 +140,8 @@
     "C-1604",
     "C-1605",
     "C-1606",
-    "C-1607"
+    "C-1607",
+    "C-1985"
    ]
   },
   {
@@ -6626,10 +6641,24 @@
    }
   },
   {
+   "id": "C-1986",
+   "basis": "derived",
+   "block": "rollback",
+   "check": {
+    "type": "questionEquality",
+    "reference": "snapshot-1777-a-pool-40-rerank-off.json",
+    "candidate": "snapshot-1794-a2-post-rollback-pool-40-rerank-off.json",
+    "compare": "rankAndMatchedContent",
+    "referenceChunks": "chunk-hashes-A.json",
+    "candidateChunks": "chunk-hashes-A2.json",
+    "expected": []
+   }
+  },
+  {
    "id": "C-1983",
    "basis": "inferred",
    "block": "rollback",
-   "text": "After the rollback rebuild the store is at sections-v2-context-v2-chunk4000-500 with 569 chunks, and the post-rollback run equals the default reference per question in rank and in matched chunk content for 42 of the 42 questions (rollback.txt, written by analyse_pool.py and not read by a check: filing, chunk index, length, md5 of the content, and first characters of the matched chunks; chunk ids differ after a rebuild); rank differing: not found; content differing: not found; G8 holds",
+   "text": "After the rollback rebuild the store is at sections-v2-context-v2-chunk4000-500 with 569 chunks, and the post-rollback run equals the default reference per question in stored rank and in the matched chunk's filing, chunk index, length, and content md5 for the 42 questions (chunk ids differ after a rebuild; the check reads the md5 the two exports record, not the chunk text); rollback.txt, written by analyse_pool.py and not read by a check, adds the first characters of the matched chunks (content differing there: not found) and the comparison of the two stores chunk by chunk; G8 holds",
    "from": [
     "C-1976",
     "C-1977",
@@ -6637,17 +6666,21 @@
     "C-1979",
     "C-1980",
     "C-1981",
-    "C-1982"
+    "C-1982",
+    "C-1986"
    ]
   },
   {
    "id": "C-1984",
    "basis": "inferred",
    "block": "decision",
-   "text": "The held-out test of store B's chosen point is FAIL with reranking off and FAIL with reranking on; under the frozen design a further grid, size, overlap, or split does not follow in this plan; the store is back at 4000 / 500, the defaults are unchanged, and whether to adopt a size and pool is DECISION RAG-30 for Jay",
+   "text": "The held-out test of store B's chosen point is FAIL with reranking off and FAIL with reranking on; under the frozen design a further grid, size, overlap, or split does not follow in this plan; the store is back at 4000 / 500 (the chunk count, store version, and content length of the storage export after the rollback), and whether to adopt a size and pool is DECISION RAG-30 for Jay",
    "from": [
     "C-1769",
-    "C-1770"
+    "C-1770",
+    "C-1980",
+    "C-1981",
+    "C-1982"
    ]
   }
  ]

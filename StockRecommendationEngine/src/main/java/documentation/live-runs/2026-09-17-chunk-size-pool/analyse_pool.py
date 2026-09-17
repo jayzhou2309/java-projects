@@ -617,7 +617,13 @@ rep_ids = [claim("derived", b, {"type": "candidateLists", "reference": REF_1615,
 for snap_file, snap in ((REF_1615, ref1615), (DEFAULT.file, DEFAULT.snapshot)):
     rep_ids.append(claim("observed", b, {"type": "metric", "snapshot": snap_file, "metric": "hitAt5", "expected": str(snap["hit_at_5"])}))
     rep_ids.append(claim("observed", b, {"type": "metric", "snapshot": snap_file, "metric": "mrr", "expected": str(snap["mrr"])}))
-claim("inferred", b, text="The default reference (store A, pool 40, reranking off) has the fused order of snapshot 1615 for the 42 questions and the same stored hit@5 and MRR; the per-question comparison of rank and matched chunk by TraceReproductionFilesTests is reproduction-%d.txt (problems=0), so G2 holds and the runs continued" % DEFAULT.id, frm=rep_ids)
+h1615 = {}
+for q in ref1615["results"]["questions"]:
+    k = "notInWindow" if q["rank"] is None else str(q["rank"])
+    h1615[k] = h1615.get(k, 0) + 1
+rep_ids.append(claim("derived", b, {"type": "rankHistogram", "snapshot": REF_1615, "expected": h1615}))
+rep_ids.append(claim("derived", b, {"type": "rankHistogram", "snapshot": DEFAULT.file, "expected": hist[DEFAULT.id]}))
+claim("inferred", b, text="The default reference (store A, pool 40, reranking off) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, and the same rank histogram; G2's per-question comparison of rank and matched chunk is the TraceReproductionFilesTests output reproduction-%d.txt (problems=0; a text file, not read by a check); the runs continued" % DEFAULT.id, frm=rep_ids)
 
 # grid (G3, G5)
 b = "grid"
@@ -757,7 +763,7 @@ for f in gate_files:
     gate_ids.append(claim("derived", b, {"type": "heldPhrases", "report": f, "expected": {"phrases": gate[f][0], "held": gate[f][1]}}))
 if gate_file in gate:
     ok = gate[gate_file][2] == ["aapl-08/0"]
-    claim("inferred", b, text="The phrase gate on store B %s: the default reference's report read against store B records 56 of the 57 accepted phrases held by a stored chunk, the one not held being aapl-08's (exempt under the frozen gate, Follow_Ups RAG-29); the direct query held_phrases.py records the same counts in held-phrases-B.txt; so store B's grid runs followed" % ("holds" if ok else "does not hold"), frm=gate_ids[-1:]) if ok else \
+    claim("inferred", b, text="The phrase gate on store B %s: the default reference's report read against store B records 56 of the 57 accepted phrases held by a stored chunk, the one not held being aapl-08's (exempt under the frozen gate, Follow_Ups RAG-29); the direct query held_phrases.py records the same counts in held-phrases-B.txt (a text file, not read by a check); store B's grid runs followed" % ("holds" if ok else "does not hold"), frm=gate_ids[-1:]) if ok else \
         claim("inferred", b, text="The phrase gate on store B does not hold (not held: %s), so store B's grid was not run and the store was rebuilt back" % ", ".join(gate[gate_file][2]), frm=gate_ids[-1:])
 
 # rollback (G8)
@@ -773,8 +779,12 @@ if POST:
         v = storage["A2"][field]
         roll_ids.append(claim("observed", b, {"type": "fileValue", "file": "storage-A2.json", "path": field, "expected": v if isinstance(v, list) else dec(v)}))
     diff_rank, diff_content, same, same_store = rollback
-    claim("inferred", b, text="After the rollback rebuild the store is at sections-v2-context-v2-chunk4000-500 with 569 chunks, and the post-rollback run equals the default reference per question in rank and in matched chunk content for %d of the 42 questions (rollback.txt: filing, chunk index, length, md5 of the content, and first characters of the matched chunks; chunk ids differ after a rebuild); rank differing: %s; content differing: %s; G8 %s"
+    claim("inferred", b, text="After the rollback rebuild the store is at sections-v2-context-v2-chunk4000-500 with 569 chunks, and the post-rollback run equals the default reference per question in rank and in matched chunk content for %d of the 42 questions (rollback.txt, written by analyse_pool.py and not read by a check: filing, chunk index, length, md5 of the content, and first characters of the matched chunks; chunk ids differ after a rebuild); rank differing: %s; content differing: %s; G8 %s"
           % (same, ", ".join(diff_rank) or "not found", ", ".join(diff_content) or "not found", "holds" if not diff_rank and not diff_content else "does not hold"), frm=roll_ids)
+
+# decision
+if HAS_B and POST:
+    claim("inferred", "decision", text="The held-out test of store B's chosen point is %s with reranking off and %s with reranking on; under the frozen design a further grid, size, overlap, or split does not follow in this plan; the store is back at 4000 / 500, the defaults are unchanged, and whether to adopt a size and pool is DECISION RAG-30 for Jay" % (test["off"][5], test["on"][5]), frm=[test_ids["off"], test_ids["on"]])
 
 assert next_id[0] - 1 <= LAST_ID, "claim ids past C-%d: %d" % (LAST_ID, next_id[0] - 1)
 labels = {DEFAULT.file: "the default reference", LATREF.file: "the latency reference", REF_1615: "the previous plan's post-rollback run"}

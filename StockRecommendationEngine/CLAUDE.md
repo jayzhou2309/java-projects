@@ -208,3 +208,12 @@ one-line fix, a typo, or a question, just do it directly.
   (RAG-29). Lessons: a rebuild re-parses with the parser in the tree, so a rollback is not a restore;
   export keys and text before any rebuild; a hard gate on held phrases has to be checked at the stored
   size too. Plan in `documentation/plans/2026-09-17-chunk-size.md`.
+- 2026-09-17, chunk size and candidate pool (RAG-27, RAG-30): one milestone, design frozen before any
+  run (stores 4,000 / 500 and 1,650 / 250, pools 40 to 250, reranking off and on, choice on 28 tuning
+  questions, one held-out test on 14). The default reference reproduced 1615, the phrase gate held with
+  aapl-08 exempt, no run fell back, the held-out test of the rebuilt store's chosen points was FAIL in
+  both reranker states, and the rollback restored 569 chunks equal by content hash (post-rollback run
+  equal to the reference per question). Worker notes: a reference that records a list property broke
+  `TraceReproductionCheck` until it read lists as text; subset metrics needed a check type
+  (`subsetMetric`); export content hashes before a rebuild so a rollback can be compared in whole text.
+  Plan in `documentation/plans/2026-09-17-chunk-size-pool.md`.

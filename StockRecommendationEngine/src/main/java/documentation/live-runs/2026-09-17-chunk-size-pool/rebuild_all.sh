@@ -25,7 +25,7 @@ for ID in 3 4 5 6 7 8 109 110 161 162 288 324 325; do
   N0=$(grep -c "Embedded chunk" "$APPLOG"); T0=$(now)
   R=$(curl -s -o "$SCRATCH/rebuild-$POINT-$ID.json" -w '%{http_code} %{time_total}' -X POST "localhost:8081/api/rag/filings/$ID/rebuild" -H "Authorization: Bearer $TOKEN")
   N1=$(grep -c "Embedded chunk" "$APPLOG")
-  LINE="filing $ID: HTTP and seconds $R; $T0 to $(now); Embedded chunk lines added $((N1-N0)); response $(cat "$SCRATCH/rebuild-$POINT-$ID.json")"
+  LINE="filing $ID: HTTP and seconds $R; $T0 to $(now); Embedded chunk lines added $((N1-N0)); response $(python3 -c "import json,sys; print(json.dumps(json.load(open(sys.argv[1])),separators=(',',':')))" "$SCRATCH/rebuild-$POINT-$ID.json")"
   echo "$LINE" >> "$OUT"; say "$LINE"
   case "$R" in 200*) grep -q '"SUCCEEDED"' "$SCRATCH/rebuild-$POINT-$ID.json" || FAILED=1;; *) FAILED=1;; esac
   if [ $FAILED = 1 ]; then say "$(now) rebuild of filing $ID did not succeed; stopping the rebuild loop (unexpected)"; break; fi

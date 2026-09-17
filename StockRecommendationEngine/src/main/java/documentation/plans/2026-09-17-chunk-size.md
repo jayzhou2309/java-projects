@@ -168,3 +168,11 @@ Correctness contract:
 - 2026-09-17, amendment 1 (Jay, before Milestone 1): after the rebuild the evaluation reruns over all questions of all
   three tickers with a per-question rank table and histogram, the non-rank-1 questions named with their chunks, and
   latency and storage compared (F7 to F9). Approved to start Milestone 1.
+- 2026-09-17, amendment 2 (Milestone 1, before Scrutiny): contract D1 said "one rank line per question"; the rank
+  experiment prints one line per located accepted phrase (its loop is over targets, one per phrase), so D1 reads "one
+  rank line per located phrase" (57). The Worker also reworded this plan's claim-id note at line 46, which `verify`
+  screened as a citation outside a block; both are the Orchestrator's errors.
+- 2026-09-17, Milestone 1 handed off (79e953c): the frozen size rule gives none. First-ranked phrases of 57: 38 at the
+  stored 4,000, 33 at 2,000, 37 at 1,000, 35 at 500 with one split phrase (aapl-13), so 500 is excluded and no remaining
+  size beats 4,000. Under the plan's boundaries no rebuild follows; Milestones 2 and 3 do not start unless Jay amends
+  the rule or the scope. Validation of Milestone 1 pending.

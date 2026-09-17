@@ -143,8 +143,19 @@ final class TraceReproductionCheck {
         return "trace outcome " + trace.rerank().outcome() + " reason " + trace.rerank().fallbackReason();
     }
 
+    /**
+     * A reference value as text. A list (since 2026-09-17, plan 2026-09-17-chunk-size-pool.md: a reference stored after the chunk-size
+     * properties records {@code storeVersions}, a list of strings) is written as {@code String.valueOf} writes the run's list,
+     * {@code [a, b]}, so both sides compare as text; before, a list in the reference threw.
+     */
     private static String text(JsonNode node) {
-        return node == null || node.isNull() ? null : node.asString();
+        if (node == null || node.isNull()) return null;
+        if (node.isArray()) {
+            List<String> items = new ArrayList<>();
+            node.forEach(item -> items.add(text(item)));
+            return String.valueOf(items);
+        }
+        return node.asString();
     }
 
     private static String string(Object value) {

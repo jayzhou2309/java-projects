@@ -156,6 +156,23 @@ class TraceReproductionCheckTests {
                 "property storeVersions: exempt from the comparison with snapshot 297 but absent from the run");
     }
 
+    @Test
+    void aListPropertyTheReferenceRecordsIsComparedWithTheRunsList() throws Exception {
+        // Plan 2026-09-17-chunk-size-pool.md, G2: the reference (snapshot 1615) records storeVersions, a list; it is compared, not exempt.
+        tools.jackson.databind.node.ObjectNode withList = (tools.jackson.databind.node.ObjectNode) reference.deepCopy();
+        ((tools.jackson.databind.node.ObjectNode) withList.get("properties")).putArray("storeVersions").add("sections-v2-context-v2-chunk4000-500");
+        RetrievalEvaluation base = run(results -> results, Map.of());
+        Map<String, Object> properties = new LinkedHashMap<>(base.properties());
+        properties.put("storeVersions", List.of("sections-v2-context-v2-chunk4000-500"));
+        RetrievalEvaluation run = new RetrievalEvaluation(base.id(), base.evaluatedAt(), base.setVersion(), base.questionCount(), base.hitAt1(),
+                base.hitAt3(), base.hitAt5(), base.mrr(), base.window(), base.retrievalStrategy(), properties, base.results(), base.tickerHitAt5(),
+                base.misses(), base.slices(), base.traces());
+        assertThat(TraceReproductionCheck.problems(withList, run)).isEmpty();
+        properties.put("storeVersions", List.of("sections-v2-context-v2-chunk1650-250"));
+        assertThat(TraceReproductionCheck.problems(withList, run)).containsExactly(
+                "property storeVersions: snapshot 297 [sections-v2-context-v2-chunk4000-500], run [sections-v2-context-v2-chunk1650-250]");
+    }
+
     private String failure(RetrievalEvaluation run) {
         Throwable thrown = catchThrowable(() -> TraceReproductionCheck.assertReproduces(reference, run));
         assertThat(thrown).isInstanceOf(AssertionError.class);

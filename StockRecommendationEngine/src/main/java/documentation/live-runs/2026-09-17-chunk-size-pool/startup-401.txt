@@ -1,0 +1,11 @@
+Description:
+
+Binding to target project.stockrecommendationengine.rag.retrieval.FilingRetrievalProperties failed:
+
+    Property: rag.retrieval.candidateCount
+    Value: "401"
+    Origin: System Environment Property "RAG_RETRIEVAL_CANDIDATE_COUNT"
+    Reason: must be less than or equal to 400
+
+
+Action:

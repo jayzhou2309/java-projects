@@ -1,0 +1,404 @@
+{
+ "snapshotId": 1785,
+ "source": "app-log-1785.txt",
+ "rule": "median: mean of the two middle values (even count); p95: sorted value at position ceil(0.95 * count); values are the logged elapsedMs",
+ "wallSeconds": 55.872599,
+ "questions": 42,
+ "rerankFallbacks": 0,
+ "retrievalMs": {
+  "count": 42,
+  "median": 1349.5,
+  "p95": 1450,
+  "max": 1521,
+  "min": 1141,
+  "sum": 55739
+ },
+ "rerankMs": {
+  "count": 42,
+  "median": 1039,
+  "p95": 1125,
+  "max": 1153,
+  "min": 835,
+  "sum": 41832
+ },
+ "perQuestion": [
+  {
+   "id": "aapl-01",
+   "ticker": "AAPL",
+   "kind": "FIGURE",
+   "retrievalMs": 1385,
+   "rerankMs": 1061,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-02",
+   "ticker": "AAPL",
+   "kind": "FIGURE",
+   "retrievalMs": 1433,
+   "rerankMs": 1084,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-03",
+   "ticker": "AAPL",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1340,
+   "rerankMs": 1045,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-04",
+   "ticker": "AAPL",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1205,
+   "rerankMs": 885,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-05",
+   "ticker": "AAPL",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1295,
+   "rerankMs": 984,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-06",
+   "ticker": "AAPL",
+   "kind": "FIGURE",
+   "retrievalMs": 1450,
+   "rerankMs": 1153,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-07",
+   "ticker": "AAPL",
+   "kind": "FIGURE",
+   "retrievalMs": 1359,
+   "rerankMs": 1054,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-08",
+   "ticker": "AAPL",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1376,
+   "rerankMs": 1050,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-09",
+   "ticker": "AAPL",
+   "kind": "FIGURE",
+   "retrievalMs": 1377,
+   "rerankMs": 1054,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-10",
+   "ticker": "AAPL",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1426,
+   "rerankMs": 1087,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-11",
+   "ticker": "AAPL",
+   "kind": "FIGURE",
+   "retrievalMs": 1389,
+   "rerankMs": 1056,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-12",
+   "ticker": "AAPL",
+   "kind": "FIGURE",
+   "retrievalMs": 1366,
+   "rerankMs": 1033,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-13",
+   "ticker": "AAPL",
+   "kind": "FIGURE",
+   "retrievalMs": 1427,
+   "rerankMs": 1125,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "aapl-14",
+   "ticker": "AAPL",
+   "kind": "FIGURE",
+   "retrievalMs": 1398,
+   "rerankMs": 1106,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-01",
+   "ticker": "MSFT",
+   "kind": "FIGURE",
+   "retrievalMs": 1214,
+   "rerankMs": 882,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-02",
+   "ticker": "MSFT",
+   "kind": "FIGURE",
+   "retrievalMs": 1141,
+   "rerankMs": 837,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-03",
+   "ticker": "MSFT",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1254,
+   "rerankMs": 916,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-04",
+   "ticker": "MSFT",
+   "kind": "FIGURE",
+   "retrievalMs": 1199,
+   "rerankMs": 902,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-05",
+   "ticker": "MSFT",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1165,
+   "rerankMs": 835,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-06",
+   "ticker": "MSFT",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1195,
+   "rerankMs": 863,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-07",
+   "ticker": "MSFT",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1169,
+   "rerankMs": 868,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-08",
+   "ticker": "MSFT",
+   "kind": "FIGURE",
+   "retrievalMs": 1206,
+   "rerankMs": 885,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-09",
+   "ticker": "MSFT",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1163,
+   "rerankMs": 843,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-10",
+   "ticker": "MSFT",
+   "kind": "FIGURE",
+   "retrievalMs": 1286,
+   "rerankMs": 859,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-11",
+   "ticker": "MSFT",
+   "kind": "FIGURE",
+   "retrievalMs": 1218,
+   "rerankMs": 881,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-12",
+   "ticker": "MSFT",
+   "kind": "FIGURE",
+   "retrievalMs": 1320,
+   "rerankMs": 930,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-13",
+   "ticker": "MSFT",
+   "kind": "FIGURE",
+   "retrievalMs": 1251,
+   "rerankMs": 908,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "msft-14",
+   "ticker": "MSFT",
+   "kind": "FIGURE",
+   "retrievalMs": 1199,
+   "rerankMs": 882,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-01",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1440,
+   "rerankMs": 1119,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-02",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1418,
+   "rerankMs": 1071,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-03",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1449,
+   "rerankMs": 1119,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-04",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1413,
+   "rerankMs": 1076,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-05",
+   "ticker": "NVDA",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1271,
+   "rerankMs": 968,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-06",
+   "ticker": "NVDA",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1306,
+   "rerankMs": 961,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-07",
+   "ticker": "NVDA",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1297,
+   "rerankMs": 954,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-08",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1410,
+   "rerankMs": 1071,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-09",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1381,
+   "rerankMs": 1050,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-10",
+   "ticker": "NVDA",
+   "kind": "NARRATIVE",
+   "retrievalMs": 1281,
+   "rerankMs": 953,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-11",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1521,
+   "rerankMs": 1102,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-12",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1427,
+   "rerankMs": 1099,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-13",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1492,
+   "rerankMs": 1128,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  },
+  {
+   "id": "nvda-14",
+   "ticker": "NVDA",
+   "kind": "FIGURE",
+   "retrievalMs": 1427,
+   "rerankMs": 1093,
+   "strategy": "HYBRID_RRF_RERANKED",
+   "results": 10
+  }
+ ]
+}

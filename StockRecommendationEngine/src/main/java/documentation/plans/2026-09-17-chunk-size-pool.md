@@ -123,3 +123,10 @@ Correctness contract:
   `runs.txt`; an older check type, `candidateLists`, shares the duplicate-id weakness, no committed snapshot triggers
   it). Lesson repeated from earlier loops: an inferred sentence needs a premise or a named source per clause, and a
   blanket sentence about one's own claims is itself a claim. UT pending.
+- 2026-09-17, UT: PASS. Snapshots 1777, 1778, 1782, 1786, 1790, 1794 read back equal to the committed exports in
+  metrics, properties, and every question's rank and matched chunk; every rank-table cell of those five grid columns
+  and two histograms re-derived; hit@5 over the 42 and over the 14 held-out questions recomputed equal to `grid.txt`;
+  the store uniform at `sections-v2-context-v2-chunk4000-500` with 569 chunks and 1,486,993 characters; retrieve for
+  nvda-04 at the defaults returns no chunk holding the answer, as 1794 records; defaults unchanged (56 candidates
+  retrieved); no ERROR line; port 8081 free. Milestone 1 closed. Open for Jay: RAG-30 (adopt a size and pool or not),
+  RAG-29 (aapl-08 section key, which keeps `verify` red on this database), and the merge of branch `chunk-size`.

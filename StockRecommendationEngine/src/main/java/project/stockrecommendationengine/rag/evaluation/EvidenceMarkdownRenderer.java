@@ -16,7 +16,7 @@ import tools.jackson.databind.JsonNode;
  */
 final class EvidenceMarkdownRenderer {
     private static final String[] SETTINGS = {"rerank", "rerankCandidates", "reranker", "rerankerVersion", "loadedModelVersion", "rerankerScoring",
-            "passageScoring", "windowOverlapTokens", "maxWindows", "maxLength"};
+            "passageScoring", "windowOverlapTokens", "maxWindows", "maxLength", "chunkMaxChars", "chunkOverlapChars", "storeVersions"};
     private static final String[] QUESTION_FIELDS = {"rank", "matchedChunkId", "retrievalStrategy", "error", "rerankOutcome", "fallbackReason",
             "scoresNotRecorded", "fusedCount", "rerankInputCount", "queryTokens", "acceptedPhraseCount", "acceptedChunkRemoved"};
     private static final String[] TOKEN_COLUMNS = {"chunkTokens", "windowLength", "windowStarts"};

@@ -31,7 +31,7 @@ import project.stockrecommendationengine.quant.QuantAnalysisService;
 import project.stockrecommendationengine.quant.QuantProperties;
 import project.stockrecommendationengine.rag.freshness.FilingFreshness;
 import project.stockrecommendationengine.rag.freshness.FilingFreshnessService;
-import project.stockrecommendationengine.rag.ingestion.FilingIngestionService;
+import project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties;
 import project.stockrecommendationengine.rag.ingestion.UnknownTickerException;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
 import tools.jackson.databind.json.JsonMapper;
@@ -81,6 +81,7 @@ public class RecommendationService {
     private final ConfidenceCalibrationService calibrations;
     private final RecommendationProperties properties;
     private final Validator validator;
+    private final FilingIngestionProperties ingestion;
     private final JsonMapper json = JsonMapper.builder().build();
     private final ExecutorService workers = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS,
             new SynchronousQueue<>(), runnable -> {
@@ -100,7 +101,7 @@ public class RecommendationService {
             ObjectProvider<BrokerReadService> brokers, ObjectProvider<QuantAnalysisService> quants,
             ObjectProvider<QuantProperties> quantProperties, RecommendationRepository store,
             ObjectProvider<TrackRecordService> trackRecords, ObjectProvider<ConfidenceCalibrationService> calibrations,
-            RecommendationProperties properties, Validator validator) {
+            RecommendationProperties properties, Validator validator, FilingIngestionProperties ingestion) {
         this.model = models.getIfAvailable();
         if (model == null) throw new IllegalStateException("Enable a Spring AI chat model before enabling recommendations");
         this.filings = filings;
@@ -113,6 +114,7 @@ public class RecommendationService {
         this.calibrations = calibrations.getIfAvailable();
         this.properties = properties;
         this.validator = validator;
+        this.ingestion = ingestion;
     }
 
     public RecommendationResponse recommend(RecommendationRequest request) {
@@ -160,7 +162,7 @@ public class RecommendationService {
                     response.sources().stream().map(source -> source.chunkId()).toList(), response.limitations(),
                     response.modelCalls(), response.observedTokens(), PROMPT_VERSION, properties.getModel(),
                     quant == null || quantProperties == null ? null : quantProperties.version(),
-                    FilingIngestionService.PROCESSING_VERSION, json.writeValueAsString(response));
+                    ingestion.processingVersion(), json.writeValueAsString(response));
             store.save(record);
             return response;
         } catch (Exception ex) {

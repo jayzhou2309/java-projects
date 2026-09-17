@@ -53,6 +53,16 @@ sec:
   archives-base-url: https://www.sec.gov/Archives/edgar/data
 
 rag:
+  # How parsed filing sections are cut into stored chunks (FilingChunker; RAG.md, FilingIngestionProperties). Changing either value
+  # changes only what a later ingestion or rebuild stores; stored filings keep their chunks and their recorded processing_version, which
+  # names the size and overlap they were cut at (sections-v2-context-v2-chunk4000-500 at these defaults). An evaluation snapshot records
+  # the values as properties.chunkMaxChars and chunkOverlapChars beside the distinct versions of the store it ran against (storeVersions).
+  ingestion:
+    # Longest chunk in characters; 100 to 20000. A longer section is cut at the last paragraph, sentence, or word boundary in the second
+    # half of the window.
+    chunk-max-chars: 4000
+    # Characters the next chunk of a section starts before the end of the previous one; 0 to half of chunk-max-chars.
+    chunk-overlap-chars: 500
   # Nightly SEC index comparison for stored tickers; the recommendation loop runs the same check on demand.
   refresh:
     enabled: ${RAG_REFRESH_ENABLED:true}

@@ -34,7 +34,7 @@ class EvidenceMarkdownRendererTests {
     void aValueChangedInTheJsonAloneChangesTheMarkdown() throws Exception {
         JsonNode report = scripted.service().parse(Files.readString(ScriptedEvidence.FIXTURE_JSON));
         String before = EvidenceMarkdownRenderer.render(report);
-        assertThat(before).contains("| rank | 2 (observed [12]) |").contains("| 101 | 1 (observed [31]) | true (observed [32]) | 3 (observed [33])");
+        assertThat(before).contains("| rank | 2 (observed [15]) |").contains("| 101 | 1 (observed [34]) | true (observed [35]) | 3 (observed [36])");
         ObjectNode rank = (ObjectNode) report.at("/questions/0/rank");
         rank.put("value", 7);
         ObjectNode score = (ObjectNode) report.at("/questions/0/phrases/0/chunks/0/rerankedPosition");
@@ -43,7 +43,7 @@ class EvidenceMarkdownRendererTests {
         score.remove("source");
         score.put("reason", "edited in the JSON");
         String after = EvidenceMarkdownRenderer.render(report);
-        assertThat(after).contains("| rank | 7 (observed [12]) |").contains("| 101 | 1 (observed [31]) | true (observed [32]) | unknown: edited in the JSON |")
+        assertThat(after).contains("| rank | 7 (observed [15]) |").contains("| 101 | 1 (observed [34]) | true (observed [35]) | unknown: edited in the JSON |")
                 .doesNotContain("| rank | 2 (observed");
     }
 

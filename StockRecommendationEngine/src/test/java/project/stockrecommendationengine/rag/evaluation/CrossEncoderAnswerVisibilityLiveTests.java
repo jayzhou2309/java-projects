@@ -13,9 +13,12 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import project.stockrecommendationengine.rag.dto.FilingChunkData;
+import project.stockrecommendationengine.rag.dto.FilingSection;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 import project.stockrecommendationengine.rag.evaluation.EvidenceChunkRepository.StoredChunk;
 import project.stockrecommendationengine.rag.evaluation.PhraseOccurrences.CharacterSpan;
+import project.stockrecommendationengine.rag.ingestion.FilingChunker;
 import project.stockrecommendationengine.rag.retrieval.CrossEncoderModelFiles;
 import project.stockrecommendationengine.rag.retrieval.CrossEncoderProperties;
 import project.stockrecommendationengine.rag.retrieval.CrossEncoderReranker;
@@ -51,10 +54,10 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
  * the pool), so a printed line that contradicts an expectation is a measurement, not a failure. Reading the lines is the point, and any
  * conclusion belongs in a {@code claims.json} beside the committed output (RAG.md, Retrieval Evaluation, Claims), not here.
  * <p>
- * The chunk splitter in the {@code chunkSize} experiment is a test-local replica of {@link project.stockrecommendationengine.rag.ingestion.FilingChunker}'s
- * rule parameterised by size, not that class, whose 4,000-character window and 500-character overlap are fixed; the factor it varies is
- * chunk size under that rule, so its rows say nothing about a different splitting rule. Ingestion is untouched: the pieces live in this
- * JVM only.
+ * The chunk splitter in the {@code chunkSize} experiment is {@link FilingChunker} itself at an explicit size and overlap (since 2026-09-17,
+ * plan {@code 2026-09-17-chunk-size.md} Milestone 2; before, a test-local replica of its rule, which FilingChunkerTests shows cut the
+ * same pieces); the factor it varies is chunk size under that rule, so its rows say nothing about a different splitting rule. Ingestion
+ * is untouched: the pieces live in this JVM only.
  * <p>
  * Aborts rather than fails when the database holds no chunk for any accepted phrase (an empty or differently ingested store), so a run
  * without the evaluation set's filings reports skipped.
@@ -305,8 +308,11 @@ class CrossEncoderAnswerVisibilityLiveTests {
             for (int size : CHUNK_SIZES) {
                 List<RetrievedFilingChunk> pieces = new ArrayList<>();
                 long id = 0;
+                FilingChunker chunker = new FilingChunker(size, size / 8);
                 for (StoredChunk stored : section) {
-                    for (String piece : split(stored.content(), size, size / 8)) pieces.add(chunk(++id, piece, target));
+                    for (FilingChunkData piece : chunker.chunk(List.of(new FilingSection(target.sectionKey(), null, stored.content())))) {
+                        pieces.add(chunk(++id, piece.content(), target));
+                    }
                 }
                 List<RetrievedFilingChunk> holders = pieces.stream().filter(piece -> holds(piece.content(), target.phraseText())).toList();
                 if (holders.isEmpty()) {
@@ -441,34 +447,6 @@ class CrossEncoderAnswerVisibilityLiveTests {
     private static RetrievedFilingChunk chunk(long id, String content, Target target) {
         return new RetrievedFilingChunk(id, null, target.ticker(), null, target.accessionNo(), null, LocalDate.EPOCH, LocalDate.EPOCH,
                 target.sectionKey(), null, (int) id, content, null, 0.0);
-    }
-
-    /**
-     * {@code text} split into pieces of at most {@code size} characters that advance by {@code size - overlap}, each piece ending at the
-     * last paragraph, sentence, or word boundary in its second half when there is one: the rule
-     * {@link project.stockrecommendationengine.rag.ingestion.FilingChunker} applies at a fixed 4,000 and 500, parameterised here so size
-     * is the only factor that varies between rows of the {@code chunkSize} experiment.
-     */
-    private static List<String> split(String text, int size, int overlap) {
-        List<String> pieces = new ArrayList<>();
-        int start = 0;
-        while (start < text.length()) {
-            int end = Math.min(start + size, text.length());
-            if (end < text.length()) {
-                int minimumEnd = start + size / 2;
-                int paragraph = text.lastIndexOf("\n\n", end);
-                int sentence = text.lastIndexOf(". ", end - 1);
-                int word = text.lastIndexOf(' ', end);
-                if (paragraph >= minimumEnd) end = paragraph;
-                else if (sentence >= minimumEnd) end = sentence + 1;
-                else if (word >= minimumEnd) end = word;
-            }
-            String piece = text.substring(start, end).trim();
-            if (!piece.isBlank()) pieces.add(piece);
-            if (end >= text.length()) break;
-            start = Math.max(end - overlap, start + 1);
-        }
-        return pieces;
     }
 
     /** A phrase on one log line: whitespace collapsed, cut to 90 characters. */

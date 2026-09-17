@@ -111,6 +111,9 @@ final class ScriptedEvidence {
         properties.put("reranker", "CrossEncoderReranker");
         properties.put("rerankerVersion", VERSION);
         properties.put("rerankerScoring", "max-window/overlap=0/maxWindows=4");
+        properties.put("chunkMaxChars", 4000);
+        properties.put("chunkOverlapChars", 500);
+        properties.put("storeVersions", List.of("sections-v2-context-v2-chunk4000-500"));
         properties.put("trace", trace);
         return properties;
     }

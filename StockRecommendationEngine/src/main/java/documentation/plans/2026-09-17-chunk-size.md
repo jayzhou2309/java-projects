@@ -221,3 +221,11 @@ Correctness contract:
   provenance for `filings-S2.json`; C-1315 premises; truncated index names; C-1512 wording; RAG-29 reporting an unrun
   test as failed; one label on C-1509) fixed in remediation round 1 (f0c8247) and passed a scoped re-check. The two
   database-state failures close only with RAG-29 (Jay's decision). UT pending.
+- 2026-09-17, Milestone 3 UT: PASS. All five snapshots (1611 to 1615) read back equal to the committed exports in
+  metrics, properties, and every question's rank and matched chunk; evidence 1615 equals the committed report (56 of
+  57 held, aapl-08 not held); evidence for 1613 and 598 reads without error against today's store; three rank-table
+  rows re-derived; retrieve for nvda-04's question returns no chunk holding the answer, as P0 records; the store is
+  uniform at `sections-v2-context-v2-chunk4000-500`, 569 chunks, 1,486,993 characters. Observation: an evidence report
+  generated while no cross-encoder is loaded labels token counts unknown ("tokenizer unavailable") instead of the
+  committed derived values, by design. Milestone 3 is closed on everything but the two database-state items, which
+  close with RAG-29. Plan close-out (merge) waits on Jay's decisions RAG-27 and RAG-29.

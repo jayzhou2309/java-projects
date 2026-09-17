@@ -108,3 +108,18 @@ Correctness contract:
 
 - 2026-09-17: plan written and frozen before any run; Jay instructed to proceed (250-word chunks, pools adjusted for
   the best result, reranker off and on, 4,000 ms timeout, latency checked, events logged).
+- 2026-09-17, Milestone 1 handed off (b18fb28 bounds, 477a827 store A, e9f294e store B, d0be553 rollback, 2a53bd4
+  checker, c98173b write-up): no stop condition triggered; 18 runs (1777 to 1794), no rerank fallback; the phrase gate
+  held on store B (56 of 57, aapl-08 exempt); the held-out test of store B's chosen points is FAIL with reranking off
+  and FAIL with reranking on; the store is back at 4,000 / 500 (569 chunks, every chunk's content md5 equal to the
+  store before the rebuild) and 1794 equals 1777 per question; defaults unchanged; decision RAG-30 for Jay.
+- 2026-09-17, Scrutiny round 1: every number, choice, held-out outcome, listing, latency and storage value, and the
+  rollback equality recomputed and equal; FAIL on the evidence rule (an inferred claim with clauses its premises did
+  not support; two per-question equality claims resting on text files; a sentence misdescribing the plan's Reported
+  list). Remediation round 1 (fdfbe05) added a test-scope `questionEquality` check so both equalities are derived by
+  `verify`. Its scoped re-check failed on three narrow gaps of the same class; remediation round 2 (767a4f8) audited
+  all ten inferred claims clause by clause and refused duplicate question ids in the new check; the scoped re-check
+  PASSED with two low notes (the choice sentences omit the rule's fallback clause, zero fallbacks being stated in
+  `runs.txt`; an older check type, `candidateLists`, shares the duplicate-id weakness, no committed snapshot triggers
+  it). Lesson repeated from earlier loops: an inferred sentence needs a premise or a named source per clause, and a
+  blanket sentence about one's own claims is itself a claim. UT pending.

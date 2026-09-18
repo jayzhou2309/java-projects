@@ -274,3 +274,10 @@ Correctness contract:
   close with RAG-29. Plan close-out (merge) waits on Jay's decisions RAG-27 and RAG-29.
 - 2026-09-18, Milestone 4 added (Jay: "proceed to find the fix", then "proceed"): the RAG-29 findings above and the
   fix contract; Worker starts.
+- 2026-09-18, amendment 5 (Milestone 4 handoff): H3 asked for an experiment claim for the fresh snapshot against 1777;
+  the checker refuses it because the set file's path is the same recorded property in both snapshots and no recorded
+  property carries the set's content. The pair is stated as an inferred claim resting on the two evidence reports'
+  recorded aapl-08 section keys, the per-question content equality on 41 of 42 questions, and the metrics; the
+  Orchestrator accepts this. Handoff: 55ef0f1, df6aca0, 2c61fae, e6ea89d; snapshot 1891 (aapl-08 rank 1 under
+  ITEM_2_02, 57 of 57 phrases held, hit@5 0.785714, MRR 0.655187, equal to 598); 1892 at 297's settings equals 297 and
+  613 rank for rank; `verify` exit 0 with 37 skipped. Validation pending.

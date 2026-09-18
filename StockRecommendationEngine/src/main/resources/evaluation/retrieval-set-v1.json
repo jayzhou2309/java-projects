@@ -75,9 +75,9 @@
       "kind": "NARRATIVE",
       "question": "Which quarter's results did Apple's most recent earnings press release cover?",
       "expected": [
-        { "accessionNo": "0000320193-26-000018", "sectionKey": "ITEM_2", "phrase": "financial results for its third fiscal quarter ended June 27, 2026" }
+        { "accessionNo": "0000320193-26-000018", "sectionKey": "ITEM_2_02", "phrase": "financial results for its third fiscal quarter ended June 27, 2026" }
       ],
-      "notes": "8-K Item 2.02; the parser stores the section key as ITEM_2."
+      "notes": "8-K Item 2.02; stored as ITEM_2 when the set was written. 2026-09-18: section key corrected from ITEM_2 to ITEM_2_02; the store's 8-K item keys carry the sub-item since parser commit 19876f2 (2026-09-12); question and phrase unchanged (Follow_Ups RAG-29)."
     },
     {
       "id": "aapl-09",

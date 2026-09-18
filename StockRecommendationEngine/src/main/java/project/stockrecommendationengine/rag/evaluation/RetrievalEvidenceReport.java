@@ -15,12 +15,15 @@ public record RetrievalEvidenceReport(long snapshotId, EvidenceValue<String> set
     /**
      * The settings token positions and window membership depend on. {@code maxLength} is not recorded in snapshots, so it is observed
      * from the current configuration; {@code passageScoring}, {@code windowOverlapTokens}, and {@code maxWindows} are parsed from
-     * {@code rerankerScoring}.
+     * {@code rerankerScoring}. {@code chunkMaxChars}, {@code chunkOverlapChars}, and {@code storeVersions} (since 2026-09-17) are the
+     * chunk size and overlap configured when the snapshot ran and the distinct processing versions of the store it ran against, as recorded;
+     * unknown for a snapshot stored before they were recorded.
      */
     public record Settings(EvidenceValue<Boolean> rerank, EvidenceValue<Integer> rerankCandidates, EvidenceValue<String> reranker,
             EvidenceValue<String> rerankerVersion, EvidenceValue<String> loadedModelVersion, EvidenceValue<String> rerankerScoring,
             EvidenceValue<String> passageScoring, EvidenceValue<Integer> windowOverlapTokens, EvidenceValue<Integer> maxWindows,
-            EvidenceValue<Integer> maxLength) {
+            EvidenceValue<Integer> maxLength, EvidenceValue<Integer> chunkMaxChars, EvidenceValue<Integer> chunkOverlapChars,
+            EvidenceValue<List<String>> storeVersions) {
     }
 
     /**

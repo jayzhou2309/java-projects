@@ -41,7 +41,8 @@ one-line fix, a typo, or a question, just do it directly.
   assertions robust to pre-existing rows (future timestamps, unique tickers).
 - Opt-in live tests skip by design (`@EnabledIfSystemProperty`: `ibkr.live`, `ibkr.live.conid`,
   `ibkr.live.history`, `quant.live`, `rag.evaluation.live`, `rag.rerank.live`,
-  `rag.rerank.gte.live`, `rag.reproduction.run`); a green `verify` reports them as skipped (32 tests on 2026-09-15).
+  `rag.rerank.gte.live`, `rag.reproduction.run`); a green `verify` reports them as skipped (37 tests on 2026-09-17, the five methods of
+  `CrossEncoderAnswerVisibilityLiveTests` included).
 - Running the app for a UT check: `SERVER_PORT=8081`, `INTEGRATION_ACCESS_TOKEN`
   of 32+ characters, `./mvnw -q -o spring-boot:run`, wait for
   `Started StockRecommendationEngineApplication`, stop with
@@ -196,3 +197,38 @@ one-line fix, a typo, or a question, just do it directly.
   Lessons: probe a downloaded model's graph before designing around it; a model comparison
   must check candidate-list identity per question, not only settings. Decision RAG-23 open.
   Plan in `documentation/plans/2026-09-15-reranker-ettin.md`.
+- 2026-09-17 to 2026-09-18, chunk size (RAG-15 lever 2, RAG-25, RAG-26, RAG-27, RAG-29): four milestones.
+  M1 (the answer-visibility diagnostic over set v2) passed Scrutiny and UT on the first round, with one low
+  finding (a stale contract reference in RAG.md) fixed under a scoped check; its frozen size rule chose
+  none, and Jay overrode it (amendment 3) for a rebuild at 1,000 / 125 with the selection rule unchanged.
+  M2 (configurable chunk size, recorded in snapshots and the processing version) passed both on the first
+  round. M3 rebuilt the store, and the R1 gate failed there (55 of 57 accepted phrases held): one phrase
+  split at a chunk boundary of the smaller cut, and one under an 8-K section key the re-parse now writes
+  with its sub-item; the rollback rebuild at 4,000 / 500 restored the text but not that key, so the
+  post-rollback run differed from the baseline on aapl-08 and the database-backed set test failed
+  (RAG-29). Scrutiny failed M3 on those two database-state items (not attributable to the diff; every
+  derived number recomputed equal) and seven documentation findings; the remediation passed a scoped
+  re-check and UT passed. M4 (the RAG-29 fix: the set entry's key corrected, the two id-bound live tests
+  re-pointed to a fresh traced snapshot) failed Scrutiny once on a sentence that overstated what the
+  compared runs shared (different store rebuilds, vectors not compared); the remediation passed; UT passed
+  after `verify` failed on the Orchestrator's own plan note, which cited a claim id in prose and was
+  reworded. Lessons: a rebuild re-parses with the parser in the tree, so a rollback under a newer parser is
+  not a restore of section keys, and keys and text are exported before any rebuild; a rule-driven size
+  choice can be overridden by the user, but the selection rule stays; the Orchestrator's plan text is under
+  the claims check like every other document. Plan in `documentation/plans/2026-09-17-chunk-size.md`.
+- 2026-09-17, chunk size and candidate pool (RAG-27, RAG-30): one milestone, design frozen before any
+  run (stores 4,000 / 500 and 1,650 / 250, pools 40 to 250, reranking off and on, choice on 28 tuning
+  questions, one held-out test on 14). The default reference reproduced 1615, the phrase gate held with
+  aapl-08 exempt, no run fell back, the held-out test of the rebuilt store's chosen points was FAIL in
+  both reranker states, no default changed, and the rollback restored 569 chunks equal by content hash
+  (post-rollback run equal to the reference per question). Scrutiny recomputed every number, choice,
+  held-out outcome, latency and storage value equal but failed round 1 on the evidence rule (an inferred
+  claim with clauses its premises did not support; two equality claims resting on text files; a sentence
+  misdescribing the plan's Reported list); remediation round 1 added a test-scope `questionEquality` check
+  so both equalities are derived by `verify`, and its scoped re-check failed on three narrow gaps of the
+  same class; remediation round 2 audited all ten inferred claims clause by clause and passed with two
+  low notes; UT passed. Lesson (repeated from earlier loops): an inferred sentence needs a premise or a
+  named source per clause, and a blanket sentence about one's own claims is itself a claim. Worker notes:
+  a reference that records a list property broke `TraceReproductionCheck` until it read lists as text;
+  subset metrics needed a check type (`subsetMetric`); export content hashes before a rebuild so a
+  rollback can be compared in whole text. Plan in `documentation/plans/2026-09-17-chunk-size-pool.md`.

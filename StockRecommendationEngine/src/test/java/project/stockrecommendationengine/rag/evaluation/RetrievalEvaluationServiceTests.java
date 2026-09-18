@@ -30,8 +30,16 @@ class RetrievalEvaluationServiceTests {
     private final FilingRetrievalService retrieval = mock(FilingRetrievalService.class);
     private final RetrievalEvaluationRepository repository = mock(RetrievalEvaluationRepository.class);
     private final RetrievalEvaluationProperties properties = new RetrievalEvaluationProperties();
+    private final project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties ingestion =
+            new project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties();
+    private final project.stockrecommendationengine.rag.repository.SECFilingRepository filings =
+            mock(project.stockrecommendationengine.rag.repository.SECFilingRepository.class);
     private final RetrievalEvaluationService service = new RetrievalEvaluationService(loader, retrieval, repository, properties,
-            new FilingRetrievalProperties());
+            new FilingRetrievalProperties(), ingestion, filings);
+
+    {
+        when(filings.findDistinctProcessingVersionsOfEmbeddedFilings()).thenReturn(List.of("sections-v2-context-v2-chunk4000-500"));
+    }
 
     @Test void computesHitAtKMrrPerTickerHitAndMissesFromScriptedRanks() {
         var q1 = question("q1", "AAPL", "net sales were");
@@ -87,6 +95,8 @@ class RetrievalEvaluationServiceTests {
         assertThat(nonFigure.missIds()).containsExactly("q3");
         assertThat(nonFigure.notInTop5()).containsExactly(new RankedQuestion("q3", null));
         assertThat(evaluation.properties()).containsEntry("set", "evaluation/retrieval-set-v2.json").containsEntry("setCreatedOn", "2026-09-12")
+                .containsEntry("chunkMaxChars", 4000).containsEntry("chunkOverlapChars", 500)
+                .containsEntry("storeVersions", List.of("sections-v2-context-v2-chunk4000-500"))
                 .containsEntry("window", 10).containsEntry("latestFilingsOnly", true)
                 .containsEntry("hybridEnabled", true).containsEntry("keywordCandidateCount", 40).containsEntry("rrfK", 60)
                 .containsEntry("rrfVectorWeight", 1.0).containsEntry("rrfKeywordWeight", 0.5).containsEntry("rrfFigureWeight", 1.0)
@@ -354,7 +364,7 @@ class RetrievalEvaluationServiceTests {
 
         var retrievalProperties = new FilingRetrievalProperties();
         retrievalProperties.setRerankingEnabled(true);
-        var onByProperty = new RetrievalEvaluationService(loader, retrieval, repository, properties, retrievalProperties).evaluate(null, null);
+        var onByProperty = new RetrievalEvaluationService(loader, retrieval, repository, properties, retrievalProperties, ingestion, filings).evaluate(null, null);
         assertThat(onByProperty.properties()).containsEntry("rerankedQuestions", 0).containsEntry("rerankFallbackQuestions", 1);
     }
 

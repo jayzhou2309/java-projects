@@ -82,10 +82,30 @@ class FilingIngestionServiceTests {
             var filing = repository.findById(id).orElseThrow();
             assertThat(filing.getChunks()).hasSize(1);
             assertThat(filing.getChunks().get(0).getContent()).isEqualTo("New content.");
-            assertThat(filing.getProcessingVersion()).isEqualTo(FilingIngestionService.PROCESSING_VERSION);
+            assertThat(filing.getProcessingVersion()).isEqualTo(service.processingVersion()).isEqualTo("sections-v2-context-v2-chunk4000-500");
         });
         assertThat(jdbc.queryForObject("SELECT outcome FROM filing_rebuild_runs WHERE filing_id=?", String.class, id))
                 .isEqualTo("SUCCEEDED");
+    }
+
+    /** E4 (plan 2026-09-17-chunk-size.md, Milestone 2): completeness is status and chunks, not the version string. */
+    @Test
+    void aCompleteFilingStoredUnderAnotherProcessingVersionIsStillSkippedByNormalIngest() {
+        var metadata = metadata();
+        when(sec.getRecentFilings("TEST", List.of("10-K"), 1)).thenReturn(List.of(metadata));
+        service.ingest("TEST", List.of("10-K"), 1);
+        long id = repository.findByAccessionNo(metadata.accessionNo()).orElseThrow().getId();
+        assertThat(jdbc.update("UPDATE sec_filings SET processing_version = 'sections-v2-context-v2' WHERE id = ?", id)).isEqualTo(1);
+        service.ingest("TEST", List.of("10-K"), 1);
+        verify(sec, times(1)).fetchFilingHTML(metadata.sourceUrl());
+        assertFiling(metadata, "EMBEDDED", 1);
+        assertThat(jdbc.queryForObject("SELECT processing_version FROM sec_filings WHERE id = ?", String.class, id)).isEqualTo("sections-v2-context-v2");
+        assertThat(repository.findDistinctProcessingVersionsOfEmbeddedFilings()).contains("sections-v2-context-v2");
+        assertThat(service.rebuild(id)).containsEntry("processingVersion", "sections-v2-context-v2-chunk4000-500");
+        assertThat(jdbc.queryForObject("SELECT processing_version FROM sec_filings WHERE id = ?", String.class, id))
+                .isEqualTo("sections-v2-context-v2-chunk4000-500");
+        assertThat(jdbc.queryForObject("SELECT previous_version FROM filing_rebuild_runs WHERE filing_id = ?", String.class, id))
+                .isEqualTo("sections-v2-context-v2");
     }
 
     @Test

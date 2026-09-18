@@ -1,0 +1,17 @@
+{
+ "description": "Pool 40 (snapshot 1781) against pool 100 (snapshot 1782) on store A (4000 / 500) with reranking on; the design sets keywordCandidateCount to the same value as candidateCount, so it is coupled. rerank-timeout-ms, not recorded in snapshots, was 4000 in both (property-diff.txt, from run.log).",
+ "experiment": {
+  "factor": "candidateCount",
+  "settings": [
+   40,
+   100
+  ],
+  "coupled": [
+   "keywordCandidateCount"
+  ],
+  "snapshots": [
+   "snapshot-1781-a-pool-40-rerank-on-40.json",
+   "snapshot-1782-a-pool-100-rerank-on-40.json"
+  ]
+ }
+}

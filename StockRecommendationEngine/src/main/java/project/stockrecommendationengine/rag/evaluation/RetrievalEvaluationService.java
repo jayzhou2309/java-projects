@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 import project.stockrecommendationengine.rag.dto.RetrievalRequest;
 import project.stockrecommendationengine.rag.dto.RetrievalResponse;
 import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
+import project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties;
 import project.stockrecommendationengine.rag.repository.FilingRetrievalRepository;
+import project.stockrecommendationengine.rag.repository.SECFilingRepository;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.Miss;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionResult;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluation.QuestionTrace;
@@ -47,6 +49,8 @@ public class RetrievalEvaluationService {
     private final RetrievalEvaluationRepository repository;
     private final RetrievalEvaluationProperties properties;
     private final FilingRetrievalProperties retrievalProperties;
+    private final FilingIngestionProperties ingestionProperties;
+    private final SECFilingRepository filings;
 
     /** Evaluate every question now with the configured retrieval default and store the snapshot; returns it with its id. */
     public RetrievalEvaluation evaluate() {
@@ -250,6 +254,9 @@ public class RetrievalEvaluationService {
         out.put("rerankerScoring", retrieval.rerankerScoring().orElse(null));
         out.put("rerankedQuestions", (int) rerankedQuestions);
         out.put("rerankFallbackQuestions", (int) fallbackQuestions);
+        out.put("chunkMaxChars", ingestionProperties.getChunkMaxChars());
+        out.put("chunkOverlapChars", ingestionProperties.getChunkOverlapChars());
+        out.put("storeVersions", new ArrayList<>(filings.findDistinctProcessingVersionsOfEmbeddedFilings()));
         out.put("trace", traced);
         return out;
     }

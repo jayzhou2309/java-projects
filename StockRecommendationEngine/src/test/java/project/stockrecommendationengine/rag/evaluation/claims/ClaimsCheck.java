@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import tools.jackson.core.JacksonException;
@@ -44,7 +47,8 @@ public final class ClaimsCheck {
     static final List<String> BASES = List.of("observed", "derived", "inferred", "unknown", "experiment");
     static final Set<String> FREE_TEXT_BASES = Set.of("inferred", "unknown", "experiment");
     static final List<String> CHECK_TYPES = List.of("rank", "topK", "metric", "ruleRow", "phraseSpan", "membership", "candidate", "bestFusedPosition",
-            "candidateRecall", "removedAccepted", "blend", "candidateLists", "notRecorded");
+            "candidateRecall", "removedAccepted", "blend", "candidateLists", "diagnosticLine", "diagnosticCount", "sizeTable", "sizeChoice", "matchedChunk",
+            "rankHistogram", "rankedAbove", "fileValue", "heldPhrases", "subsetMetric", "questionEquality", "notRecorded");
     static final List<String> CRITERIA = List.of("aggregateHitAt5", "nonFigureHitAt5", "tickerHitAt5", "figureKindTop5");
     static final Pattern ID = Pattern.compile("C-\\d{3,}");
     static final Pattern BLOCK = Pattern.compile("[A-Za-z0-9_-]+");
@@ -66,15 +70,28 @@ public final class ClaimsCheck {
             Map.entry("removedAccepted", Set.of("type", "report", "expected")),
             Map.entry("blend", Set.of("type", "snapshot", "report", "k", "w", "questions", "metric", "expected", "reference")),
             Map.entry("candidateLists", Set.of("type", "reference", "candidate", "compare", "expected")),
+            Map.entry("diagnosticLine", Set.of("type", "output", "experiment", "line", "question", "chunk", "sizeChars", "field", "expected")),
+            Map.entry("diagnosticCount", Set.of("type", "output", "experiment", "sizeChars", "expected")),
+            Map.entry("sizeTable", Set.of("type", "output", "sizeChars", "expected")),
+            Map.entry("sizeChoice", Set.of("type", "output", "stored", "candidates", "expected")),
+            Map.entry("matchedChunk", Set.of("type", "snapshot", "question", "expected")),
+            Map.entry("rankHistogram", Set.of("type", "snapshot", "expected")),
+            Map.entry("rankedAbove", Set.of("type", "snapshot", "question", "chunks", "expected")),
+            Map.entry("fileValue", Set.of("type", "file", "path", "expected")),
+            Map.entry("heldPhrases", Set.of("type", "report", "expected")),
+            Map.entry("subsetMetric", Set.of("type", "snapshot", "questions", "metric", "expected")),
+            Map.entry("questionEquality", Set.of("type", "reference", "candidate", "compare", "referenceChunks", "candidateChunks", "expected")),
             Map.entry("notRecorded", Set.of("type", "report", "path", "reason")));
     private static final Set<String> ROW_KEYS = Set.of("snapshot", "expected");
     private static final Map<String, List<String>> EXPECTED_KEYS = Map.of(
             "phraseSpan", List.of("tokenSpan", "characterSpan"),
             "membership", List.of("head", "windowsHoldingWholly"),
-            "candidate", List.of("fusedPosition", "rerankInput", "rerankedPosition"));
+            "candidate", List.of("fusedPosition", "rerankInput", "rerankedPosition"),
+            "sizeTable", List.of("phrases", "firstRanked", "split", "unseen"),
+            "heldPhrases", List.of("phrases", "held"));
     private static final Set<String> EXPERIMENT_REFERENCE_KEYS = Set.of("file", "factor");
     private static final Set<String> EXPERIMENT_FILE_KEYS = Set.of("experiment", "description");
-    private static final Set<String> EXPERIMENT_KEYS = Set.of("factor", "settings", "snapshots");
+    private static final Set<String> EXPERIMENT_KEYS = Set.of("factor", "settings", "snapshots", "coupled");
     private static final Map<String, String> CRITERION_NAMES = Map.of("aggregateHitAt5", "aggregate hit@5", "nonFigureHitAt5", "non-figure hit@5",
             "tickerHitAt5", "per-ticker hit@5", "figureKindTop5", "FIGURE top-5");
 
@@ -520,6 +537,22 @@ public final class ClaimsCheck {
         if (snapshotFiles == null || !snapshotFiles.isArray() || snapshotFiles.size() != 2 || !snapshotFiles.get(0).isString() || !snapshotFiles.get(1).isString()) {
             found.add(experimentFile + " snapshots expected two committed snapshot files, one per setting, found " + (snapshotFiles == null ? "none" : abbreviate(snapshotFiles.toString())));
         }
+        // Since 2026-09-17 (plan 2026-09-17-chunk-size.md, Milestone 3): recorded properties that change together with the factor, each of which
+        // must differ between the two snapshots and is named in the rendered sentence; the factor itself may not be listed.
+        List<String> coupled = new ArrayList<>();
+        JsonNode declaredCoupled = declared.get("coupled");
+        if (declaredCoupled != null) {
+            if (!declaredCoupled.isArray()) {
+                found.add(experimentFile + " coupled expected a list of recorded property names that change with the factor, found " + abbreviate(declaredCoupled.toString()));
+            } else {
+                for (JsonNode name : declaredCoupled) {
+                    if (!name.isString() || name.stringValue().isBlank()) found.add(experimentFile + " coupled expected property names, found " + name);
+                    else if (name.stringValue().equals(factor)) found.add(experimentFile + " coupled expected properties other than the factor, found the factor " + factor);
+                    else if (coupled.contains(name.stringValue())) found.add(experimentFile + " coupled lists " + name.stringValue() + " twice");
+                    else coupled.add(name.stringValue());
+                }
+            }
+        }
         if (!found.isEmpty()) {
             found.forEach(problem -> problems.add(label + problem));
             return null;
@@ -563,11 +596,23 @@ public final class ClaimsCheck {
                 found.add(experimentFile + " snapshots expected to differ in " + factor + ", found " + render(firstValue) + " in both");
             }
         }
+        List<String> coupledRendered = new ArrayList<>();
+        for (String key : coupled) {
+            JsonNode a = recorded.get(0).get(key);
+            JsonNode b = recorded.get(1).get(key);
+            if (a == null || b == null) {
+                found.add(experimentFile + " coupled property " + key + " expected a property both snapshots record, found " + (a == null ? first : second) + " not recording it");
+            } else if (sameValue(a, b)) {
+                found.add(experimentFile + " snapshots expected to differ in the coupled property " + key + ", found " + render(a) + " in both");
+            } else {
+                coupledRendered.add(key + " " + render(a) + " against " + render(b));
+            }
+        }
         List<String> others = new ArrayList<>();
         Set<String> keys = new LinkedHashSet<>(recorded.get(0).keySet());
         keys.addAll(recorded.get(1).keySet());
         for (String key : keys) {
-            if (key.equals(factor)) continue;
+            if (key.equals(factor) || coupled.contains(key)) continue;
             JsonNode a = recorded.get(0).get(key);
             JsonNode b = recorded.get(1).get(key);
             if (a == null || b == null || !sameValue(a, b)) {
@@ -575,14 +620,15 @@ public final class ClaimsCheck {
             }
         }
         if (!others.isEmpty()) {
-            found.add(experimentFile + " snapshots " + first + " and " + second + " expected to differ only in " + factor + ", found " + others.size()
+            found.add(experimentFile + " snapshots " + first + " and " + second + " expected to differ only in " + factor + (coupled.isEmpty() ? "" : " and the coupled " + String.join(", ", coupled)) + ", found " + others.size()
                     + (others.size() == 1 ? " other recorded property differing: " : " other recorded properties differing: ") + String.join(", ", others));
         }
         if (!found.isEmpty()) {
             found.forEach(problem -> problems.add(label + problem));
             return null;
         }
-        String rendered = factor + " " + render(settings.get(0)) + " in snapshot " + ids.get(0) + " against " + render(settings.get(1)) + " in snapshot " + ids.get(1);
+        String rendered = factor + " " + render(settings.get(0)) + " in snapshot " + ids.get(0) + " against " + render(settings.get(1)) + " in snapshot " + ids.get(1)
+                + (coupledRendered.isEmpty() ? "" : ", with it " + joinAnd(coupledRendered));
         return new Experiment(experimentFile, snapshots, ids, rendered);
     }
 
@@ -617,6 +663,17 @@ public final class ClaimsCheck {
                 case "removedAccepted" -> removedAccepted(claim, check, evaluation);
                 case "blend" -> blend(claim, check, evaluation);
                 case "candidateLists" -> candidateLists(claim, check, evaluation);
+                case "diagnosticLine" -> diagnosticLine(claim, check, evaluation);
+                case "diagnosticCount" -> diagnosticCount(claim, check, evaluation);
+                case "sizeTable" -> sizeTable(claim, check, evaluation);
+                case "sizeChoice" -> sizeChoice(claim, check, evaluation);
+                case "matchedChunk" -> matchedChunk(claim, check, evaluation);
+                case "rankHistogram" -> rankHistogram(claim, check, evaluation);
+                case "rankedAbove" -> rankedAbove(claim, check, evaluation);
+                case "fileValue" -> fileValue(claim, check, evaluation);
+                case "heldPhrases" -> heldPhrases(claim, check, evaluation);
+                case "subsetMetric" -> subsetMetric(claim, check, evaluation);
+                case "questionEquality" -> questionEquality(claim, check, evaluation);
                 case "notRecorded" -> notRecorded(check, evaluation);
                 default -> throw new IllegalStateException(type);
             };
@@ -662,6 +719,458 @@ public final class ClaimsCheck {
         Unreadable(String message) {
             super(message);
         }
+    }
+
+    // Template (RAG.md, Claims, Sentences): "<Snapshot> records chunk <id> as the matched chunk of <question>." | "<Snapshot> records no matched
+    // chunk for <question> (no matching chunk in the window)." | "<Snapshot> records a retrieval error for <question> and no matched chunk."
+    /** The question's stored matchedChunkId (since 2026-09-17, plan 2026-09-17-chunk-size.md Milestone 3), an integer or null. */
+    private String matchedChunk(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        String question = requireText(check, "question");
+        evaluation.subject("matched chunk of " + question + " in " + snapshotFile);
+        JsonNode expected = check.get("expected");
+        if (expected == null || !(expected.isNull() || expected.isIntegralNumber())) {
+            throw new Unreadable("check.expected must be a chunk id (integer) or null, found " + (expected == null ? "none" : expected));
+        }
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Long found = snapshot.matchedChunkId(question);
+        Long wanted = expected.isNull() ? null : expected.longValue();
+        if (!Objects.equals(found, wanted)) evaluation.differs("matchedChunkId", String.valueOf(wanted), String.valueOf(found));
+        basis(claim, "observed", evaluation);
+        String reference = capitalize(snapshotReference(loaded, snapshot, null));
+        if (found != null) return reference + " records chunk " + found + " as the matched chunk of " + question + ".";
+        if (snapshot.error(question) != null) return reference + " records a retrieval error for " + question + " and no matched chunk.";
+        return reference + " records no matched chunk for " + question + " (no matching chunk in the window).";
+    }
+
+    // Template: "In <Snapshot>, of the <total> questions <n> rank 1st, <n> 2nd, ..., and <n> rank outside the window[ of <w> results] (no matching
+    // chunk[, <e> with a retrieval error])." (only ranks that occur, ascending; with no question outside, the last clause is "and none ranks outside
+    // the window[ of <w> results]").
+    /**
+     * The rank histogram of a snapshot (since 2026-09-17): how many questions are stored at each rank and how many have no rank. {@code expected}
+     * is an object whose keys are ranks (positive integers as strings) or {@code notInWindow}, each a non-negative integer; a key absent from it
+     * counts as 0, and every rank that occurs must be listed, so the claim states the whole histogram.
+     */
+    private String rankHistogram(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        evaluation.subject("rank histogram of " + snapshotFile);
+        JsonNode expected = check.get("expected");
+        if (expected == null || !expected.isObject()) {
+            throw new Unreadable("check.expected must be an object of counts keyed by rank or notInWindow, found " + (expected == null ? "none" : abbreviate(expected.toString())));
+        }
+        Map<String, Integer> wanted = new TreeMap<>(RANK_KEYS);
+        for (Map.Entry<String, JsonNode> entry : expected.properties()) {
+            String key = entry.getKey();
+            if (!(key.equals("notInWindow") || key.matches("[1-9]\\d*"))) throw new Unreadable("check.expected key \"" + key + "\" is neither a rank nor notInWindow");
+            if (!entry.getValue().isIntegralNumber() || entry.getValue().intValue() < 0) throw new Unreadable("check.expected." + key + " must be a non-negative count, found " + entry.getValue());
+            wanted.put(key, entry.getValue().intValue());
+        }
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Map<String, Integer> found = new TreeMap<>(RANK_KEYS);
+        int total = 0;
+        int errors = 0;
+        for (JsonNode question : snapshot.questions()) {
+            total++;
+            JsonNode rank = question.get("rank");
+            String key = rank == null || rank.isNull() ? "notInWindow" : rank.isIntegralNumber() && rank.intValue() > 0 ? rank.asString() : null;
+            if (key == null) throw new Unreadable("question " + question.path("id").asString("(no id)") + " records a rank that is not a positive integer: " + rank);
+            found.merge(key, 1, Integer::sum);
+            JsonNode error = question.get("error");
+            if (key.equals("notInWindow") && error != null && !error.isNull()) errors++;
+        }
+        Set<String> keys = new TreeSet<>(RANK_KEYS);
+        keys.addAll(wanted.keySet());
+        keys.addAll(found.keySet());
+        for (String key : keys) {
+            int w = wanted.getOrDefault(key, 0);
+            int f = found.getOrDefault(key, 0);
+            if (w != f) evaluation.differs(key.equals("notInWindow") ? "not in the window" : "rank " + key, String.valueOf(w), String.valueOf(f));
+        }
+        basis(claim, "derived", evaluation);
+        List<String> parts = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : found.entrySet()) {
+            if (entry.getKey().equals("notInWindow")) continue;
+            parts.add(entry.getValue() + " rank " + ordinal(Integer.parseInt(entry.getKey())));
+        }
+        int outside = found.getOrDefault("notInWindow", 0);
+        String window = snapshot.windowSize() == null ? "" : " of " + snapshot.windowSize() + " results";
+        parts.add(outside == 0 ? "none ranks outside the window" + window
+                : outside + " rank outside the window" + window + " (no matching chunk" + (errors == 0 ? "" : ", " + errors + " with a retrieval error") + ")");
+        return "In " + snapshotReference(loaded, snapshot, null) + ", of the " + total + " questions " + joinAnd(parts) + ".";
+    }
+
+    // Template (RAG.md, Claims, Sentences): "From the stored ranks of <Snapshot>, <name> over the <n> questions <ids> is <value> (<c> ranked 1 to <k>)."
+    // for hit@1, hit@3, hit@5 ("ranked 1st" for hit@1), and "From the stored ranks of <Snapshot>, MRR over the <n> questions <ids> is <value>."
+    /**
+     * A metric over a listed subset of a snapshot's questions, computed from their stored ranks (since 2026-09-17, plan
+     * 2026-09-17-chunk-size-pool.md Milestone 1: the tuning and held-out questions of a split). {@code metric} is hitAt1, hitAt3, hitAt5, or mrr,
+     * computed as RetrievalEvaluationService computes them (questions ranked 1 to k divided by the listed questions, half up to six places; each
+     * 1/rank half up to twelve places, their sum divided by the listed questions half up to six places, a null rank counting 0). The check reads
+     * stored ranks only; which split, slice, or ticker the list stands for is not read.
+     */
+    private String subsetMetric(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        JsonNode questionsNode = check.get("questions");
+        if (questionsNode == null || !questionsNode.isArray() || questionsNode.isEmpty()) {
+            throw new Unreadable("check.questions must list at least one question id, found " + questionsNode);
+        }
+        List<String> questions = new ArrayList<>();
+        for (JsonNode q : questionsNode) {
+            if (!q.isString() || q.stringValue().isBlank() || questions.contains(q.stringValue())) {
+                throw new Unreadable("check.questions must list distinct non-blank question ids, found " + abbreviate(questionsNode.toString()));
+            }
+            questions.add(q.stringValue());
+        }
+        String metric = requireText(check, "metric");
+        if (!Set.of("hitAt1", "hitAt3", "hitAt5", "mrr").contains(metric)) throw new Unreadable("check.metric must be hitAt1, hitAt3, hitAt5, or mrr, found " + quote(metric));
+        BigDecimal expected = scale6(check.get("expected"));
+        if (expected == null) throw new Unreadable("check.expected must be a number with at most six decimal places, found " + check.get("expected"));
+        evaluation.subject(metric + " over " + questions.size() + (questions.size() == 1 ? " question" : " questions") + " of " + snapshotFile);
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Map<String, Integer> ranks = new LinkedHashMap<>();
+        for (String question : questions) {
+            JsonNode rank = snapshot.question(question).get("rank");
+            if (rank != null && !rank.isNull() && !(rank.isIntegralNumber() && rank.intValue() > 0)) {
+                throw new Unreadable("question " + question + " records a rank that is not a positive integer: " + rank);
+            }
+            ranks.put(question, snapshot.rank(question));
+        }
+        basis(claim, "derived", evaluation);
+        String lead = "From the stored ranks of " + snapshotReference(loaded, snapshot, null) + ", ";
+        String over = " over the " + questions.size() + (questions.size() == 1 ? " question " : " questions ") + joinAnd(questions) + " is ";
+        if (metric.equals("mrr")) {
+            BigDecimal sum = BigDecimal.ZERO;
+            for (Integer r : ranks.values()) {
+                if (r != null) sum = sum.add(BigDecimal.ONE.divide(BigDecimal.valueOf(r), 12, RoundingMode.HALF_UP));
+            }
+            BigDecimal found = sum.divide(BigDecimal.valueOf(questions.size()), 6, RoundingMode.HALF_UP);
+            if (found.compareTo(expected) != 0) {
+                List<String> listed = new ArrayList<>();
+                ranks.forEach((q, r) -> listed.add(q + " " + rankText(r)));
+                evaluation.differs("MRR", expected.toPlainString(), found.toPlainString() + " (" + String.join(", ", listed) + ")");
+            }
+            return lead + "MRR" + over + found.toPlainString() + ".";
+        }
+        int k = Integer.parseInt(metric.substring("hitAt".length()));
+        long inside = ranks.values().stream().filter(r -> r != null && r <= k).count();
+        BigDecimal found = BigDecimal.valueOf(inside).divide(BigDecimal.valueOf(questions.size()), 6, RoundingMode.HALF_UP);
+        if (found.compareTo(expected) != 0) {
+            List<String> outside = new ArrayList<>();
+            ranks.forEach((q, r) -> { if (r == null || r > k) outside.add(q + " (" + rankText(r) + ")"); });
+            evaluation.differs(metricName(metric), expected.toPlainString(), found.toPlainString() + " (" + inside + " of " + questions.size() + "; outside the top " + k + ": "
+                    + (outside.isEmpty() ? "none" : String.join(", ", outside)) + ")");
+        }
+        return lead + metricName(metric) + over + found.toPlainString() + " (" + inside + (k == 1 ? " ranked 1st)." : " ranked 1 to " + k + ")."); 
+    }
+
+    // Template (RAG.md, Claims, Sentences): "Between <reference Snapshot> and <candidate Snapshot>, <what> is (are) identical for each of the <n>
+    // questions." | "..., <what> differs (differ) for <m> of the <n> questions: <question> (<detail>), ...." with <what> "the stored rank", "the
+    // stored rank and matched chunk id", or "the stored rank and the matched chunk's filing, chunk index, length, and content md5 (from <File> and
+    // <File>)", and a detail naming both sides' rank, matched chunk id, or matched chunk entry.
+    /**
+     * Whether two snapshots store the same result per question (since 2026-09-17, plan 2026-09-17-chunk-size-pool.md Milestone 1, remediation
+     * round 1: G2 and G8 state a per-question equality). {@code compare} {@code rank}: the stored ranks; {@code rankAndMatchedChunk}: the stored
+     * ranks and matched chunk ids (two runs on one store); {@code rankAndMatchedContent}: the stored ranks and, for a question with a matched
+     * chunk, the entries of the two matched chunks in the chunk-hash exports {@code referenceChunks} and {@code candidateChunks} (JSON arrays of
+     * objects with {@code id}, {@code filingId}, {@code chunkIndex}, {@code chars}, and {@code contentMd5}, written by chunk-hashes.sql from the
+     * store each run retrieved from), compared by those four values, for two runs on stores whose chunk ids differ. {@code expected} lists the
+     * distinct questions that differ (empty for none); true when exactly those differ. Unreadable: the snapshots list different questions, a
+     * snapshot lists a question id twice (one entry per id is read; remediation round 2), a question with a retrieval error, a rank that is not a positive integer, a rank without a matched chunk id or the reverse, the two export
+     * keys given with another compare or missing with rankAndMatchedContent, a file that is not such an export, or a matched chunk absent from
+     * its export. The check reads no chunk text: equal content rests on the md5 the export records.
+     */
+    private String questionEquality(Claim claim, JsonNode check, Evaluation evaluation) {
+        String referenceFile = requireText(check, "reference");
+        String candidateFile = requireText(check, "candidate");
+        String compare = requireText(check, "compare");
+        if (!Set.of("rank", "rankAndMatchedChunk", "rankAndMatchedContent").contains(compare)) {
+            throw new Unreadable("check.compare must be rank, rankAndMatchedChunk, or rankAndMatchedContent, found " + quote(compare));
+        }
+        boolean content = compare.equals("rankAndMatchedContent");
+        if (content != (check.has("referenceChunks") && check.has("candidateChunks")) || (!content && (check.has("referenceChunks") || check.has("candidateChunks")))) {
+            throw new Unreadable("check.referenceChunks and check.candidateChunks are required with compare rankAndMatchedContent and refused otherwise");
+        }
+        JsonNode expected = check.get("expected");
+        List<String> wanted = new ArrayList<>();
+        boolean listed = expected != null && expected.isArray();
+        if (listed) {
+            for (JsonNode id : expected) {
+                if (!id.isString() || id.stringValue().isBlank() || wanted.contains(id.stringValue())) listed = false;
+                else wanted.add(id.stringValue());
+            }
+        }
+        if (!listed) {
+            throw new Unreadable("check.expected must list the distinct question ids that differ (an empty list for none), found "
+                    + (expected == null ? "none" : abbreviate(expected.toString())));
+        }
+        evaluation.subject(compare + " of " + candidateFile + " against " + referenceFile);
+        Loaded referenceLoaded = load(referenceFile, directory, evaluation);
+        Snapshot reference = Snapshot.of(referenceFile, referenceLoaded.json());
+        Loaded candidateLoaded = load(candidateFile, directory, evaluation);
+        Snapshot candidate = Snapshot.of(candidateFile, candidateLoaded.json());
+        if (referenceLoaded.path().equals(candidateLoaded.path())) throw new Unreadable("check.reference and check.candidate name the same file " + referenceFile);
+        List<String> questions = new ArrayList<>();
+        reference.questions().forEach(q -> questions.add(q.path("id").asString("")));
+        List<String> candidateQuestions = new ArrayList<>();
+        candidate.questions().forEach(q -> candidateQuestions.add(q.path("id").asString("")));
+        refuseDuplicateQuestion(questions, referenceFile);
+        refuseDuplicateQuestion(candidateQuestions, candidateFile);
+        if (!new HashSet<>(questions).equals(new HashSet<>(candidateQuestions)) || questions.size() != candidateQuestions.size()) {
+            throw new Unreadable(referenceFile + " and " + candidateFile + " list different questions");
+        }
+        for (String id : wanted) {
+            if (!questions.contains(id)) throw new Unreadable("check.expected lists " + id + ", which neither snapshot has");
+        }
+        Loaded referenceChunks = null;
+        Loaded candidateChunks = null;
+        Map<Long, String> referenceEntries = null;
+        Map<Long, String> candidateEntries = null;
+        if (content) {
+            String referenceChunksFile = requireText(check, "referenceChunks");
+            String candidateChunksFile = requireText(check, "candidateChunks");
+            referenceChunks = load(referenceChunksFile, directory, evaluation);
+            candidateChunks = load(candidateChunksFile, directory, evaluation);
+            referenceEntries = hashEntries(referenceChunks, referenceChunksFile);
+            candidateEntries = hashEntries(candidateChunks, candidateChunksFile);
+        }
+        List<String> differing = new ArrayList<>();
+        List<String> details = new ArrayList<>();
+        for (String question : questions) {
+            Integer a = storedRank(reference, question, referenceFile);
+            Integer b = storedRank(candidate, question, candidateFile);
+            Long chunkA = reference.matchedChunkId(question);
+            Long chunkB = candidate.matchedChunkId(question);
+            if ((a == null) != (chunkA == null)) throw new Unreadable("question " + question + " records " + rankText(a) + " and matched chunk " + chunkA + " in " + referenceFile);
+            if ((b == null) != (chunkB == null)) throw new Unreadable("question " + question + " records " + rankText(b) + " and matched chunk " + chunkB + " in " + candidateFile);
+            String detail = null;
+            if (!Objects.equals(a, b)) {
+                detail = rankText(a) + " in snapshot " + reference.id() + ", " + rankText(b) + " in snapshot " + candidate.id();
+            } else if (a != null && compare.equals("rankAndMatchedChunk") && !chunkA.equals(chunkB)) {
+                detail = "matched chunk " + chunkA + " in snapshot " + reference.id() + ", " + chunkB + " in snapshot " + candidate.id();
+            } else if (a != null && content) {
+                String entryA = referenceEntries.get(chunkA);
+                String entryB = candidateEntries.get(chunkB);
+                if (entryA == null) throw new Unreadable("matched chunk " + chunkA + " of " + question + " is not in the chunk-hash export " + check.get("referenceChunks").stringValue());
+                if (entryB == null) throw new Unreadable("matched chunk " + chunkB + " of " + question + " is not in the chunk-hash export " + check.get("candidateChunks").stringValue());
+                if (!entryA.equals(entryB)) detail = "matched chunk " + chunkA + " is " + entryA + " in snapshot " + reference.id() + ", matched chunk " + chunkB + " is " + entryB + " in snapshot " + candidate.id();
+            }
+            if (detail != null) {
+                differing.add(question);
+                details.add(question + " (" + detail + ")");
+            }
+        }
+        if (!new HashSet<>(wanted).equals(new HashSet<>(differing))) {
+            evaluation.differs("questions that differ", wanted.isEmpty() ? "none" : String.join(", ", wanted), differing.isEmpty() ? "none" : String.join(", ", details));
+        }
+        basis(claim, "derived", evaluation);
+        String what = switch (compare) {
+            case "rank" -> "the stored rank";
+            case "rankAndMatchedChunk" -> "the stored rank and matched chunk id";
+            default -> "the stored rank and the matched chunk's filing, chunk index, length, and content md5 (from " + fileReference(referenceChunks, "the chunk-hash export")
+                    + " and " + fileReference(candidateChunks, "the chunk-hash export") + ")";
+        };
+        boolean plural = !compare.equals("rank");
+        String lead = "Between " + snapshotReference(referenceLoaded, reference, null) + " and " + snapshotReference(candidateLoaded, candidate, null) + ", " + what;
+        return differing.isEmpty() ? lead + (plural ? " are" : " is") + " identical for each of the " + questions.size() + " questions."
+                : lead + (plural ? " differ" : " differs") + " for " + differing.size() + " of the " + questions.size() + " questions: " + String.join(", ", details) + ".";
+    }
+
+    /** questionEquality reads one entry per question id, so a snapshot listing an id twice is refused: its later entry would go uncompared. */
+    private static void refuseDuplicateQuestion(List<String> ids, String file) {
+        Set<String> seen = new HashSet<>();
+        for (String id : ids) {
+            if (!seen.add(id)) throw new Unreadable(file + " lists question " + id + " twice");
+        }
+    }
+
+    /** The stored rank of a question for questionEquality: null or a positive integer, and no retrieval error. */
+    private static Integer storedRank(Snapshot snapshot, String question, String file) {
+        if (snapshot.error(question) != null) throw new Unreadable("question " + question + " records a retrieval error in " + file + ": " + snapshot.error(question));
+        JsonNode rank = snapshot.question(question).get("rank");
+        if (rank != null && !rank.isNull() && !(rank.isIntegralNumber() && rank.intValue() > 0)) {
+            throw new Unreadable("question " + question + " records a rank that is not a positive integer in " + file + ": " + rank);
+        }
+        return snapshot.rank(question);
+    }
+
+    /** Chunk id to "filing <f> chunk <i>, <n> characters, md5 <h>" of a chunk-hash export. */
+    private static Map<Long, String> hashEntries(Loaded loaded, String file) {
+        if (!loaded.json().isArray()) throw new Unreadable(file + " is not a chunk-hash export (a JSON array of chunks)");
+        Map<Long, String> entries = new HashMap<>();
+        for (JsonNode chunk : loaded.json()) {
+            JsonNode id = chunk.get("id");
+            JsonNode filing = chunk.get("filingId");
+            JsonNode index = chunk.get("chunkIndex");
+            JsonNode chars = chunk.get("chars");
+            JsonNode md5 = chunk.get("contentMd5");
+            if (id == null || !id.isIntegralNumber() || filing == null || !filing.isIntegralNumber() || index == null || !index.isIntegralNumber()
+                    || chars == null || !chars.isIntegralNumber() || md5 == null || !md5.isString() || md5.stringValue().isBlank()) {
+                throw new Unreadable(file + " holds a chunk without an integer id, filingId, chunkIndex, and chars and a contentMd5: " + abbreviate(chunk.toString()));
+            }
+            if (entries.put(id.longValue(), "filing " + filing.longValue() + " chunk " + index.longValue() + ", " + chars.longValue() + " characters, md5 " + md5.stringValue()) != null) {
+                throw new Unreadable(file + " lists chunk " + id.longValue() + " twice");
+            }
+        }
+        return entries;
+    }
+
+    /** Rank keys in numeric order with notInWindow last. */
+    private static final Comparator<String> RANK_KEYS = (a, b) -> {
+        if (a.equals(b)) return 0;
+        if (a.equals("notInWindow")) return 1;
+        if (b.equals("notInWindow")) return -1;
+        return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+    };
+
+    // Template: "In <Snapshot>, the <n> chunks returned above <question>'s matched chunk <m> (rank <r>) are chunk <id> (<sectionKey>, "<head>"),
+    // ...; sections and text from <Chunks>." | "In <Snapshot>, no chunk is returned above <question>'s matched chunk <m> (rank 1)." | "In <Snapshot>,
+    // the <n> chunks returned for <question>, none of them a matched chunk, are ...; sections and text from <Chunks>." ("chunk" and "is" for one)
+    /**
+     * The chunks returned above a question's matched chunk (since 2026-09-17, plan 2026-09-17-chunk-size.md Milestone 3, F7): from the
+     * question's trace, its {@code returnedChunkIds} before the stored rank (all of them when the rank is null), each joined by id to the
+     * committed chunk export {@code chunks} (a JSON array of objects with {@code id}, {@code sectionKey}, and {@code head}, the first characters
+     * of the stored text, written by chunks.sql from the store the run retrieved from) for its section and text. {@code expected} lists the
+     * chunk ids in returned order (empty for a question at rank 1); true when equal. Unreadable when the question has no trace or returned
+     * list, the returned chunk at the stored rank is not the matched chunk, or a returned chunk is absent from the export. The check reads no
+     * score and states nothing about why a chunk ranks where it does.
+     */
+    private String rankedAbove(Claim claim, JsonNode check, Evaluation evaluation) {
+        String snapshotFile = requireText(check, "snapshot");
+        String question = requireText(check, "question");
+        String chunksFile = requireText(check, "chunks");
+        evaluation.subject("chunks returned above the matched chunk of " + question + " in " + snapshotFile);
+        JsonNode expected = check.get("expected");
+        if (expected == null || !expected.isArray()) throw new Unreadable("check.expected must be a list of chunk ids in returned order, found " + (expected == null ? "none" : abbreviate(expected.toString())));
+        List<Long> wanted = new ArrayList<>();
+        for (JsonNode id : expected) {
+            if (!id.isIntegralNumber()) throw new Unreadable("check.expected must list chunk ids (integers), found " + id);
+            wanted.add(id.longValue());
+        }
+        Loaded loaded = load(snapshotFile, directory, evaluation);
+        Snapshot snapshot = Snapshot.of(snapshotFile, loaded.json());
+        Loaded chunks = load(chunksFile, directory, evaluation);
+        if (!chunks.json().isArray()) throw new Unreadable(chunksFile + " is not a chunk export (a JSON array of chunks)");
+        Map<Long, JsonNode> byId = new HashMap<>();
+        for (JsonNode chunk : chunks.json()) {
+            JsonNode id = chunk.get("id");
+            if (id == null || !id.isIntegralNumber()) throw new Unreadable(chunksFile + " holds a chunk without an integer id: " + abbreviate(chunk.toString()));
+            byId.put(id.longValue(), chunk);
+        }
+        Integer rank = snapshot.rank(question);
+        Long matched = snapshot.matchedChunkId(question);
+        if (snapshot.error(question) != null) throw new Unreadable("question " + question + " records a retrieval error: " + snapshot.error(question));
+        JsonNode trace = snapshot.trace(question);
+        if (trace == null) throw new Unreadable("question " + question + " has no trace in " + snapshotFile);
+        JsonNode returned = trace.get("returnedChunkIds");
+        if (returned == null || !returned.isArray()) throw new Unreadable("the trace of " + question + " records no returnedChunkIds list");
+        List<Long> returnedIds = new ArrayList<>();
+        for (JsonNode id : returned) {
+            if (!id.isIntegralNumber()) throw new Unreadable("the trace of " + question + " records a returned chunk id that is not an integer: " + id);
+            returnedIds.add(id.longValue());
+        }
+        int above = rank == null ? returnedIds.size() : rank - 1;
+        if (rank != null && (rank > returnedIds.size() || !Objects.equals(returnedIds.get(rank - 1), matched))) {
+            throw new Unreadable("question " + question + " records rank " + rank + " and matched chunk " + matched + ", but the trace returns "
+                    + (rank > returnedIds.size() ? "only " + returnedIds.size() + " chunks" : "chunk " + returnedIds.get(rank - 1) + " at that rank"));
+        }
+        List<Long> foundIds = returnedIds.subList(0, above);
+        if (!foundIds.equals(wanted)) evaluation.differs("chunks above", wanted.toString(), foundIds.toString());
+        List<String> parts = new ArrayList<>();
+        for (Long id : foundIds) {
+            JsonNode chunk = byId.get(id);
+            if (chunk == null) throw new Unreadable("returned chunk " + id + " is not in the chunk export " + chunksFile);
+            parts.add("chunk " + id + " (" + chunk.path("sectionKey").asString("no section") + ", \"" + chunk.path("head").asString("") + "\")");
+        }
+        basis(claim, "derived", evaluation);
+        String reference = snapshotReference(loaded, snapshot, null);
+        String source = "; sections and text from " + fileReference(chunks, "the chunk export");
+        if (rank != null && above == 0) return "In " + reference + ", no chunk is returned above " + question + "'s matched chunk " + matched + " (rank 1).";
+        if (rank == null) {
+            return "In " + reference + ", the " + counted(foundIds.size(), "chunk") + " returned for " + question + ", none of them a matched chunk, "
+                    + (foundIds.size() == 1 ? "is " : "are ") + joinAnd(parts) + source + ".";
+        }
+        return "In " + reference + ", the " + counted(foundIds.size(), "chunk") + " returned above " + question + "'s matched chunk " + matched + " (rank " + rank + ") "
+                + (foundIds.size() == 1 ? "is " : "are ") + joinAnd(parts) + source + ".";
+    }
+
+    private static String counted(int n, String noun) {
+        return n + " " + noun + (n == 1 ? "" : "s");
+    }
+
+    /** "<what> <path as written>" or "<label> (<what> <path as written>)". */
+    private String fileReference(Loaded loaded, String what) {
+        String label = labels.get(loaded.path());
+        String reference = what + " " + loaded.written();
+        return label == null ? reference : label + " (" + reference + ")";
+    }
+
+    // Template: "In <File>, <path> is <value>." with <File> "the file <path as written>" or "<label> (the file <path as written>)" and the value
+    // as render writes it (a string without quotes, a list with brackets, null as null).
+    /**
+     * One value of a committed JSON file by path (since 2026-09-17, plan 2026-09-17-chunk-size.md Milestone 3, F8 and F9): {@code path} as
+     * ReportPath reads it; {@code expected} any JSON value, compared as sameValue compares (numbers by value, lists element by element). A path
+     * naming nothing is unreadable. The check reads the file as it is on disk and states nothing about how the value was produced; the file's
+     * own description and the run log say that.
+     */
+    private String fileValue(Claim claim, JsonNode check, Evaluation evaluation) {
+        String file = requireText(check, "file");
+        String path = requireText(check, "path");
+        evaluation.subject(path + " in " + file);
+        if (!check.has("expected")) throw new Unreadable("check.expected is required (the value the file holds at the path)");
+        JsonNode expected = check.get("expected");
+        Loaded loaded = load(file, directory, evaluation);
+        JsonNode found = ReportPath.resolve(loaded.json(), path);
+        if (found == null) throw new Unreadable("path " + path + " names nothing in " + file);
+        if (!sameValue(expected, found)) evaluation.differs("value", shown(expected, found), shown(found, expected));
+        basis(claim, "observed", evaluation);
+        return "In " + fileReference(loaded, "the file") + ", " + path + " is " + render(found) + ".";
+    }
+
+    // Template: "In <Report>, <held> of the <phrases> accepted phrases are held by a stored chunk[; not held: <question> "<phrase>", ...]."
+    /**
+     * The R1 gate of plan 2026-09-17-chunk-size.md (since 2026-09-17): over every accepted phrase of every question of an evidence report,
+     * how many record {@code heldByStoredChunk} observed true. {@code expected: {phrases, held}}, both non-negative integers; true when both
+     * counts equal. A phrase whose value is not an observed boolean makes the claim unreadable, naming it, so an unknown is never counted as
+     * held or as not held. The report evaluates the rule against the store at report time (Evidence report, Limits), which the run log
+     * ties to the store the run retrieved from.
+     */
+    private String heldPhrases(Claim claim, JsonNode check, Evaluation evaluation) {
+        String reportFile = requireText(check, "report");
+        evaluation.subject("accepted phrases held by a stored chunk in " + reportFile);
+        JsonNode expected = expected(check, "heldPhrases");
+        for (String key : EXPECTED_KEYS.get("heldPhrases")) {
+            JsonNode value = expected.get(key);
+            if (value == null || !value.isIntegralNumber() || value.intValue() < 0) throw new Unreadable("check.expected." + key + " must be a non-negative count, found " + value);
+        }
+        for (String key : expected.propertyNames()) {
+            if (!EXPECTED_KEYS.get("heldPhrases").contains(key)) throw new Unreadable("unknown expected field \"" + key + "\" (one of phrases, held)");
+        }
+        Loaded report = report(reportFile, evaluation);
+        int phrases = 0;
+        int held = 0;
+        List<String> notHeld = new ArrayList<>();
+        for (JsonNode question : report.json().get("questions")) {
+            String id = question.path("id").asString("(no id)");
+            JsonNode list = question.get("phrases");
+            if (list == null || !list.isArray()) throw new Unreadable("question " + id + " lists no phrases");
+            for (JsonNode phrase : list) {
+                phrases++;
+                JsonNode value = phrase.get("heldByStoredChunk");
+                if (value == null || !value.isObject() || !"observed".equals(value.path("basis").asString(null)) || !value.path("value").isBoolean()) {
+                    throw new Unreadable("question " + id + " phrase \"" + phrase.path("phrase").asString("") + "\": heldByStoredChunk is not an observed boolean ("
+                            + (value == null ? "not in the report" : abbreviate(value.toString())) + ")");
+                }
+                if (value.get("value").booleanValue()) held++;
+                else notHeld.add(id + " \"" + phrase.path("phrase").asString("") + "\"");
+            }
+        }
+        if (phrases != expected.get("phrases").intValue()) evaluation.differs("phrases", expected.get("phrases").asString(), String.valueOf(phrases));
+        if (held != expected.get("held").intValue()) evaluation.differs("held", expected.get("held").asString(), String.valueOf(held) + (notHeld.isEmpty() ? "" : " (not held: " + String.join(", ", notHeld) + ")"));
+        basis(claim, "derived", evaluation);
+        return "In " + reportReference(report) + ", " + held + " of the " + phrases + " accepted phrases are held by a stored chunk" + (notHeld.isEmpty() ? "" : "; not held: " + String.join(", ", notHeld)) + ".";
     }
 
     // Template (RAG.md, Claims, Sentences): "<Snapshot> ranks <question> <ordinal>." | "<Snapshot> ranks <question> outside its window[ of <n>
@@ -1726,10 +2235,287 @@ public final class ClaimsCheck {
             }
         });
         if (read instanceof String error) throw new Unreadable(error);
-        Loaded loaded = new Loaded(resolved, relative, (JsonNode) read);
+        if (!(read instanceof JsonNode json)) throw new Unreadable("file " + relative + " was read as diagnostic output by another check, not as JSON evidence");
+        Loaded loaded = new Loaded(resolved, relative, json);
         referenced.add(resolved);
         if (evaluation != null) evaluation.references.add(loaded);
         return loaded;
+    }
+
+    /**
+     * The file's {@code ANSWER_VISIBILITY} lines ({@link DiagnosticOutput}), read once per resolved path; the path must lie inside the
+     * evidence root. Recorded on the evaluation as a reference with no snapshot id, so an experiment claim reading it is refused.
+     */
+    private DiagnosticOutput diagnostic(String relative, Evaluation evaluation) {
+        Path resolved = resolve(relative, directory);
+        Object read = files.computeIfAbsent(resolved, path -> {
+            try {
+                return DiagnosticOutput.parse(Files.readString(path));
+            } catch (IOException failure) {
+                return "file " + relative + " cannot be read: " + firstLine(failure.getMessage());
+            }
+        });
+        if (read instanceof String error) throw new Unreadable(error);
+        if (!(read instanceof DiagnosticOutput output)) throw new Unreadable("file " + relative + " was read as JSON evidence by another check, not as diagnostic output");
+        if (output.lines().isEmpty()) throw new Unreadable("file " + relative + " holds no ANSWER_VISIBILITY line");
+        referenced.add(resolved);
+        evaluation.references.add(new Loaded(resolved, relative, JSON.createObjectNode()));
+        return output;
+    }
+
+    /** "the diagnostic output <path as written>" or "<label> (the diagnostic output <path as written>)". */
+    private String outputReference(String relative) {
+        String label = labels.get(resolve(relative, directory));
+        String reference = "the diagnostic output " + relative;
+        return label == null ? reference : label + " (" + reference + ")";
+    }
+
+    /**
+     * The one line of the experiment matching the selectors; none or several is unreadable, naming the count found. With a line number, that
+     * line, which must be a line of the experiment and match the other selectors.
+     */
+    private static DiagnosticOutput.Line oneLine(DiagnosticOutput output, String relative, String experiment, Integer number, String question, Long chunk, Integer sizeChars) {
+        List<DiagnosticOutput.Line> lines = output.select(experiment, question, chunk, sizeChars).stream().filter(line -> number == null || line.number() == number).toList();
+        if (lines.size() != 1) {
+            throw new Unreadable(relative + " has " + (lines.isEmpty() ? "no " + experiment + " line" : lines.size() + " " + experiment + " lines") + " matching "
+                    + selectors(number, question, chunk, sizeChars) + (lines.isEmpty() ? "" : " (lines " + lines.stream().map(line -> String.valueOf(line.number())).collect(Collectors.joining(", ")) + ")")
+                    + ", expected exactly one");
+        }
+        return lines.get(0);
+    }
+
+    private static String selectors(Integer number, String question, Long chunk, Integer sizeChars) {
+        List<String> parts = new ArrayList<>();
+        if (number != null) parts.add("line " + number);
+        if (question != null) parts.add("question " + question);
+        if (chunk != null) parts.add("chunk " + chunk);
+        if (sizeChars != null) parts.add(sizeChars + " characters");
+        return parts.isEmpty() ? "no selector" : String.join(", ", parts);
+    }
+
+    /** "the <experiment>[ TOTALS] line[ of <question>][, chunk <chunk>][, at <n> characters]". */
+    private static String lineDescription(String experiment, boolean totals, String question, Long chunk, Integer sizeChars) {
+        return "the " + experiment + (totals ? " TOTALS" : "") + " line" + (question == null ? "" : " of " + question) + (chunk == null ? "" : ", chunk " + chunk)
+                + (sizeChars == null ? "" : ", at " + sizeChars + " characters");
+    }
+
+    // Template (RAG.md, Claims, Sentences): "Line <n> of <Output>, the <experiment>[ TOTALS] line[ of <question>][, chunk <id>][, at <size>
+    // characters], records <field> <value as printed>."
+    /**
+     * One field of one printed line, compared as printed: a number expected against a value that reads as a number by numeric value,
+     * anything else as text against the printed text (a boolean as {@code true} or {@code false}, a list with its brackets, a quoted phrase
+     * with its quotes). The selectors (a line number, the question, the chunk, the size) must match exactly one line of the experiment.
+     */
+    private String diagnosticLine(Claim claim, JsonNode check, Evaluation evaluation) {
+        String outputFile = requireText(check, "output");
+        String experiment = requireText(check, "experiment");
+        String field = requireText(check, "field");
+        Integer number = optionalSize(check, "line");
+        String question = optionalText(check, "question");
+        Long chunk = optionalLong(check, "chunk");
+        Integer sizeChars = optionalSize(check, "sizeChars");
+        JsonNode expected = check.get("expected");
+        if (expected == null || expected.isNull() || expected.isArray() || expected.isObject()) {
+            throw new Unreadable("check.expected must be a number, string, or boolean as the line prints it, found " + (expected == null ? "none" : expected));
+        }
+        evaluation.subject(field + " of " + lineDescription(experiment, false, question, chunk, sizeChars) + (number == null ? "" : " (line " + number + ")") + " in " + outputFile);
+        DiagnosticOutput output = diagnostic(outputFile, evaluation);
+        DiagnosticOutput.Line line = oneLine(output, outputFile, experiment, number, question, chunk, sizeChars);
+        String value = line.field(field);
+        if (value == null) throw new Unreadable("line " + line.number() + " has no field " + field + " (its fields: " + String.join(", ", line.fields().keySet()) + ")");
+        if (!printedEquals(expected, value)) evaluation.differs(field, render(expected), value + " (line " + line.number() + ")");
+        basis(claim, "observed", evaluation);
+        return "Line " + line.number() + " of " + outputReference(outputFile) + ", " + lineDescription(experiment, line.fields().containsKey("TOTALS"), question, chunk, sizeChars)
+                + ", records " + field + " " + value + ".";
+    }
+
+    /** A number against a printed number by value; otherwise the rendered expectation against the printed text. */
+    private static boolean printedEquals(JsonNode expected, String printed) {
+        if (expected.isNumber()) {
+            try {
+                return expected.decimalValue().compareTo(new BigDecimal(printed)) == 0;
+            } catch (NumberFormatException notANumber) {
+                return false;
+            }
+        }
+        return render(expected).equals(printed);
+    }
+
+    // Template: "<Output> holds <n> <experiment> lines naming a question[ at <size> characters]."
+    /** The number of the experiment's lines that name a question (the setup line and a TOTALS line are not counted), at one size when given. */
+    private String diagnosticCount(Claim claim, JsonNode check, Evaluation evaluation) {
+        String outputFile = requireText(check, "output");
+        String experiment = requireText(check, "experiment");
+        Integer sizeChars = optionalSize(check, "sizeChars");
+        JsonNode expected = check.get("expected");
+        if (expected == null || !expected.isIntegralNumber() || expected.intValue() < 0) {
+            throw new Unreadable("check.expected must be a line count (non-negative integer), found " + (expected == null ? "none" : expected));
+        }
+        evaluation.subject(experiment + " lines" + (sizeChars == null ? "" : " at " + sizeChars + " characters") + " in " + outputFile);
+        DiagnosticOutput output = diagnostic(outputFile, evaluation);
+        long count = output.select(experiment, null, null, sizeChars).stream().filter(DiagnosticOutput.Line::measurement).count();
+        if (count != expected.intValue()) evaluation.differs("count", String.valueOf(expected.intValue()), String.valueOf(count));
+        basis(claim, "derived", evaluation);
+        return capitalize(outputReference(outputFile)) + " holds " + count + " " + experiment + " lines naming a question" + (sizeChars == null ? "" : " at " + sizeChars + " characters") + ".";
+    }
+
+    /** The counts of the frozen size rule at one size (plan {@code 2026-09-17-chunk-size.md}), over the chunkSize lines at that size. */
+    private record SizeCounts(int sizeChars, Integer overlapChars, int phrases, int firstRanked, int split, int unseen, List<String> notFirst,
+            List<String> splitPhrases, List<String> unseenPhrases) {
+    }
+
+    /**
+     * Over the chunkSize lines at {@code sizeChars}: a line is one located phrase; first-ranked when its {@code bestRank} is 1; split when it
+     * prints {@code noPieceHoldsPhrase=true} or {@code piecesHoldingPhrase=0}; unseen when it is not split and no holder prints
+     * {@code phraseSeen=true}. A line that is neither split nor prints an integer {@code bestRank} is unreadable, as is a size with no line.
+     */
+    private static SizeCounts sizeCounts(DiagnosticOutput output, String relative, int sizeChars) {
+        List<DiagnosticOutput.Line> lines = output.select("chunkSize", null, null, sizeChars).stream().filter(DiagnosticOutput.Line::measurement).toList();
+        if (lines.isEmpty()) throw new Unreadable(relative + " has no chunkSize line at " + sizeChars + " characters");
+        int firstRanked = 0;
+        int split = 0;
+        int unseen = 0;
+        Integer overlap = null;
+        List<String> notFirst = new ArrayList<>();
+        List<String> splitPhrases = new ArrayList<>();
+        List<String> unseenPhrases = new ArrayList<>();
+        for (DiagnosticOutput.Line line : lines) {
+            String phrase = line.field("question") + " (stored chunk " + line.field("storedChunk") + ", line " + line.number() + ")";
+            if ("true".equals(line.field("noPieceHoldsPhrase")) || "0".equals(line.field("piecesHoldingPhrase"))) {
+                split++;
+                splitPhrases.add(phrase);
+                continue;
+            }
+            String printedOverlap = line.field("overlapChars");
+            if (printedOverlap != null) {
+                int value = parseInt(printedOverlap, "overlapChars on line " + line.number());
+                if (overlap != null && overlap != value) throw new Unreadable("overlapChars differs among the chunkSize lines at " + sizeChars + " characters (" + overlap + " and " + value + " on line " + line.number() + ")");
+                overlap = value;
+            }
+            String bestRank = line.field("bestRank");
+            if (bestRank == null) throw new Unreadable("line " + line.number() + " prints neither bestRank nor noPieceHoldsPhrase=true");
+            int rank = parseInt(bestRank, "bestRank on line " + line.number());
+            if (rank == 1) firstRanked++;
+            else notFirst.add(phrase + " bestRank " + rank);
+            if (line.holders().stream().noneMatch(holder -> "true".equals(holder.get("phraseSeen")))) {
+                unseen++;
+                unseenPhrases.add(phrase);
+            }
+        }
+        return new SizeCounts(sizeChars, overlap, lines.size(), firstRanked, split, unseen, notFirst, splitPhrases, unseenPhrases);
+    }
+
+    private static int parseInt(String printed, String what) {
+        try {
+            return Integer.parseInt(printed);
+        } catch (NumberFormatException notAnInteger) {
+            throw new Unreadable(what + " expected an integer, found " + printed);
+        }
+    }
+
+    // Template: "At <size> characters[ (overlap <o>)], <Output> records <p> phrases: <f> with the holding piece ranked first in its section
+    // pool, <s> split by a piece boundary, and <u> whose holding pieces are seen by no scored row."
+    /** The size rule's counts at one size; every expected field is required, and a failure names the phrases behind each differing count. */
+    private String sizeTable(Claim claim, JsonNode check, Evaluation evaluation) {
+        String outputFile = requireText(check, "output");
+        Integer sizeChars = optionalSize(check, "sizeChars");
+        if (sizeChars == null) throw new Unreadable("check.sizeChars must be a positive integer, found none");
+        JsonNode expected = expected(check, "sizeTable");
+        for (String key : EXPECTED_KEYS.get("sizeTable")) {
+            JsonNode value = expected.get(key);
+            if (value == null || !value.isIntegralNumber() || value.intValue() < 0) throw new Unreadable("check.expected." + key + " must be a non-negative integer, found " + value);
+        }
+        evaluation.subject(sizeChars + " characters in " + outputFile);
+        DiagnosticOutput output = diagnostic(outputFile, evaluation);
+        SizeCounts counts = sizeCounts(output, outputFile, sizeChars);
+        if (counts.phrases() != expected.get("phrases").intValue()) evaluation.differs("phrases", expected.get("phrases").toString(), String.valueOf(counts.phrases()));
+        if (counts.firstRanked() != expected.get("firstRanked").intValue()) {
+            evaluation.differs("firstRanked", expected.get("firstRanked").toString(), counts.firstRanked() + (counts.notFirst().isEmpty() ? "" : " (not first: " + String.join(", ", counts.notFirst()) + ")"));
+        }
+        if (counts.split() != expected.get("split").intValue()) {
+            evaluation.differs("split", expected.get("split").toString(), counts.split() + (counts.split() == 0 ? "" : " (" + String.join(", ", counts.splitPhrases()) + ")"));
+        }
+        if (counts.unseen() != expected.get("unseen").intValue()) {
+            evaluation.differs("unseen", expected.get("unseen").toString(), counts.unseen() + (counts.unseen() == 0 ? "" : " (" + String.join(", ", counts.unseenPhrases()) + ")"));
+        }
+        basis(claim, "derived", evaluation);
+        return "At " + sizeChars + " characters" + (counts.overlapChars() == null ? "" : " (overlap " + counts.overlapChars() + ")") + ", " + outputReference(outputFile) + " records "
+                + counts.phrases() + " phrases: " + counts.firstRanked() + " with the holding piece ranked first in its section pool, " + counts.split()
+                + " split by a piece boundary, and " + counts.unseen() + " whose holding pieces are seen by no scored row.";
+    }
+
+    // Template: "Under the frozen size rule over <Output> (first-ranked phrases: <size> characters <n>, ...; split phrases: <size> characters <n>,
+    // ...; a size with a split phrase is excluded), the chosen size is <size> characters." | "..., no size is chosen: no remaining size has more
+    // first-ranked phrases than the stored <size> characters." | "..., no size is chosen: no candidate size remains."
+    /**
+     * The frozen size-choice rule of plan {@code 2026-09-17-chunk-size.md}, computed from the chunkSize lines: among the candidate sizes
+     * without a split phrase, the one with the most first-ranked phrases, the larger on a tie; none when no remaining size has more
+     * first-ranked phrases than the stored size. {@code expected} is the chosen size or the string {@code none}.
+     */
+    private String sizeChoice(Claim claim, JsonNode check, Evaluation evaluation) {
+        String outputFile = requireText(check, "output");
+        Integer stored = optionalSize(check, "stored");
+        if (stored == null) throw new Unreadable("check.stored must be a positive integer, found none");
+        JsonNode candidatesNode = check.get("candidates");
+        if (candidatesNode == null || !candidatesNode.isArray() || candidatesNode.isEmpty()) throw new Unreadable("check.candidates must list at least one size, found " + candidatesNode);
+        List<Integer> candidates = new ArrayList<>();
+        for (JsonNode candidate : candidatesNode) {
+            if (!candidate.isIntegralNumber() || candidate.intValue() < 1) throw new Unreadable("check.candidates must hold positive integers, found " + candidate);
+            if (candidate.intValue() == stored || candidates.contains(candidate.intValue())) throw new Unreadable("check.candidates must be distinct sizes other than the stored " + stored + ", found " + candidatesNode);
+            candidates.add(candidate.intValue());
+        }
+        JsonNode expected = check.get("expected");
+        boolean none = expected != null && expected.isString() && expected.stringValue().equals("none");
+        if (!none && (expected == null || !expected.isIntegralNumber() || !candidates.contains(expected.intValue()))) {
+            throw new Unreadable("check.expected must be one of the candidate sizes or \"none\", found " + (expected == null ? "none given" : expected));
+        }
+        evaluation.subject("stored " + stored + ", candidates " + candidates + " in " + outputFile);
+        DiagnosticOutput output = diagnostic(outputFile, evaluation);
+        SizeCounts storedCounts = sizeCounts(output, outputFile, stored);
+        List<SizeCounts> all = new ArrayList<>();
+        all.add(storedCounts);
+        SizeCounts best = null;
+        for (int candidate : candidates) {
+            SizeCounts counts = sizeCounts(output, outputFile, candidate);
+            all.add(counts);
+            if (counts.split() > 0) continue;
+            if (best == null || counts.firstRanked() > best.firstRanked() || counts.firstRanked() == best.firstRanked() && counts.sizeChars() > best.sizeChars()) best = counts;
+        }
+        Integer chosen = best != null && best.firstRanked() > storedCounts.firstRanked() ? best.sizeChars() : null;
+        Integer wanted = none ? null : expected.intValue();
+        if (!Objects.equals(chosen, wanted)) {
+            evaluation.differs("chosen size", wanted == null ? "none" : String.valueOf(wanted), (chosen == null ? "none" : String.valueOf(chosen)) + " (first-ranked: "
+                    + all.stream().map(c -> c.sizeChars() + " " + c.firstRanked()).collect(Collectors.joining(", ")) + "; split: "
+                    + all.stream().map(c -> c.sizeChars() + " " + c.split()).collect(Collectors.joining(", ")) + ")");
+        }
+        basis(claim, "derived", evaluation);
+        String counts = "first-ranked phrases: " + all.stream().map(c -> c.sizeChars() + " characters " + c.firstRanked()).collect(Collectors.joining(", "))
+                + "; split phrases: " + all.stream().map(c -> c.sizeChars() + " characters " + c.split()).collect(Collectors.joining(", ")) + "; a size with a split phrase is excluded";
+        String start = "Under the frozen size rule over " + outputReference(outputFile) + " (" + counts + "), ";
+        if (chosen != null) return start + "the chosen size is " + chosen + " characters.";
+        if (best == null) return start + "no size is chosen: no candidate size remains.";
+        return start + "no size is chosen: no remaining size has more first-ranked phrases than the stored " + stored + " characters.";
+    }
+
+    private static String optionalText(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null) return null;
+        if (!value.isString() || value.stringValue().isBlank()) throw new Unreadable("check." + field + " must be a non-blank string, found " + value);
+        return value.stringValue();
+    }
+
+    private static Long optionalLong(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null) return null;
+        if (!value.isIntegralNumber()) throw new Unreadable("check." + field + " must be an integer, found " + value);
+        return value.longValue();
+    }
+
+    private static Integer optionalSize(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null) return null;
+        if (!value.isIntegralNumber() || value.intValue() < 1) throw new Unreadable("check." + field + " must be a positive integer, found " + value);
+        return value.intValue();
     }
 
     private Path resolve(String relative, Path base) {

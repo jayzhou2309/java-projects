@@ -29,6 +29,7 @@ class IntegrationWiringTests {
                     WatchlistController.class, BrokerController.class, RetrievalEvaluationController.class)
             .withBean(IntegrationAccessProperties.class).withBean(IbkrProperties.class).withBean(RecommendationProperties.class)
             .withBean(QuantProperties.class).withBean(OutcomeProperties.class)
+            .withBean(project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties.class)
             .withBean(OutcomeRepository.class, () -> mock(OutcomeRepository.class))
             .withBean(CalibrationRepository.class, () -> mock(CalibrationRepository.class))
             .withBean(FilingRetrievalService.class, () -> mock(FilingRetrievalService.class))

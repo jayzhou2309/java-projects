@@ -188,9 +188,16 @@
     * Lesson (Follow_Ups RAG-15): the result records a count, not a cause of any miss.
     * Pointers: `src/main/java/documentation/plans/2026-09-14-retrieval-recall.md` (Status, Milestone 3 closed); commits dd7c9b5, 089e20e; `src/main/java/documentation/live-runs/2026-09-14-diversification-trace/run.log`; `src/main/java/documentation/RAG.md` (Diversification removals block).
 
+* A rebuild that was more than one factor away from the store it replaced
+    * Challenge: measure one factor, the chunk size, by rebuilding the whole store at a smaller size and comparing with a same-session baseline.
+    * What happened: the rebuild re-downloads and re-parses each filing with the parser in the tree. Three AAPL 8-Ks ingested on 2026-09-10 came back with sub-item section keys (`ITEM_2_02` for `ITEM_2`, observed: unchanged text between the 2026-09-10 store and both rebuilds, `chunks-S0.json` against `chunks-S2.json`), so one accepted phrase of the set stopped matching on its section key at both measured sizes (4,000 / 500 and 1,000 / 125), and the rollback rebuild did not restore the baseline for that question (P0 against B0); a second phrase, longer than the overlap, lay across a chunk boundary of the stored cut at 1,000 / 125. The R1 gate failed, the rule was not applied, and the store was rolled back with one question lost.
+    * Lesson (the Orchestrator's, recorded in the Milestone 3 write-up from the committed exports P0 against B0): a rebuild re-parses, and here the re-parse changed section keys on unchanged text (observed), so a rollback rebuild is not a restore of the store it replaced; that a parser change between the ingestion dates is what changed the keys is inferred and untested (Follow_Ups RAG-29); export the store's keys and text before a rebuild so what changed can be compared afterwards.
+    * Pointers: `src/main/java/documentation/plans/2026-09-17-chunk-size.md` (Milestone 3, amendment 3); `src/main/java/documentation/live-runs/2026-09-17-chunk-size/measurement/run.log`, `comparison.txt` (sections 3 and 8), `chunks-S0.json` against `chunks-S2.json`; RAG.md, Retrieval Evaluation, Chunk size measurement; Follow_Ups RAG-26, RAG-27, RAG-29.
+
 * What remains
     * Challenge: Plan B (raw-score fusion, rerank depth, graded figure features, neighbour expansion and section-first retrieval) depends on Plan A's evidence.
     * What happened: its contracts are to be written and approved after Plan A closes; the vector-rank hypotheses remain untested.
     * Pointers: `src/main/java/documentation/plans/2026-09-14-retrieval-recall.md` (Plan B); Follow_Ups RAG-15.
 
 * Change log — 2026-09-14: document created (plan `plans/2026-09-14-retrieval-recall.md`, Milestone 4) from the project's recorded history; no new analysis or measurement.
+* Change log — 2026-09-17: one bullet added for the chunk-size rebuild of plan `plans/2026-09-17-chunk-size.md`, Milestone 3, from its committed evidence.

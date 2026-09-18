@@ -1,0 +1,456 @@
+{
+ "description": "RAG-29, the evaluation set's aapl-08 section key (plan plans/2026-09-17-chunk-size.md, Milestone 4): the fresh default traced snapshot 1891 on the corrected set (aapl-08 sectionKey ITEM_2_02) beside the default reference 1777 (the uncorrected set, same store content, same recorded settings), the post-rollback run 1794, and the 2026-09-13 reference 598; and the traced run 1892 at snapshot 297's settings, the re-recorded reference of the two opt-in live tests, beside 297 and 613. The pair 1891 against 1777 is an inferred claim, not an experiment claim: the set file's content, which differs between them, is not a recorded property (run.log, C2 and Remediation round 1); the two ran on different rebuilds of the store (equal recorded properties and equal matched-chunk content by md5; the stores' vectors and the query embeddings are not compared), while 1794 ran on the same store rows as 1891. No claim states why a rank changed.",
+ "labels": {
+  "snapshot-1891-f-defaults-rerank-off.json": "the run on the corrected set",
+  "snapshot-1892-r-traced-297-settings-rerank-candidates-20.json": "the traced run at the reranked settings on the corrected set",
+  "../2026-09-17-chunk-size-pool/snapshot-1777-a-pool-40-rerank-off.json": "the default reference",
+  "../2026-09-17-chunk-size-pool/snapshot-1794-a2-post-rollback-pool-40-rerank-off.json": "the post-rollback run of the pool plan",
+  "../2026-09-17-chunk-size-pool/chunk-hashes-A.json": "the content hashes of the default reference's store",
+  "chunk-hashes.json": "the content hashes of the current store",
+  "chunks.json": "the chunk export of the current store",
+  "filings.json": "the filings export of the current store",
+  "../2026-09-17-chunk-size-pool/evidence-1777.json": "the default reference's evidence report"
+ },
+ "claims": [
+  {
+   "id": "C-2001",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1891-f-defaults-rerank-off.json",
+    "metric": "hitAt1",
+    "expected": "0.547619"
+   }
+  },
+  {
+   "id": "C-2002",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1891-f-defaults-rerank-off.json",
+    "metric": "hitAt3",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-2003",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1891-f-defaults-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-2004",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1891-f-defaults-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.655187"
+   }
+  },
+  {
+   "id": "C-2005",
+   "basis": "derived",
+   "block": "correction",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1891-f-defaults-rerank-off.json",
+    "expected": {
+     "1": 23,
+     "2": 6,
+     "3": 1,
+     "4": 1,
+     "5": 2,
+     "6": 1,
+     "7": 1,
+     "8": 1,
+     "10": 1,
+     "notInWindow": 5
+    }
+   }
+  },
+  {
+   "id": "C-2006",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1891-f-defaults-rerank-off.json",
+    "question": "aapl-08",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-2007",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1891-f-defaults-rerank-off.json",
+    "question": "aapl-08",
+    "expected": 13896
+   }
+  },
+  {
+   "id": "C-2008",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks.json",
+    "path": "[id=13896].sectionKey",
+    "expected": "ITEM_2_02"
+   }
+  },
+  {
+   "id": "C-2009",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "fileValue",
+    "file": "chunks.json",
+    "path": "[id=13896].filingId",
+    "expected": 5
+   }
+  },
+  {
+   "id": "C-2010",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "fileValue",
+    "file": "filings.json",
+    "path": "[filingId=5].accessionNo",
+    "expected": "0000320193-26-000018"
+   }
+  },
+  {
+   "id": "C-2011",
+   "basis": "derived",
+   "block": "correction",
+   "check": {
+    "type": "bestFusedPosition",
+    "report": "evidence-1891.json",
+    "question": "aapl-08",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-2012",
+   "basis": "derived",
+   "block": "correction",
+   "check": {
+    "type": "heldPhrases",
+    "report": "evidence-1891.json",
+    "expected": {
+     "phrases": 57,
+     "held": 57
+    }
+   }
+  },
+  {
+   "id": "C-2013",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "fileValue",
+    "file": "evidence-1891.json",
+    "path": "questions[id=aapl-08].phrases[0].sectionKey",
+    "expected": "ITEM_2_02"
+   }
+  },
+  {
+   "id": "C-2014",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "fileValue",
+    "file": "../2026-09-17-chunk-size-pool/evidence-1777.json",
+    "path": "questions[id=aapl-08].phrases[0].sectionKey",
+    "expected": "ITEM_2"
+   }
+  },
+  {
+   "id": "C-2015",
+   "basis": "derived",
+   "block": "correction",
+   "check": {
+    "type": "heldPhrases",
+    "report": "../2026-09-17-chunk-size-pool/evidence-1777.json",
+    "expected": {
+     "phrases": 57,
+     "held": 56
+    }
+   }
+  },
+  {
+   "id": "C-2016",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-17-chunk-size-pool/snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-2017",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-17-chunk-size-pool/snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.631378"
+   }
+  },
+  {
+   "id": "C-2018",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "rank",
+    "snapshot": "../2026-09-17-chunk-size-pool/snapshot-1777-a-pool-40-rerank-off.json",
+    "question": "aapl-08",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-2019",
+   "basis": "derived",
+   "block": "correction",
+   "check": {
+    "type": "questionEquality",
+    "reference": "../2026-09-17-chunk-size-pool/snapshot-1777-a-pool-40-rerank-off.json",
+    "candidate": "snapshot-1891-f-defaults-rerank-off.json",
+    "compare": "rankAndMatchedContent",
+    "referenceChunks": "../2026-09-17-chunk-size-pool/chunk-hashes-A.json",
+    "candidateChunks": "chunk-hashes.json",
+    "expected": [
+     "aapl-08"
+    ]
+   }
+  },
+  {
+   "id": "C-2020",
+   "basis": "derived",
+   "block": "correction",
+   "check": {
+    "type": "questionEquality",
+    "reference": "../2026-09-17-chunk-size-pool/snapshot-1794-a2-post-rollback-pool-40-rerank-off.json",
+    "candidate": "snapshot-1891-f-defaults-rerank-off.json",
+    "compare": "rankAndMatchedChunk",
+    "expected": [
+     "aapl-08"
+    ]
+   }
+  },
+  {
+   "id": "C-2021",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-2022",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.655187"
+   }
+  },
+  {
+   "id": "C-2023",
+   "basis": "observed",
+   "block": "correction",
+   "check": {
+    "type": "rank",
+    "snapshot": "../2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json",
+    "question": "aapl-08",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-2024",
+   "basis": "derived",
+   "block": "correction",
+   "check": {
+    "type": "questionEquality",
+    "reference": "../2026-09-13-evaluation-evidence/measurement/snapshot-598-traced-snapshot-295-reference-rerank-off.json",
+    "candidate": "snapshot-1891-f-defaults-rerank-off.json",
+    "compare": "rank",
+    "expected": []
+   }
+  },
+  {
+   "id": "C-2025",
+   "basis": "inferred",
+   "block": "correction",
+   "text": "The run on the corrected set (snapshot 1891) and the default reference (snapshot 1777) record equal values on the 24 recorded property keys (comparison.txt, a text file not read by a check) and their matched chunks are equal in content by md5 for 41 of the 42 questions; the two ran on different rebuilds of the store (the default reference on the store of 2026-09-17 before its rollback rebuild, chunk ids 11406 to 11974, recorded in the pool plan's run.log, E3, and in chunk-hashes-A.json in that directory, which the premise C-2019 reads; the corrected-set run on the rebuilt store, ids 13789 to 14357, run.log, E3 and E4; the rollback rebuild itself is the pool plan's run.log, R1; the run.log entries are text not read by a check), and these premises compare recorded properties and matched-chunk content, not the stores' vectors or the query embeddings; the corrected-set run also equals the post-rollback run of the pool plan (snapshot 1794), whose matched chunk ids are those of the rebuilt store, in rank and matched chunk id for 41 of the 42 questions (that the store's rows are unchanged between 1794 and 1891 is in run.log, E4 and the session notes, text not read by a check); the set file's aapl-08 section key differs between the compared runs, ITEM_2 in the set read for the default reference's report and ITEM_2_02 in the set read for the corrected-set run's report, which properties.set (the same classpath path in both snapshots) does not record, so the checker's experiment file cannot name it as the factor (run.log, C2 as corrected in Remediation round 1); with that key corrected the run ranks aapl-08 first, 57 of 57 accepted phrases are held, and the 42 ranks and the hit@5 and MRR equal those of snapshot 598 of 2026-09-13 (the reference with reranking off before the rebuilds)",
+   "from": [
+    "C-2019",
+    "C-2020",
+    "C-2014",
+    "C-2013",
+    "C-2015",
+    "C-2012",
+    "C-2006",
+    "C-2011",
+    "C-2003",
+    "C-2004",
+    "C-2021",
+    "C-2022",
+    "C-2023",
+    "C-2024",
+    "C-2018",
+    "C-2016",
+    "C-2017"
+   ]
+  },
+  {
+   "id": "C-2026",
+   "basis": "observed",
+   "block": "reference",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1892-r-traced-297-settings-rerank-candidates-20.json",
+    "metric": "hitAt1",
+    "expected": "0.500000"
+   }
+  },
+  {
+   "id": "C-2027",
+   "basis": "observed",
+   "block": "reference",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1892-r-traced-297-settings-rerank-candidates-20.json",
+    "metric": "hitAt3",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-2028",
+   "basis": "observed",
+   "block": "reference",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1892-r-traced-297-settings-rerank-candidates-20.json",
+    "metric": "hitAt5",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-2029",
+   "basis": "observed",
+   "block": "reference",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1892-r-traced-297-settings-rerank-candidates-20.json",
+    "metric": "mrr",
+    "expected": "0.633135"
+   }
+  },
+  {
+   "id": "C-2030",
+   "basis": "observed",
+   "block": "reference",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json",
+    "metric": "hitAt5",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-2031",
+   "basis": "observed",
+   "block": "reference",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json",
+    "metric": "mrr",
+    "expected": "0.633135"
+   }
+  },
+  {
+   "id": "C-2032",
+   "basis": "derived",
+   "block": "reference",
+   "check": {
+    "type": "questionEquality",
+    "reference": "../2026-09-13-reranker-windows/measurement/snapshot-297-rerank-candidates-20.json",
+    "candidate": "snapshot-1892-r-traced-297-settings-rerank-candidates-20.json",
+    "compare": "rank",
+    "expected": []
+   }
+  },
+  {
+   "id": "C-2033",
+   "basis": "derived",
+   "block": "reference",
+   "check": {
+    "type": "questionEquality",
+    "reference": "../2026-09-13-evaluation-evidence/measurement/snapshot-613-traced-snapshot-297-rerank-candidates-20.json",
+    "candidate": "snapshot-1892-r-traced-297-settings-rerank-candidates-20.json",
+    "compare": "rank",
+    "expected": []
+   }
+  },
+  {
+   "id": "C-2034",
+   "basis": "observed",
+   "block": "reference",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1892-r-traced-297-settings-rerank-candidates-20.json",
+    "question": "aapl-08",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-2035",
+   "basis": "observed",
+   "block": "reference",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1892-r-traced-297-settings-rerank-candidates-20.json",
+    "question": "aapl-08",
+    "expected": 13896
+   }
+  },
+  {
+   "id": "C-2036",
+   "basis": "inferred",
+   "block": "reference",
+   "text": "The traced run at the reranked settings of snapshot 297 on the corrected set (snapshot 1892; that its recorded settings are 297's is in comparison.txt and run.log, text files not read by a check) ranks the 42 questions as snapshot 297 and its 2026-09-13 traced reproduction 613 did, with the same hit@5 and MRR, so it is the committed reference of RetrievalEvaluationTraceLiveTests and the traced snapshot RetrievalEvidenceLiveTests reads, compared by matched chunk content (chunk-hashes.json and filings.json), not by chunk id",
+   "from": [
+    "C-2032",
+    "C-2033",
+    "C-2028",
+    "C-2029",
+    "C-2030",
+    "C-2031",
+    "C-2034",
+    "C-2035"
+   ]
+  }
+ ]
+}

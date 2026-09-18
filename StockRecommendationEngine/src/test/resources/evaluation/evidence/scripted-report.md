@@ -19,6 +19,9 @@ Each value is followed by its basis: observed (read from the numbered source), d
 | windowOverlapTokens | 0 (derived [10]) |
 | maxWindows | 4 (derived [10]) |
 | maxLength | 20 (observed [11]) |
+| chunkMaxChars | 4000 (observed [12]) |
+| chunkOverlapChars | 500 (observed [13]) |
+| storeVersions | sections-v2-context-v2-chunk4000-500 (observed [14]) |
 
 ## Question q1 (AAPL, FIGURE)
 
@@ -26,54 +29,54 @@ Question: q1 alpha beta
 
 | Field | Value |
 |---|---|
-| rank | 2 (observed [12]) |
-| matchedChunkId | 102 (observed [13]) |
-| retrievalStrategy | HYBRID_RRF_RERANKED (observed [14]) |
-| error | none (observed [15]) |
-| rerankOutcome | RERANKED (observed [16]) |
-| fallbackReason | none (observed [17]) |
-| scoresNotRecorded | none (observed [18]) |
-| fusedCount | 4 (observed [19]) |
-| rerankInputCount | 3 (observed [20]) |
-| queryTokens | 3 (derived [21]) |
-| acceptedPhraseCount | 2 (observed [22]) |
+| rank | 2 (observed [15]) |
+| matchedChunkId | 102 (observed [16]) |
+| retrievalStrategy | HYBRID_RRF_RERANKED (observed [17]) |
+| error | none (observed [18]) |
+| rerankOutcome | RERANKED (observed [19]) |
+| fallbackReason | none (observed [20]) |
+| scoresNotRecorded | none (observed [21]) |
+| fusedCount | 4 (observed [22]) |
+| rerankInputCount | 3 (observed [23]) |
+| queryTokens | 3 (derived [24]) |
+| acceptedPhraseCount | 2 (observed [25]) |
 | acceptedChunkRemoved | unknown: no trace of removals |
 
 ### Accepted phrase 1 of 2
 
 0000000001-26-000001 ITEM_7: "w012 w013 w014 w015"
 
-heldByStoredChunk: true (observed [23])
+heldByStoredChunk: true (observed [26])
 
 | Chunk | chunkTokens | windowLength | windowStarts | characterSpan | tokenSpan | head | windowsHoldingWholly |
 |---|---|---|---|---|---|---|---|
-| 101 | 40 (derived [24]) | 14 (derived [25]) | 0, 14, 26 (derived [26]) | [60, 79) (derived [27]) | [12, 16) (derived [28]) | partly (derived [29]) | none (derived [30]) |
-| 102 | 6 (derived [24]) | 14 (derived [25]) | 0 (derived [26]) | [6, 27) (derived [27]) | [1, 5) (derived [28]) | wholly (derived [29]) | 1 (derived [30]) |
+| 101 | 40 (derived [27]) | 14 (derived [28]) | 0, 14, 26 (derived [29]) | [60, 79) (derived [30]) | [12, 16) (derived [31]) | partly (derived [32]) | none (derived [33]) |
+| 102 | 6 (derived [27]) | 14 (derived [28]) | 0 (derived [29]) | [6, 27) (derived [30]) | [1, 5) (derived [31]) | wholly (derived [32]) | 1 (derived [33]) |
 
 | Chunk | fusedPosition | rerankInput | rerankedPosition | score | windowCount | windowScores | returnedPosition | removedRedundantWith |
 |---|---|---|---|---|---|---|---|---|
-| 101 | 1 (observed [31]) | true (observed [32]) | 3 (observed [33]) | -0.5 (observed [34]) | 3 (observed [35]) | -0.5, -3.0, -2.0 (observed [36]) | not returned (observed [37]) | unknown: no trace of removals |
-| 102 | 3 (observed [31]) | true (observed [32]) | 2 (observed [33]) | 1.25 (observed [34]) | 1 (observed [35]) | 1.25 (observed [36]) | 2 (observed [37]) | unknown: no trace of removals |
+| 101 | 1 (observed [34]) | true (observed [35]) | 3 (observed [36]) | -0.5 (observed [37]) | 3 (observed [38]) | -0.5, -3.0, -2.0 (observed [39]) | not returned (observed [40]) | unknown: no trace of removals |
+| 102 | 3 (observed [34]) | true (observed [35]) | 2 (observed [36]) | 1.25 (observed [37]) | 1 (observed [38]) | 1.25 (observed [39]) | 2 (observed [40]) | unknown: no trace of removals |
 
 ### Accepted phrase 2 of 2
 
 0000000001-26-000001 ITEM_1A: "a phrase no stored chunk holds"
 
-heldByStoredChunk: false (observed [23])
+heldByStoredChunk: false (observed [26])
 
 ### Ranked above the best accepted chunk
 
 | Field | Value |
 |---|---|
-| ranking | reranked order (observed [38]) |
-| bestAcceptedChunk | 102 (observed [39]) |
-| bestAcceptedPosition | 2 (observed [33]) |
+| ranking | reranked order (observed [41]) |
+| bestAcceptedChunk | 102 (observed [42]) |
+| bestAcceptedPosition | 2 (observed [36]) |
 
-rankedAbove: 1 chunk (observed [40])
+rankedAbove: 1 chunk (observed [43])
 
 | Chunk | position | fusedPosition | score | windowScores |
 |---|---|---|---|---|
-| 301 | 1 (observed [33]) | 2 (observed [41]) | 2.5 (observed [34]) | 2.5, -1.0 (observed [36]) |
+| 301 | 1 (observed [36]) | 2 (observed [44]) | 2.5 (observed [37]) | 2.5, -1.0 (observed [39]) |
 
 ### Removed by diversification
 
@@ -85,47 +88,47 @@ Question: q2 gamma
 
 | Field | Value |
 |---|---|
-| rank | none (observed [12]) |
-| matchedChunkId | none (observed [13]) |
-| retrievalStrategy | HYBRID_RRF (observed [14]) |
-| error | none (observed [15]) |
-| rerankOutcome | FALLBACK (observed [16]) |
-| fallbackReason | timeout (observed [17]) |
-| scoresNotRecorded | none (observed [18]) |
-| fusedCount | 2 (observed [19]) |
-| rerankInputCount | 2 (observed [20]) |
-| queryTokens | 2 (derived [21]) |
-| acceptedPhraseCount | 1 (observed [22]) |
+| rank | none (observed [15]) |
+| matchedChunkId | none (observed [16]) |
+| retrievalStrategy | HYBRID_RRF (observed [17]) |
+| error | none (observed [18]) |
+| rerankOutcome | FALLBACK (observed [19]) |
+| fallbackReason | timeout (observed [20]) |
+| scoresNotRecorded | none (observed [21]) |
+| fusedCount | 2 (observed [22]) |
+| rerankInputCount | 2 (observed [23]) |
+| queryTokens | 2 (derived [24]) |
+| acceptedPhraseCount | 1 (observed [25]) |
 | acceptedChunkRemoved | unknown: no trace of removals |
 
 ### Accepted phrase 1 of 1
 
 0000000002-26-000002 ITEM_1: "w030 w031"
 
-heldByStoredChunk: true (observed [23])
+heldByStoredChunk: true (observed [26])
 
 | Chunk | chunkTokens | windowLength | windowStarts | characterSpan | tokenSpan | head | windowsHoldingWholly |
 |---|---|---|---|---|---|---|---|
-| 201 | 40 (derived [24]) | 15 (derived [25]) | 0, 15, 25 (derived [26]) | [150, 159) (derived [27]) | [30, 32) (derived [28]) | not (derived [29]) | 3 (derived [30]) |
+| 201 | 40 (derived [27]) | 15 (derived [28]) | 0, 15, 25 (derived [29]) | [150, 159) (derived [30]) | [30, 32) (derived [31]) | not (derived [32]) | 3 (derived [33]) |
 
 | Chunk | fusedPosition | rerankInput | rerankedPosition | score | windowCount | windowScores | returnedPosition | removedRedundantWith |
 |---|---|---|---|---|---|---|---|---|
-| 201 | not in the fused list (observed [31]) | false (derived [42]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | not returned (observed [37]) | unknown: no trace of removals |
+| 201 | not in the fused list (observed [34]) | false (derived [45]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | not returned (observed [40]) | unknown: no trace of removals |
 
 ### Ranked above the best accepted chunk
 
 | Field | Value |
 |---|---|
-| ranking | fused order (observed [43]) |
-| bestAcceptedChunk | none (observed [44]) |
-| bestAcceptedPosition | none (observed [44]) |
+| ranking | fused order (observed [46]) |
+| bestAcceptedChunk | none (observed [47]) |
+| bestAcceptedPosition | none (observed [47]) |
 
-rankedAbove: 2 chunks (observed [45])
+rankedAbove: 2 chunks (observed [48])
 
 | Chunk | position | fusedPosition | score | windowScores |
 |---|---|---|---|---|
-| 202 | 1 (observed [46]) | 1 (observed [19]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores |
-| 203 | 2 (observed [46]) | 2 (observed [19]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores |
+| 202 | 1 (observed [49]) | 1 (observed [22]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores |
+| 203 | 2 (observed [49]) | 2 (observed [22]) | unknown: rerank fell back (timeout): the trace records no reranked positions or scores | unknown: rerank fell back (timeout): the trace records no reranked positions or scores |
 
 ### Removed by diversification
 
@@ -137,28 +140,28 @@ Question: q3 delta epsilon
 
 | Field | Value |
 |---|---|
-| rank | none (observed [12]) |
-| matchedChunkId | none (observed [13]) |
-| retrievalStrategy | none (observed [14]) |
-| error | IllegalStateException: Embedding request failed (observed [15]) |
+| rank | none (observed [15]) |
+| matchedChunkId | none (observed [16]) |
+| retrievalStrategy | none (observed [17]) |
+| error | IllegalStateException: Embedding request failed (observed [18]) |
 | rerankOutcome | unknown: no trace for this question (its retrieval failed) |
 | fallbackReason | unknown: no trace for this question (its retrieval failed) |
 | scoresNotRecorded | unknown: no trace for this question (its retrieval failed) |
 | fusedCount | unknown: no trace for this question (its retrieval failed) |
 | rerankInputCount | unknown: no trace for this question (its retrieval failed) |
-| queryTokens | 3 (derived [21]) |
-| acceptedPhraseCount | 1 (observed [22]) |
+| queryTokens | 3 (derived [24]) |
+| acceptedPhraseCount | 1 (observed [25]) |
 | acceptedChunkRemoved | unknown: no trace for this question (its retrieval failed) |
 
 ### Accepted phrase 1 of 1
 
 0000000002-26-000002 ITEM_1: "w030 w031"
 
-heldByStoredChunk: true (observed [23])
+heldByStoredChunk: true (observed [26])
 
 | Chunk | chunkTokens | windowLength | windowStarts | characterSpan | tokenSpan | head | windowsHoldingWholly |
 |---|---|---|---|---|---|---|---|
-| 201 | 40 (derived [24]) | 14 (derived [25]) | 0, 14, 26 (derived [26]) | [150, 159) (derived [27]) | [30, 32) (derived [28]) | not (derived [29]) | 3 (derived [30]) |
+| 201 | 40 (derived [27]) | 14 (derived [28]) | 0, 14, 26 (derived [29]) | [150, 159) (derived [30]) | [30, 32) (derived [31]) | not (derived [32]) | 3 (derived [33]) |
 
 | Chunk | fusedPosition | rerankInput | rerankedPosition | score | windowCount | windowScores | returnedPosition | removedRedundantWith |
 |---|---|---|---|---|---|---|---|---|
@@ -191,38 +194,41 @@ removed: unknown: no trace for this question (its retrieval failed)
 9. observed: snapshot properties.rerankerScoring
 10. derived: parsed from snapshot properties.rerankerScoring
 11. observed: current configuration rag.retrieval.cross-encoder.max-length (snapshots do not record it)
-12. observed: snapshot results rank (null: no matching chunk in the window)
-13. observed: snapshot results matchedChunkId (null: no matching chunk in the window)
-14. observed: snapshot results retrievalStrategy (null: retrieval error, or stored before the field)
-15. observed: snapshot results error (null: none)
-16. observed: trace rerank outcome
-17. observed: trace rerank fallbackReason (null: not a fallback)
-18. observed: trace rerank scoresNotRecorded (null: every rerank input carries its position and score, or not reranked)
-19. observed: trace fused
-20. observed: trace rerank inputCount (null: reranking off)
-21. derived: tokens of the question text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer
-22. observed: bundled set evaluation/scripted-set.json
-23. observed: sec_filing_chunks at report time: chunks of the phrase's accession and section whose text contains the phrase (RetrievalEvaluationService.matches)
-24. derived: tokens of the stored chunk text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer
-25. derived: W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)
-26. derived: start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored
-27. derived: occurrence of the normalised phrase in the normalised chunk text (whitespace runs collapsed, trimmed, lower-cased), mapped to UTF-16 offsets of the stored text, end exclusive
-28. derived: tokens of the whole-chunk tokenization whose character span overlaps the occurrence, end exclusive
-29. derived: wholly: token span end <= W; partly: start < W < end; not: start >= W
-30. derived: 1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored
-31. observed: trace fused (null: not in the fused list)
-32. observed: trace rerank candidates (true: a rerank input; false: not a rerank input)
-33. observed: trace rerank candidates rerankedPosition
-34. observed: trace rerank candidates score
-35. observed: trace rerank candidates windowCount
-36. observed: trace rerank candidates windowScores
-37. observed: trace returnedChunkIds (null: not returned)
-38. observed: trace rerank outcome RERANKED
-39. observed: trace reranked order: first chunk holding an accepted phrase
-40. observed: trace reranked order: every chunk ranked above the best accepted chunk
-41. observed: trace rerank candidates fusedPosition
-42. derived: fused position <= trace rerank inputCount (the reranker receives the first inputCount fused chunks)
-43. observed: trace rerank outcome FALLBACK
-44. observed: trace fused order: no chunk holding an accepted phrase is in it
-45. observed: trace fused order: every chunk (no chunk holding an accepted phrase is in it)
-46. observed: trace fused fusedPosition
+12. observed: snapshot properties.chunkMaxChars
+13. observed: snapshot properties.chunkOverlapChars
+14. observed: snapshot properties.storeVersions
+15. observed: snapshot results rank (null: no matching chunk in the window)
+16. observed: snapshot results matchedChunkId (null: no matching chunk in the window)
+17. observed: snapshot results retrievalStrategy (null: retrieval error, or stored before the field)
+18. observed: snapshot results error (null: none)
+19. observed: trace rerank outcome
+20. observed: trace rerank fallbackReason (null: not a fallback)
+21. observed: trace rerank scoresNotRecorded (null: every rerank input carries its position and score, or not reranked)
+22. observed: trace fused
+23. observed: trace rerank inputCount (null: reranking off)
+24. derived: tokens of the question text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer
+25. observed: bundled set evaluation/scripted-set.json
+26. observed: sec_filing_chunks at report time: chunks of the phrase's accession and section whose text contains the phrase (RetrievalEvaluationService.matches)
+27. derived: tokens of the stored chunk text bounded to 20,000 characters, tokenized alone by the loaded cross-encoder tokenizer
+28. derived: W = max-length (from the current configuration, not recorded in the snapshot) - 3 - the query tokens kept against the whole chunk, longest first (CrossEncoderPairAssembler.windowLength)
+29. derived: start token of each row under the snapshot's rerankerScoring: head one row at 0; max-window CrossEncoderPairAssembler.windowStarts(chunk tokens, W, overlap, max-windows); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored
+30. derived: occurrence of the normalised phrase in the normalised chunk text (whitespace runs collapsed, trimmed, lower-cased), mapped to UTF-16 offsets of the stored text, end exclusive
+31. derived: tokens of the whole-chunk tokenization whose character span overlaps the occurrence, end exclusive
+32. derived: wholly: token span end <= W; partly: start < W < end; not: start >= W
+33. derived: 1-based rows whose tokens [start, start + min(W, chunk tokens)) contain the whole token span (empty: no row holds it wholly); these are the rows the recorded scoring scores for this chunk beside this question only when the chunk is a rerank input of a RERANKED trace (rerankInput observed true); for reranking off, a fallback, a question without a trace, or a chunk outside the rerank input they are the rows the recorded scoring would score, not rows that were scored
+34. observed: trace fused (null: not in the fused list)
+35. observed: trace rerank candidates (true: a rerank input; false: not a rerank input)
+36. observed: trace rerank candidates rerankedPosition
+37. observed: trace rerank candidates score
+38. observed: trace rerank candidates windowCount
+39. observed: trace rerank candidates windowScores
+40. observed: trace returnedChunkIds (null: not returned)
+41. observed: trace rerank outcome RERANKED
+42. observed: trace reranked order: first chunk holding an accepted phrase
+43. observed: trace reranked order: every chunk ranked above the best accepted chunk
+44. observed: trace rerank candidates fusedPosition
+45. derived: fused position <= trace rerank inputCount (the reranker receives the first inputCount fused chunks)
+46. observed: trace rerank outcome FALLBACK
+47. observed: trace fused order: no chunk holding an accepted phrase is in it
+48. observed: trace fused order: every chunk (no chunk holding an accepted phrase is in it)
+49. observed: trace fused fusedPosition

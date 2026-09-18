@@ -306,6 +306,39 @@ class RetrievalEvidenceServiceTests {
         assertThat(service.markdown(built)).contains("unknown: tokenizer unavailable");
     }
 
+    /** E3 (plan 2026-09-17-chunk-size.md, Milestone 2): the chunk settings and store versions as recorded; unknown, not an error, when absent. */
+    @Test
+    void chunkSettingsAndStoreVersionsAreReportedAsRecordedAndUnknownWhenTheSnapshotPredatesThem() {
+        RetrievalEvaluation traced = ScriptedEvidence.tracedSnapshot();
+        RetrievalEvidenceReport report = scripted.service().report(traced);
+        assertThat(report.settings().chunkMaxChars()).isEqualTo(EvidenceValue.observed(4000, "snapshot properties.chunkMaxChars"));
+        assertThat(report.settings().chunkOverlapChars()).isEqualTo(EvidenceValue.observed(500, "snapshot properties.chunkOverlapChars"));
+        assertThat(report.settings().storeVersions())
+                .isEqualTo(EvidenceValue.observed(List.of("sections-v2-context-v2-chunk4000-500"), "snapshot properties.storeVersions"));
+
+        Map<String, Object> old = new LinkedHashMap<>(traced.properties());
+        old.remove("chunkMaxChars");
+        old.remove("chunkOverlapChars");
+        old.remove("storeVersions");
+        RetrievalEvidenceReport before = scripted.service().report(ScriptedEvidence.with(traced, old, traced.traces()));
+        assertThat(before.settings().chunkMaxChars()).isEqualTo(EvidenceValue.unknown("snapshot records no properties.chunkMaxChars"));
+        assertThat(before.settings().chunkOverlapChars()).isEqualTo(EvidenceValue.unknown("snapshot records no properties.chunkOverlapChars"));
+        assertThat(before.settings().storeVersions()).isEqualTo(EvidenceValue.unknown("snapshot records no properties.storeVersions"));
+        assertThat(before.settings().chunkMaxChars().value()).isNull();
+        assertThat(before.questions()).hasSameSizeAs(report.questions());
+        String markdown = scripted.service().markdown(before);
+        assertThat(markdown).contains("| chunkMaxChars | unknown: snapshot records no properties.chunkMaxChars |")
+                .contains("| storeVersions | unknown: snapshot records no properties.storeVersions |");
+        assertThat(scripted.service().markdown(report)).contains("| chunkMaxChars | 4000 (observed [")
+                .contains("| storeVersions | sections-v2-context-v2-chunk4000-500 (observed [");
+
+        Map<String, Object> mixed = new LinkedHashMap<>(traced.properties());
+        mixed.put("storeVersions", java.util.Arrays.asList("sections-v2-context-v2", null));
+        RetrievalEvidenceReport twoVersions = scripted.service().report(ScriptedEvidence.with(traced, mixed, traced.traces()));
+        assertThat(twoVersions.settings().storeVersions().value()).containsExactly("sections-v2-context-v2", null);
+        assertThat(scripted.service().markdown(twoVersions)).contains("| storeVersions | sections-v2-context-v2, none (observed [");
+    }
+
     @Test
     void tokenFieldsAreNeverComputedWithAnotherModelsTokenizerOrWithoutARecordedVersion() {
         RetrievalEvaluation traced = ScriptedEvidence.tracedSnapshot();

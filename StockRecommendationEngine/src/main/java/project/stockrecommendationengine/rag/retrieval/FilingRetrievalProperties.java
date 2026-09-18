@@ -19,7 +19,11 @@ public class FilingRetrievalProperties {
     @Min(1) @Max(20)
     private int defaultTopK = 5;
 
-    @Min(20) @Max(200)
+    /**
+     * Vector candidates fetched per query. The upper bound was 200 until 2026-09-17, raised to 400 so the pool grid of plan
+     * {@code 2026-09-17-chunk-size-pool.md} can set 250; the default is unchanged.
+     */
+    @Min(20) @Max(400)
     private int candidateCount = 40;
 
     private boolean latestFilingsOnly = true;
@@ -48,8 +52,8 @@ public class FilingRetrievalProperties {
      */
     private boolean hybridEnabled = true;
 
-    /** Keyword candidates fetched per query when the hybrid path runs. */
-    @Min(20) @Max(200)
+    /** Keyword candidates fetched per query when the hybrid path runs; the upper bound was 200 until 2026-09-17 (see candidateCount). */
+    @Min(20) @Max(400)
     private int keywordCandidateCount = 40;
 
     /** The k in reciprocal rank fusion's 1 / (k + rank). */

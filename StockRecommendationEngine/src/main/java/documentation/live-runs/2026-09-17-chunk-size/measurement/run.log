@@ -1,0 +1,220 @@
+Chunk-size measurement, Milestone 3 of plan plans/2026-09-17-chunk-size.md under amendment 3 (Follow_Ups RAG-15, RAG-26, RAG-27, RAG-29), 2026-09-17 (times +08)
+Worktree /Users/jayzhou/Documents/GitHub/java-projects-chunk-size/StockRecommendationEngine, branch chunk-size at ec560cc when the runs started. No application code
+change: every code change of this milestone is test scope (TraceReproductionCheck exempt properties; claims checker types matchedChunk, rankHistogram, rankedAbove,
+fileValue, heldPhrases; coupled experiment properties) and is listed under Code. Development Mac, CPU. App port 8081, INTEGRATION_ACCESS_TOKEN a 42-character hex
+token (openssl rand -hex 21, not recorded), RAG_CROSS_ENCODER_ENABLED=true for every application start. No chat model and no /api/recommendations call.
+Embedding calls (text-embedding-3-small): 42 per evaluate call plus 1 per warm-up, and 1 per chunk rebuilt: 43 + 42 (app A) + 1,917 + 1 + 42 + 42 (app B) + 569 + 1 + 42
+(app C) + 42 (floors test) = 2,741 (derived: "Query embedding completed" and "Embedded chunk" line counts below).
+Labels: observed = a command output, a log line, or a file value quoted here; derived = computed (computation named). This log states no cause for any rank, time,
+or size. The application logs (app-A.log, app-B.log, app-C.log, in the session scratch directory) are not committed; the evaluation windows relied on for latency
+are committed as app-log-<id>.txt, the rebuild and rollback lines as rebuild-log.txt and rollback-log.txt, and the per-filing responses as rebuild-responses.txt
+and rollback-responses.txt.
+
+Environment
+  E1. env | grep -cE '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)=' -> 0 in every shell that ran
+      Maven; grep -cE of the same names over .env -> 0 (observed).
+  E2. 11:55:59 before anything: lsof -nP -iTCP:8081 -sTCP:LISTEN -> 0 listeners; no surefire, spring-boot:run, or StockRecommendationEngineApplication process;
+      docker trading-postgres Up (healthy); retrieval_evaluations 51 rows, max id 1610; filing_rebuild_runs 6 rows (filing-rebuild-runs-before.json, the six AAPL
+      rebuilds of 2026-09-10); sec_filings 13 rows all EMBEDDED at processing_version sections-v2-context-v2; sec_filing_chunks 569 rows (observed: psql).
+
+Store before the rebuild (S0)
+  S0.1. storage.sql with -v point=S0 -> storage-S0.json (3,608 bytes): chunks 569, contentChars 1,486,993, meanChunkChars 2613.3, maxChunkChars 4000,
+      tokenCountSum 371,954, totalRelationBytes 9,068,544, heapBytes 548,864, toastBytes 7,553,024, indexesBytes 966,656, content_tsv index 753,664, deadTuples
+      132, lastAutovacuum 03:33:54Z (observed: the file; the storage block of RAG.md states the values by fileValue claims).
+  S0.2. chunks.sql -> chunks-S0.json (150,809 bytes; 569 objects: id, filingId, chunkIndex, sectionKey, sectionTitle, sectionChunkIndex, chars, tokens, head = the
+      first 80 characters with whitespace runs collapsed) (observed: wc, python len). No head holds a newline (observed).
+
+Application A (stored size; RAG_CROSS_ENCODER_ENABLED=true only; env grep printed exactly RAG_CROSS_ENCODER_ENABLED=true SERVER_PORT=8081)
+  A1. 11:57:20 start; "Started StockRecommendationEngineApplication in 4.466 seconds"; "Cross-encoder loaded: ... maxLength=512, batchSize=20,
+      scoring=max-window/overlap=64/maxWindows=4" (observed: app-A.log).
+  A2. Warm-up POST /api/rag/retrieve (NVDA, "What was NVIDIA gross margin in fiscal 2026?", rerank true): HTTP 200 in 3.61 s, HYBRID_RRF_RERANKED, 5 results;
+      "Reranking filing candidates: ticker=NVDA, candidates=20, timeoutMs=2000"; scoring candidates=20, windows=44, topK=5, elapsedMs=1356 (observed).
+  A3. B0: 11:57:55 POST /api/rag/evaluate?rerank=false&trace=true, loadavg before { 4.67 4.60 4.13 }, after { 4.60 4.59 4.14 }; HTTP 200 in 15.214932 s,
+      374,190 bytes -> snapshot 1611; "Retrieval evaluation stored: id=1611, hitAt1=0.547619, hitAt3=0.714286, hitAt5=0.785714, mrr=0.655187, misses=5,
+      rerankedQuestions=0, rerankFallbackQuestions=0"; properties chunkMaxChars 4000, chunkOverlapChars 500, storeVersions [sections-v2-context-v2] (observed).
+      GET /api/rag/evaluate/1611 HTTP 200 application/json 374,190 bytes; GET .../evidence HTTP 200 512,... see below: 531,099 bytes -> evidence-1611.json 377,253
+      bytes (whitespace outside JSON strings removed by a scratch script that printed parses_equal_numbers_as_written=True); row export
+      snapshot-1611-b0-stored-size-4000-500-rerank-off.json 244,443 bytes, 1 line (observed).
+  A4. B1: 11:58:17 POST ...?rerank=true&trace=true, loadavg before { 4.20 4.50 4.11 }, after { 6.59 5.15 4.38 }; HTTP 200 in 63.812610 s, 560,527 bytes ->
+      snapshot 1612; "stored: id=1612, hitAt1=0.500000, hitAt3=0.761905, hitAt5=0.785714, mrr=0.633135, misses=7, rerankedQuestions=42, rerankFallbackQuestions=0"
+      (observed). GET snapshot HTTP 200 560,527 bytes; GET evidence HTTP 200 512,055 bytes -> evidence-1612.json 370,362 bytes (parses_equal_numbers_as_written=True);
+      row export snapshot-1612-b1-stored-size-4000-500-rerank-candidates-20.json 364,930 bytes, 1 line (observed).
+  A5. app-A.log: 2 "Evaluating retrieval" lines; 85 "Query embedding completed" (1 warm-up + 42 + 42); 0 "Reranking failed"; 0 WARN or ERROR lines (observed:
+      grep -c). Windows: extract_log_window.py -> app-log-1611.txt (476 lines, 42 "Retrieval completed", 0 "Reranking completed") and app-log-1612.txt (560 lines,
+      42 and 42) (observed: the script's output).
+  A6. Stopped 11:59:36; 0 listeners on 8081, 0 spring-boot:run or application processes at 11:59:47 (observed).
+  A7. F1 reproduction: ./mvnw -q -o test -Dtest=TraceReproductionFilesTests -Drag.reproduction.reference=<598 export> -Drag.reproduction.run=<1611 export>
+      -Drag.reproduction.out=reproduction-1611.txt -Drag.reproduction.exempt=chunkMaxChars,chunkOverlapChars,storeVersions -> "questions reference=42 run=42
+      traces=42", the three exempt properties printed with the run's values (absent from the reference, not compared), "problems=0"; the same for 613 against
+      1612 -> reproduction-1612.txt problems=0; surefire tests="1" failures="0" for each run (observed). compare_chunk_size.py's second comparison
+      (comparison.txt, section 2): 0 differing questions in each pair, hit_at_5 and mrr equal as stored (derived). F1 holds, so the rebuild followed.
+
+Application B (chunk 1,000 / 125; env grep printed exactly RAG_CROSS_ENCODER_ENABLED=true RAG_INGESTION_CHUNK_MAX_CHARS=1000 RAG_INGESTION_CHUNK_OVERLAP_CHARS=125
+SERVER_PORT=8081)
+  B1. 12:00:23 start; started in 3.48 seconds; cross-encoder loaded as A1 (observed). That the two overrides bound: every rebuild response records
+      processingVersion sections-v2-context-v2-chunk1000-125, and snapshots 1613 and 1614 record chunkMaxChars 1000, chunkOverlapChars 125 (observed).
+  B2. Rebuild: POST /api/rag/filings/{id}/rebuild for 3, 4, 5, 6, 7, 8, 109, 110, 161, 162, 288, 324, 325 in that order, one at a time (rebuild-responses.txt:
+      per filing the HTTP code, curl seconds, start and end time, the count of "Embedded chunk" lines the log gained, and the response). 12:00:45 to 12:09:18
+      (8 min 33 s wall, derived); every response HTTP 200, outcome SUCCEEDED, version sections-v2-context-v2-chunk1000-125; chunks per filing 3: 277 (76 before),
+      4: 108 (31), 5: 2 (2), 6: 110 (32), 7: 2 (2), 8: 3 (1), 109: 478 (163), 110: 287 (95), 161: 451 (115), 162: 192 (47), 288: 3 (2), 324: 2 (2), 325: 2 (1):
+      1,917 chunks (observed: the responses; previous counts from filing-rebuild-runs-after.json previous_chunks). Seconds per filing: 76.0, 29.0, 0.9, 29.2, 0.6,
+      0.8, 127.2, 76.3, 120.6, 50.9, 0.5, 0.4, 0.5 (observed: curl time_total in rebuild-responses.txt).
+  B3. app-B.log: 1,917 "Embedding chunk" and 1,917 "Embedded chunk" lines (one embedding call per chunk), 13 "Filing rebuild succeeded", 0 "Filing rebuild failed",
+      1 ERROR line (12:00:46, io.netty DnsServerAddressStreamProviders "Unable to load ...MacOSDnsServerAddressStreamProvider, fallback to system defaults" at the
+      first SEC call; no rebuild was affected) (observed: grep -c). rebuild-log.txt holds the 143 lines of the rebuild phase other than the per-chunk lines.
+  B4. F2: select id, processing_version, ingestion_status, count(chunks) ... -> all 13 filings sections-v2-context-v2-chunk1000-125 and EMBEDDED with the counts of
+      B2; chunk ids 9489 to 11405; max(length(content)) 1000 (observed: psql). filing_rebuild_runs 19 rows (filing-rebuild-runs-after.json), the 13 new ones
+      SUCCEEDED with previous_version sections-v2-context-v2 (observed).
+  B5. Storage S1 (storage-S1.json, 12:09:42Z): chunks 1,917, contentChars 1,553,652, meanChunkChars 810.5, maxChunkChars 1000, tokenCountSum 389,139,
+      totalRelationBytes 22,544,384, heapBytes 3,178,496, toastBytes 17,498,112, indexesBytes 1,867,776, content_tsv index 1,458,176, deadTuples 52 (observed).
+      chunks-S1.json: 1,917 objects (observed).
+  B6. R1 (hard gate), by the application's own rule: GET /api/rag/evaluate/1611/evidence at 12:12 (B0's report, now evaluated against the rebuilt store; no
+      embedding call) HTTP 200 1,817,668 bytes -> evidence-1611-against-S1.json 1,131,209 bytes: heldByStoredChunk true for 55 of 57 phrases; false for aapl-08
+      phrase 0 (0000320193-26-000018, ITEM_2) and aapl-13 phrase 0 (0000320193-26-000020, ITEM_2) (observed: the file; comparison.txt section 3; the heldPhrases
+      claims). held_phrases.py (the same rule in Python over the store) -> held-phrases-S1.txt TOTALS held=55 notHeld=2 [aapl-08/0, aapl-13/0] (observed).
+      Both questions have one accepted phrase and were at rank 1 in B0 (chunks 297 and 278; evidence-1611.json) (observed).
+      Where the two phrases are, observed from the store and the exports, no cause stated: aapl-13's phrase (166 characters) has its first 29 words at the end
+      of chunk 9811 (section chunk 12 of ITEM_2, offsets 9194 to 10194, ending "... higher net sales of Pro") and its last 25 words at the start of chunk 9812
+      (offsets 10069 to 11068, beginning "the third quarter and first nine months ..."), so no chunk holds it whole; aapl-08's phrase is at character 81 of
+      chunk 9874 of filing 5, whose section_key is now ITEM_2_02 (section_title "02 Results of Operations and Financial Condition.") where the old store's
+      chunk 297 had ITEM_2 with the same title and the same 581 characters (chunks-S0.json against chunks-S1.json: filings 5, 7, 8 differ in section keys only,
+      ITEM_2_02 / ITEM_9_01 / ITEM_5_02 for ITEM_2 / ITEM_9 / ITEM_5; the MSFT 8-Ks 288, 324, 325 carried sub-item keys in S0 already).
+      R1 FAILED. Under the plan N0 was not run for the rule and the rollback followed (after the two diagnostic runs below).
+  B7. Diagnostic runs on the rebuilt store, taken as records and not as selection candidates (Worker's decision, recorded for the Orchestrator: 84 embedding
+      calls, the F7 and F8 evidence amendment 1 asked for): warm-up HTTP 200 in 1.36 s, HYBRID_RRF_RERANKED, 5 results; scoring candidates=20, windows=20,
+      topK=5, elapsedMs=281 (observed). D0: 12:13:00 ?rerank=false&trace=true, loadavg { 2.78 3.11 3.60 } before, { 2.69 3.07 3.58 } after; HTTP 200 in
+      15.308138 s, 430,941 bytes -> snapshot 1613, "hitAt1=0.452381, hitAt3=0.595238, hitAt5=0.714286, mrr=0.554856, misses=9, rerankedQuestions=0,
+      rerankFallbackQuestions=0"; properties chunkMaxChars 1000, chunkOverlapChars 125, storeVersions [sections-v2-context-v2-chunk1000-125]; GET evidence
+      647,351 bytes -> evidence-1613.json 445,523 bytes; row export 283,476 bytes (observed). D1: 12:13:16 ?rerank=true&trace=true, loadavg { 2.69 3.07 3.58 }
+      before, { 3.75 3.27 3.63 } after; HTTP 200 in 26.635819 s, 606,692 bytes -> snapshot 1614, "hitAt1=0.452381, hitAt3=0.595238, hitAt5=0.690476,
+      mrr=0.554563, misses=8, rerankedQuestions=42, rerankFallbackQuestions=0"; GET evidence 548,213 bytes -> evidence-1614.json 392,042 bytes; row export
+      393,720 bytes (observed). app-B.log: 2 "Evaluating retrieval", 85 "Query embedding completed", 0 "Reranking failed" (observed). Windows app-log-1613.txt
+      (476 lines, 42 retrievals) and app-log-1614.txt (560 lines, 42 retrievals, 42 rerank completions) (observed).
+  B8. Stopped 12:13:57; 0 listeners, 0 processes at 12:14:07 (observed).
+
+Application C (rollback; RAG_CROSS_ENCODER_ENABLED=true only, so the application.yaml defaults 4000 / 500 apply; env grep as A)
+  C1. 12:14:07 start; started in 3.562 seconds; cross-encoder loaded (observed).
+  C2. Rollback rebuild, the 13 filings in the same order (rollback-responses.txt): 12:14:25 to 12:17:03 (2 min 38 s, derived); every response HTTP 200,
+      SUCCEEDED, version sections-v2-context-v2-chunk4000-500; chunks per filing 76, 31, 2, 32, 2, 1, 163, 95, 115, 47, 2, 2, 1 = 569, equal to S0's counts
+      per filing (observed: the responses and storage-S2.json filingsDetail). app-C.log: 569 "Embedded chunk" lines, 13 succeeded, 0 failed, 1 ERROR line (the
+      netty DNS line of B3) (observed). rollback-log.txt: the 143 rebuild-phase lines. filing_rebuild_runs 32 rows (filing-rebuild-runs-after-rollback.json).
+  C3. F2 after the rollback: all 13 filings sections-v2-context-v2-chunk4000-500 and EMBEDDED; chunk ids 11406 to 11974; max length 4000 (observed: psql).
+  C4. Storage S2 (storage-S2.json, 12:17:33Z): chunks 569, contentChars 1,486,993, meanChunkChars 2613.3, maxChunkChars 4000, tokenCountSum 371,954,
+      totalRelationBytes 23,216,128, heapBytes 3,416,064, toastBytes 17,588,224, indexesBytes 2,211,840, content_tsv index 1,736,704, deadTuples 199,
+      lastAutovacuum 04:16:55Z (observed). No VACUUM was run at any point; the S2 sizes include the space of the replaced rows (observed: deadTuples).
+  C5. chunks-S2.json against chunks-S0.json, paired in order (comparison.txt, section 8): 564 pairs equal in filing, chunk index, length, first characters,
+      and section key; 5 pairs differ in the section key only (S0 297 ITEM_2 -> S2 11513 ITEM_2_02; 298 ITEM_9 -> 11514 ITEM_9_01; 331 ITEM_2 -> 11547
+      ITEM_2_02; 332 ITEM_9 -> 11548 ITEM_9_01; 333 ITEM_5 -> 11549 ITEM_5_02); 0 pairs differ in text (derived: the script). held_phrases.py at S2 ->
+      held-phrases-S2.txt TOTALS held=56 notHeld=1 [aapl-08/0] (observed).
+  C6. P0 (post-rollback, B0's settings): warm-up HTTP 200 in 1.68 s; 12:17:35 ?rerank=false&trace=true, loadavg { 3.18 3.14 3.47 } before, { 3.80 3.27 3.51 }
+      after; HTTP 200 in 17.033816 s, 380,319 bytes -> snapshot 1615, "hitAt1=0.523810, hitAt3=0.690476, hitAt5=0.761905, mrr=0.631378, misses=6,
+      rerankedQuestions=0, rerankFallbackQuestions=0"; properties chunkMaxChars 4000, chunkOverlapChars 500, storeVersions [sections-v2-context-v2-chunk4000-500];
+      GET evidence 566,141 bytes -> evidence-1615.json 397,549 bytes; row export 250,423 bytes (observed). Window app-log-1615.txt (476 lines, 42 retrievals).
+  C7. F6: P0 against B0 per question (comparison.txt, section 8): 41 questions equal in rank and in matched chunk content (filing, chunk index, length, first
+      characters of the matched chunks in chunks-S0.json and chunks-S2.json); aapl-08 differs: B0 rank 1 chunk 297, P0 no matched chunk (its phrase-holding chunk
+      11513 is returned first, RETRIEVAL_EVAL miss line in floors-post-rollback.txt, but its section_key ITEM_2_02 is not the set's ITEM_2). F6 does not hold for
+      that one question (derived).
+  C8. Stopped 12:18:14; 0 listeners, 0 processes at 12:18:25 (observed).
+  C9. Floors on the rolled-back store: ./mvnw -q -o test -Dtest=RetrievalEvaluationLiveTests -Drag.evaluation.live=true, 12:19:46 to 12:20:07, exit 0, surefire
+      tests="1" failures="0"; floors-post-rollback.txt: hitAt5=0.761905 floor=0.65 (32 of 42, margin 4), nonFigure hitAt5=0.666667 floor 0.6 (20 of 30, margin 2),
+      misses aapl-08, msft-08, nvda-02, nvda-04, nvda-07, nvda-09 (observed). The evaluation this test makes is rolled back and stores no snapshot.
+  C10. A restoration of the five section keys to their S0 values by SQL (which would have completed the rollback to the S0 content, since the application's
+      rebuild cannot produce the 2026-09-10 keys) was attempted at 12:31 and refused by the session's permission system before any statement ran (observed:
+      the keys of chunks 11513, 11514, 11547, 11548, 11549 read back as ITEM_2_02, ITEM_9_01, ITEM_2_02, ITEM_9_01, ITEM_5_02 afterwards; sec_filing_chunks 569).
+      The store is left as the application's rollback rebuild made it; the resolution is Jay's (Follow_Ups RAG-29).
+
+Latency (F8; latency.py over the committed windows; wall = curl time_total of the evaluate call; derived by the script's stated rule: median of the two middle
+values, p95 the sorted value at ceil(0.95 x 42) = 40; values are the application's elapsedMs)
+  L1. B0 1611: retrieval median 320, p95 517, max 705, min 282 ms; wall 15.21 s. D0 1613: median 344, p95 467, max 576, min 256; wall 15.31 s.
+  L2. B1 1612: retrieval median 1515, p95 1726, max 1895, min 1287; rerank median 1175.5, p95 1319, max 1563, min 947; wall 63.81 s. D1 1614: retrieval median
+      621.5, p95 747, max 767, min 470; rerank median 266, p95 317, max 418, min 162; wall 26.64 s. Rerank fallbacks 0 in both.
+  L3. P0 1615: retrieval median 359.5, p95 526, max 1271, min 282; wall 17.03 s. (The latency block of RAG.md states these by fileValue claims.)
+
+Scripts and claims (after the runs; read only committed files)
+  K1. compare_chunk_size.py -> property-diff.txt, rank-table.txt, rank-histogram.txt, comparison.txt, experiment-chunk-size-1611-1613.json,
+      experiment-chunk-size-1612-1614.json, claims.json (276 claims, C-1201 to C-1476; blocks baselines, store, filings, r1, diagnostic, ranks, nvda, latency,
+      rollback, decision). A second run reproduces the files byte for byte (observed: md5 of claims.json before and after; no __pycache__).
+  K2. Rank histogram (rank-histogram.txt; rank 1 / not at rank 1 / not in window): B0 23 / 19 / 5; D0 19 / 23 / 9; B1 21 / 21 / 7; D1 19 / 23 / 8;
+      P0 22 / 20 / 6 (derived; the rankHistogram claims). Top-5 membership D0 against B0: entering msft-01, msft-07, msft-08, nvda-02 (4); leaving aapl-08,
+      aapl-12, aapl-13, aapl-14, msft-04, nvda-03, nvda-08 (7). D1 against B1: entering 5, leaving 9 (comparison.txt, section 6). Rule rows R2 to R5 for the
+      record only, not a selection outcome (section 5): R2 and R3 do not hold for D0 against B0 (hit@5 0.714286 against 0.785714; MRR 0.554856 against 0.655187)
+      nor for D1 against B1; R4 does not hold (more leavers than entrants); R5 was not run on the rebuilt store.
+  K3. nvda-02 and nvda-04 (comparison.txt, section 7; the nvda block): in D0 nvda-02's holding chunk 11003 is at fused position 1 and rank 1 (a second holding
+      chunk 11002 at fused 10); in D1 chunk 11003 is a rerank input (fused 1) reranked 6th, rank 6. nvda-04's holding chunk 10813 is at fused position 47 in D0
+      and D1 (not a rerank input), rank null in both; in B0 and B1 chunks 802 and 754 are at fused 41 and 54, as in 598 and 613.
+  K4. The RAG.md subsection Retrieval Evaluation, Chunk size measurement holds the ten generated blocks; ./mvnw -q -o test -Dtest=DocumentationClaimsTests
+      -Dclaims.generate=true wrote them (CLAIMS_GENERATE changed=1 [RAG.md]). Earlier generations reported, and the texts were changed for: "made" and "none"
+      in an inferred claim (causal and absolute wording), "expects" in another, a bestFusedPosition expectation for the reranked run taken from the reranked
+      position instead of the smallest fused position (the script now takes the minimum fusedPosition over the holding chunks), two lead-in lines holding
+      "three" and "1", and a label on chunks-S2.json read by no check (a rankedAbove claim for aapl-08 in P0 now reads it).
+
+Code (test scope only; git diff --stat ec560cc -- src/main/java/project src/main/resources is empty)
+  T1. TraceReproductionCheck.problems(reference, run, exempt) and TraceReproductionFilesTests -Drag.reproduction.exempt; TraceReproductionCheckTests gains one
+      test (8 tests, 0 failures, observed).
+  T2. ClaimsCheck: check types matchedChunk, rankHistogram, rankedAbove, fileValue, heldPhrases; experiment files may name coupled properties; Snapshot gains
+      matchedChunkId and trace. MeasurementChecksTests (5 tests) covers them; ClaimsCheckTests' type list updated (101 tests); DiagnosticChecksTests (6) and
+      ClaimsCheckTests pass (observed: surefire reports).
+
+Verify
+  V1. rm -rf target/surefire-reports; set -a && source .env && set +a (env grep for RAG_* and the enable flags -> 0); ./mvnw -q -o verify -> exit 1 at 12:32:04
+      (observed). 70 test classes, 627 tests, 3 failures, 0 errors, 37 skipped (derived: surefire XML sums) before the K4 label fix; the failures were
+      DocumentationClaimsTests (the chunks-S2.json label, fixed in K4) and the two RetrievalEvaluationSetTests below. The 37 skipped are the opt-in live tests of
+      CLAUDE.md's list plus the five methods of CrossEncoderAnswerVisibilityLiveTests, as Milestone 1 recorded.
+  V2. RetrievalEvaluationSetTests.everyExpectedPassageOfTheSelectedSetIsAVerbatimExcerptOfAStoredChunk and everyExpectedPassageOfSetV1IsAVerbatimExcerptOfAStoredChunk
+      fail on the shared database: "aapl-08 -> ExpectedPassage[accessionNo=0000320193-26-000018, sectionKey=ITEM_2, phrase=financial results for its third fiscal
+      quarter ended June 27, 2026] (0 chunks in that filing and section)" (observed: the surefire report). These are database-backed tests in the normal verify
+      that were green at ec560cc against the S0 store; they fail for every worktree sharing this database until the aapl-08 entry or the AAPL 8-K keys are
+      resolved (C10, RAG-29). The final verify of this milestone is in V3.
+  V3. The final ./mvnw -q -o verify after K4: see the line appended below by the session (exit code, counts, CLAIMS_CHECK line).
+  V4. Final verify (13:57:33 to 13:57:45, after the Orchestrator finding was folded in and the keys block generated): rm -rf target/surefire-reports;
+      set -a && source .env && set +a (env grep for RAG_* and the enable flags -> 0); ./mvnw -q -o verify -> exit 1 (observed). 70 test classes, 627 tests,
+      2 failures, 0 errors, 37 skipped (derived: surefire XML sums); the two failures are the RetrievalEvaluationSetTests methods of V2 (aapl-08, ITEM_2, "0 chunks
+      in that filing and section"), a state of the shared database and not of this milestone's code; "CLAIMS_CHECK claimsFiles=9 documents=28 problems=0"
+      (observed). claims.json: 312 claims, C-1201 to C-1512; compare_chunk_size.py reproduces its files byte for byte (md5 before and after a re-run); no
+      __pycache__. lsof -iTCP:8081 -sTCP:LISTEN -> 0 lines (observed). git diff --stat ec560cc -- src/main/java/project src/main/resources -> empty (observed).
+
+Remediation round 1 (Scrutiny findings on Milestone 3), 2026-09-17 (times +08); worktree branch chunk-size at ba3dbff when the round started
+No application start, no rebuild, no evaluation, no model call; the database was read with psql only (select statements). Labels as above.
+  M1. filings-S2.json provenance (finding 2). The file was first written at 13:54:20 on 2026-09-17 (its modification time before this round: the write-up phase,
+      after the S2 storage snapshot of 12:17:33), by a psql query that was not committed. filings.sql is now committed with the same columns (filingId, ticker,
+      filingType, accessionNo, filingDate, createdAt, updatedAt, processingVersion, ingestionStatus; times as UTC), ordered by id. Run at 14:14:47:
+      docker exec -i trading-postgres psql ... -tA -f - < filings.sql > <scratch>/filings-S2.regenerated.json -> psql exit 0; cmp against the committed
+      filings-S2.json -> exit 0 (identical; 3,896 bytes each; md5 c98f302a082ce7ddb310b2d3052ab27b for both); the regenerated file was copied over the
+      committed one (no content change) (observed). The values are the database's current sec_filings rows (read at 14:05: 13 rows, processing_version
+      sections-v2-context-v2-chunk4000-500 and EMBEDDED on each, updated_at 04:14:47Z to 04:17:03Z; filing_rebuild_runs 32 rows; sec_filing_chunks 569 rows,
+      ids 11406 to 11974) (observed: psql). What fixes the store state at the rollback point S2: filing-rebuild-runs-after-rollback.json (32 rows, the 13
+      rollback rebuilds SUCCEEDED at that version) and storage-S2.json (recordedAt 04:17:33Z, 13 filings EMBEDDED, storeVersions
+      [sections-v2-context-v2-chunk4000-500]); the file's updated_at values lie inside the rollback window of C2 (12:14:25 to 12:17:03) and the rebuild-run
+      count is unchanged since C2, so the rows the file holds are the rows of S2 (derived from those files and the counts above).
+  M2. comparison.txt (finding 4): compare_chunk_size.py's storage table (section 10) printed index names cut to 14 characters ("index idx_sec_filing"); the
+      first column is widened from 20 to 43 characters and the name is printed whole, so the seven index rows read idx_sec_filing_chunks_content_tsv,
+      idx_sec_filing_chunks_filing, idx_sec_filing_chunks_filing_section, idx_sec_filing_chunks_section_key, idx_sec_filing_chunks_section_title,
+      sec_filing_chunks_pkey, uq_sec_filing_chunk with their bytes at S0, S1, S2 (observed: the regenerated file). Values unchanged.
+  M3. claims.json edits, by the script (findings 3, 4, 5, 7): before any edit the committed script reproduced the committed claims.json and comparison.txt byte
+      for byte (git status clean after a run; md5 b428b59429ed96ee2784588476ef62b0 and 97be5f98de0f3ec619ce1f961e017249) (observed). Then: C-1315's premises
+      are D0's hit@5 and MRR (C-1273, C-1274), B0's (C-1201, C-1202), and the leaving and entering claims of D0 against B0 (C-1288 to C-1298); C-1272 and
+      C-1275 to C-1279 dropped. C-1509's text no longer calls itself derived: it says the keys, lengths, heads, and ingestion dates are the observed claims
+      listed and that the reading is inferred, not computed by a check (basis inferred, unchanged); the RAG.md Outcome prose and Follow_Ups RAG-29 carry the
+      same label. C-1512 says "overlap 500". C-1513, C-1514, C-1515 (block store, observed, fileValue on storage-S<n>.json path indexes) list the seven
+      indexes with their bytes at S0, S1, S2; they are appended after the decision claim in the script so the ids C-1201 to C-1512 do not move. 315 claims,
+      C-1201 to C-1515, ids unique (observed: python over the file). No measured number, snapshot, evidence report, log window, or export changed.
+  M4. Generation: ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true. The first run reported problems=1: C-1509 "no check" (absolute
+      wording in free text); reworded to "not computed by a check". The second run: CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md]
+      notGenerated=0; CLAIMS_CHECK claimsFiles=9 documents=28 problems=0; a plain check run afterwards printed the same CLAIMS_CHECK line (observed). The
+      store block of RAG.md gains the three index bullets; the diagnostic, keys, and decision blocks carry the reworded C-1315, C-1509, and C-1512.
+  M5. Prose (findings 1, 5, 6, 7): Project_Challenges.md, the chunk-size entry: the key change is stated as observed (unchanged text between the 2026-09-10
+      store and both rebuilds), "at any size" is limited to the two measured sizes (4,000 / 500 and 1,000 / 125), and the lesson labels the parser-change
+      reading as inferred and untested. RAG.md, Outcome: "(derived from the exports on identical text)" is replaced by the inferred label with what is
+      observed named; "at any chunk size" reads "at either measured size (1,000 / 125 and 4,000 / 500; a further size is not measured)"; the Evidence bullet
+      names filings.sql. Follow_Ups RAG-29: "after any rebuild" and "at any chunk size" limited to the two rebuilds; the two opt-in live tests
+      (RetrievalEvaluationTraceLiveTests, RetrievalEvidenceLiveTests, both under -Drag.evaluation.live=true) are recorded as "would fail" from the exports
+      (chunk ids 297, 459's chunks, 460, 515, 571 do not exist in chunks-S2.json, whose ids are 11406 to 11974) and as not run this round (they call the
+      embedding API); the "derived:" label on the parser sentence reads inferred, as in the claim.
+  M6. Verify: see V5 below.
+  V5. Verify of this round, after the last edit (14:19:04 to 14:19:16): rm -rf target/surefire-reports; set -a && source .env && set +a (env grep for RAG_* and
+      the enable flags -> 0); ./mvnw -q -o verify -> exit 1 (observed). 70 test classes, 627 tests, 2 failures, 0 errors, 37 skipped (derived: surefire XML
+      sums); the two failures are the RetrievalEvaluationSetTests methods of V2 (aapl-08, ITEM_2, "0 chunks in that filing and section"), the shared-database
+      state of RAG-29 and not this round's edits; "CLAIMS_CHECK claimsFiles=9 documents=28 problems=0" (observed). claims.json md5 c0f2b74ffb955afbfbcc6499e085f4b4
+      and comparison.txt md5 a60d9b44219debced9b05c76ab4c2917 after a further run of compare_chunk_size.py, equal to the files verify read (observed); no
+      __pycache__. lsof -iTCP:8081 -sTCP:LISTEN -> 0 lines (observed). git diff --stat ba3dbff -- src/main/java/project src/main/resources src/test -> empty
+      (observed): no code change in this round.

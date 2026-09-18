@@ -1,0 +1,83 @@
+Chunk size diagnostic, Milestone 1 of plan plans/2026-09-17-chunk-size.md (Follow_Ups RAG-25, RAG-15), 2026-09-17 (times +08)
+One run of CrossEncoderAnswerVisibilityLiveTests over every question of evaluation set v2 with four of its five experiments (visibility,
+truncation, rank, chunkSize); the overlap grid was excluded by the plan (it scores each section pool nine times and is not a factor of this plan).
+Worktree /Users/jayzhou/Documents/GitHub/java-projects-chunk-size/StockRecommendationEngine, branch chunk-size at e33f077 when the run started
+(observed: DIAG_HEAD line of the raw console log). No application code change; the reranker model files are read from models/ (a symbolic link
+to the main checkout's models/). Development Mac, CPU. No application start, no HTTP call, no chat model call, no embedding call: the diagnostic
+reads the shared database and scores with the local ONNX cross-encoder only.
+This log records what ran and what was written; it states no cause for any score or rank.
+
+Labels: observed (file and field, or command output quoted here) = a value as recorded; derived (script and computation) = computed from
+recorded values. Line numbers below are 1-based lines of answer-visibility.log in this directory.
+
+Environment
+  E1. env | grep -E '^(RAG_[A-Z0-9_]*|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)=' | wc -l -> 0
+      before and after set -a && source .env && set +a (observed: command output; the run script printed DIAG_ENV_FLAGS 0 after sourcing .env).
+      grep -cE '^(RAG_|RECOMMENDATION_ENABLED|OUTCOMES_ENABLED|IBKR_ENABLED|WATCHLIST_ENABLED|SPRING_PROFILES_ACTIVE)' .env -> 0.
+  E2. docker ps: trading-postgres Up (healthy) (observed). target/ did not exist in the worktree before the run.
+
+Run (one Maven invocation, in the background, console to a scratch file outside the repository)
+  R1. cd <worktree>; set -a && source .env && set +a;
+      ./mvnw -o test -Dtest='CrossEncoderAnswerVisibilityLiveTests#whetherTheAcceptedPhraseIsInsideTheScoredRowsIsRecordedForEveryQuestion+theLogitWithAndWithoutTheProductionTruncationIsRecordedForEveryQuestion+theAcceptedChunkRankAmongItsSectionIsRecordedUnderHeadAndWindowedScoring+theRankOfTheSmallerPieceHoldingThePhraseIsRecordedPerChunkSize' -Drag.rerank.live=true -Dsurefire.failIfNoSpecifiedTests=false
+      No -Drag.rerank.visibility.questions property, so every question of the set was measured.
+  R2. Start 10:25:25, end 10:30:44 (observed: DIAG_START and DIAG_END lines of the raw console log); Maven "Total time: 05:18 min",
+      "BUILD SUCCESS", exit 0 (observed: DIAG_EXIT 0).
+  R3. Surefire: "Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 313.7 s -- in
+      project.stockrecommendationengine.rag.evaluation.CrossEncoderAnswerVisibilityLiveTests" (observed: console). The report
+      target/surefire-reports/TEST-...CrossEncoderAnswerVisibilityLiveTests.xml lists exactly the four named test cases and no
+      theOverlapAndMaxWindowsGridIsRecordedForEveryQuestion (observed: grep of the report's testcase names). The filter excluded the overlap method.
+  R4. Setup line (line 1 of answer-visibility.log, observed): set=v2 resource=evaluation/retrieval-set-v2.json questions=42 questionsMeasured=all
+      acceptedPhrasesLocated=57 acceptedPhrasesNotInAnyStoredChunk=0[] model=5d3e70fd0c9f maxLength=512 batchSize=20
+      configuredScoring=max-window/overlap=64/maxWindows=4. The 57 located phrases are the set's 57 accepted phrases over 42 questions (some
+      questions accept alternative phrases), so every experiment prints one line per located phrase, the rank experiment included (one rank
+      line per phrase, not one per question).
+  R5. Raw console log: 855 lines, sha256 9b1b20388d2c398f9f445b85dcfb26ac47f2a5a372dab3c1fc4f454dd0884701 (observed: wc, shasum); not
+      committed (Spring and Maven INFO lines, the reranker's per-pool "Cross-encoder scoring completed" lines, and Lombok and Unsafe
+      WARNING lines from the JVM start; 0 lines containing ERROR). The 401 lines starting "ANSWER_VISIBILITY " were extracted in order with
+      grep '^ANSWER_VISIBILITY ' into answer-visibility.log, sha256 3805cb274d7b9d1f10554b7588ad8b051fcb7687555889b024e6be3cddbbce20
+      (observed: wc, shasum).
+  R6. Lines per experiment in answer-visibility.log (derived: awk over the second word): setup 1, visibility 58 (57 naming a question plus
+      the TOTALS line 344), truncation 57, rank 57, chunkSize 228 (57 at each of 4000, 2000, 1000, 500 characters), overlap 0.
+
+Script and claims (after the run; reads only answer-visibility.log)
+  S1. cd <this directory> && python3 size_choice.py -> "size-choice.txt and claims.json written: 44 claims; chosen size none" (observed:
+      command output). A second run reproduces both files byte for byte (observed: cmp after re-running, see V3).
+  S2. size-choice.txt holds the D1 counts, the D2 table, the rule's outcome, the phrases behind every count, and the D3 lines for nvda-04 and
+      nvda-02. The table (derived by the script, and by the sizeTable and sizeChoice checks of verify from the same file):
+        size  overlap  phrases  first-ranked  split  unseen
+        4000      500       57            38      0       0
+        2000      250       57            33      0       0
+        1000      125       57            37      0       0
+         500       62       57            35      1       0
+      Frozen rule: 500 is excluded (aapl-13, stored chunk 278, line 126: noPieceHoldsPhrase=true); among 2000 (33) and 1000 (37) the most
+      first-ranked phrases is 37 at 1000, which is not more than the stored 4000's 38, so the chosen size is none (derived).
+  S3. claims.json: C-1001 to C-1044, blocks run, counts, table, nvda; label "the diagnostic run" on answer-visibility.log. The four block
+      markers were added to RAG.md (Retrieval Evaluation, Chunk size diagnostic) and the blocks generated with
+      ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true (V2).
+
+Checker
+  C1. Test code only (src/test/java/.../claims): DiagnosticOutput (parser of the printed lines) and four check types in ClaimsCheck,
+      diagnosticLine (observed), diagnosticCount, sizeTable, sizeChoice (derived; the last encodes the frozen rule), with DiagnosticChecksTests.
+      ./mvnw -q -o test -Dtest=DiagnosticChecksTests -> surefire report tests="6" errors="0" skipped="0" failures="0" (observed). No main
+      code change (git diff --stat against e33f077 -- src/main/java/project src/main/resources is empty, V4).
+
+Verify
+  V1. set -a && source .env && set +a && ./mvnw -q -o verify -> exit 0 at 10:46:07 (observed: command output), after the block generation in V2
+      and with target/surefire-reports removed before the run so the counts below are this run's alone. 67 test classes, 592 tests, 0 failures,
+      0 errors, 37 skipped (derived: sum of the tests, failures, errors, skipped attributes over target/surefire-reports/TEST-*.xml).
+      "CLAIMS_CHECK claimsFiles=8 documents=28 problems=0" (observed: DocumentationClaimsTests report). The 37 skipped are the opt-in live
+      tests of CLAUDE.md's list plus the five methods of CrossEncoderAnswerVisibilityLiveTests, which verify runs without -Drag.rerank.live.
+  V2. ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> "CLAIMS_GENERATE changed=1 [src/main/java/documentation/RAG.md]
+      notGenerated=0", "CLAIMS_CHECK claimsFiles=8 documents=28 problems=0" (observed). An earlier generation, before the wording fixes in V5,
+      reported 4 problems, all citations outside a block: two in the RAG-25 row of Follow_Ups.md and one in RAG.md's change-log bullet, both
+      written in this milestone as "(C-1001 to C-1044 ...)", and one at line 46 of plans/2026-09-17-chunk-size.md as committed at e33f077,
+      "(C-971 is the highest in use)", so verify already failed at the base commit; reworded to "(the highest id in use is C-971)".
+  V3. cd <this directory> && python3 size_choice.py, then cmp against the copies taken before: claims.json and size-choice.txt identical
+      (observed: cmp exit 0, "script reproduces both files byte for byte").
+  V4. git diff --stat e33f077 -- src/main/java/project src/main/resources -> empty (observed: command output). Main code and resources unchanged.
+  V5. ./mvnw -q -o test -Dtest=DiagnosticChecksTests -> surefire tests="6" failures="0" errors="0" skipped="0" (observed), after the template
+      of diagnosticLine changed from "(the <experiment> line ...)" to ", the <experiment> line ..., " so a labelled output does not print two
+      parenthesised groups in a row; ClaimsCheckTests' exact-text list of check types was extended by the four new types.
+
+Files committed in this directory
+  answer-visibility.log (R5), size_choice.py, size-choice.txt and claims.json (S1), run.log.

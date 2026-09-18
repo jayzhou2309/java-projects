@@ -1,0 +1,4 @@
+reference=/Users/jayzhou/Documents/GitHub/java-projects-chunk-size/StockRecommendationEngine/src/main/java/documentation/live-runs/2026-09-17-chunk-size-pool/../2026-09-17-chunk-size/measurement/snapshot-1615-p0-post-rollback-4000-500-rerank-off.json (snapshot 1615)
+run=/Users/jayzhou/Documents/GitHub/java-projects-chunk-size/StockRecommendationEngine/src/main/java/documentation/live-runs/2026-09-17-chunk-size-pool/snapshot-1777-a-pool-40-rerank-off.json (snapshot 1777)
+questions reference=42 run=42 traces=42
+problems=0

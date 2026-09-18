@@ -65,6 +65,21 @@
       "value" : 20,
       "basis" : "observed",
       "source" : "current configuration rag.retrieval.cross-encoder.max-length (snapshots do not record it)"
+    },
+    "chunkMaxChars" : {
+      "value" : 4000,
+      "basis" : "observed",
+      "source" : "snapshot properties.chunkMaxChars"
+    },
+    "chunkOverlapChars" : {
+      "value" : 500,
+      "basis" : "observed",
+      "source" : "snapshot properties.chunkOverlapChars"
+    },
+    "storeVersions" : {
+      "value" : [ "sections-v2-context-v2-chunk4000-500" ],
+      "basis" : "observed",
+      "source" : "snapshot properties.storeVersions"
     }
   },
   "questions" : [ {

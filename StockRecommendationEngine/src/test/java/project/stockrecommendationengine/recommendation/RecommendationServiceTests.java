@@ -99,7 +99,8 @@ class RecommendationServiceTests {
         return new RecommendationService(beans.getBeanProvider(ChatModel.class), filings, freshness,
                 beans.getBeanProvider(BrokerReadService.class), beans.getBeanProvider(QuantAnalysisService.class),
                 beans.getBeanProvider(QuantProperties.class), store, beans.getBeanProvider(TrackRecordService.class),
-                beans.getBeanProvider(ConfidenceCalibrationService.class), properties, validators.getValidator());
+                beans.getBeanProvider(ConfidenceCalibrationService.class), properties, validators.getValidator(),
+                new project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties());
     }
 
     @Test void directionalConfidenceIsCalibratedThroughTheLatestSnapshotWhileTheRawFigureIsStored() {
@@ -210,7 +211,8 @@ class RecommendationServiceTests {
         assertThat(record.promptVersion()).isEqualTo(RecommendationService.PROMPT_VERSION);
         assertThat(record.model()).isEqualTo("scripted-test-model");
         assertThat(record.quantVersion()).isEqualTo(new QuantProperties().version());
-        assertThat(record.processingVersion()).isEqualTo(project.stockrecommendationengine.rag.ingestion.FilingIngestionService.PROCESSING_VERSION);
+        assertThat(record.processingVersion()).isEqualTo(new project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties().processingVersion())
+                .isEqualTo("sections-v2-context-v2-chunk4000-500");
         assertThat(record.responseJson()).contains("\"runId\":\"" + result.runId() + "\"").contains("\"takeProfit\":104.00");
         assertThat(record.requestedAt()).isBeforeOrEqualTo(record.completedAt());
         assertThat(result.limitations()).doesNotContain("AUDIT_NOT_PERSISTED");
@@ -692,7 +694,8 @@ class RecommendationServiceTests {
         service = new RecommendationService(withoutQuant.getBeanProvider(ChatModel.class), filings, freshness,
                 withoutQuant.getBeanProvider(BrokerReadService.class), withoutQuant.getBeanProvider(QuantAnalysisService.class),
                 withoutQuant.getBeanProvider(QuantProperties.class), store, withoutQuant.getBeanProvider(TrackRecordService.class),
-                withoutQuant.getBeanProvider(ConfidenceCalibrationService.class), properties, validators.getValidator());
+                withoutQuant.getBeanProvider(ConfidenceCalibrationService.class), properties, validators.getValidator(),
+                new project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties());
         when(model.call(any(Prompt.class))).thenReturn(calls(call("m", "researchBroker", "{}")),
                 calls(call("b1", "findInstrument", "{}")), calls(call("b2", "analyzePriceHistory", "{\"conid\":1}")));
         var result = service.recommend(request(false));

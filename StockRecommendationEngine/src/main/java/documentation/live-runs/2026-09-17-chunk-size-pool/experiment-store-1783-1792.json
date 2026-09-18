@@ -1,0 +1,18 @@
+{
+ "description": "Store A at 4000 / 500 (snapshot 1783) against store B at 1650 / 250 (snapshot 1792), pool 200 and reranking on in both; the rebuild changes chunkOverlapChars and storeVersions together with chunkMaxChars, so they are coupled. rerank-timeout-ms, not recorded in snapshots, was 4000 in both (property-diff.txt, from run.log).",
+ "experiment": {
+  "factor": "chunkMaxChars",
+  "settings": [
+   4000,
+   1650
+  ],
+  "coupled": [
+   "chunkOverlapChars",
+   "storeVersions"
+  ],
+  "snapshots": [
+   "snapshot-1783-a-pool-200-rerank-on-40.json",
+   "snapshot-1792-b-pool-200-rerank-on-40.json"
+  ]
+ }
+}

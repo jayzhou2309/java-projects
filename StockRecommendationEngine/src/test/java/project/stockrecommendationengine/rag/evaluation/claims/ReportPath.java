@@ -10,10 +10,11 @@ import tools.jackson.databind.JsonNode;
  * A field path into an evidence report for the {@code notRecorded} check (RAG.md, Claims): segments separated by dots, each a field name
  * optionally followed by one selector, {@code [n]} for the n-th element (0-based) or {@code [key=value]} for the first element whose
  * {@code key} reads as {@code value}; for example {@code questions[id=msft-05].phrases[0].chunks[chunkId=515].rerankInput}. A dot inside a
- * selector does not split; a value cannot contain {@code ]}.
+ * selector does not split; a value cannot contain {@code ]}. A segment holding only a selector ({@code [id=297].sectionKey}) applies it to the
+ * node the path has reached, so a file whose root is an array can be addressed (since 2026-09-17).
  */
 final class ReportPath {
-    private static final Pattern SEGMENT = Pattern.compile("([A-Za-z0-9_]+)(?:\\[([^\\]]+)\\])?");
+    private static final Pattern SEGMENT = Pattern.compile("([A-Za-z0-9_]*)(?:\\[([^\\]]+)\\])?");
 
     private ReportPath() {
     }
@@ -23,8 +24,10 @@ final class ReportPath {
         JsonNode node = root;
         for (String segment : split(path)) {
             Matcher matcher = SEGMENT.matcher(segment);
-            if (!matcher.matches()) throw new IllegalArgumentException("malformed path segment \"" + segment + "\"");
-            node = node.get(matcher.group(1));
+            if (!matcher.matches() || segment.isEmpty()) throw new IllegalArgumentException("malformed path segment \"" + segment + "\"");
+            // A segment that is only a selector ("[id=297]") applies it to the node itself, so a file whose root is an array can be addressed
+            // (since 2026-09-17, plan 2026-09-17-chunk-size.md Milestone 3: the chunk exports).
+            if (!matcher.group(1).isEmpty()) node = node.get(matcher.group(1));
             if (node == null) return null;
             String selector = matcher.group(2);
             if (selector == null) continue;

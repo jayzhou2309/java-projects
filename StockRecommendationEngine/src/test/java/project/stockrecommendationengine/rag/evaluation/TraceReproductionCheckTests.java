@@ -128,6 +128,87 @@ class TraceReproductionCheckTests {
                 "property rerankTimeoutMs: absent from snapshot 297, run 4000"));
     }
 
+    @Test
+    void namedExemptPropertiesTheReferenceLacksAreAllowedWhenPresentAndComparedWhenBothRecordThem() {
+        // Plan 2026-09-17-chunk-size.md, Milestone 3: a run against a store that records chunkMaxChars, chunkOverlapChars, and storeVersions
+        // reproduces a reference stored before those properties existed, so the caller names them; everything else stays compared.
+        RetrievalEvaluation base = run(results -> results, Map.of());
+        Map<String, Object> properties = new LinkedHashMap<>(base.properties());
+        properties.put("chunkMaxChars", 4000);
+        properties.put("chunkOverlapChars", 500);
+        properties.put("storeVersions", List.of("sections-v2-context-v2"));
+        RetrievalEvaluation run = new RetrievalEvaluation(base.id(), base.evaluatedAt(), base.setVersion(), base.questionCount(), base.hitAt1(),
+                base.hitAt3(), base.hitAt5(), base.mrr(), base.window(), base.retrievalStrategy(), properties, base.results(), base.tickerHitAt5(),
+                base.misses(), base.slices(), base.traces());
+        java.util.Set<String> exempt = new java.util.LinkedHashSet<>(List.of("chunkMaxChars", "chunkOverlapChars", "storeVersions"));
+        assertThat(TraceReproductionCheck.problems(reference, run)).containsExactly(
+                "property chunkMaxChars: absent from snapshot 297, run 4000",
+                "property chunkOverlapChars: absent from snapshot 297, run 500",
+                "property storeVersions: absent from snapshot 297, run [sections-v2-context-v2]");
+        assertThat(TraceReproductionCheck.problems(reference, run, exempt)).isEmpty();
+        // An exempt property the run does not carry is still a problem, and an exempt name the reference also records is still compared.
+        properties.remove("storeVersions");
+        properties.put("rerankCandidates", 40);
+        assertThat(TraceReproductionCheck.problems(reference, run, new java.util.LinkedHashSet<>(List.of("storeVersions", "rerankCandidates")))).containsExactly(
+                "property rerankCandidates: snapshot 297 20, run 40",
+                "property chunkMaxChars: absent from snapshot 297, run 4000",
+                "property chunkOverlapChars: absent from snapshot 297, run 500",
+                "property storeVersions: exempt from the comparison with snapshot 297 but absent from the run");
+    }
+
+    @Test
+    void aListPropertyTheReferenceRecordsIsComparedWithTheRunsList() throws Exception {
+        // Plan 2026-09-17-chunk-size-pool.md, G2: the reference (snapshot 1615) records storeVersions, a list; it is compared, not exempt.
+        tools.jackson.databind.node.ObjectNode withList = (tools.jackson.databind.node.ObjectNode) reference.deepCopy();
+        ((tools.jackson.databind.node.ObjectNode) withList.get("properties")).putArray("storeVersions").add("sections-v2-context-v2-chunk4000-500");
+        RetrievalEvaluation base = run(results -> results, Map.of());
+        Map<String, Object> properties = new LinkedHashMap<>(base.properties());
+        properties.put("storeVersions", List.of("sections-v2-context-v2-chunk4000-500"));
+        RetrievalEvaluation run = new RetrievalEvaluation(base.id(), base.evaluatedAt(), base.setVersion(), base.questionCount(), base.hitAt1(),
+                base.hitAt3(), base.hitAt5(), base.mrr(), base.window(), base.retrievalStrategy(), properties, base.results(), base.tickerHitAt5(),
+                base.misses(), base.slices(), base.traces());
+        assertThat(TraceReproductionCheck.problems(withList, run)).isEmpty();
+        properties.put("storeVersions", List.of("sections-v2-context-v2-chunk1650-250"));
+        assertThat(TraceReproductionCheck.problems(withList, run)).containsExactly(
+                "property storeVersions: snapshot 297 [sections-v2-context-v2-chunk4000-500], run [sections-v2-context-v2-chunk1650-250]");
+    }
+
+    @Test
+    void matchedChunksAreComparedByContentWhenBothSidesResolveThem() {
+        // Plan 2026-09-17-chunk-size.md, Milestone 4 (H4): a rebuild renumbers chunks, so a run whose matched chunk ids all differ from the
+        // reference's reproduces it when each pair resolves to the same content identity; a differing identity, or an id a side cannot
+        // resolve, is a problem printing both ids with their identities. The identity here is a stand-in text keyed by id.
+        Map<Long, String> referenceIdentity = new LinkedHashMap<>();
+        Map<Long, String> runIdentity = new LinkedHashMap<>();
+        for (JsonNode q : reference.get("results").get("questions")) {
+            if (q.get("matchedChunkId").isNull()) continue;
+            long id = q.get("matchedChunkId").asLong();
+            String identity = "accession A section S index 0 chars 100 md5 " + id;
+            referenceIdentity.put(id, identity);
+            runIdentity.put(id + 10_000, identity);
+        }
+        RetrievalEvaluation run = run(results -> results.stream().map(r -> r.matchedChunkId() == null ? r
+                : result(r, r.rank(), r.matchedChunkId() + 10_000, r.retrievalStrategy(), null)).toList(), Map.of());
+        assertThat(run.results()).noneMatch(r -> r.matchedChunkId() != null && referenceIdentity.containsKey(r.matchedChunkId()));
+        long matched = run.results().stream().filter(r -> r.matchedChunkId() != null).count();
+        assertThat(TraceReproductionCheck.problems(reference, run)).as("by id, every matched question differs").hasSize((int) matched);
+        assertThat(matched).isEqualTo(35).isGreaterThan(referenceIdentity.size()); // three chunk ids are matched by two questions each
+        TraceReproductionCheck.ChunkIdentity ofReference = referenceIdentity::get;
+        TraceReproductionCheck.ChunkIdentity ofRun = runIdentity::get;
+        assertThat(TraceReproductionCheck.problems(reference, run, java.util.Set.of(), ofReference, ofRun)).isEmpty();
+        assertThatCode(() -> TraceReproductionCheck.assertReproduces(reference, run, java.util.Set.of(), ofReference, ofRun)).doesNotThrowAnyException();
+
+        // msft-05's run chunk holds other content; aapl-04's run id is unknown to the run's resolver; nvda-11 has no matched chunk on the run side.
+        runIdentity.put(460L + 10_000, "accession A section S index 1 chars 200 md5 other");
+        runIdentity.remove(210L + 10_000);
+        RetrievalEvaluation changed = run(results -> replace(run.results(), "nvda-11", r -> result(r, null, null, r.retrievalStrategy(), null)), Map.of());
+        assertThat(TraceReproductionCheck.problems(reference, changed, java.util.Set.of(), ofReference, ofRun)).containsExactly(
+                "question aapl-04: snapshot 297 rank 1 chunk 210 (accession A section S index 0 chars 100 md5 210), run rank 1 chunk 10210 (unknown to the run)",
+                "question msft-05: snapshot 297 rank 10 chunk 460 (accession A section S index 0 chars 100 md5 460), run rank 10 chunk 10460 (accession A section S index 1 chars 200 md5 other)",
+                "question nvda-11: snapshot 297 rank 5 chunk 805 (accession A section S index 0 chars 100 md5 805), run rank null chunk null (no matched chunk)");
+        assertThatThrownBy(() -> TraceReproductionCheck.problems(reference, run, java.util.Set.of(), ofReference, null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
     private String failure(RetrievalEvaluation run) {
         Throwable thrown = catchThrowable(() -> TraceReproductionCheck.assertReproduces(reference, run));
         assertThat(thrown).isInstanceOf(AssertionError.class);

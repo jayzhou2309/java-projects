@@ -3,8 +3,6 @@ package project.stockrecommendationengine.rag.evaluation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,16 +21,33 @@ import static org.assertj.core.api.Assertions.*;
 
 /**
  * Opt-in (-Drag.evaluation.live=true; model files under models/; reads the shared database, writes nothing, calls no model) evidence
- * report on stored snapshots (evaluation evidence Milestone 2). The traced snapshot ({@code -Drag.evidence.traced-snapshot}, default 459,
- * a traced run at snapshot 297's settings) and the untraced one ({@code -Drag.evidence.untraced-snapshot}, default 297) must exist. With the
- * cross-encoder enabled in this test's context only:
+ * report on stored snapshots (evaluation evidence Milestone 2; re-pointed 2026-09-18, plan 2026-09-17-chunk-size.md Milestone 4, H4, since
+ * the rebuilds of 2026-09-17 renumbered every chunk and the traced snapshot 459 names rerank inputs by id). The traced snapshot
+ * ({@code -Drag.evidence.traced-snapshot}, default {@value #TRACED_DEFAULT}: snapshot 1892, a traced run at snapshot 297's settings on the
+ * store of 2026-09-18, committed under live-runs/2026-09-18-rag29-section-key/) and the untraced one ({@code -Drag.evidence.untraced-snapshot},
+ * default 297, whose report reads the current store's chunks by accession, section, and phrase, so it depends on no chunk id) must exist.
+ * Chunks are named by what they hold, never by id: msft-05's and msft-04's chunks are the chunks the report lists under the set's accepted
+ * phrases (accession number, section key, phrase).
+ * <p>
+ * Limitation (recorded 2026-09-18, Milestone 4 remediation round 1): the traced snapshot's rerank inputs are chunk ids, which this test looks
+ * up in {@code sec_filing_chunks}, so a rebuild, which renumbers chunks, breaks the traced default exactly as it broke snapshot 459. After a
+ * rebuild, re-record it with the R part of {@code live-runs/2026-09-18-rag29-section-key/run_session.sh} (the application at the
+ * application.yaml defaults with {@code RAG_CROSS_ENCODER_ENABLED=true}, {@code POST /api/rag/evaluate?rerank=true&trace=true}, the row
+ * export {@code select row_to_json(r) from retrieval_evaluations r where id=<id>}, and {@code chunk-hashes.sql} and {@code chunks.sql} over
+ * the new store), then, as a separate hand-run step the script does not include, {@code filings.sql} (under
+ * {@code live-runs/2026-09-17-chunk-size-pool/}) over the same store into {@code filings.json}; then update {@link #TRACED_DEFAULT} and, in
+ * the same change, RetrievalEvaluationTraceLiveTests' REFERENCE, REFERENCE_ID,
+ * and export paths (that test compares by matched chunk content, so a renumbering rebuild with equal content does not break it, but a
+ * rebuild that changes content does). With the cross-encoder enabled in this test's context only:
  * <ul>
  * <li>for every rerank input of every question of the traced snapshot, the window arithmetic on the stored chunk text beside the question
  * gives exactly the row count the trace recorded ({@code windowCount}), which checks the tokenizer, the current max-length, and the
  * parsed scoring against what the scorer actually ran;</li>
  * <li>every reported chunk whose trace records a window count has as many derived window starts;</li>
- * <li>msft-05's accepted phrases are reported against chunks 460, 515, and 571 with derived token spans, and chunk 515's rerank input
- * membership is observed; chunk 466 for msft-04 has an observed reranked position;</li>
+ * <li>each of msft-05's accepted phrases (Item 1, Item 7, and Item 8 of the 10-K 0001193125-26-323660) is held by a stored chunk with a
+ * derived token span, every holding chunk's rerank input membership is observed, and the Item 7 phrase's holding chunk (the one whose
+ * phrase sits outside the head window) is a rerank input with an observed reranked position; a
+ * holding chunk of msft-04's phrase that is a rerank input has an observed reranked position;</li>
  * <li>on the untraced snapshot every candidate field is unknown with reason "no trace" while token fields are derived.</li>
  * </ul>
  * With {@code -Drag.evidence.write-dir=<directory>} both reports are also written there as compact JSON, {@code evidence-<id>.json}, the form
@@ -41,6 +56,11 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest(properties = "rag.retrieval.cross-encoder.enabled=true")
 @EnabledIfSystemProperty(named = "rag.evaluation.live", matches = "true")
 class RetrievalEvidenceLiveTests {
+    static final long TRACED_DEFAULT = 1892L;
+    static final long UNTRACED_DEFAULT = 297L;
+    /** msft-05's and msft-04's expected passages are in the 10-K of this accession number. */
+    static final String MSFT_10K = "0001193125-26-323660";
+
     @Autowired RetrievalEvidenceService evidence;
     @Autowired RetrievalEvaluationRepository snapshots;
     @Autowired RetrievalEvaluationSetLoader loader;
@@ -50,7 +70,7 @@ class RetrievalEvidenceLiveTests {
 
     @Test
     void theTracedSnapshotsRecordedRowCountsEqualTheWindowArithmeticAndTheNamedChunksAreReported() {
-        long id = Long.getLong("rag.evidence.traced-snapshot", 459L);
+        long id = Long.getLong("rag.evidence.traced-snapshot", TRACED_DEFAULT);
         RetrievalEvaluation snapshot = snapshots.findById(id).orElseThrow(() -> new AssertionError("snapshot " + id + " is not stored"));
         assertThat(snapshot.traces()).as("snapshot %d traces", id).isNotNull();
         Scoring scoring = Scoring.parse(String.valueOf(snapshot.properties().get("rerankerScoring")));
@@ -90,29 +110,42 @@ class RetrievalEvidenceLiveTests {
         System.out.println("EVIDENCE_LIVE reportedChunksWithRecordedWindowCount=" + reported);
 
         QuestionEvidence msft05 = report.questions().stream().filter(q -> q.id().equals("msft-05")).findFirst().orElseThrow();
-        Set<Long> held = new TreeSet<>();
+        assertThat(msft05.phrases()).extracting(PhraseEvidence::accessionNo).containsOnly(MSFT_10K);
+        assertThat(msft05.phrases()).extracting(PhraseEvidence::sectionKey).containsExactlyInAnyOrder("ITEM_1", "ITEM_7", "ITEM_8");
+        int held = 0;
         for (PhraseEvidence phrase : msft05.phrases()) {
+            assertThat(phrase.chunks()).as("msft-05 %s \"%s\" held by a stored chunk", phrase.sectionKey(), phrase.phrase()).isNotEmpty();
             for (ChunkEvidence chunk : phrase.chunks()) {
-                held.add(chunk.chunkId());
+                held++;
                 assertThat(chunk.occurrences()).allSatisfy(o -> assertThat(o.tokenSpan().basis()).isEqualTo(EvidenceValue.Basis.DERIVED));
-                System.out.println("EVIDENCE_LIVE msft-05 chunk=" + chunk.chunkId() + " tokens=" + chunk.chunkTokens().value() + " W=" + chunk.windowLength().value()
+                assertThat(chunk.rerankInput().basis()).as("msft-05 %s chunk %d rerank input", phrase.sectionKey(), chunk.chunkId()).isEqualTo(EvidenceValue.Basis.OBSERVED);
+                System.out.println("EVIDENCE_LIVE msft-05 section=" + phrase.sectionKey() + " chunk=" + chunk.chunkId() + " tokens=" + chunk.chunkTokens().value() + " W=" + chunk.windowLength().value()
                         + " starts=" + chunk.windowStarts().value() + " spans=" + chunk.occurrences().stream().map(o -> o.tokenSpan().value() + " " + o.head().value()
                         + " rows " + o.windowsHoldingWholly().value()).toList() + " fused=" + chunk.fusedPosition().value() + " rerankInput="
                         + chunk.rerankInput().value() + " (" + chunk.rerankInput().basis() + ") reranked=" + chunk.rerankedPosition().value() + " score=" + chunk.score().value());
-                if (chunk.chunkId() == 515) assertThat(chunk.rerankInput().basis()).isEqualTo(EvidenceValue.Basis.OBSERVED);
+                if (phrase.sectionKey().equals("ITEM_7")) {
+                    assertThat(chunk.rerankInput().value()).as("msft-05 Item 7 chunk %d a rerank input", chunk.chunkId()).isEqualTo(true);
+                    assertThat(chunk.rerankedPosition().basis()).isEqualTo(EvidenceValue.Basis.OBSERVED);
+                    assertThat(chunk.rerankedPosition().value()).isNotNull();
+                }
             }
         }
-        assertThat(held).contains(460L, 515L, 571L);
+        assertThat(held).isGreaterThanOrEqualTo(3);
         QuestionEvidence msft04 = report.questions().stream().filter(q -> q.id().equals("msft-04")).findFirst().orElseThrow();
-        ChunkEvidence c466 = msft04.phrases().stream().flatMap(p -> p.chunks().stream()).filter(c -> c.chunkId() == 466).findFirst().orElseThrow();
-        assertThat(c466.rerankedPosition().basis()).isEqualTo(EvidenceValue.Basis.OBSERVED);
-        assertThat(c466.rerankedPosition().value()).isNotNull();
-        System.out.println("EVIDENCE_LIVE msft-04 chunk=466 reranked=" + c466.rerankedPosition().value() + " score=" + c466.score().value());
+        assertThat(msft04.phrases()).extracting(PhraseEvidence::accessionNo).containsOnly(MSFT_10K);
+        List<ChunkEvidence> msft04Inputs = msft04.phrases().stream().flatMap(p -> p.chunks().stream())
+                .filter(c -> c.rerankInput().basis() == EvidenceValue.Basis.OBSERVED && Boolean.TRUE.equals(c.rerankInput().value())).toList();
+        assertThat(msft04Inputs).as("msft-04 holding chunks that are rerank inputs").isNotEmpty();
+        for (ChunkEvidence chunk : msft04Inputs) {
+            assertThat(chunk.rerankedPosition().basis()).isEqualTo(EvidenceValue.Basis.OBSERVED);
+            assertThat(chunk.rerankedPosition().value()).isNotNull();
+            System.out.println("EVIDENCE_LIVE msft-04 chunk=" + chunk.chunkId() + " fused=" + chunk.fusedPosition().value() + " reranked=" + chunk.rerankedPosition().value() + " score=" + chunk.score().value());
+        }
     }
 
     @Test
     void theUntracedSnapshotHasEveryCandidateFieldUnknownNoTrace() {
-        long id = Long.getLong("rag.evidence.untraced-snapshot", 297L);
+        long id = Long.getLong("rag.evidence.untraced-snapshot", UNTRACED_DEFAULT);
         RetrievalEvidenceReport report = evidence.report(id).orElseThrow(() -> new AssertionError("snapshot " + id + " is not stored"));
         assertThat(report.traced().value()).isFalse();
         write(id, report);

@@ -247,7 +247,19 @@ public class RetrievalEvidenceService {
             return new Settings(property("rerank", Boolean.class), property("rerankCandidates", Integer.class), property("reranker", String.class),
                     property("rerankerVersion", String.class),
                     tokenizer.isPresent() ? observed(loadedVersion, SOURCE_LOADED_MODEL) : unknown(CROSS_ENCODER_NOT_LOADED),
-                    property("rerankerScoring", String.class), passageScoring, overlap, maxWindows, observed(maxLength, maxLengthSource));
+                    property("rerankerScoring", String.class), passageScoring, overlap, maxWindows, observed(maxLength, maxLengthSource),
+                    property("chunkMaxChars", Integer.class), property("chunkOverlapChars", Integer.class), stringList("storeVersions"));
+        }
+
+        /** A snapshot property holding a list as recorded, each entry as text (a null entry kept); unknown when the snapshot does not record it. */
+        private EvidenceValue<List<String>> stringList(String name) {
+            if (!properties.containsKey(name)) return unknown("snapshot records no properties." + name);
+            Object value = properties.get(name);
+            if (value == null) return observed(null, "snapshot properties." + name);
+            if (!(value instanceof List<?> list)) return unknown("snapshot properties." + name + " is not a list: " + value);
+            List<String> entries = new ArrayList<>();
+            for (Object entry : list) entries.add(entry == null ? null : String.valueOf(entry));
+            return observed(entries, "snapshot properties." + name);
         }
 
         /** A snapshot property as recorded; unknown when the snapshot does not record it. */

@@ -22,7 +22,7 @@ import java.util.Locale;
 @Slf4j
 public class FilingIngestionService {
 
-    public static final String PROCESSING_VERSION = "sections-v2-context-v2";
+    private final FilingIngestionProperties properties;
     private final org.springframework.jdbc.core.JdbcTemplate jdbc;
     private final SECClient secClient;
     private final FilingHtmlParser filingHtmlParser;
@@ -31,6 +31,14 @@ public class FilingIngestionService {
     private final SECFilingRepository filingRepository;
 
     private final PlatformTransactionManager transactionManager;
+
+    /**
+     * The processing version a filing stored now records ({@link FilingIngestionProperties#processingVersion()}: the parser and context
+     * rule, then the configured chunk size and overlap). Whether a stored filing is complete does not depend on it.
+     */
+    public String processingVersion() {
+        return properties.processingVersion();
+    }
 
     public void ingest(String ticker, List<String> filingTypes, int limit) {
         String normalizedTicker = ticker.trim().toUpperCase(Locale.ROOT);
@@ -114,11 +122,11 @@ public class FilingIngestionService {
                         INSERT INTO filing_rebuild_runs(run_id, filing_id, processing_version, outcome,
                             previous_version, previous_chunks, resulting_chunks)
                         VALUES (?, ?, ?, 'SUCCEEDED', ?, ?, ?)
-                        """, runId, filingId, PROCESSING_VERSION, previousVersion, previousCount, count);
+                        """, runId, filingId, processingVersion(), previousVersion, previousCount, count);
                 log.info("Filing rebuild succeeded: runId={}, filingId={}, chunks={}, version={}",
-                        runId, filingId, count, PROCESSING_VERSION);
+                        runId, filingId, count, processingVersion());
                 return java.util.Map.<String, Object>of("runId", runId, "filingId", filingId,
-                        "processingVersion", PROCESSING_VERSION, "chunks", count, "outcome", "SUCCEEDED");
+                        "processingVersion", processingVersion(), "chunks", count, "outcome", "SUCCEEDED");
             });
         } catch (org.springframework.web.server.ResponseStatusException rejected) {
             throw rejected;
@@ -127,7 +135,7 @@ public class FilingIngestionService {
                 tx.executeWithoutResult(status -> jdbc.update("""
                         INSERT INTO filing_rebuild_runs(run_id, filing_id, processing_version, outcome, error_code)
                         VALUES (?, ?, ?, 'FAILED', ?)
-                        """, runId, filingId, PROCESSING_VERSION, failure.getClass().getSimpleName()));
+                        """, runId, filingId, processingVersion(), failure.getClass().getSimpleName()));
             } catch (RuntimeException auditFailure) {
                 failure.addSuppressed(auditFailure);
             }
@@ -187,7 +195,7 @@ public class FilingIngestionService {
         filing.getChunks().clear();
         filingRepository.saveAndFlush(filing);
         filing.getChunks().addAll(toEntities(filing, embeddedChunks));
-        filing.setProcessingVersion(PROCESSING_VERSION);
+        filing.setProcessingVersion(processingVersion());
         filing.setIngestionStatus("EMBEDDED");
         filing.setIngestionError(null);
         filingRepository.saveAndFlush(filing);

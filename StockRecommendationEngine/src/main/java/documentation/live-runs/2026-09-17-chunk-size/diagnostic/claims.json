@@ -1,0 +1,614 @@
+{
+ "description": "Chunk size diagnostic (plan plans/2026-09-17-chunk-size.md, Milestone 1), written by size_choice.py from answer-visibility.log, the ANSWER_VISIBILITY lines of one run of CrossEncoderAnswerVisibilityLiveTests over every question of set v2 with the visibility, truncation, rank, and chunkSize experiments (the overlap grid did not run): the setup line, the line counts per experiment and size (D1), the size-choice table and the frozen rule's outcome (D2), and the lines for nvda-04 and nvda-02 cited by line number (D3). Scores are printed as the run printed them, and the claims state no cause for any score or rank.",
+ "labels": {
+  "answer-visibility.log": "the diagnostic run"
+ },
+ "claims": [
+  {
+   "id": "C-1001",
+   "basis": "observed",
+   "block": "run",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "setup",
+    "field": "questions",
+    "expected": 42
+   }
+  },
+  {
+   "id": "C-1002",
+   "basis": "observed",
+   "block": "run",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "setup",
+    "field": "acceptedPhrasesLocated",
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1003",
+   "basis": "observed",
+   "block": "run",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "setup",
+    "field": "acceptedPhrasesNotInAnyStoredChunk",
+    "expected": "0[]"
+   }
+  },
+  {
+   "id": "C-1004",
+   "basis": "observed",
+   "block": "run",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "setup",
+    "field": "model",
+    "expected": "5d3e70fd0c9f"
+   }
+  },
+  {
+   "id": "C-1005",
+   "basis": "observed",
+   "block": "run",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "setup",
+    "field": "maxLength",
+    "expected": 512
+   }
+  },
+  {
+   "id": "C-1006",
+   "basis": "observed",
+   "block": "run",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "setup",
+    "field": "configuredScoring",
+    "expected": "max-window/overlap=64/maxWindows=4"
+   }
+  },
+  {
+   "id": "C-1007",
+   "basis": "derived",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticCount",
+    "output": "answer-visibility.log",
+    "experiment": "visibility",
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1008",
+   "basis": "derived",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticCount",
+    "output": "answer-visibility.log",
+    "experiment": "truncation",
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1009",
+   "basis": "derived",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticCount",
+    "output": "answer-visibility.log",
+    "experiment": "rank",
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1010",
+   "basis": "derived",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticCount",
+    "output": "answer-visibility.log",
+    "experiment": "overlap",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1011",
+   "basis": "derived",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticCount",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "sizeChars": 4000,
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1012",
+   "basis": "derived",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticCount",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "sizeChars": 2000,
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1013",
+   "basis": "derived",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticCount",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "sizeChars": 1000,
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1014",
+   "basis": "derived",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticCount",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "sizeChars": 500,
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1015",
+   "basis": "observed",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "visibility",
+    "line": 344,
+    "field": "phrases",
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1016",
+   "basis": "observed",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "visibility",
+    "line": 344,
+    "field": "headWholly",
+    "expected": 35
+   }
+  },
+  {
+   "id": "C-1017",
+   "basis": "observed",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "visibility",
+    "line": 344,
+    "field": "headPartly",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-1018",
+   "basis": "observed",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "visibility",
+    "line": 344,
+    "field": "headNot",
+    "expected": 19
+   }
+  },
+  {
+   "id": "C-1019",
+   "basis": "observed",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "visibility",
+    "line": 344,
+    "field": "someRowHoldsPhrase",
+    "expected": 57
+   }
+  },
+  {
+   "id": "C-1020",
+   "basis": "observed",
+   "block": "counts",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "visibility",
+    "line": 344,
+    "field": "noRowHoldsPhrase",
+    "expected": "0[]"
+   }
+  },
+  {
+   "id": "C-1021",
+   "basis": "inferred",
+   "block": "counts",
+   "text": "The output holds, per located phrase, one visibility line, one truncation line, one rank line, and one chunkSize line per size (the rank experiment prints one line per located phrase, not one per question), and the overlap grid did not run",
+   "from": [
+    "C-1002",
+    "C-1007",
+    "C-1008",
+    "C-1009",
+    "C-1010",
+    "C-1011",
+    "C-1012",
+    "C-1013",
+    "C-1014",
+    "C-1015",
+    "C-1016",
+    "C-1017",
+    "C-1018",
+    "C-1019",
+    "C-1020"
+   ]
+  },
+  {
+   "id": "C-1022",
+   "basis": "derived",
+   "block": "table",
+   "check": {
+    "type": "sizeTable",
+    "output": "answer-visibility.log",
+    "sizeChars": 4000,
+    "expected": {
+     "phrases": 57,
+     "firstRanked": 38,
+     "split": 0,
+     "unseen": 0
+    }
+   }
+  },
+  {
+   "id": "C-1023",
+   "basis": "derived",
+   "block": "table",
+   "check": {
+    "type": "sizeTable",
+    "output": "answer-visibility.log",
+    "sizeChars": 2000,
+    "expected": {
+     "phrases": 57,
+     "firstRanked": 33,
+     "split": 0,
+     "unseen": 0
+    }
+   }
+  },
+  {
+   "id": "C-1024",
+   "basis": "derived",
+   "block": "table",
+   "check": {
+    "type": "sizeTable",
+    "output": "answer-visibility.log",
+    "sizeChars": 1000,
+    "expected": {
+     "phrases": 57,
+     "firstRanked": 37,
+     "split": 0,
+     "unseen": 0
+    }
+   }
+  },
+  {
+   "id": "C-1025",
+   "basis": "derived",
+   "block": "table",
+   "check": {
+    "type": "sizeTable",
+    "output": "answer-visibility.log",
+    "sizeChars": 500,
+    "expected": {
+     "phrases": 57,
+     "firstRanked": 35,
+     "split": 1,
+     "unseen": 0
+    }
+   }
+  },
+  {
+   "id": "C-1026",
+   "basis": "observed",
+   "block": "table",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "question": "aapl-13",
+    "chunk": 278,
+    "sizeChars": 500,
+    "field": "noPieceHoldsPhrase",
+    "expected": "true"
+   }
+  },
+  {
+   "id": "C-1027",
+   "basis": "derived",
+   "block": "table",
+   "check": {
+    "type": "sizeChoice",
+    "output": "answer-visibility.log",
+    "stored": 4000,
+    "candidates": [
+     2000,
+     1000,
+     500
+    ],
+    "expected": "none"
+   }
+  },
+  {
+   "id": "C-1028",
+   "basis": "inferred",
+   "block": "table",
+   "text": "Under the plan's frozen rule the size choice is empty, and the plan stops after this milestone without a rebuild; the counts do not describe the vector or keyword legs, which a rebuilt store alone would show",
+   "from": [
+    "C-1027",
+    "C-1022",
+    "C-1023",
+    "C-1024",
+    "C-1025",
+    "C-1026"
+   ]
+  },
+  {
+   "id": "C-1029",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "question": "nvda-04",
+    "chunk": 754,
+    "sizeChars": 4000,
+    "field": "bestRank",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1030",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "question": "nvda-04",
+    "chunk": 754,
+    "sizeChars": 2000,
+    "field": "bestRank",
+    "expected": 4
+   }
+  },
+  {
+   "id": "C-1031",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "question": "nvda-04",
+    "chunk": 754,
+    "sizeChars": 1000,
+    "field": "bestRank",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1032",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "question": "nvda-04",
+    "chunk": 754,
+    "sizeChars": 500,
+    "field": "bestRank",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1033",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "rank",
+    "question": "nvda-04",
+    "chunk": 754,
+    "field": "bestWindowedRank(max-window/overlap=64/maxWindows=4)",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-1034",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "truncation",
+    "question": "nvda-04",
+    "chunk": 754,
+    "field": "headScore",
+    "expected": "-11.235582"
+   }
+  },
+  {
+   "id": "C-1035",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "truncation",
+    "question": "nvda-04",
+    "chunk": 754,
+    "field": "windowedScore(max-window/overlap=64/maxWindows=4)",
+    "expected": "-0.65041685"
+   }
+  },
+  {
+   "id": "C-1036",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "truncation",
+    "question": "nvda-04",
+    "chunk": 754,
+    "field": "recutScore(from 200 chars before the phrase)",
+    "expected": "5.159078"
+   }
+  },
+  {
+   "id": "C-1037",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "question": "nvda-02",
+    "chunk": 802,
+    "sizeChars": 4000,
+    "field": "bestRank",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1038",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "question": "nvda-02",
+    "chunk": 802,
+    "sizeChars": 2000,
+    "field": "bestRank",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-1039",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "question": "nvda-02",
+    "chunk": 802,
+    "sizeChars": 1000,
+    "field": "bestRank",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1040",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "chunkSize",
+    "question": "nvda-02",
+    "chunk": 802,
+    "sizeChars": 500,
+    "field": "bestRank",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1041",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "rank",
+    "question": "nvda-02",
+    "chunk": 802,
+    "field": "bestWindowedRank(max-window/overlap=64/maxWindows=4)",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-1042",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "truncation",
+    "question": "nvda-02",
+    "chunk": 802,
+    "field": "headScore",
+    "expected": "1.668531"
+   }
+  },
+  {
+   "id": "C-1043",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "truncation",
+    "question": "nvda-02",
+    "chunk": 802,
+    "field": "windowedScore(max-window/overlap=64/maxWindows=4)",
+    "expected": "5.0587115"
+   }
+  },
+  {
+   "id": "C-1044",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "diagnosticLine",
+    "output": "answer-visibility.log",
+    "experiment": "truncation",
+    "question": "nvda-02",
+    "chunk": 802,
+    "field": "recutScore(from 200 chars before the phrase)",
+    "expected": "4.3077326"
+   }
+  }
+ ]
+}

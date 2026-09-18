@@ -87,7 +87,9 @@ class FilingRetrievalControllerTests {
         var loader = mock(project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationSetLoader.class);
         var snapshots = mock(RetrievalEvaluationRepository.class);
         var evaluation = new RetrievalEvaluationService(loader, retrieval, snapshots,
-                new project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationProperties(), new FilingRetrievalProperties());
+                new project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationProperties(), new FilingRetrievalProperties(),
+                new project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties(),
+                mock(project.stockrecommendationengine.rag.repository.SECFilingRepository.class));
         MockMvc mvc = MockMvcBuilders.standaloneSetup(new RetrievalEvaluationController(evaluation, snapshots, mock(project.stockrecommendationengine.rag.evaluation.RetrievalEvidenceService.class)))
                 .setControllerAdvice(new RetrievalExceptionHandler()).build();
         mvc.perform(post("/api/rag/evaluate").param("rerank", "true"))

@@ -1,0 +1,6696 @@
+{
+ "description": "Chunk size and candidate pool (plan plans/2026-09-17-chunk-size-pool.md, Milestone 1), written by analyse_pool.py: the reproduction of snapshot 1615; the grid of pools 40, 100, 200, 250 with reranking off and on (40 inputs, 4000 ms) on store A (4000 / 500) and store B (1650 / 250) with stored and tuning metrics, pool pairs and store pairs as one-factor experiment claims; the choice per store and reranker state on the 28 tuning questions; the held-out test of store B's chosen points on the 14 held-out questions; metrics, rank histograms, and top-5 membership of the reported runs; the chunks above every question not at rank 1 at store B's chosen points; nvda-02 and nvda-04 in every grid run; latency of every run; storage at three points; the phrase gate; and the rollback. No claim states why a rank, a time, or a size changed.",
+ "labels": {
+  "snapshot-1777-a-pool-40-rerank-off.json": "the default reference",
+  "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json": "the latency reference",
+  "../2026-09-17-chunk-size/measurement/snapshot-1615-p0-post-rollback-4000-500-rerank-off.json": "the previous plan's post-rollback run",
+  "snapshot-1794-a2-post-rollback-pool-40-rerank-off.json": "the post-rollback run",
+  "snapshot-1778-a-pool-100-rerank-off.json": "store A's chosen point with reranking off",
+  "snapshot-1782-a-pool-100-rerank-on-40.json": "store A's chosen point with reranking on",
+  "snapshot-1786-b-pool-40-rerank-off.json": "store B's chosen point with reranking off",
+  "snapshot-1790-b-pool-40-rerank-on-40.json": "store B's chosen point with reranking on",
+  "storage-A.json": "storage before the rebuild",
+  "storage-B.json": "storage of the rebuilt store",
+  "storage-A2.json": "storage after the rollback",
+  "evidence-1777-against-B.json": "the default reference's report read against the rebuilt store",
+  "chunks-B.json": "the chunk export of the rebuilt store",
+  "chunk-hashes-A.json": "the content hashes before the rebuild",
+  "chunk-hashes-A2.json": "the content hashes after the rollback"
+ },
+ "claims": [
+  {
+   "id": "C-1601",
+   "basis": "derived",
+   "block": "reproduction",
+   "check": {
+    "type": "candidateLists",
+    "reference": "../2026-09-17-chunk-size/measurement/snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "candidate": "snapshot-1777-a-pool-40-rerank-off.json",
+    "compare": "fusedOrder",
+    "expected": []
+   }
+  },
+  {
+   "id": "C-1602",
+   "basis": "observed",
+   "block": "reproduction",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-17-chunk-size/measurement/snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1603",
+   "basis": "observed",
+   "block": "reproduction",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-17-chunk-size/measurement/snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.631378"
+   }
+  },
+  {
+   "id": "C-1604",
+   "basis": "observed",
+   "block": "reproduction",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1605",
+   "basis": "observed",
+   "block": "reproduction",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.631378"
+   }
+  },
+  {
+   "id": "C-1606",
+   "basis": "derived",
+   "block": "reproduction",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "../2026-09-17-chunk-size/measurement/snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "expected": {
+     "1": 22,
+     "2": 6,
+     "notInWindow": 6,
+     "8": 1,
+     "6": 1,
+     "4": 1,
+     "7": 1,
+     "3": 1,
+     "10": 1,
+     "5": 2
+    }
+   }
+  },
+  {
+   "id": "C-1607",
+   "basis": "derived",
+   "block": "reproduction",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "expected": {
+     "1": 22,
+     "2": 6,
+     "notInWindow": 6,
+     "8": 1,
+     "6": 1,
+     "4": 1,
+     "7": 1,
+     "3": 1,
+     "10": 1,
+     "5": 2
+    }
+   }
+  },
+  {
+   "id": "C-1985",
+   "basis": "derived",
+   "block": "reproduction",
+   "check": {
+    "type": "questionEquality",
+    "reference": "../2026-09-17-chunk-size/measurement/snapshot-1615-p0-post-rollback-4000-500-rerank-off.json",
+    "candidate": "snapshot-1777-a-pool-40-rerank-off.json",
+    "compare": "rankAndMatchedChunk",
+    "expected": []
+   }
+  },
+  {
+   "id": "C-1608",
+   "basis": "inferred",
+   "block": "reproduction",
+   "text": "The default reference (snapshot 1777; that it is the run on store A at pool 40 with reranking off is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)) has the fused order of snapshot 1615 for the 42 questions, the same stored hit@5 and MRR, the same rank histogram, and the same stored rank and matched chunk id per question; the TraceReproductionFilesTests output reproduction-1777.txt (problems=0; a text file, not read by a check) records the comparison as run at the time; this comparison is the plan's reproduction condition G2 (the plan's correctness contract, not read by a check), and that the runs continued after it is in run.log (not read by a check)",
+   "from": [
+    "C-1601",
+    "C-1602",
+    "C-1603",
+    "C-1604",
+    "C-1605",
+    "C-1606",
+    "C-1607",
+    "C-1985"
+   ]
+  },
+  {
+   "id": "C-1609",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1610",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.631378"
+   }
+  },
+  {
+   "id": "C-1611",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1612",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.604464"
+   }
+  },
+  {
+   "id": "C-1613",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1614",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.650425"
+   }
+  },
+  {
+   "id": "C-1615",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store A (4000 / 500) with reranking off and the other recorded settings equal, pool 100 against pool 40: the tuning hit@5 is equal to that of the pool 40 run (0.714286 against 0.714286) and the tuning MRR is above it (0.633036 against 0.604464)",
+   "experiment": {
+    "file": "experiment-pool-1777-1778.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1616",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.633036"
+   }
+  },
+  {
+   "id": "C-1617",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1779-a-pool-200-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1618",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1779-a-pool-200-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.650425"
+   }
+  },
+  {
+   "id": "C-1619",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store A (4000 / 500) with reranking off and the other recorded settings equal, pool 200 against pool 40: the tuning hit@5 is equal to that of the pool 40 run (0.714286 against 0.714286) and the tuning MRR is above it (0.633036 against 0.604464)",
+   "experiment": {
+    "file": "experiment-pool-1777-1779.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1779-a-pool-200-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1620",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1779-a-pool-200-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.633036"
+   }
+  },
+  {
+   "id": "C-1621",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1780-a-pool-250-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1622",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1780-a-pool-250-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.650425"
+   }
+  },
+  {
+   "id": "C-1623",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store A (4000 / 500) with reranking off and the other recorded settings equal, pool 250 against pool 40: the tuning hit@5 is equal to that of the pool 40 run (0.714286 against 0.714286) and the tuning MRR is above it (0.633036 against 0.604464)",
+   "experiment": {
+    "file": "experiment-pool-1777-1780.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1780-a-pool-250-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1624",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1780-a-pool-250-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.633036"
+   }
+  },
+  {
+   "id": "C-1625",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1781-a-pool-40-rerank-on-40.json",
+    "metric": "hitAt5",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-1626",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1781-a-pool-40-rerank-on-40.json",
+    "metric": "mrr",
+    "expected": "0.632804"
+   }
+  },
+  {
+   "id": "C-1627",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1781-a-pool-40-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1628",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1781-a-pool-40-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.584921"
+   }
+  },
+  {
+   "id": "C-1629",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "metric": "hitAt5",
+    "expected": "0.809524"
+   }
+  },
+  {
+   "id": "C-1630",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "metric": "mrr",
+    "expected": "0.636111"
+   }
+  },
+  {
+   "id": "C-1631",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store A (4000 / 500) with reranking on and the other recorded settings equal, pool 100 against pool 40: the tuning hit@5 is above that of the pool 40 run (0.750000 against 0.714286) and the tuning MRR is above it (0.589881 against 0.584921)",
+   "experiment": {
+    "file": "experiment-pool-1781-1782.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.750000"
+   }
+  },
+  {
+   "id": "C-1632",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.589881"
+   }
+  },
+  {
+   "id": "C-1633",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1783-a-pool-200-rerank-on-40.json",
+    "metric": "hitAt5",
+    "expected": "0.809524"
+   }
+  },
+  {
+   "id": "C-1634",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1783-a-pool-200-rerank-on-40.json",
+    "metric": "mrr",
+    "expected": "0.636111"
+   }
+  },
+  {
+   "id": "C-1635",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store A (4000 / 500) with reranking on and the other recorded settings equal, pool 200 against pool 40: the tuning hit@5 is above that of the pool 40 run (0.750000 against 0.714286) and the tuning MRR is above it (0.589881 against 0.584921)",
+   "experiment": {
+    "file": "experiment-pool-1781-1783.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1783-a-pool-200-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.750000"
+   }
+  },
+  {
+   "id": "C-1636",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1783-a-pool-200-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.589881"
+   }
+  },
+  {
+   "id": "C-1637",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1784-a-pool-250-rerank-on-40.json",
+    "metric": "hitAt5",
+    "expected": "0.809524"
+   }
+  },
+  {
+   "id": "C-1638",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1784-a-pool-250-rerank-on-40.json",
+    "metric": "mrr",
+    "expected": "0.636111"
+   }
+  },
+  {
+   "id": "C-1639",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store A (4000 / 500) with reranking on and the other recorded settings equal, pool 250 against pool 40: the tuning hit@5 is above that of the pool 40 run (0.750000 against 0.714286) and the tuning MRR is above it (0.589881 against 0.584921)",
+   "experiment": {
+    "file": "experiment-pool-1781-1784.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1784-a-pool-250-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.750000"
+   }
+  },
+  {
+   "id": "C-1640",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1784-a-pool-250-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.589881"
+   }
+  },
+  {
+   "id": "C-1641",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1642",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "At pool 40 with reranking off and the other recorded settings equal, store B (1650 / 250) against store A (4000 / 500): the MRR over the 42 questions is below that of store A's run (0.610402 against 0.631378), and the hit@5 is below it (0.714286 against 0.761905)",
+   "experiment": {
+    "file": "experiment-store-1777-1786.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.610402"
+   }
+  },
+  {
+   "id": "C-1643",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1644",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.631930"
+   }
+  },
+  {
+   "id": "C-1645",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1787-b-pool-100-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1646",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "At pool 100 with reranking off and the other recorded settings equal, store B (1650 / 250) against store A (4000 / 500): the MRR over the 42 questions is below that of store A's run (0.610402 against 0.650425), and the hit@5 is below it (0.714286 against 0.761905)",
+   "experiment": {
+    "file": "experiment-store-1778-1787.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1787-b-pool-100-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.610402"
+   }
+  },
+  {
+   "id": "C-1647",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store B (1650 / 250) with reranking off and the other recorded settings equal, pool 100 against pool 40: the tuning hit@5 is equal to that of the pool 40 run (0.714286 against 0.714286) and the tuning MRR is equal to it (0.631930 against 0.631930)",
+   "experiment": {
+    "file": "experiment-pool-1786-1787.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1787-b-pool-100-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1648",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1787-b-pool-100-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.631930"
+   }
+  },
+  {
+   "id": "C-1649",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1788-b-pool-200-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1650",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "At pool 200 with reranking off and the other recorded settings equal, store B (1650 / 250) against store A (4000 / 500): the MRR over the 42 questions is below that of store A's run (0.610402 against 0.650425), and the hit@5 is below it (0.714286 against 0.761905)",
+   "experiment": {
+    "file": "experiment-store-1779-1788.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1788-b-pool-200-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.610402"
+   }
+  },
+  {
+   "id": "C-1651",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store B (1650 / 250) with reranking off and the other recorded settings equal, pool 200 against pool 40: the tuning hit@5 is equal to that of the pool 40 run (0.714286 against 0.714286) and the tuning MRR is equal to it (0.631930 against 0.631930)",
+   "experiment": {
+    "file": "experiment-pool-1786-1788.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1788-b-pool-200-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1652",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1788-b-pool-200-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.631930"
+   }
+  },
+  {
+   "id": "C-1653",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1789-b-pool-250-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1654",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "At pool 250 with reranking off and the other recorded settings equal, store B (1650 / 250) against store A (4000 / 500): the MRR over the 42 questions is below that of store A's run (0.610402 against 0.650425), and the hit@5 is below it (0.714286 against 0.761905)",
+   "experiment": {
+    "file": "experiment-store-1780-1789.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1789-b-pool-250-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.610402"
+   }
+  },
+  {
+   "id": "C-1655",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store B (1650 / 250) with reranking off and the other recorded settings equal, pool 250 against pool 40: the tuning hit@5 is equal to that of the pool 40 run (0.714286 against 0.714286) and the tuning MRR is equal to it (0.631930 against 0.631930)",
+   "experiment": {
+    "file": "experiment-pool-1786-1789.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1789-b-pool-250-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1656",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1789-b-pool-250-rerank-off.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.631930"
+   }
+  },
+  {
+   "id": "C-1657",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "metric": "hitAt5",
+    "expected": "0.738095"
+   }
+  },
+  {
+   "id": "C-1658",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "At pool 40 with reranking on and the other recorded settings equal, store B (1650 / 250) against store A (4000 / 500): the MRR over the 42 questions is below that of store A's run (0.546296 against 0.632804), and the hit@5 is below it (0.738095 against 0.785714)",
+   "experiment": {
+    "file": "experiment-store-1781-1790.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "metric": "mrr",
+    "expected": "0.546296"
+   }
+  },
+  {
+   "id": "C-1659",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1660",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.526786"
+   }
+  },
+  {
+   "id": "C-1661",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1791-b-pool-100-rerank-on-40.json",
+    "metric": "hitAt5",
+    "expected": "0.738095"
+   }
+  },
+  {
+   "id": "C-1662",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "At pool 100 with reranking on and the other recorded settings equal, store B (1650 / 250) against store A (4000 / 500): the MRR over the 42 questions is below that of store A's run (0.546296 against 0.636111), and the hit@5 is below it (0.738095 against 0.809524)",
+   "experiment": {
+    "file": "experiment-store-1782-1791.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1791-b-pool-100-rerank-on-40.json",
+    "metric": "mrr",
+    "expected": "0.546296"
+   }
+  },
+  {
+   "id": "C-1663",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store B (1650 / 250) with reranking on and the other recorded settings equal, pool 100 against pool 40: the tuning hit@5 is equal to that of the pool 40 run (0.714286 against 0.714286) and the tuning MRR is equal to it (0.526786 against 0.526786)",
+   "experiment": {
+    "file": "experiment-pool-1790-1791.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1791-b-pool-100-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1664",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1791-b-pool-100-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.526786"
+   }
+  },
+  {
+   "id": "C-1665",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1792-b-pool-200-rerank-on-40.json",
+    "metric": "hitAt5",
+    "expected": "0.738095"
+   }
+  },
+  {
+   "id": "C-1666",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "At pool 200 with reranking on and the other recorded settings equal, store B (1650 / 250) against store A (4000 / 500): the MRR over the 42 questions is below that of store A's run (0.546296 against 0.636111), and the hit@5 is below it (0.738095 against 0.809524)",
+   "experiment": {
+    "file": "experiment-store-1783-1792.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1792-b-pool-200-rerank-on-40.json",
+    "metric": "mrr",
+    "expected": "0.546296"
+   }
+  },
+  {
+   "id": "C-1667",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store B (1650 / 250) with reranking on and the other recorded settings equal, pool 200 against pool 40: the tuning hit@5 is equal to that of the pool 40 run (0.714286 against 0.714286) and the tuning MRR is equal to it (0.526786 against 0.526786)",
+   "experiment": {
+    "file": "experiment-pool-1790-1792.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1792-b-pool-200-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1668",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1792-b-pool-200-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.526786"
+   }
+  },
+  {
+   "id": "C-1669",
+   "basis": "observed",
+   "block": "grid",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1793-b-pool-250-rerank-on-40.json",
+    "metric": "hitAt5",
+    "expected": "0.738095"
+   }
+  },
+  {
+   "id": "C-1670",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "At pool 250 with reranking on and the other recorded settings equal, store B (1650 / 250) against store A (4000 / 500): the MRR over the 42 questions is below that of store A's run (0.546296 against 0.636111), and the hit@5 is below it (0.738095 against 0.809524)",
+   "experiment": {
+    "file": "experiment-store-1784-1793.json",
+    "factor": "chunkMaxChars"
+   },
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1793-b-pool-250-rerank-on-40.json",
+    "metric": "mrr",
+    "expected": "0.546296"
+   }
+  },
+  {
+   "id": "C-1671",
+   "basis": "experiment",
+   "block": "grid",
+   "text": "On store B (1650 / 250) with reranking on and the other recorded settings equal, pool 250 against pool 40: the tuning hit@5 is equal to that of the pool 40 run (0.714286 against 0.714286) and the tuning MRR is equal to it (0.526786 against 0.526786)",
+   "experiment": {
+    "file": "experiment-pool-1790-1793.json",
+    "factor": "candidateCount"
+   },
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1793-b-pool-250-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1672",
+   "basis": "derived",
+   "block": "grid",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1793-b-pool-250-rerank-on-40.json",
+    "questions": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-09",
+     "aapl-10",
+     "aapl-13",
+     "msft-01",
+     "msft-05",
+     "msft-06",
+     "msft-08",
+     "msft-09",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-02",
+     "nvda-03",
+     "nvda-05",
+     "nvda-06",
+     "nvda-07",
+     "nvda-09",
+     "nvda-12",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "metric": "mrr",
+    "expected": "0.526786"
+   }
+  },
+  {
+   "id": "C-1673",
+   "basis": "inferred",
+   "block": "choice",
+   "text": "By the frozen choice rule (the plan's frozen design, not read by a check: highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool; that the 28 ids the premises list are the tuning questions is the plan's frozen split), the chosen pool on store A (4000 / 500) with reranking off is 100 (snapshot 1778): pool 40 (snapshot 1777) tuning hit@5 0.714286 and tuning MRR 0.604464; pool 100 (snapshot 1778) tuning hit@5 0.714286 and tuning MRR 0.633036; pool 200 (snapshot 1779) tuning hit@5 0.714286 and tuning MRR 0.633036; pool 250 (snapshot 1780) tuning hit@5 0.714286 and tuning MRR 0.633036; which snapshot is the run of which store, pool, and reranker state is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)",
+   "from": [
+    "C-1611",
+    "C-1612",
+    "C-1615",
+    "C-1616",
+    "C-1619",
+    "C-1620",
+    "C-1623",
+    "C-1624"
+   ]
+  },
+  {
+   "id": "C-1674",
+   "basis": "inferred",
+   "block": "choice",
+   "text": "By the frozen choice rule (the plan's frozen design, not read by a check: highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool; that the 28 ids the premises list are the tuning questions is the plan's frozen split), the chosen pool on store A (4000 / 500) with reranking on is 100 (snapshot 1782): pool 40 (snapshot 1781) tuning hit@5 0.714286 and tuning MRR 0.584921; pool 100 (snapshot 1782) tuning hit@5 0.750000 and tuning MRR 0.589881; pool 200 (snapshot 1783) tuning hit@5 0.750000 and tuning MRR 0.589881; pool 250 (snapshot 1784) tuning hit@5 0.750000 and tuning MRR 0.589881; which snapshot is the run of which store, pool, and reranker state is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)",
+   "from": [
+    "C-1627",
+    "C-1628",
+    "C-1631",
+    "C-1632",
+    "C-1635",
+    "C-1636",
+    "C-1639",
+    "C-1640"
+   ]
+  },
+  {
+   "id": "C-1675",
+   "basis": "inferred",
+   "block": "choice",
+   "text": "By the frozen choice rule (the plan's frozen design, not read by a check: highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool; that the 28 ids the premises list are the tuning questions is the plan's frozen split), the chosen pool on store B (1650 / 250) with reranking off is 40 (snapshot 1786): pool 40 (snapshot 1786) tuning hit@5 0.714286 and tuning MRR 0.631930; pool 100 (snapshot 1787) tuning hit@5 0.714286 and tuning MRR 0.631930; pool 200 (snapshot 1788) tuning hit@5 0.714286 and tuning MRR 0.631930; pool 250 (snapshot 1789) tuning hit@5 0.714286 and tuning MRR 0.631930; which snapshot is the run of which store, pool, and reranker state is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)",
+   "from": [
+    "C-1643",
+    "C-1644",
+    "C-1647",
+    "C-1648",
+    "C-1651",
+    "C-1652",
+    "C-1655",
+    "C-1656"
+   ]
+  },
+  {
+   "id": "C-1676",
+   "basis": "inferred",
+   "block": "choice",
+   "text": "By the frozen choice rule (the plan's frozen design, not read by a check: highest tuning hit@5 over the 28 tuning questions, ties by higher tuning MRR, then the smaller pool; that the 28 ids the premises list are the tuning questions is the plan's frozen split), the chosen pool on store B (1650 / 250) with reranking on is 40 (snapshot 1790): pool 40 (snapshot 1790) tuning hit@5 0.714286 and tuning MRR 0.526786; pool 100 (snapshot 1791) tuning hit@5 0.714286 and tuning MRR 0.526786; pool 200 (snapshot 1792) tuning hit@5 0.714286 and tuning MRR 0.526786; pool 250 (snapshot 1793) tuning hit@5 0.714286 and tuning MRR 0.526786; which snapshot is the run of which store, pool, and reranker state is in runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)",
+   "from": [
+    "C-1659",
+    "C-1660",
+    "C-1663",
+    "C-1664",
+    "C-1667",
+    "C-1668",
+    "C-1671",
+    "C-1672"
+   ]
+  },
+  {
+   "id": "C-1677",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "hitAt1",
+    "expected": "0.523810"
+   }
+  },
+  {
+   "id": "C-1678",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "hitAt3",
+    "expected": "0.690476"
+   }
+  },
+  {
+   "id": "C-1679",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "slices.figure.hitAt5",
+    "expected": "1.000000"
+   }
+  },
+  {
+   "id": "C-1680",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "slices.nonFigure.hitAt5",
+    "expected": "0.666667"
+   }
+  },
+  {
+   "id": "C-1681",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "tickerHitAt5.AAPL",
+    "expected": "0.857143"
+   }
+  },
+  {
+   "id": "C-1682",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "tickerHitAt5.MSFT",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-1683",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "metric": "tickerHitAt5.NVDA",
+    "expected": "0.642857"
+   }
+  },
+  {
+   "id": "C-1684",
+   "basis": "derived",
+   "block": "reported",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "expected": {
+     "1": 22,
+     "2": 6,
+     "notInWindow": 6,
+     "8": 1,
+     "6": 1,
+     "4": 1,
+     "7": 1,
+     "3": 1,
+     "10": 1,
+     "5": 2
+    }
+   }
+  },
+  {
+   "id": "C-1685",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "metric": "hitAt1",
+    "expected": "0.547619"
+   }
+  },
+  {
+   "id": "C-1686",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "metric": "hitAt3",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1687",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "metric": "slices.figure.hitAt5",
+    "expected": "1.000000"
+   }
+  },
+  {
+   "id": "C-1688",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "metric": "slices.nonFigure.hitAt5",
+    "expected": "0.666667"
+   }
+  },
+  {
+   "id": "C-1689",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "metric": "tickerHitAt5.AAPL",
+    "expected": "0.857143"
+   }
+  },
+  {
+   "id": "C-1690",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "metric": "tickerHitAt5.MSFT",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-1691",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "metric": "tickerHitAt5.NVDA",
+    "expected": "0.642857"
+   }
+  },
+  {
+   "id": "C-1692",
+   "basis": "derived",
+   "block": "reported",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "expected": {
+     "1": 23,
+     "2": 6,
+     "notInWindow": 6,
+     "8": 1,
+     "6": 1,
+     "4": 1,
+     "7": 1,
+     "3": 1,
+     "10": 1,
+     "5": 1
+    }
+   }
+  },
+  {
+   "id": "C-1693",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "metric": "hitAt1",
+    "expected": "0.500000"
+   }
+  },
+  {
+   "id": "C-1694",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "metric": "hitAt3",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1695",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "metric": "slices.figure.hitAt5",
+    "expected": "1.000000"
+   }
+  },
+  {
+   "id": "C-1696",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "metric": "slices.nonFigure.hitAt5",
+    "expected": "0.733333"
+   }
+  },
+  {
+   "id": "C-1697",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "metric": "tickerHitAt5.AAPL",
+    "expected": "0.857143"
+   }
+  },
+  {
+   "id": "C-1698",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "metric": "tickerHitAt5.MSFT",
+    "expected": "0.928571"
+   }
+  },
+  {
+   "id": "C-1699",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "metric": "tickerHitAt5.NVDA",
+    "expected": "0.642857"
+   }
+  },
+  {
+   "id": "C-1700",
+   "basis": "derived",
+   "block": "reported",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "expected": {
+     "1": 21,
+     "3": 2,
+     "2": 9,
+     "notInWindow": 7,
+     "10": 1,
+     "4": 1,
+     "5": 1
+    }
+   }
+  },
+  {
+   "id": "C-1701",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "metric": "hitAt1",
+    "expected": "0.523810"
+   }
+  },
+  {
+   "id": "C-1702",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "metric": "hitAt3",
+    "expected": "0.642857"
+   }
+  },
+  {
+   "id": "C-1703",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "metric": "slices.figure.hitAt5",
+    "expected": "0.916667"
+   }
+  },
+  {
+   "id": "C-1704",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "metric": "slices.nonFigure.hitAt5",
+    "expected": "0.633333"
+   }
+  },
+  {
+   "id": "C-1705",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "metric": "tickerHitAt5.AAPL",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-1706",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "metric": "tickerHitAt5.MSFT",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-1707",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "metric": "tickerHitAt5.NVDA",
+    "expected": "0.571429"
+   }
+  },
+  {
+   "id": "C-1708",
+   "basis": "derived",
+   "block": "reported",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "expected": {
+     "5": 2,
+     "2": 4,
+     "1": 22,
+     "notInWindow": 7,
+     "7": 3,
+     "10": 1,
+     "3": 1,
+     "4": 1,
+     "8": 1
+    }
+   }
+  },
+  {
+   "id": "C-1709",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "metric": "hitAt1",
+    "expected": "0.428571"
+   }
+  },
+  {
+   "id": "C-1710",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "metric": "hitAt3",
+    "expected": "0.642857"
+   }
+  },
+  {
+   "id": "C-1711",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "metric": "slices.figure.hitAt5",
+    "expected": "0.833333"
+   }
+  },
+  {
+   "id": "C-1712",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "metric": "slices.nonFigure.hitAt5",
+    "expected": "0.700000"
+   }
+  },
+  {
+   "id": "C-1713",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "metric": "tickerHitAt5.AAPL",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-1714",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "metric": "tickerHitAt5.MSFT",
+    "expected": "0.857143"
+   }
+  },
+  {
+   "id": "C-1715",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "metric": "tickerHitAt5.NVDA",
+    "expected": "0.571429"
+   }
+  },
+  {
+   "id": "C-1716",
+   "basis": "derived",
+   "block": "reported",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "expected": {
+     "notInWindow": 10,
+     "1": 18,
+     "2": 5,
+     "4": 4,
+     "3": 4,
+     "9": 1
+    }
+   }
+  },
+  {
+   "id": "C-1717",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "metric": "hitAt1",
+    "expected": "0.476190"
+   }
+  },
+  {
+   "id": "C-1718",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "metric": "hitAt3",
+    "expected": "0.738095"
+   }
+  },
+  {
+   "id": "C-1719",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1720",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "metric": "mrr",
+    "expected": "0.609325"
+   }
+  },
+  {
+   "id": "C-1721",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "metric": "slices.figure.hitAt5",
+    "expected": "1.000000"
+   }
+  },
+  {
+   "id": "C-1722",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "metric": "slices.nonFigure.hitAt5",
+    "expected": "0.666667"
+   }
+  },
+  {
+   "id": "C-1723",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "metric": "tickerHitAt5.AAPL",
+    "expected": "0.857143"
+   }
+  },
+  {
+   "id": "C-1724",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "metric": "tickerHitAt5.MSFT",
+    "expected": "0.857143"
+   }
+  },
+  {
+   "id": "C-1725",
+   "basis": "observed",
+   "block": "reported",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "metric": "tickerHitAt5.NVDA",
+    "expected": "0.571429"
+   }
+  },
+  {
+   "id": "C-1726",
+   "basis": "derived",
+   "block": "reported",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1785-a-latency-reference-pool-40-rerank-on-20.json",
+    "expected": {
+     "1": 20,
+     "3": 2,
+     "2": 9,
+     "notInWindow": 8,
+     "10": 1,
+     "8": 1,
+     "5": 1
+    }
+   }
+  },
+  {
+   "id": "C-1727",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-01",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1728",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-07",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1729",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-07",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1730",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "aapl-14",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1731",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-02",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1732",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-04",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1733",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-01",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1734",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-03",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1735",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-01",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1736",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-07",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1737",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-07",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1738",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "aapl-14",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1739",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-02",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1740",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-04",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1741",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-01",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1742",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-03",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1743",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-01",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1744",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-07",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1745",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-08",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1746",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-07",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1747",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "aapl-01",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1748",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-04",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1749",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-11",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1750",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-01",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1751",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-11",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1752",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-05",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1753",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-07",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+      "expected": "outside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "inside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1754",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "aapl-01",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1755",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-04",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1756",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "msft-11",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1757",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-02",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1758",
+   "basis": "derived",
+   "block": "membership",
+   "check": {
+    "type": "topK",
+    "question": "nvda-11",
+    "k": 5,
+    "rows": [
+     {
+      "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+      "expected": "inside"
+     },
+     {
+      "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+      "expected": "outside"
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1759",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.857143"
+   }
+  },
+  {
+   "id": "C-1760",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "mrr",
+    "expected": "0.685204"
+   }
+  },
+  {
+   "id": "C-1761",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.857143"
+   }
+  },
+  {
+   "id": "C-1762",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "mrr",
+    "expected": "0.685204"
+   }
+  },
+  {
+   "id": "C-1763",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.928571"
+   }
+  },
+  {
+   "id": "C-1764",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "mrr",
+    "expected": "0.728571"
+   }
+  },
+  {
+   "id": "C-1765",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-1766",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "mrr",
+    "expected": "0.567347"
+   }
+  },
+  {
+   "id": "C-1767",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "hitAt5",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-1768",
+   "basis": "derived",
+   "block": "heldout",
+   "check": {
+    "type": "subsetMetric",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "questions": [
+     "aapl-04",
+     "aapl-05",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-07",
+     "msft-10",
+     "nvda-04",
+     "nvda-08",
+     "nvda-10",
+     "nvda-11"
+    ],
+    "metric": "mrr",
+    "expected": "0.585317"
+   }
+  },
+  {
+   "id": "C-1769",
+   "basis": "inferred",
+   "block": "heldout",
+   "text": "Held-out test with reranking off: FAIL. Held-out hit@5 over the 14 held-out questions of store B's chosen point (pool 40, snapshot 1786) is 0.714286, against 0.857143 for the default reference (snapshot 1777) and 0.857143 for store A's chosen point (pool 100, snapshot 1778); the two chosen points are those of the choice claims among the premises; the frozen held-out rule (the plan's frozen design, not read by a check) passes when the first value is at least the other two, and that the 14 ids the premises list are the held-out questions is the plan's frozen split; against the default reference, held-out questions inside the top 5 at store B's point only: msft-07; inside the top 5 at the default reference only: aapl-14, msft-02, msft-04; against store A's chosen point (pool 100), held-out questions inside the top 5 at store B's point only: msft-07; inside the top 5 at store A's chosen point (pool 100) only: aapl-14, msft-02, msft-04; the premises state the top-5 membership of the questions these lists name, and that the lists are complete over the 14 held-out questions is in grid.txt section 4 (written by analyse_pool.py from the stored ranks; a text file, not read by a check)",
+   "from": [
+    "C-1765",
+    "C-1759",
+    "C-1761",
+    "C-1728",
+    "C-1730",
+    "C-1731",
+    "C-1732",
+    "C-1736",
+    "C-1738",
+    "C-1739",
+    "C-1740",
+    "C-1675",
+    "C-1673"
+   ]
+  },
+  {
+   "id": "C-1770",
+   "basis": "inferred",
+   "block": "heldout",
+   "text": "Held-out test with reranking on: FAIL. Held-out hit@5 over the 14 held-out questions of store B's chosen point (pool 40, snapshot 1790) is 0.785714, against 0.857143 for the default reference (snapshot 1777) and 0.928571 for store A's chosen point (pool 100, snapshot 1782); the two chosen points are those of the choice claims among the premises; the frozen held-out rule (the plan's frozen design, not read by a check) passes when the first value is at least the other two, and that the 14 ids the premises list are the held-out questions is the plan's frozen split; against the default reference, held-out questions inside the top 5 at store B's point only: msft-07; inside the top 5 at the default reference only: msft-04, nvda-11; against store A's chosen point (pool 100), held-out questions inside the top 5 at store B's point only: not found; inside the top 5 at store A's chosen point (pool 100) only: msft-04, nvda-11; the premises state the top-5 membership of the questions these lists name, and that the lists are complete over the 14 held-out questions is in grid.txt section 4 (written by analyse_pool.py from the stored ranks; a text file, not read by a check)",
+   "from": [
+    "C-1767",
+    "C-1759",
+    "C-1763",
+    "C-1744",
+    "C-1748",
+    "C-1751",
+    "C-1755",
+    "C-1758",
+    "C-1676",
+    "C-1674"
+   ]
+  },
+  {
+   "id": "C-1771",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "aapl-01",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12661,
+     12662,
+     12688,
+     12780
+    ]
+   }
+  },
+  {
+   "id": "C-1772",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "aapl-02",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12786
+    ]
+   }
+  },
+  {
+   "id": "C-1773",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "aapl-08",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12820,
+     12781,
+     12657,
+     12783,
+     12780,
+     12782,
+     12786,
+     12774,
+     12753,
+     12760
+    ]
+   }
+  },
+  {
+   "id": "C-1774",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "aapl-09",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12710,
+     12769,
+     12655,
+     12755,
+     12657,
+     12756,
+     12760,
+     12782,
+     12679,
+     12814
+    ]
+   }
+  },
+  {
+   "id": "C-1775",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "aapl-14",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12784,
+     12664,
+     12783,
+     12781,
+     12782,
+     12786
+    ]
+   }
+  },
+  {
+   "id": "C-1776",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "msft-02",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13282,
+     13043,
+     13255,
+     13294,
+     13270,
+     13169,
+     13276,
+     13044,
+     13289
+    ]
+   }
+  },
+  {
+   "id": "C-1777",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "msft-03",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13287
+    ]
+   }
+  },
+  {
+   "id": "C-1778",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "msft-04",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13294,
+     13289,
+     13169,
+     13270,
+     13034,
+     13044,
+     13048,
+     13046,
+     13282,
+     13036
+    ]
+   }
+  },
+  {
+   "id": "C-1779",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "msft-05",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13264,
+     13270
+    ]
+   }
+  },
+  {
+   "id": "C-1780",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "msft-07",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12925
+    ]
+   }
+  },
+  {
+   "id": "C-1781",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "msft-08",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13285,
+     13048,
+     13286,
+     13169,
+     13046,
+     13045
+    ]
+   }
+  },
+  {
+   "id": "C-1782",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-01",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13656,
+     13630,
+     13655,
+     13731,
+     13685,
+     13710,
+     13712,
+     13622,
+     13631,
+     13549
+    ]
+   }
+  },
+  {
+   "id": "C-1783",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-02",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13655,
+     13656,
+     13717,
+     13731,
+     13712,
+     13537
+    ]
+   }
+  },
+  {
+   "id": "C-1784",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-03",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13620,
+     13624,
+     13669,
+     13678,
+     13590,
+     13670,
+     13622,
+     13532,
+     13591,
+     13677
+    ]
+   }
+  },
+  {
+   "id": "C-1785",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-04",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13630,
+     13655,
+     13402,
+     13685,
+     13622,
+     13678,
+     13635,
+     13624,
+     13676,
+     13667
+    ]
+   }
+  },
+  {
+   "id": "C-1786",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-05",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13400,
+     13391,
+     13399,
+     13717,
+     13406,
+     13394,
+     13397,
+     13402,
+     13536,
+     13425
+    ]
+   }
+  },
+  {
+   "id": "C-1787",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-07",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13500,
+     13772,
+     13750
+    ]
+   }
+  },
+  {
+   "id": "C-1788",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-08",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13731
+    ]
+   }
+  },
+  {
+   "id": "C-1789",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-09",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13731,
+     13717,
+     13712,
+     13537,
+     13655,
+     13709,
+     13656
+    ]
+   }
+  },
+  {
+   "id": "C-1790",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-10",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13765,
+     13419,
+     13494,
+     13418
+    ]
+   }
+  },
+  {
+   "id": "C-1791",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "aapl-01",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12661,
+     12780,
+     12689,
+     12760,
+     12662,
+     12663,
+     12782,
+     12783,
+     12688,
+     12781
+    ]
+   }
+  },
+  {
+   "id": "C-1792",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "aapl-08",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12820,
+     12760,
+     12658,
+     12657,
+     12752,
+     12783,
+     12689,
+     12776,
+     12786,
+     12784
+    ]
+   }
+  },
+  {
+   "id": "C-1793",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "aapl-09",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12769,
+     12783,
+     12820,
+     12655,
+     12760,
+     12689,
+     12654,
+     12690,
+     12759,
+     12679
+    ]
+   }
+  },
+  {
+   "id": "C-1794",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "aapl-14",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12784
+    ]
+   }
+  },
+  {
+   "id": "C-1795",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "msft-01",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13046,
+     13294,
+     13287
+    ]
+   }
+  },
+  {
+   "id": "C-1796",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "msft-02",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13282,
+     13276
+    ]
+   }
+  },
+  {
+   "id": "C-1797",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "msft-04",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13168,
+     13282,
+     13276,
+     13169,
+     13270,
+     13037,
+     13294,
+     13036,
+     13046,
+     13034
+    ]
+   }
+  },
+  {
+   "id": "C-1798",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "msft-05",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13784,
+     13270,
+     13169
+    ]
+   }
+  },
+  {
+   "id": "C-1799",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "msft-07",
+    "chunks": "chunks-B.json",
+    "expected": [
+     12925
+    ]
+   }
+  },
+  {
+   "id": "C-1800",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "msft-11",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13051,
+     13296,
+     13291,
+     13294,
+     13169,
+     13270,
+     13276,
+     13048,
+     13049,
+     13037
+    ]
+   }
+  },
+  {
+   "id": "C-1801",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "msft-12",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13293,
+     13297
+    ]
+   }
+  },
+  {
+   "id": "C-1802",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "msft-13",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13065,
+     13310,
+     13046
+    ]
+   }
+  },
+  {
+   "id": "C-1803",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "msft-14",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13276
+    ]
+   }
+  },
+  {
+   "id": "C-1804",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-01",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13631,
+     13731,
+     13654,
+     13630,
+     13655,
+     13685,
+     13712,
+     13551,
+     13667,
+     13657
+    ]
+   }
+  },
+  {
+   "id": "C-1805",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-02",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13712,
+     13731,
+     13655,
+     13657,
+     13537,
+     13631,
+     13656,
+     13727,
+     13551,
+     13542
+    ]
+   }
+  },
+  {
+   "id": "C-1806",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-04",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13667,
+     13630,
+     13685,
+     13658,
+     13631,
+     13627,
+     13712,
+     13657,
+     13655,
+     13710
+    ]
+   }
+  },
+  {
+   "id": "C-1807",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-05",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13717,
+     13391,
+     13399,
+     13536,
+     13394,
+     13400,
+     13772,
+     13398,
+     13401,
+     13406
+    ]
+   }
+  },
+  {
+   "id": "C-1808",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-06",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13772,
+     13500
+    ]
+   }
+  },
+  {
+   "id": "C-1809",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-08",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13731
+    ]
+   }
+  },
+  {
+   "id": "C-1810",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-09",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13712,
+     13731,
+     13709,
+     13657,
+     13717,
+     13655,
+     13537,
+     13685,
+     13728,
+     13710
+    ]
+   }
+  },
+  {
+   "id": "C-1811",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-10",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13765,
+     13494,
+     13419
+    ]
+   }
+  },
+  {
+   "id": "C-1812",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-11",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13551,
+     13709,
+     13731,
+     13712,
+     13654,
+     13653,
+     13730,
+     13657
+    ]
+   }
+  },
+  {
+   "id": "C-1813",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-13",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13712,
+     13731
+    ]
+   }
+  },
+  {
+   "id": "C-1814",
+   "basis": "derived",
+   "block": "ranks",
+   "check": {
+    "type": "rankedAbove",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-14",
+    "chunks": "chunks-B.json",
+    "expected": [
+     13731
+    ]
+   }
+  },
+  {
+   "id": "C-1815",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1816",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1777.json",
+    "question": "nvda-02",
+    "chunk": 11868,
+    "expected": {
+     "fusedPosition": 41,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1817",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1818",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1778.json",
+    "question": "nvda-02",
+    "chunk": 11868,
+    "expected": {
+     "fusedPosition": 27,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1819",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1779-a-pool-200-rerank-off.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1820",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1779.json",
+    "question": "nvda-02",
+    "chunk": 11868,
+    "expected": {
+     "fusedPosition": 27,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1821",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1780-a-pool-250-rerank-off.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1822",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1780.json",
+    "question": "nvda-02",
+    "chunk": 11868,
+    "expected": {
+     "fusedPosition": 27,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1823",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1781-a-pool-40-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1824",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1781.json",
+    "question": "nvda-02",
+    "chunk": 11868,
+    "expected": {
+     "fusedPosition": 41,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1825",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": 4
+   }
+  },
+  {
+   "id": "C-1826",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": 11868
+   }
+  },
+  {
+   "id": "C-1827",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1782.json",
+    "question": "nvda-02",
+    "chunk": 11868,
+    "expected": {
+     "fusedPosition": 27,
+     "rerankInput": true,
+     "rerankedPosition": 4
+    }
+   }
+  },
+  {
+   "id": "C-1828",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1783-a-pool-200-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": 4
+   }
+  },
+  {
+   "id": "C-1829",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1783-a-pool-200-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": 11868
+   }
+  },
+  {
+   "id": "C-1830",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1783.json",
+    "question": "nvda-02",
+    "chunk": 11868,
+    "expected": {
+     "fusedPosition": 27,
+     "rerankInput": true,
+     "rerankedPosition": 4
+    }
+   }
+  },
+  {
+   "id": "C-1831",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1784-a-pool-250-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": 4
+   }
+  },
+  {
+   "id": "C-1832",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1784-a-pool-250-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": 11868
+   }
+  },
+  {
+   "id": "C-1833",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1784.json",
+    "question": "nvda-02",
+    "chunk": 11868,
+    "expected": {
+     "fusedPosition": 27,
+     "rerankInput": true,
+     "rerankedPosition": 4
+    }
+   }
+  },
+  {
+   "id": "C-1834",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 7
+   }
+  },
+  {
+   "id": "C-1835",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 13541
+   }
+  },
+  {
+   "id": "C-1836",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1786.json",
+    "question": "nvda-02",
+    "chunk": 13541,
+    "expected": {
+     "fusedPosition": 7,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1837",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1787-b-pool-100-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 7
+   }
+  },
+  {
+   "id": "C-1838",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1787-b-pool-100-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 13541
+   }
+  },
+  {
+   "id": "C-1839",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1787.json",
+    "question": "nvda-02",
+    "chunk": 13541,
+    "expected": {
+     "fusedPosition": 7,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1840",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1788-b-pool-200-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 7
+   }
+  },
+  {
+   "id": "C-1841",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1788-b-pool-200-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 13541
+   }
+  },
+  {
+   "id": "C-1842",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1788.json",
+    "question": "nvda-02",
+    "chunk": 13541,
+    "expected": {
+     "fusedPosition": 7,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1843",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1789-b-pool-250-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 7
+   }
+  },
+  {
+   "id": "C-1844",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "snapshot-1789-b-pool-250-rerank-off.json",
+    "question": "nvda-02",
+    "expected": 13541
+   }
+  },
+  {
+   "id": "C-1845",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1789.json",
+    "question": "nvda-02",
+    "chunk": 13541,
+    "expected": {
+     "fusedPosition": 7,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1846",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1847",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1790.json",
+    "question": "nvda-02",
+    "chunk": 13541,
+    "expected": {
+     "fusedPosition": 7,
+     "rerankInput": true,
+     "rerankedPosition": 22
+    }
+   }
+  },
+  {
+   "id": "C-1848",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1791-b-pool-100-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1849",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1791.json",
+    "question": "nvda-02",
+    "chunk": 13541,
+    "expected": {
+     "fusedPosition": 7,
+     "rerankInput": true,
+     "rerankedPosition": 23
+    }
+   }
+  },
+  {
+   "id": "C-1850",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1792-b-pool-200-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1851",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1792.json",
+    "question": "nvda-02",
+    "chunk": 13541,
+    "expected": {
+     "fusedPosition": 7,
+     "rerankInput": true,
+     "rerankedPosition": 23
+    }
+   }
+  },
+  {
+   "id": "C-1852",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1793-b-pool-250-rerank-on-40.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1853",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1793.json",
+    "question": "nvda-02",
+    "chunk": 13541,
+    "expected": {
+     "fusedPosition": 7,
+     "rerankInput": true,
+     "rerankedPosition": 23
+    }
+   }
+  },
+  {
+   "id": "C-1854",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1855",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1777.json",
+    "question": "nvda-04",
+    "chunk": 11820,
+    "expected": {
+     "fusedPosition": 54,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1856",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1778-a-pool-100-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1857",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1778.json",
+    "question": "nvda-04",
+    "chunk": 11820,
+    "expected": {
+     "fusedPosition": 49,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1858",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1779-a-pool-200-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1859",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1779.json",
+    "question": "nvda-04",
+    "chunk": 11820,
+    "expected": {
+     "fusedPosition": 49,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1860",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1780-a-pool-250-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1861",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1780.json",
+    "question": "nvda-04",
+    "chunk": 11820,
+    "expected": {
+     "fusedPosition": 49,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1862",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1781-a-pool-40-rerank-on-40.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1863",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1781.json",
+    "question": "nvda-04",
+    "chunk": 11820,
+    "expected": {
+     "fusedPosition": 54,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1864",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1782-a-pool-100-rerank-on-40.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1865",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1782.json",
+    "question": "nvda-04",
+    "chunk": 11820,
+    "expected": {
+     "fusedPosition": 49,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1866",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1783-a-pool-200-rerank-on-40.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1867",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1783.json",
+    "question": "nvda-04",
+    "chunk": 11820,
+    "expected": {
+     "fusedPosition": 49,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1868",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1784-a-pool-250-rerank-on-40.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1869",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1784.json",
+    "question": "nvda-04",
+    "chunk": 11820,
+    "expected": {
+     "fusedPosition": 49,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1870",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1786-b-pool-40-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1871",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1786.json",
+    "question": "nvda-04",
+    "chunk": 13424,
+    "expected": {
+     "fusedPosition": 46,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1872",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1787-b-pool-100-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1873",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1787.json",
+    "question": "nvda-04",
+    "chunk": 13424,
+    "expected": {
+     "fusedPosition": 86,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1874",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1788-b-pool-200-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1875",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1788.json",
+    "question": "nvda-04",
+    "chunk": 13424,
+    "expected": {
+     "fusedPosition": 50,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1876",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1789-b-pool-250-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1877",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1789.json",
+    "question": "nvda-04",
+    "chunk": 13424,
+    "expected": {
+     "fusedPosition": 51,
+     "rerankInput": false
+    }
+   }
+  },
+  {
+   "id": "C-1878",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1790-b-pool-40-rerank-on-40.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1879",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1790.json",
+    "question": "nvda-04",
+    "chunk": 13424,
+    "expected": {
+     "fusedPosition": 46,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1880",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1791-b-pool-100-rerank-on-40.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1881",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1791.json",
+    "question": "nvda-04",
+    "chunk": 13424,
+    "expected": {
+     "fusedPosition": 86,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1882",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1792-b-pool-200-rerank-on-40.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1883",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1792.json",
+    "question": "nvda-04",
+    "chunk": 13424,
+    "expected": {
+     "fusedPosition": 50,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1884",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "rank",
+    "snapshot": "snapshot-1793-b-pool-250-rerank-on-40.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-1885",
+   "basis": "observed",
+   "block": "nvda",
+   "check": {
+    "type": "candidate",
+    "report": "evidence-1793.json",
+    "question": "nvda-04",
+    "chunk": 13424,
+    "expected": {
+     "fusedPosition": 51,
+     "rerankInput": false,
+     "rerankedPosition": null
+    }
+   }
+  },
+  {
+   "id": "C-1886",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1777.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 372.5,
+     "p95": 540,
+     "max": 658,
+     "min": 318,
+     "sum": 16515
+    }
+   }
+  },
+  {
+   "id": "C-1887",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1777.json",
+    "path": "wallSeconds",
+    "expected": 16.630468
+   }
+  },
+  {
+   "id": "C-1888",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1778.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 441.5,
+     "p95": 877,
+     "max": 1068,
+     "min": 376,
+     "sum": 20573
+    }
+   }
+  },
+  {
+   "id": "C-1889",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1778.json",
+    "path": "wallSeconds",
+    "expected": 20.700008
+   }
+  },
+  {
+   "id": "C-1890",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1779.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 474.5,
+     "p95": 575,
+     "max": 815,
+     "min": 323,
+     "sum": 19437
+    }
+   }
+  },
+  {
+   "id": "C-1891",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1779.json",
+    "path": "wallSeconds",
+    "expected": 19.601192
+   }
+  },
+  {
+   "id": "C-1892",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1780.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 490,
+     "p95": 547,
+     "max": 847,
+     "min": 332,
+     "sum": 19674
+    }
+   }
+  },
+  {
+   "id": "C-1893",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1780.json",
+    "path": "wallSeconds",
+    "expected": 19.83589
+   }
+  },
+  {
+   "id": "C-1894",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1781.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 2368.5,
+     "p95": 2524,
+     "max": 2533,
+     "min": 1913,
+     "sum": 96351
+    }
+   }
+  },
+  {
+   "id": "C-1895",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1781.json",
+    "path": "rerankMs",
+    "expected": {
+     "count": 42,
+     "median": 1999.5,
+     "p95": 2173,
+     "max": 2179,
+     "min": 1601,
+     "sum": 82111
+    }
+   }
+  },
+  {
+   "id": "C-1896",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1781.json",
+    "path": "wallSeconds",
+    "expected": 96.498823
+   }
+  },
+  {
+   "id": "C-1897",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1781.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1898",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1782.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 2382.5,
+     "p95": 2585,
+     "max": 2613,
+     "min": 2022,
+     "sum": 99320
+    }
+   }
+  },
+  {
+   "id": "C-1899",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1782.json",
+    "path": "rerankMs",
+    "expected": {
+     "count": 42,
+     "median": 1994,
+     "p95": 2195,
+     "max": 2206,
+     "min": 1664,
+     "sum": 82560
+    }
+   }
+  },
+  {
+   "id": "C-1900",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1782.json",
+    "path": "wallSeconds",
+    "expected": 99.477215
+   }
+  },
+  {
+   "id": "C-1901",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1782.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1902",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1783.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 2405.5,
+     "p95": 2657,
+     "max": 2714,
+     "min": 2128,
+     "sum": 101268
+    }
+   }
+  },
+  {
+   "id": "C-1903",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1783.json",
+    "path": "rerankMs",
+    "expected": {
+     "count": 42,
+     "median": 1981.5,
+     "p95": 2185,
+     "max": 2190,
+     "min": 1662,
+     "sum": 82335
+    }
+   }
+  },
+  {
+   "id": "C-1904",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1783.json",
+    "path": "wallSeconds",
+    "expected": 101.462743
+   }
+  },
+  {
+   "id": "C-1905",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1783.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1906",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1784.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 2425,
+     "p95": 2670,
+     "max": 2680,
+     "min": 2169,
+     "sum": 102362
+    }
+   }
+  },
+  {
+   "id": "C-1907",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1784.json",
+    "path": "rerankMs",
+    "expected": {
+     "count": 42,
+     "median": 1988,
+     "p95": 2178,
+     "max": 2191,
+     "min": 1636,
+     "sum": 82372
+    }
+   }
+  },
+  {
+   "id": "C-1908",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1784.json",
+    "path": "wallSeconds",
+    "expected": 102.557744
+   }
+  },
+  {
+   "id": "C-1909",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1784.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1910",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1785.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 1349.5,
+     "p95": 1450,
+     "max": 1521,
+     "min": 1141,
+     "sum": 55739
+    }
+   }
+  },
+  {
+   "id": "C-1911",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1785.json",
+    "path": "rerankMs",
+    "expected": {
+     "count": 42,
+     "median": 1039,
+     "p95": 1125,
+     "max": 1153,
+     "min": 835,
+     "sum": 41832
+    }
+   }
+  },
+  {
+   "id": "C-1912",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1785.json",
+    "path": "wallSeconds",
+    "expected": 55.872599
+   }
+  },
+  {
+   "id": "C-1913",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1785.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1914",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1786.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 346,
+     "p95": 469,
+     "max": 533,
+     "min": 295,
+     "sum": 15255
+    }
+   }
+  },
+  {
+   "id": "C-1915",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1786.json",
+    "path": "wallSeconds",
+    "expected": 15.396761
+   }
+  },
+  {
+   "id": "C-1916",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1787.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 419.5,
+     "p95": 542,
+     "max": 868,
+     "min": 333,
+     "sum": 18292
+    }
+   }
+  },
+  {
+   "id": "C-1917",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1787.json",
+    "path": "wallSeconds",
+    "expected": 18.414209
+   }
+  },
+  {
+   "id": "C-1918",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1788.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 532.5,
+     "p95": 621,
+     "max": 785,
+     "min": 399,
+     "sum": 22413
+    }
+   }
+  },
+  {
+   "id": "C-1919",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1788.json",
+    "path": "wallSeconds",
+    "expected": 22.580055
+   }
+  },
+  {
+   "id": "C-1920",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1789.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 552,
+     "p95": 684,
+     "max": 836,
+     "min": 487,
+     "sum": 24043
+    }
+   }
+  },
+  {
+   "id": "C-1921",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1789.json",
+    "path": "wallSeconds",
+    "expected": 24.221597
+   }
+  },
+  {
+   "id": "C-1922",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1790.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 1315,
+     "p95": 1559,
+     "max": 1648,
+     "min": 845,
+     "sum": 53808
+    }
+   }
+  },
+  {
+   "id": "C-1923",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1790.json",
+    "path": "rerankMs",
+    "expected": {
+     "count": 42,
+     "median": 948.5,
+     "p95": 1157,
+     "max": 1196,
+     "min": 513,
+     "sum": 38310
+    }
+   }
+  },
+  {
+   "id": "C-1924",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1790.json",
+    "path": "wallSeconds",
+    "expected": 53.978738
+   }
+  },
+  {
+   "id": "C-1925",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1790.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1926",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1791.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 1318.5,
+     "p95": 1634,
+     "max": 1830,
+     "min": 948,
+     "sum": 55215
+    }
+   }
+  },
+  {
+   "id": "C-1927",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1791.json",
+    "path": "rerankMs",
+    "expected": {
+     "count": 42,
+     "median": 890,
+     "p95": 1120,
+     "max": 1258,
+     "min": 546,
+     "sum": 36891
+    }
+   }
+  },
+  {
+   "id": "C-1928",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1791.json",
+    "path": "wallSeconds",
+    "expected": 55.364824
+   }
+  },
+  {
+   "id": "C-1929",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1791.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1930",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1792.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 1414.5,
+     "p95": 1715,
+     "max": 1791,
+     "min": 1078,
+     "sum": 59365
+    }
+   }
+  },
+  {
+   "id": "C-1931",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1792.json",
+    "path": "rerankMs",
+    "expected": {
+     "count": 42,
+     "median": 900,
+     "p95": 1207,
+     "max": 1321,
+     "min": 560,
+     "sum": 38595
+    }
+   }
+  },
+  {
+   "id": "C-1932",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1792.json",
+    "path": "wallSeconds",
+    "expected": 59.585755
+   }
+  },
+  {
+   "id": "C-1933",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1792.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1934",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1793.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 1480,
+     "p95": 1686,
+     "max": 1804,
+     "min": 1075,
+     "sum": 61107
+    }
+   }
+  },
+  {
+   "id": "C-1935",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1793.json",
+    "path": "rerankMs",
+    "expected": {
+     "count": 42,
+     "median": 890.5,
+     "p95": 1206,
+     "max": 1245,
+     "min": 571,
+     "sum": 37838
+    }
+   }
+  },
+  {
+   "id": "C-1936",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1793.json",
+    "path": "wallSeconds",
+    "expected": 61.326855
+   }
+  },
+  {
+   "id": "C-1937",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1793.json",
+    "path": "rerankFallbacks",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-1938",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1794.json",
+    "path": "retrievalMs",
+    "expected": {
+     "count": 42,
+     "median": 353.5,
+     "p95": 427,
+     "max": 488,
+     "min": 277,
+     "sum": 14933
+    }
+   }
+  },
+  {
+   "id": "C-1939",
+   "basis": "observed",
+   "block": "latency",
+   "check": {
+    "type": "fileValue",
+    "file": "latency-1794.json",
+    "path": "wallSeconds",
+    "expected": 15.049618
+   }
+  },
+  {
+   "id": "C-1940",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "chunks",
+    "expected": 569
+   }
+  },
+  {
+   "id": "C-1941",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "contentChars",
+    "expected": 1486993
+   }
+  },
+  {
+   "id": "C-1942",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "meanChunkChars",
+    "expected": 2613.3
+   }
+  },
+  {
+   "id": "C-1943",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "maxChunkChars",
+    "expected": 4000
+   }
+  },
+  {
+   "id": "C-1944",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "tokenCountSum",
+    "expected": 371954
+   }
+  },
+  {
+   "id": "C-1945",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "totalRelationBytes",
+    "expected": 23216128
+   }
+  },
+  {
+   "id": "C-1946",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "heapBytes",
+    "expected": 3416064
+   }
+  },
+  {
+   "id": "C-1947",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "toastBytes",
+    "expected": 17588224
+   }
+  },
+  {
+   "id": "C-1948",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "indexesBytes",
+    "expected": 2211840
+   }
+  },
+  {
+   "id": "C-1949",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "storeVersions",
+    "expected": [
+     "sections-v2-context-v2-chunk4000-500"
+    ]
+   }
+  },
+  {
+   "id": "C-1950",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A.json",
+    "path": "indexes",
+    "expected": [
+     {
+      "name": "idx_sec_filing_chunks_content_tsv",
+      "bytes": 1736704
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing_section",
+      "bytes": 57344
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_key",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_title",
+      "bytes": 40960
+     },
+     {
+      "name": "sec_filing_chunks_pkey",
+      "bytes": 90112
+     },
+     {
+      "name": "uq_sec_filing_chunk",
+      "bytes": 131072
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1951",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "chunks",
+    "expected": 1214
+   }
+  },
+  {
+   "id": "C-1952",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "contentChars",
+    "expected": 1580398
+   }
+  },
+  {
+   "id": "C-1953",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "meanChunkChars",
+    "expected": 1301.8
+   }
+  },
+  {
+   "id": "C-1954",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "maxChunkChars",
+    "expected": 1650
+   }
+  },
+  {
+   "id": "C-1955",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "tokenCountSum",
+    "expected": 395546
+   }
+  },
+  {
+   "id": "C-1956",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "totalRelationBytes",
+    "expected": 17596416
+   }
+  },
+  {
+   "id": "C-1957",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "heapBytes",
+    "expected": 1843200
+   }
+  },
+  {
+   "id": "C-1958",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "toastBytes",
+    "expected": 13541376
+   }
+  },
+  {
+   "id": "C-1959",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "indexesBytes",
+    "expected": 2211840
+   }
+  },
+  {
+   "id": "C-1960",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "storeVersions",
+    "expected": [
+     "sections-v2-context-v2-chunk1650-250"
+    ]
+   }
+  },
+  {
+   "id": "C-1961",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-B.json",
+    "path": "indexes",
+    "expected": [
+     {
+      "name": "idx_sec_filing_chunks_content_tsv",
+      "bytes": 1736704
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing_section",
+      "bytes": 57344
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_key",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_title",
+      "bytes": 40960
+     },
+     {
+      "name": "sec_filing_chunks_pkey",
+      "bytes": 90112
+     },
+     {
+      "name": "uq_sec_filing_chunk",
+      "bytes": 131072
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1962",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "chunks",
+    "expected": 569
+   }
+  },
+  {
+   "id": "C-1963",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "contentChars",
+    "expected": 1486993
+   }
+  },
+  {
+   "id": "C-1964",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "meanChunkChars",
+    "expected": 2613.3
+   }
+  },
+  {
+   "id": "C-1965",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "maxChunkChars",
+    "expected": 4000
+   }
+  },
+  {
+   "id": "C-1966",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "tokenCountSum",
+    "expected": 371954
+   }
+  },
+  {
+   "id": "C-1967",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "totalRelationBytes",
+    "expected": 10059776
+   }
+  },
+  {
+   "id": "C-1968",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "heapBytes",
+    "expected": 548864
+   }
+  },
+  {
+   "id": "C-1969",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "toastBytes",
+    "expected": 6995968
+   }
+  },
+  {
+   "id": "C-1970",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "indexesBytes",
+    "expected": 2514944
+   }
+  },
+  {
+   "id": "C-1971",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "storeVersions",
+    "expected": [
+     "sections-v2-context-v2-chunk4000-500"
+    ]
+   }
+  },
+  {
+   "id": "C-1972",
+   "basis": "observed",
+   "block": "storage",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "indexes",
+    "expected": [
+     {
+      "name": "idx_sec_filing_chunks_content_tsv",
+      "bytes": 2039808
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_filing_section",
+      "bytes": 57344
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_key",
+      "bytes": 40960
+     },
+     {
+      "name": "idx_sec_filing_chunks_section_title",
+      "bytes": 40960
+     },
+     {
+      "name": "sec_filing_chunks_pkey",
+      "bytes": 90112
+     },
+     {
+      "name": "uq_sec_filing_chunk",
+      "bytes": 131072
+     }
+    ]
+   }
+  },
+  {
+   "id": "C-1973",
+   "basis": "derived",
+   "block": "gate",
+   "check": {
+    "type": "heldPhrases",
+    "report": "evidence-1777.json",
+    "expected": {
+     "phrases": 57,
+     "held": 56
+    }
+   }
+  },
+  {
+   "id": "C-1974",
+   "basis": "derived",
+   "block": "gate",
+   "check": {
+    "type": "heldPhrases",
+    "report": "evidence-1777-against-B.json",
+    "expected": {
+     "phrases": 57,
+     "held": 56
+    }
+   }
+  },
+  {
+   "id": "C-1975",
+   "basis": "inferred",
+   "block": "gate",
+   "text": "The phrase gate on store B holds: the default reference's report read against store B records 56 of the 57 accepted phrases held by a stored chunk, the one not held being aapl-08's; the gate is the frozen one (the plan's frozen design, not read by a check: 56 of 57 held, with aapl-08's phrase exempt; the aapl-08 item is Follow_Ups RAG-29, not read by a check); that the application read this report against store B is in run.log (not read by a check); the direct query held_phrases.py records the same counts in held-phrases-B.txt (a text file, not read by a check); that store B's grid runs followed is in run.log (not read by a check)",
+   "from": [
+    "C-1974"
+   ]
+  },
+  {
+   "id": "C-1976",
+   "basis": "derived",
+   "block": "rollback",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1777-a-pool-40-rerank-off.json",
+    "expected": {
+     "1": 22,
+     "2": 6,
+     "notInWindow": 6,
+     "8": 1,
+     "6": 1,
+     "4": 1,
+     "7": 1,
+     "3": 1,
+     "10": 1,
+     "5": 2
+    }
+   }
+  },
+  {
+   "id": "C-1977",
+   "basis": "derived",
+   "block": "rollback",
+   "check": {
+    "type": "rankHistogram",
+    "snapshot": "snapshot-1794-a2-post-rollback-pool-40-rerank-off.json",
+    "expected": {
+     "1": 22,
+     "2": 6,
+     "notInWindow": 6,
+     "8": 1,
+     "6": 1,
+     "4": 1,
+     "7": 1,
+     "3": 1,
+     "10": 1,
+     "5": 2
+    }
+   }
+  },
+  {
+   "id": "C-1978",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1794-a2-post-rollback-pool-40-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.761905"
+   }
+  },
+  {
+   "id": "C-1979",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "metric",
+    "snapshot": "snapshot-1794-a2-post-rollback-pool-40-rerank-off.json",
+    "metric": "mrr",
+    "expected": "0.631378"
+   }
+  },
+  {
+   "id": "C-1980",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "chunks",
+    "expected": 569
+   }
+  },
+  {
+   "id": "C-1981",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "storeVersions",
+    "expected": [
+     "sections-v2-context-v2-chunk4000-500"
+    ]
+   }
+  },
+  {
+   "id": "C-1982",
+   "basis": "observed",
+   "block": "rollback",
+   "check": {
+    "type": "fileValue",
+    "file": "storage-A2.json",
+    "path": "contentChars",
+    "expected": 1486993
+   }
+  },
+  {
+   "id": "C-1986",
+   "basis": "derived",
+   "block": "rollback",
+   "check": {
+    "type": "questionEquality",
+    "reference": "snapshot-1777-a-pool-40-rerank-off.json",
+    "candidate": "snapshot-1794-a2-post-rollback-pool-40-rerank-off.json",
+    "compare": "rankAndMatchedContent",
+    "referenceChunks": "chunk-hashes-A.json",
+    "candidateChunks": "chunk-hashes-A2.json",
+    "expected": []
+   }
+  },
+  {
+   "id": "C-1983",
+   "basis": "inferred",
+   "block": "rollback",
+   "text": "The storage export storage-A2.json records the store at sections-v2-context-v2-chunk4000-500 with 569 chunks and 1486993 content characters (that this export and chunk-hashes-A2.json were written after the rollback rebuild, and chunk-hashes-A.json before the rebuild to store B, is in run.log, not read by a check); the post-rollback run (snapshot 1794; that it ran after the rollback rebuild at the default reference's settings is in run.log and runs.txt (written by analyse_pool.py from the snapshots' recorded properties; a text file, not read by a check)) has the default reference's stored hit@5, MRR, and rank histogram, and it equals the default reference per question in stored rank and in the matched chunk's filing, chunk index, length, and content md5 for the 42 questions (the check reads the md5 the two exports record, not the chunk text); rollback.txt, written by analyse_pool.py and not read by a check, states that chunk ids differ after a rebuild and adds the first characters of the matched chunks (content differing there: not found) and the comparison of the two stores chunk by chunk; G8 holds, G8 being the plan's rollback condition (the plan's correctness contract, not read by a check): the store at that one version with 569 chunks, and the post-rollback run equal to the default reference per question in rank and matched chunk content",
+   "from": [
+    "C-1976",
+    "C-1977",
+    "C-1978",
+    "C-1979",
+    "C-1980",
+    "C-1981",
+    "C-1982",
+    "C-1986",
+    "C-1609",
+    "C-1610"
+   ]
+  },
+  {
+   "id": "C-1984",
+   "basis": "inferred",
+   "block": "decision",
+   "text": "The held-out test of store B's chosen point is FAIL with reranking off and FAIL with reranking on; that a further grid, size, overlap, or split does not follow in this plan is the plan's frozen design, not read by a check; the store is back at 4000 / 500 (the chunk count, store version, and content length of the storage export after the rollback against those of the export before the rebuild; when the two exports were written is in run.log, not read by a check), and that whether to adopt a size and pool is DECISION RAG-30 for Jay is the plan's frozen design and Follow_Ups RAG-30 (not read by a check)",
+   "from": [
+    "C-1769",
+    "C-1770",
+    "C-1980",
+    "C-1981",
+    "C-1982",
+    "C-1940",
+    "C-1949",
+    "C-1941"
+   ]
+  }
+ ]
+}

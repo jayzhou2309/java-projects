@@ -1,0 +1,18 @@
+{
+ "description": "Chunk size 4000 / 500 (B0, 1611) against 1000 / 125 (D0, 1613) on the rebuilt store, reranking off in both; the rebuild changes chunkOverlapChars and storeVersions together with chunkMaxChars, so they are coupled. D0 is a diagnostic record, not a selection candidate (R1 failed; comparison.txt section 3). rerank-timeout-ms, not recorded in snapshots, was 2000 in both (property-diff.txt).",
+ "experiment": {
+  "factor": "chunkMaxChars",
+  "settings": [
+   4000,
+   1000
+  ],
+  "coupled": [
+   "chunkOverlapChars",
+   "storeVersions"
+  ],
+  "snapshots": [
+   "snapshot-1611-b0-stored-size-4000-500-rerank-off.json",
+   "snapshot-1613-d0-diagnostic-rebuilt-1000-125-rerank-off.json"
+  ]
+ }
+}

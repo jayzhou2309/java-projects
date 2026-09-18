@@ -28,10 +28,23 @@ import tools.jackson.databind.JsonNode;
  * date record no {@code chunkMaxChars}, {@code chunkOverlapChars}, or {@code storeVersions}, so a run reproducing one carries three
  * properties the reference lacks; naming them keeps every other property compared).</li>
  * </ol>
+ * A matched chunk is compared by id unless the caller gives a {@link ChunkIdentity} for each side (since 2026-09-18, plan
+ * {@code 2026-09-17-chunk-size.md} Milestone 4, H4: every rebuild renumbers chunks, so a reference is compared by what its matched chunk
+ * holds, not by its number): then the two matched chunks are equal when their identities are equal text, and a problem prints both ids
+ * with their identities.
  */
 final class TraceReproductionCheck {
     /** The only run property not compared with the reference: the reference snapshot predates traces. */
     static final String EXEMPT_PROPERTY = "trace";
+
+    /**
+     * A chunk's content identity for one side of the comparison: for a chunk id, one line naming what the chunk holds (for example
+     * the filing's accession number, section key, chunk index, length, and content md5), or null when that side does not know the id.
+     */
+    @FunctionalInterface
+    interface ChunkIdentity {
+        String of(long chunkId);
+    }
 
     private TraceReproductionCheck() {
     }
@@ -47,6 +60,16 @@ final class TraceReproductionCheck {
      * named here.
      */
     static List<String> problems(JsonNode reference, RetrievalEvaluation run, Set<String> exempt) {
+        return problems(reference, run, exempt, null, null);
+    }
+
+    /**
+     * As {@link #problems(JsonNode, RetrievalEvaluation, Set)}, comparing matched chunks by content: {@code referenceChunks} resolves the
+     * reference's matched chunk ids and {@code runChunks} the run's (both given, or both null for the id comparison). Two matched chunks
+     * are equal when both are null or their identities are equal text; an id a side cannot resolve is reported as unknown to that side.
+     */
+    static List<String> problems(JsonNode reference, RetrievalEvaluation run, Set<String> exempt, ChunkIdentity referenceChunks, ChunkIdentity runChunks) {
+        if ((referenceChunks == null) != (runChunks == null)) throw new IllegalArgumentException("give a ChunkIdentity for both sides or for neither");
         List<String> problems = new ArrayList<>();
         String label = "snapshot " + reference.get("id").asString();
 
@@ -68,11 +91,15 @@ final class TraceReproductionCheck {
             String expectedId = expected.get("id").asString();
             String expectedRank = text(expected.get("rank"));
             String expectedChunk = text(expected.get("matchedChunkId"));
-            if (!expectedId.equals(actual.id()) || !Objects.equals(expectedRank, string(actual.rank()))
-                    || !Objects.equals(expectedChunk, string(actual.matchedChunkId()))) {
-                problems.add("question " + expectedId + ": " + label + " rank " + expectedRank + " chunk " + expectedChunk + ", run "
+            String expectedIdentity = identity(referenceChunks, expected.get("matchedChunkId").isNull() ? null : expected.get("matchedChunkId").asLong(), label);
+            String actualIdentity = identity(runChunks, actual.matchedChunkId(), "the run");
+            boolean sameChunk = referenceChunks == null ? Objects.equals(expectedChunk, string(actual.matchedChunkId()))
+                    : Objects.equals(expectedIdentity, actualIdentity) && !expectedIdentity.startsWith(UNKNOWN) && !actualIdentity.startsWith(UNKNOWN);
+            if (!expectedId.equals(actual.id()) || !Objects.equals(expectedRank, string(actual.rank())) || !sameChunk) {
+                problems.add("question " + expectedId + ": " + label + " rank " + expectedRank + " chunk " + expectedChunk
+                        + (referenceChunks == null ? "" : " (" + expectedIdentity + ")") + ", run "
                         + (expectedId.equals(actual.id()) ? "" : "question " + actual.id() + " ") + "rank " + actual.rank() + " chunk "
-                        + actual.matchedChunkId());
+                        + actual.matchedChunkId() + (runChunks == null ? "" : " (" + actualIdentity + ")"));
             }
         }
 
@@ -122,11 +149,28 @@ final class TraceReproductionCheck {
         if (!problems.isEmpty()) throw new AssertionError(report(reference, problems));
     }
 
+    /** As {@link #assertReproduces(JsonNode, RetrievalEvaluation)} with matched chunks compared by content. */
+    static void assertReproduces(JsonNode reference, RetrievalEvaluation run, Set<String> exempt, ChunkIdentity referenceChunks, ChunkIdentity runChunks) {
+        List<String> problems = problems(reference, run, exempt, referenceChunks, runChunks);
+        if (!problems.isEmpty()) throw new AssertionError(report(reference, problems));
+    }
+
     static String report(JsonNode reference, List<String> problems) {
         StringBuilder out = new StringBuilder("The traced run does not reproduce snapshot " + reference.get("id").asString() + ": "
                 + problems.size() + " problem" + (problems.size() == 1 ? "" : "s"));
         problems.forEach(problem -> out.append(System.lineSeparator()).append("  - ").append(problem));
         return out.toString();
+    }
+
+    /** The identity text of a chunk a side cannot resolve starts with this, so two unknowns are never equal. */
+    static final String UNKNOWN = "unknown to ";
+
+    /** A matched chunk's identity on one side: "no matched chunk" for null, the side's identity text, or unknown to that side. */
+    private static String identity(ChunkIdentity chunks, Long chunkId, String side) {
+        if (chunks == null) return null;
+        if (chunkId == null) return "no matched chunk";
+        String identity = chunks.of(chunkId);
+        return identity == null ? UNKNOWN + side : identity;
     }
 
     /** The service's rule: the run's {@code rerank} override when present, else {@code rerankingEnabled}. */

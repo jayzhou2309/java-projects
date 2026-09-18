@@ -166,6 +166,49 @@ Correctness contract:
   holds; `POST /api/rag/retrieve` for nvda-04's question returns, in its top 5 or not, what N0 records; the store's
   `processing_version` is uniform; three rows of the rank table re-derived from the live snapshots match.
 
+## Milestone 4 (added 2026-09-18): RAG-29, the evaluation set's aapl-08 section key, and the id-bound live tests
+
+Findings (Orchestrator, 2026-09-18, from the repository and the store; see RAG-29): commit 19876f2 (2026-09-12) changed
+`FilingHtmlParser`'s item pattern from `item (\d+[a-z]?)` to `item (\d+[a-z]?(?:\.\d+)?)`, keeping an 8-K sub-item in
+the key; on the actual headings "Item 2.02", "Item 9.01", "Item 5.02" the old pattern keys ITEM_2, ITEM_9, ITEM_5 and
+the new one ITEM_2_02, ITEM_9_01, ITEM_5_02, while 10-K and 10-Q headings key the same under both (a two-pattern
+experiment on the heading strings, to be committed with this milestone). Apple's three 8-Ks were ingested on
+2026-09-10 under the old pattern and Microsoft's on 2026-09-12 under the new one, so the set of 2026-09-13 names
+ITEM_7_01 for msft-09 and the stale ITEM_2 for aapl-08. The rebuilds of 2026-09-17 re-keyed Apple's 8-Ks; the set
+entry is the stale side. Two opt-in live tests pin chunk ids of the 2026-09-13 store (297's matched ids;
+msft-05's chunks 460, 515, 571 in snapshot 459), which every rebuild renumbers.
+
+Scope: correct aapl-08's `sectionKey` to ITEM_2_02 in `retrieval-set-v1.json` and `retrieval-set-v2.json` with a
+dated note in the entry (question and phrase unchanged; no set-version bump, the version convention concerns floors
+on a new set); commit the two-pattern experiment as a unit test on the heading strings; make
+`RetrievalEvaluationTraceLiveTests` and `RetrievalEvidenceLiveTests` resolve their chunks by filing, section, and
+content (md5 or the accepted phrase) instead of by id, and run each once with its opt-in flag on the current store
+with the output committed; one fresh default traced snapshot on the current store recording aapl-08's rank and the
+set's hit@5, committed under `live-runs/2026-09-18-rag29-section-key/` with `claims.json` (ids C-2001 to C-2099) and a
+generated RAG.md block; RAG-29 DONE with evidence; RAG-26, RAG-27, RAG-30, and RAG.md prose that cite 0.761905 as the
+current store's baseline gain a pointer to the corrected figure; a new Follow_Ups item RAG-31 recording the
+fusion-gate observation (with weights 1.0 / 0.5 and k 60, a chunk found only by the keyword leg scores at most
+0.5 / 61 = 0.0082 while the 40th vector candidate scores 1 / 100 = 0.0100; over the 42 questions of snapshots 1777 and
+1786 no keyword-only chunk reached a fused position above 39; nvda-04's chunk at keyword rank 35 and 8 with no vector
+rank sat at 54 and 46; the cheapest tests being keyword weight 1.0 and guaranteed keyword slots in the reranker input,
+untested); change-log bullet; CLAUDE.md skipped count from the final `verify`.
+
+Correctness contract:
+- H1. `./mvnw -q -o verify` exit 0 on the shared database (the two set tests pass), skipped count reported.
+- H2. The heading-pattern unit test shows the old and new keys for the five headings above.
+- H3. The fresh snapshot records aapl-08 with a rank (not null) and its matched chunk holds the phrase under
+  ITEM_2_02; its hit@5 and MRR are stated as observed claims beside snapshot 1777's 0.761905 / 0.631378 and the
+  2026-09-13 reference 598's 0.785714 / 0.655187, with no cause stated beyond the set correction being the one factor
+  against 1777 (same store, same settings: an experiment claim).
+- H4. Both opt-in live tests pass on the current store with their outputs committed, and neither names a chunk id.
+- H5. No production code changes; no store change; no default change.
+- Commands: `./mvnw -q -o verify` exit 0; the two opt-in tests; `lsof -iTCP:8081 -sTCP:LISTEN` empty after the app
+  stops.
+- Out of scope: any parser change; changing msft-09 or any other entry; the fusion weights (RAG-31 is a record only).
+- User-facing flow (UT): `GET /api/rag/evaluate/{id}` for the fresh snapshot returns aapl-08 at the recorded rank;
+  `GET .../evidence` reports 57 of 57 phrases held; `POST /api/rag/retrieve` for aapl-08's question (ticker AAPL) at
+  the defaults returns a chunk holding the phrase within the recorded rank.
+
 ## Status
 
 - 2026-09-17: plan written after the nvda-04 investigation.
@@ -229,3 +272,5 @@ Correctness contract:
   generated while no cross-encoder is loaded labels token counts unknown ("tokenizer unavailable") instead of the
   committed derived values, by design. Milestone 3 is closed on everything but the two database-state items, which
   close with RAG-29. Plan close-out (merge) waits on Jay's decisions RAG-27 and RAG-29.
+- 2026-09-18, Milestone 4 added (Jay: "proceed to find the fix", then "proceed"): the RAG-29 findings above and the
+  fix contract; Worker starts.

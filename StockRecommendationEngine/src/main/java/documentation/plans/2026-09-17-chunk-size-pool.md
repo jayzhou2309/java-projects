@@ -130,3 +130,6 @@ Correctness contract:
   nvda-04 at the defaults returns no chunk holding the answer, as 1794 records; defaults unchanged (56 candidates
   retrieved); no ERROR line; port 8081 free. Milestone 1 closed. Open for Jay: RAG-30 (adopt a size and pool or not),
   RAG-29 (aapl-08 section key, which keeps `verify` red on this database), and the merge of branch `chunk-size`.
+- 2026-09-18, plan closed: CLAUDE.md loop-history bullet written in ed44fa0 (scoped Scrutiny PASS). RAG-30 stays a
+  decision for Jay; RAG-31 records the fusion-gate observation for the return to reranking. Branch `chunk-size` goes to
+  a pull request against `main`.

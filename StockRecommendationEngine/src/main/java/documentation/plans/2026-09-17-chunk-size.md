@@ -299,3 +299,7 @@ Correctness contract:
   failures, 37 skipped, claims check 0 problems). Same lesson as the RAG-14 loop: the Orchestrator's plan text is
   under the claims check like every other document. Milestone 4 closed; close-out (two low pointer notes, CLAUDE.md
   loop history) follows.
+- 2026-09-18, plan closed: the two low pointer notes of Milestone 4 and the CLAUDE.md loop-history bullets landed in
+  ed44fa0 and passed a scoped Scrutiny check (`verify` exit 0, 658 tests, 37 skipped). Two non-blocking notes stay as
+  recorded there: the rag29 evidence `run.log` entry M2 describes the Javadoc as of remediation round 1 and is
+  superseded by ed44fa0 without a pointer in the log. Branch `chunk-size` goes to a pull request against `main`.

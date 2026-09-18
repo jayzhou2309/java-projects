@@ -1,0 +1,26 @@
+Fresh default snapshot 1891 (corrected set: aapl-08 sectionKey ITEM_2_02) against the references
+1891 against 1777, rank and matched chunk content (filing, chunk index, length, md5 from the chunk-hash exports): 41 of 42 questions equal; differing: aapl-08 (rank 1 chunk 13896 (5, 0, 581, '39a2e1e911c2d7f060ebc13b8ba7b4a9') against rank None chunk None None)
+  metrics 1891: hit@1 0.547619 hit@3 0.714286 hit@5 0.785714 MRR 0.655187; metrics 1777: hit@1 0.523810 hit@3 0.690476 hit@5 0.761905 MRR 0.631378
+  recorded properties (24 keys on either side): equal on every key
+  note: properties.set is the same classpath path in both (evaluation/retrieval-set-v2.json) while the file content differs (aapl-08 sectionKey), which no recorded property shows; the set change is read from the two evidence reports: evidence-1777.json questions[id=aapl-08].phrases[0].sectionKey ITEM_2; evidence-1891.json ITEM_2_02
+1891 against 1794, rank and matched chunk id: 41 of 42 questions equal; differing: aapl-08 (rank 1 chunk 13896 against rank None chunk None)
+  metrics 1891: hit@1 0.547619 hit@3 0.714286 hit@5 0.785714 MRR 0.655187; metrics 1794: hit@1 0.523810 hit@3 0.690476 hit@5 0.761905 MRR 0.631378
+  recorded properties (24 keys on either side): equal on every key
+1891 against 598, rank only: 42 of 42 questions equal; differing: none
+  metrics 1891: hit@1 0.547619 hit@3 0.714286 hit@5 0.785714 MRR 0.655187; metrics 598: hit@1 0.547619 hit@3 0.714286 hit@5 0.785714 MRR 0.655187
+  recorded properties (24 keys on either side): differ in chunkMaxChars: 4000 against <absent>; chunkOverlapChars: 500 against <absent>; storeVersions: ['sections-v2-context-v2-chunk4000-500'] against <absent>
+
+Traced run at snapshot 297 settings, 1892, against the 2026-09-13 references
+1892 against 297, rank only: 42 of 42 questions equal; differing: none
+  metrics 1892: hit@1 0.500000 hit@3 0.761905 hit@5 0.785714 MRR 0.633135; metrics 297: hit@1 0.500000 hit@3 0.761905 hit@5 0.785714 MRR 0.633135
+  recorded properties (24 keys on either side): differ in chunkMaxChars: 4000 against <absent>; chunkOverlapChars: 500 against <absent>; storeVersions: ['sections-v2-context-v2-chunk4000-500'] against <absent>; trace: True against <absent>
+1892 against 613, rank only: 42 of 42 questions equal; differing: none
+  metrics 1892: hit@1 0.500000 hit@3 0.761905 hit@5 0.785714 MRR 0.633135; metrics 613: hit@1 0.500000 hit@3 0.761905 hit@5 0.785714 MRR 0.633135
+  recorded properties (24 keys on either side): differ in chunkMaxChars: 4000 against <absent>; chunkOverlapChars: 500 against <absent>; storeVersions: ['sections-v2-context-v2-chunk4000-500'] against <absent>
+
+aapl-08 in 1891: rank 1, matched chunk 13896 (filingId 5, sectionKey ITEM_2_02, sectionChunkIndex 0, chars 581, head "On July 30, 2026, Apple Inc. (“Apple”) issued a press release regarding Apple’s ")
+aapl-08 accepted phrase in evidence-1891.json: accession 0000320193-26-000018 section ITEM_2_02 "financial results for its third fiscal quarter ended June 27, 2026": heldByStoredChunk True (observed), holding chunks [13896]
+aapl-08 in 1892: rank 1, matched chunk 13896
+evidence-1891.json: 57 accepted phrases, 57 held by a stored chunk (heldByStoredChunk observed true)
+rank histogram 1891: 1: 23, 2: 6, 3: 1, 4: 1, 5: 2, 6: 1, 7: 1, 8: 1, 10: 1, notInWindow: 5
+rank histogram 1892: 1: 21, 2: 9, 3: 2, 5: 1, 8: 1, 10: 1, notInWindow: 7

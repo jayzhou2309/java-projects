@@ -286,9 +286,16 @@ Correctness contract:
   11406 to 11974) and 1891 on the rollback rebuild A2 (13789 to 14357), re-embedded separately, so the set key is not
   the one input that differs; the premises establish equal recorded properties and equal matched-chunk content on
   41 of 42 questions, not equal vectors. Amendment 5 recorded only the checker's refusal. Scrutiny failed the milestone
-  on the sentence that overstated this (C-2025 and two prose copies) plus two low notes; remediation round 1 (61a6c11)
+  on the pair claim's sentence that overstated this and its two prose copies, plus two low notes; remediation round 1 (61a6c11)
   bounded the sentence, added the same-store pair 1794 against 1891 as a premise, recorded that the traced live test
   must be re-recorded after any rebuild, and reworded "stored heading strings"; the scoped re-check PASSED with three
   low notes: a source pointer for store A's id range should name the pool plan's E3 or `chunk-hashes-A.json`; the
   re-recording procedure should name `filings.sql` as a separate hand-run step; and this plan's H3 wording, corrected
   here. The two pointer notes are fixed at plan close-out. UT pending.
+- 2026-09-18, Milestone 4 UT: every deliverable PASSED against the live app (1891 and 1892 read back equal to the
+  committed exports on all 42 questions; evidence 57 of 57 held; aapl-08 at rank 1 under ITEM_2_02 with the phrase
+  in the returned chunk; store untouched; set files corrected), and `verify` FAILED on this plan's amendment 6, which
+  cited a claim id in prose outside a block. The Orchestrator reworded that note; `verify` exit 0 (658 tests, 0
+  failures, 37 skipped, claims check 0 problems). Same lesson as the RAG-14 loop: the Orchestrator's plan text is
+  under the claims check like every other document. Milestone 4 closed; close-out (two low pointer notes, CLAUDE.md
+  loop history) follows.

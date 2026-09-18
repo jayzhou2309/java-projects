@@ -27,7 +27,16 @@ import static org.assertj.core.api.Assertions.*;
  * store of 2026-09-18, committed under live-runs/2026-09-18-rag29-section-key/) and the untraced one ({@code -Drag.evidence.untraced-snapshot},
  * default 297, whose report reads the current store's chunks by accession, section, and phrase, so it depends on no chunk id) must exist.
  * Chunks are named by what they hold, never by id: msft-05's and msft-04's chunks are the chunks the report lists under the set's accepted
- * phrases (accession number, section key, phrase). With the cross-encoder enabled in this test's context only:
+ * phrases (accession number, section key, phrase).
+ * <p>
+ * Limitation (recorded 2026-09-18, Milestone 4 remediation round 1): the traced snapshot's rerank inputs are chunk ids, which this test looks
+ * up in {@code sec_filing_chunks}, so a rebuild, which renumbers chunks, breaks the traced default exactly as it broke snapshot 459. After a
+ * rebuild, re-record it with the R part of {@code live-runs/2026-09-18-rag29-section-key/run_session.sh}: the application at the
+ * application.yaml defaults with {@code RAG_CROSS_ENCODER_ENABLED=true}, {@code POST /api/rag/evaluate?rerank=true&trace=true}, the row
+ * export {@code select row_to_json(r) from retrieval_evaluations r where id=<id>}, and {@code chunk-hashes.sql} and {@code filings.sql} over
+ * the new store; then update {@link #TRACED_DEFAULT} and, in the same change, RetrievalEvaluationTraceLiveTests' REFERENCE, REFERENCE_ID,
+ * and export paths (that test compares by matched chunk content, so a renumbering rebuild with equal content does not break it, but a
+ * rebuild that changes content does). With the cross-encoder enabled in this test's context only:
  * <ul>
  * <li>for every rerank input of every question of the traced snapshot, the window arithmetic on the stored chunk text beside the question
  * gives exactly the row count the trace recorded ({@code windowCount}), which checks the tokenizer, the current max-length, and the

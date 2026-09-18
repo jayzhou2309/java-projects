@@ -11,8 +11,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The two-pattern experiment of plan 2026-09-17-chunk-size.md, Milestone 4 (Follow_Ups RAG-29, contract H2): the item heading pattern of
- * {@link FilingHtmlParser} before and after commit 19876f2 (2026-09-12), applied to the heading strings of the stored 8-K, 10-K, and 10-Q
- * sections, with the key built as the parser builds it ({@code "ITEM_" + group 1 upper-cased with '.' replaced by '_'}). The 8-K headings
+ * {@link FilingHtmlParser} before and after commit 19876f2 (2026-09-12), applied to heading strings of the form stored for the 8-K, 10-K, and
+ * 10-Q sections (item number and title as the parser reads them; the stored section titles differ in detail, for example
+ * "Results of Operations and Financial Condition." with a trailing period and the full "Management's Discussion and Analysis of Financial
+ * Condition and Results of Operations", and the title does not enter the key), with the key built as the parser builds it
+ * ({@code "ITEM_" + group 1 upper-cased with '.' replaced by '_'}). The 8-K headings
  * key ITEM_2, ITEM_9, ITEM_5 under the old pattern and ITEM_2_02, ITEM_9_01, ITEM_5_02 under the current one; the 10-K and 10-Q headings key
  * the same under both. The parser's pattern is private, so the current pattern is repeated here as a string and the last test proves that
  * the parser itself keys these headings as the repeated pattern does. No parser change.

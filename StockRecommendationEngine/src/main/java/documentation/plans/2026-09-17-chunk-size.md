@@ -281,3 +281,14 @@ Correctness contract:
   Orchestrator accepts this. Handoff: 55ef0f1, df6aca0, 2c61fae, e6ea89d; snapshot 1891 (aapl-08 rank 1 under
   ITEM_2_02, 57 of 57 phrases held, hit@5 0.785714, MRR 0.655187, equal to 598); 1892 at 297's settings equals 297 and
   613 rank for rank; `verify` exit 0 with 37 skipped. Validation pending.
+- 2026-09-18, amendment 6 (Milestone 4, Scrutiny round 1): H3's premise "(same store, same settings: an experiment
+  claim)" was wrong on both counts. The runs are not on the same physical store: 1777 ran on store A (chunk ids
+  11406 to 11974) and 1891 on the rollback rebuild A2 (13789 to 14357), re-embedded separately, so the set key is not
+  the one input that differs; the premises establish equal recorded properties and equal matched-chunk content on
+  41 of 42 questions, not equal vectors. Amendment 5 recorded only the checker's refusal. Scrutiny failed the milestone
+  on the sentence that overstated this (C-2025 and two prose copies) plus two low notes; remediation round 1 (61a6c11)
+  bounded the sentence, added the same-store pair 1794 against 1891 as a premise, recorded that the traced live test
+  must be re-recorded after any rebuild, and reworded "stored heading strings"; the scoped re-check PASSED with three
+  low notes: a source pointer for store A's id range should name the pool plan's E3 or `chunk-hashes-A.json`; the
+  re-recording procedure should name `filings.sql` as a separate hand-run step; and this plan's H3 wording, corrected
+  here. The two pointer notes are fixed at plan close-out. UT pending.

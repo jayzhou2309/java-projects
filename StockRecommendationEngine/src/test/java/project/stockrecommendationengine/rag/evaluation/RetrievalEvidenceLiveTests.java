@@ -31,10 +31,12 @@ import static org.assertj.core.api.Assertions.*;
  * <p>
  * Limitation (recorded 2026-09-18, Milestone 4 remediation round 1): the traced snapshot's rerank inputs are chunk ids, which this test looks
  * up in {@code sec_filing_chunks}, so a rebuild, which renumbers chunks, breaks the traced default exactly as it broke snapshot 459. After a
- * rebuild, re-record it with the R part of {@code live-runs/2026-09-18-rag29-section-key/run_session.sh}: the application at the
+ * rebuild, re-record it with the R part of {@code live-runs/2026-09-18-rag29-section-key/run_session.sh} (the application at the
  * application.yaml defaults with {@code RAG_CROSS_ENCODER_ENABLED=true}, {@code POST /api/rag/evaluate?rerank=true&trace=true}, the row
- * export {@code select row_to_json(r) from retrieval_evaluations r where id=<id>}, and {@code chunk-hashes.sql} and {@code filings.sql} over
- * the new store; then update {@link #TRACED_DEFAULT} and, in the same change, RetrievalEvaluationTraceLiveTests' REFERENCE, REFERENCE_ID,
+ * export {@code select row_to_json(r) from retrieval_evaluations r where id=<id>}, and {@code chunk-hashes.sql} and {@code chunks.sql} over
+ * the new store), then, as a separate hand-run step the script does not include, {@code filings.sql} (under
+ * {@code live-runs/2026-09-17-chunk-size-pool/}) over the same store into {@code filings.json}; then update {@link #TRACED_DEFAULT} and, in
+ * the same change, RetrievalEvaluationTraceLiveTests' REFERENCE, REFERENCE_ID,
  * and export paths (that test compares by matched chunk content, so a renumbering rebuild with equal content does not break it, but a
  * rebuild that changes content does). With the cross-encoder enabled in this test's context only:
  * <ul>

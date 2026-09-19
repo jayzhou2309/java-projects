@@ -149,8 +149,9 @@ rag:
     answers:
       pause-ms: 20000
       # Where a pass's snapshot is written (one JSON file) if it cannot be stored in answer_evaluations; the pass has
-      # spent its tokens by then. Relative to the working directory.
-      fallback-dir: target/answer-evaluations
+      # spent its tokens by then. Relative to the working directory; outside target/ (which mvnw clean deletes) and
+      # ignored by git. Keep any file written here.
+      fallback-dir: var/answer-evaluations
     # Classpath resource of the evaluation set to run (recorded as properties.set in every snapshot). v2 is the default;
     # evaluation/retrieval-set-v1.json stays bundled for comparison. Metrics are only comparable within one set.
     set: evaluation/retrieval-set-v2.json

@@ -75,6 +75,10 @@ final class ScriptedAnswers {
         // The shortest cut the property allows, so a test passage can put its phrase past it.
         recommendationProperties.setModelPassageChars(200);
         recommendationProperties.setRateLimitRetryMs(1);
+        // Never the default (a directory of the repository): a test that fails a snapshot write names its own @TempDir, and
+        // any other lands under the system temp directory.
+        evaluationProperties.getAnswers().setFallbackDir(
+                java.nio.file.Path.of(System.getProperty("java.io.tmpdir"), "answer-evaluation-tests").toString());
         when(filings.findDistinctProcessingVersionsOfEmbeddedFilings()).thenReturn(List.of("scripted-store-v1"));
         when(retrieval.retrieve(any())).thenAnswer(invocation -> {
             RetrievalRequest request = invocation.getArgument(0);

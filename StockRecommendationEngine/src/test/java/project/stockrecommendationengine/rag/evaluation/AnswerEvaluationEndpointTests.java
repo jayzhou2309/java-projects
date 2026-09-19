@@ -48,7 +48,7 @@ class AnswerEvaluationEndpointTests {
     }
 
     @Test void aPassWhoseSnapshotCouldNotBeStoredAnswers500NamingTheFallbackFile() throws Exception {
-        var file = java.nio.file.Path.of("target", "answer-evaluations", "answer-evaluation-20260919T120000.000000Z.json").toAbsolutePath();
+        var file = java.nio.file.Path.of("var", "answer-evaluations", "answer-evaluation-20260919T120000.000000Z.json").toAbsolutePath();
         when(service.evaluate(any(), any())).thenThrow(new AnswerEvaluationNotStoredException("It was written to " + file, file,
                 new IllegalStateException("SQL detail that must not reach the body")));
         mvc.perform(post("/api/rag/evaluate/answers")).andExpect(status().isInternalServerError())

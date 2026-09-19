@@ -71,8 +71,10 @@ public class RetrievalEvaluationProperties {
         /**
          * Directory a pass's snapshot is written to, as one JSON file named with the evaluation time, when it cannot be
          * stored in {@code answer_evaluations}; relative paths resolve against the working directory. Created on demand.
+         * The default lies outside {@code target/}, which {@code mvnw clean} deletes, and is ignored by git; a file
+         * written there is the only copy of a paid pass's snapshot outside the log, so keep it.
          */
         @NotBlank
-        private String fallbackDir = "target/answer-evaluations";
+        private String fallbackDir = "var/answer-evaluations";
     }
 }

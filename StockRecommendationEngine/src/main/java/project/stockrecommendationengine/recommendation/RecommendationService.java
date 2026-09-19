@@ -392,7 +392,7 @@ public class RecommendationService {
                         the manager receives original tool evidence separately.
                         """, request, allowed, state, context);
                 // Passage text that reads like instructions is disclosed before the manager reads the specialist's report.
-                for (Long chunkId : tools.instructionLikeEvidence) state.limitations.add("EVIDENCE_INSTRUCTION_LIKE:" + chunkId);
+                for (Long chunkId : tools.instructionLikeCopy()) state.limitations.add("EVIDENCE_INSTRUCTION_LIKE:" + chunkId);
                 tools.jackson.databind.JsonNode report;
                 try { report = json.readTree(summary); }
                 catch (RuntimeException ex) { throw new IllegalArgumentException("INVALID_SPECIALIST_REPORT"); }
@@ -402,7 +402,7 @@ public class RecommendationService {
                 }
                 return json.writeValueAsString(Map.of("specialist", role, "summary", report.path("summary").asText(),
                         "evidence", role.equals("RAG") ? tools.forModel(tools.evidenceCopy()) : List.of(),
-                        "instructionLikePassages", role.equals("RAG") ? List.copyOf(tools.instructionLikeEvidence) : List.of(),
+                        "instructionLikePassages", role.equals("RAG") ? tools.instructionLikeCopy() : List.of(),
                         "quotes", role.equals("BROKER") ? List.copyOf(tools.quotes.values()) : List.of(),
                         "portfolio", role.equals("BROKER") && tools.portfolio != null ? tools.portfolio : Map.of(),
                         "priceAnalysis", role.equals("BROKER") && tools.priceAnalysis != null ? tools.priceAnalysis : Map.of(),
@@ -425,7 +425,7 @@ public class RecommendationService {
         var evidence = new LinkedHashMap<String, Object>();
         evidence.put("query", request.question());
         evidence.put("passages", tools.forModel(tools.evidenceCopy()));
-        evidence.put("instructionLikePassages", List.copyOf(tools.instructionLikeEvidence));
+        evidence.put("instructionLikePassages", tools.instructionLikeCopy());
         evidence.put("limitations", state.limitations());
         return evidence;
     }
@@ -755,7 +755,7 @@ public class RecommendationService {
             evidence.put("draft", Map.of("assessment", draft.assessment(), "reasoning", draft.reasoning()));
             evidence.put("citedPassages", tools.forModel(draft.cited().stream().map(tools.evidence::get).toList()));
             evidence.put("uncitedRetrievedPassages", tools.evidence.size() - draft.cited().size());
-            evidence.put("instructionLikePassages", List.copyOf(tools.instructionLikeEvidence));
+            evidence.put("instructionLikePassages", tools.instructionLikeCopy());
             evidence.put("quotes", List.copyOf(tools.quotes.values()));
             evidence.put("priceAnalysis", tools.priceAnalysis == null ? Map.of() : tools.priceAnalysis);
             // The critic judges anchoring from the statistics; the per-run history would only repeat what the manager saw.

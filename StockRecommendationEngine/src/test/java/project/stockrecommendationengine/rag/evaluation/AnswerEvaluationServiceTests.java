@@ -174,6 +174,7 @@ class AnswerEvaluationServiceTests {
         assertThat(aggregates.citedAndVisibleAmongAnswered()).isEqualTo(3);
         assertThat(aggregates.shareCitedGivenVisibleAmongAnswered()).isEqualByComparingTo("0.75");
         assertThat(aggregates.shareFiguresInReasoningAmongAnswered()).isEqualByComparingTo("0.5");
+        assertThat(aggregates.insufficientAmongAnswered()).isEqualTo(1);
         assertThat(aggregates.insufficientEvidenceRateAmongAnswered()).isEqualByComparingTo("0.166667");
 
         // B2: exactly one snapshot, complete, and every run of the pass stored as an EVALUATION run with the set's question.
@@ -466,6 +467,7 @@ class AnswerEvaluationServiceTests {
         assertThat(aggregates.figureQuestionsAmongAnswered()).isEqualTo(1);
         assertThat(aggregates.figuresInReasoningAmongAnswered()).isEqualTo(1);
         assertThat(aggregates.shareFiguresInReasoningAmongAnswered()).isEqualByComparingTo("1");
+        assertThat(aggregates.insufficientAmongAnswered()).isZero();
         assertThat(aggregates.insufficientEvidenceRateAmongAnswered()).isEqualByComparingTo("0");
     }
 
@@ -536,11 +538,12 @@ class AnswerEvaluationServiceTests {
         verify(snapshots, times(1)).save(attempted.capture());
         assertThat(notStored.fallbackFile()).isNotNull().hasParent(fallback).isRegularFile();
         assertThat(notStored.fallbackFile().getFileName().toString()).matches("answer-evaluation-\\d{8}T\\d{6}\\.\\d{6}Z\\.json");
-        assertThat(notStored.getMessage()).contains(notStored.fallbackFile().toString()).contains("ANSWER_EVALUATION_SNAPSHOT").doesNotContain("secret SQL detail");
+        assertThat(notStored.getMessage()).contains(notStored.fallbackFile().toString()).contains("ANSWER_EVALUATION_SNAPSHOT").contains("Keep that file")
+                .doesNotContain("secret SQL detail");
         String written = Files.readString(notStored.fallbackFile());
         assertThat(JsonMapper.builder().build().readValue(written, AnswerEvaluation.class)).as("the file holds the whole snapshot").isEqualTo(attempted.getValue());
         assertThat(written).doesNotContain("\n");
-        assertThat(output.getOut()).contains("ANSWER_EVALUATION_SNAPSHOT " + written).contains(notStored.fallbackFile().toString())
+        assertThat(output.getOut()).contains("ANSWER_EVALUATION_SNAPSHOT " + written).contains("written to " + notStored.fallbackFile() + ". Keep this file")
                 .doesNotContain("secret SQL detail");
         try (var files = Files.list(fallback)) { assertThat(files).hasSize(1); }
         // The guard is released, so a later pass can run.

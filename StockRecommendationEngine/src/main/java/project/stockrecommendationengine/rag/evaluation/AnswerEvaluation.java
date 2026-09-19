@@ -62,7 +62,7 @@ public record AnswerEvaluation(Long id, Instant evaluatedAt, String setVersion, 
      * visibleAmongAnswered / retrievedAmongAnswered; {@code shareCitedGivenVisibleAmongAnswered} =
      * citedAndVisibleAmongAnswered / visibleAmongAnswered; {@code shareFiguresInReasoningAmongAnswered} =
      * figuresInReasoningAmongAnswered / figureQuestionsAmongAnswered; {@code insufficientEvidenceRateAmongAnswered} =
-     * insufficientEvidence / answeredRuns. These counts are boxed: a row written before they existed reads them as null
+     * insufficientAmongAnswered (answered runs whose status is INSUFFICIENT_EVIDENCE) / answeredRuns. These counts are boxed: a row written before they existed reads them as null
      * (unknown), where a primitive would make the row unreadable.
      */
     public record Aggregates(int attempted, int withRun, int measured, int retrieved, BigDecimal shareRetrieved, int visible,
@@ -73,7 +73,8 @@ public record AnswerEvaluation(Long id, Instant evaluatedAt, String setVersion, 
             Integer retrievedAmongAnswered, BigDecimal shareRetrievedAmongAnswered, Integer visibleAmongAnswered,
             BigDecimal shareVisibleGivenRetrievedAmongAnswered, Integer citedAndVisibleAmongAnswered,
             BigDecimal shareCitedGivenVisibleAmongAnswered, Integer figureQuestionsAmongAnswered, Integer figuresInReasoningAmongAnswered,
-            BigDecimal shareFiguresInReasoningAmongAnswered, BigDecimal insufficientEvidenceRateAmongAnswered) { }
+            BigDecimal shareFiguresInReasoningAmongAnswered, Integer insufficientAmongAnswered,
+            BigDecimal insufficientEvidenceRateAmongAnswered) { }
 
     AnswerEvaluation withId(long newId) {
         return new AnswerEvaluation(newId, evaluatedAt, setVersion, questionCount, attempted, partial, partialReason, aggregates,

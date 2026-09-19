@@ -117,6 +117,45 @@ class AnswerEvaluationMeasureTests {
         assertThat(AnswerEvaluationService.clean(null)).isNull();
     }
 
+    @Test void theFigureCheckReadsTheReasoningAsItIsStoredSoTheSnapshotRecomputesToTheSameValues() {
+        // With U+0000 between the digits the raw text tokenises as 4 and 2; the stored reasoning reads 42.
+        var question = question(Kind.FIGURE, "we had approximately 42 stores at year end");
+        QuestionResult result = AnswerEvaluationService.measure(question,
+                new EvaluationRun(response("PARTIAL", "NEUTRAL", "About 4\0" + "2 stores.", List.of()), true, List.of()), 0);
+        assertThat(result.reasoning()).isEqualTo("About 42 stores.");
+        assertThat(result.figuresInReasoning()).isTrue();
+        assertThat(result.figureTokensMissing()).isEmpty();
+        assertThat(check(question, result.reasoning())).as("recomputed from the stored reasoning")
+                .isEqualTo(new FigureCheck(result.figureTokens(), result.figureTokensMissing()));
+        assertThat(check(question, "About 4\0" + "2 stores.").missing()).as("the uncleaned text would have disagreed").containsExactly("42");
+
+        // The other way round: a numeral that exists only because of the removed character is not in the stored reasoning either way.
+        QuestionResult split = AnswerEvaluationService.measure(question,
+                new EvaluationRun(response("PARTIAL", "NEUTRAL", "About 4 2 stores.", List.of()), true, List.of()), 0);
+        assertThat(split.figuresInReasoning()).isFalse();
+        assertThat(split.figureTokensMissing()).containsExactly("42");
+    }
+
+    @Test void theInsufficientEvidenceRateAmongAnsweredCountsOnlyAnsweredRuns() {
+        var question = question(Kind.NARRATIVE, "a phrase");
+        QuestionResult answeredInsufficient = AnswerEvaluationService.measure(question,
+                new EvaluationRun(response("INSUFFICIENT_EVIDENCE", "INSUFFICIENT_EVIDENCE", "The filings do not say.", List.of()), true, List.of()), 0);
+        QuestionResult blankAfterCleaning = AnswerEvaluationService.measure(question,
+                new EvaluationRun(response("INSUFFICIENT_EVIDENCE", "INSUFFICIENT_EVIDENCE", "\0 ", List.of()), true, List.of()), 0);
+        QuestionResult answeredPartial = AnswerEvaluationService.measure(question,
+                new EvaluationRun(response("PARTIAL", "NEUTRAL", "Some reasoning.", List.of()), true, List.of()), 0);
+        assertThat(AnswerEvaluationService.answered(blankAfterCleaning)).isFalse();
+
+        var aggregates = AnswerEvaluationService.aggregate(List.of(answeredInsufficient, blankAfterCleaning, answeredPartial));
+        assertThat(aggregates.withRun()).isEqualTo(3);
+        assertThat(aggregates.insufficientEvidence()).isEqualTo(2);
+        assertThat(aggregates.insufficientEvidenceRate()).isEqualByComparingTo("0.666667");
+        assertThat(aggregates.answeredRuns()).isEqualTo(2);
+        assertThat(aggregates.noAnswerRuns()).isEqualTo(1);
+        assertThat(aggregates.insufficientAmongAnswered()).as("the run with no answer is not in the numerator").isEqualTo(1);
+        assertThat(aggregates.insufficientEvidenceRateAmongAnswered()).isEqualByComparingTo("0.5");
+    }
+
     @Test void anAnsweredRunHasAnAnswerStatusAndAReasoningAndAggregatesStoredBeforeTheAnsweredSharesStillRead() {
         var question = question(Kind.NARRATIVE, "a phrase");
         for (String status : List.of("COMPLETE", "PARTIAL", "INSUFFICIENT_EVIDENCE")) {
@@ -140,6 +179,7 @@ class AnswerEvaluationMeasureTests {
         assertThat(read.answeredRuns()).isNull();
         assertThat(read.noAnswerRuns()).isNull();
         assertThat(read.shareRetrievedAmongAnswered()).isNull();
+        assertThat(read.insufficientAmongAnswered()).isNull();
     }
 
     private static FigureCheck check(RetrievalEvaluationQuestion question, String reasoning) {

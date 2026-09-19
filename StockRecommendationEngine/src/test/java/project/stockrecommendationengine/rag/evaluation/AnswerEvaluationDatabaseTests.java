@@ -46,7 +46,7 @@ class AnswerEvaluationDatabaseTests {
                         null, 0, 0, List.of(), null, null, null, List.of(), null, null, 0, 0, 3, null));
         var aggregates = new Aggregates(2, 1, 1, 1, new BigDecimal("1.000000"), 0, new BigDecimal("0.000000"), 0, null, 0, 0, null, 0,
                 new BigDecimal("0.000000"), 0, Map.of("PARTIAL", 1), Map.of("BROKER_DISABLED", 1), 6500, 4, 31003,
-                1, 0, 1, 1, new BigDecimal("1.000000"), 0, new BigDecimal("0.000000"), 0, null, 0, 0, null, new BigDecimal("0.000000"));
+                1, 0, 1, 1, new BigDecimal("1.000000"), 0, new BigDecimal("0.000000"), 0, null, 0, 0, null, 0, new BigDecimal("0.000000"));
         var partial = repository.save(new AnswerEvaluation(null, base, "v2", 3, 2, true, "RECOMMENDATION_CAPACITY_REACHED at nvda-04", aggregates,
                 Map.of("searchTopK", 3, "chatModel", "scripted"), results, List.of("msft-01")));
         var complete = repository.save(new AnswerEvaluation(null, base.plusSeconds(60), "v2", 1, 1, false, null, aggregates, Map.of(), results.subList(0, 1), List.of()));

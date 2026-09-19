@@ -244,9 +244,10 @@ public class AnswerEvaluationService {
             Path file = directory.resolve("answer-evaluation-" + FILE_STAMP.format(snapshot.evaluatedAt()) + ".json");
             if (Files.exists(file)) file = directory.resolve("answer-evaluation-" + FILE_STAMP.format(snapshot.evaluatedAt()) + "-" + System.nanoTime() + ".json");
             Files.writeString(file, serialised, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
-            log.error("Answer evaluation snapshot not stored; written to {}", file);
+            log.error("Answer evaluation snapshot not stored; written to {}. Keep this file: it is the only copy of the pass's snapshot outside the log.", file);
             return new AnswerEvaluationNotStoredException("The pass ended but its snapshot could not be stored in answer_evaluations. "
                     + "It was written to " + file + " and logged on one line after \"" + SNAPSHOT_LOG_PREFIX.trim() + "\". "
+                    + "Keep that file: it is the only copy of the snapshot outside the log. "
                     + "The runs of the pass are stored; do not repeat the pass to recover it.", file, failure);
         } catch (IOException | RuntimeException unwritable) {
             log.error("Answer evaluation snapshot not stored and the fallback file could not be written: {}", unwritable.getClass().getSimpleName());
@@ -298,7 +299,9 @@ public class AnswerEvaluationService {
         int citedHolding = (int) cited.stream().filter(chunk -> question.expected().stream()
                 .anyMatch(passage -> RetrievalEvaluationService.matches(chunk, passage))).count();
         boolean captured = run.evidenceCaptured();
-        FigureCheck figures = question.kind() == Kind.FIGURE ? figures(question, response.reasoning()) : null;
+        // Measured on the reasoning as it is stored (U+0000 removed), so the stored snapshot recomputes to the same values.
+        String reasoning = clean(response.reasoning());
+        FigureCheck figures = question.kind() == Kind.FIGURE ? figures(question, reasoning) : null;
         var critique = response.critique();
         return new QuestionResult(question.id(), question.ticker(), question.kind(), response.runId(), null, clean(response.status()),
                 clean(response.assessment()), captured, run.retrieved().size(), captured ? !expected.isEmpty() : null, captured ? List.copyOf(expected) : null,
@@ -306,7 +309,7 @@ public class AnswerEvaluationService {
                 figures == null ? null : figures.missing().isEmpty(), figures == null ? null : figures.tokens(),
                 figures == null ? null : figures.missing(), clean(response.limitations()),
                 critique == null ? null : clean(critique.verdict()), critique == null ? null : clean(critique.unsupportedNumerals()),
-                response.modelCalls(), response.observedTokens(), elapsedMs, clean(response.reasoning()));
+                response.modelCalls(), response.observedTokens(), elapsedMs, reasoning);
     }
 
     /** Text without NUL characters: PostgreSQL's jsonb refuses U+0000, and model text is the one place it can come from. */
@@ -385,6 +388,7 @@ public class AnswerEvaluationService {
         int citedAndVisibleAnswered = count(measuredAnswered, r -> Boolean.TRUE.equals(r.visibleToModel()) && Boolean.TRUE.equals(r.citedExpected()));
         int figureQuestionsAnswered = count(answered, r -> r.figuresInReasoning() != null);
         int figuresInReasoningAnswered = count(answered, r -> Boolean.TRUE.equals(r.figuresInReasoning()));
+        int insufficientAnswered = count(answered, r -> INSUFFICIENT_EVIDENCE.equals(r.status()));
         Map<String, Integer> statuses = new TreeMap<>();
         Map<String, Integer> limitations = new TreeMap<>();
         for (QuestionResult result : withRun) {
@@ -400,7 +404,7 @@ public class AnswerEvaluationService {
                 measuredAnswered.size(), retrievedAnswered, share(retrievedAnswered, measuredAnswered.size()), visibleAnswered,
                 share(visibleAnswered, retrievedAnswered), citedAndVisibleAnswered, share(citedAndVisibleAnswered, visibleAnswered),
                 figureQuestionsAnswered, figuresInReasoningAnswered, share(figuresInReasoningAnswered, figureQuestionsAnswered),
-                share(insufficient, answered.size()));
+                insufficientAnswered, share(insufficientAnswered, answered.size()));
     }
 
     private static int count(List<QuestionResult> results, java.util.function.Predicate<QuestionResult> test) {

@@ -116,3 +116,7 @@ Correctness contract:
 
 - 2026-09-19: plan written; awaiting Jay's approval of the milestones, the frozen measure definitions, and the token
   budget before Milestone 1's Worker starts.
+- 2026-09-19: Jay approved ("proceed") the milestones, the frozen measure definitions, and the proposed token budget:
+  one live lean run in each of the Milestone 1 and Milestone 2 UT checks (about 7,000 tokens each), the 6-question
+  pilot (about 45,000), and one full lean pass of 42 (about 300,000), paced; a rate-limit rejection stops a pass, which
+  is then recorded as partial and not repeated without approval. Milestone 1 starts.

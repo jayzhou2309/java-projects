@@ -271,6 +271,27 @@ class RecommendationServiceTests {
                         calls(call("b2", "getQuote", "{\"conid\":1}"), call("b3", "analyzePriceHistory", "{\"conid\":1}")), report()));
     }
 
+    @Test void thePublicPathStoresUserRunsAndOnlyTheInternalEntryPointStoresAnEvaluationRun() {
+        scriptByRole(fullRunScript("BULLISH"));
+        var user = service.recommend(request(false));
+        scriptByRole(fullRunScript("BULLISH"));
+        var evaluation = service.recommend(request(false), RunPurpose.EVALUATION);
+        var records = org.mockito.ArgumentCaptor.forClass(RecommendationRecord.class);
+        verify(store, times(2)).save(records.capture());
+        assertThat(records.getAllValues()).extracting(RecommendationRecord::runId).containsExactly(user.runId(), evaluation.runId());
+        assertThat(records.getAllValues()).extracting(RecommendationRecord::purpose).containsExactly(RunPurpose.USER, RunPurpose.EVALUATION);
+        // The run itself does not depend on the purpose: same status, calls, sources, limitations, and tool trace shape.
+        assertThat(evaluation).usingRecursiveComparison().ignoringFields("runId", "toolTrace", "dataFreshness").isEqualTo(user);
+        assertThat(evaluation.toolTrace()).extracting(t -> t.tool() + ":" + t.outcome())
+                .containsExactlyElementsOf(user.toolTrace().stream().map(t -> t.tool() + ":" + t.outcome()).toList());
+        assertThat(records.getAllValues().get(1).responseJson()).as("the purpose is a column, not part of the response").doesNotContain("purpose");
+        // The internal entry point validates exactly as the public one does, and a missing purpose is a programming error.
+        assertThatThrownBy(() -> service.recommend(new RecommendationRequest("not valid!", "q", null, false), RunPurpose.EVALUATION))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
+        assertThatThrownBy(() -> service.recommend(request(false), null)).isInstanceOf(IllegalArgumentException.class);
+        verify(store, times(2)).save(any());
+    }
+
     @Test void criticReviewsTheDraftWithoutToolsAndTheVerdictIsEchoed() {
         properties.setCriticRounds(2);
         scriptByRole(withCritic(fullRunScript("BULLISH"), verdict("ACCEPT", "[\"Reasoning matches the cited passage.\"]")));

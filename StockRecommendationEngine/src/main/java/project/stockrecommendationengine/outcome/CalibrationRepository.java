@@ -18,14 +18,14 @@ public class CalibrationRepository {
     private final JsonMapper json = JsonMapper.builder().build();
 
     /**
-     * Every stored run with a raw confidence and a scored direction at the horizon. The stored confidence is the
+     * Every stored user run (evaluation runs are excluded) with a raw confidence and a scored direction at the horizon. The stored confidence is the
      * input-coverage composite, never a calibrated value, so calibrating on it is not circular.
      */
     public List<Sample> samples(int horizonDays) {
         return jdbc.query("""
                 SELECT r.confidence, o.direction_correct, r.assessment, r.prompt_version
                 FROM recommendation_outcomes o JOIN recommendations r ON r.run_id = o.run_id
-                WHERE o.horizon_days = ? AND o.direction_correct IS NOT NULL AND r.confidence IS NOT NULL
+                WHERE r.purpose = 'USER' AND o.horizon_days = ? AND o.direction_correct IS NOT NULL AND r.confidence IS NOT NULL
                 ORDER BY r.requested_at, r.run_id
                 """, (rs, i) -> new Sample(rs.getBigDecimal("confidence"), rs.getBoolean("direction_correct"),
                 rs.getString("assessment"), rs.getString("prompt_version")), horizonDays);

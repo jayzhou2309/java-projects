@@ -16,6 +16,7 @@ import project.stockrecommendationengine.broker.BrokerData.PriceHistory;
 import project.stockrecommendationengine.quant.PriceBarRepository;
 import project.stockrecommendationengine.recommendation.RecommendationRecord;
 import project.stockrecommendationengine.recommendation.RecommendationRepository;
+import project.stockrecommendationengine.recommendation.RunPurpose;
 
 /**
  * Scores stored recommendations against stored daily bars. Bars are refreshed through the broker when it is
@@ -82,11 +83,15 @@ public class OutcomeEvaluationService {
         return new EvaluationRun(started, elapsed, pending.size(), written, pendingHorizons, List.copyOf(refreshFailures), List.copyOf(failedRuns));
     }
 
-    /** Evaluate one run now; returns the outcomes stored for it afterwards. */
+    /** Evaluate one run now; returns the outcomes stored for it afterwards. An evaluation-purpose run is never scored. */
     public List<OutcomeRecord> evaluate(String runId) {
         var rec = recommendations.findByRunId(runId).orElseThrow(() -> new NoSuchElementException(runId));
         var refreshFailures = new ArrayList<String>();
         var cache = new HashMap<Long, List<DailyBar>>();
+        if (rec.purpose() != RunPurpose.USER) {
+            log.info("Outcome evaluation skipped: run={} purpose={}", rec.runId(), rec.purpose());
+            return outcomes.findByRunId(runId);
+        }
         if (rec.conid() != null && rec.barsAsOf() != null && rec.lastClose() != null) {
             List<DailyBar> benchmark = history(properties.getBenchmarkConid(), refreshFailures, cache);
             List<DailyBar> series = history(rec.conid(), refreshFailures, cache);

@@ -30,6 +30,10 @@
             * Wait at most deadline-ms, then cancel and interrupt the worker.
             * Return HTTP 429 when both worker slots are occupied; there is no pending-work queue.
             * Persist the outcome through persist(...) after the worker returns, including DEADLINE_EXCEEDED and FAILED results; a failed write adds AUDIT_NOT_PERSISTED to the response instead of failing the request.
+            * Always stores the run with purpose USER. The controller and the watchlist call only this method.
+        * recommend(RecommendationRequest request, RunPurpose purpose)
+            * Internal entry point for callers inside the application that must mark a run (the planned answer-evaluation runner; nothing calls it with EVALUATION yet). The run is the same in every respect: same validation, tool allowlist, instruction-like passage screen, and citation checks; only the stored purpose differs. A null purpose is rejected.
+            * No request body, query parameter, header, or configuration property reaches the purpose argument.
         * run(...)
             * Create fresh RecommendationTools, message history, evidence state, and trace.
             * When the manager returns several delegations in one response, submit them to the specialist pool and wait with the run deadline; a limit violation in either specialist stops the run and cancels the other.
@@ -145,6 +149,7 @@
     * conid: optional positive IBKR contract ID; needed only when the ticker has several listings in the preferred currency.
     * includePortfolio: false by default; explicitly enables sending position data to the configured model provider.
     * No accountId, broker password, or TWS host/port is accepted in this request.
+    * No field sets the run purpose (see Recommendation Audit Store). The application's JSON mapper ignores unknown properties, so a body carrying "purpose" is accepted and the run is stored as USER; RunPurposeTests post such bodies through the controller with the application's mapper and read the stored rows.
 
 * RecommendationResponse
     * runId: request correlation ID.
@@ -231,19 +236,31 @@ curl -X POST http://localhost:8080/api/recommendations \
         * Stored runs are the raw material for outcome measurement, confidence calibration, and the agent's own track record.
     * RecommendationRepository
         * save(RecommendationRecord record): insert one row; rows are never updated by the loop.
-        * findByRunId(String runId): one stored run.
-        * findByTicker(String ticker, int limit): newest runs for a ticker.
+        * findByRunId(String runId): one stored run, whatever its purpose.
+        * findByTicker(String ticker, int limit): newest USER runs for a ticker; EVALUATION runs are never listed.
     * RecommendationRecord fields
         * runId, ticker, conid (from the price analysis or first quote), requestedAt, completedAt, question.
         * status, assessment, takeProfit, stopLoss, confidence, lastClose, barsAsOf (the newest bar the levels were computed from), quoteAvailability.
         * citedChunkIds, limitations, modelCalls, observedTokens.
         * promptVersion (RecommendationService.PROMPT_VERSION; bump on any prompt change), model, quantVersion (QuantProperties.version(), the ATR/level parameter set), processingVersion (filing processing version).
         * responseJson: the complete RecommendationResponse as JSONB.
+        * purpose: USER or EVALUATION (RunPurpose). It is a column of the stored record only; RecommendationResponse and responseJson do not carry it.
+    * Run purpose
+        * USER runs are product data. EVALUATION runs measure the loop itself (plan [2026-09-19-answer-evaluation](plans/2026-09-19-answer-evaluation.md)) and must not feed product data.
+        * Readers of the recommendations table and how each treats EVALUATION:
+            * RecommendationRepository.findByRunId (GET /api/recommendations/{runId}, OutcomeEvaluationService.evaluate): returns the run and shows its purpose.
+            * RecommendationRepository.findByTicker (GET /api/recommendations?ticker=, and TrackRecordService, so the track record given to the manager and the critic): USER only.
+            * RecommendationRepository.findPendingEvaluation (outcome scoring passes): USER only.
+            * OutcomeEvaluationService.evaluate(runId) (POST /api/outcomes/evaluate/{runId}): finds the run, scores nothing when its purpose is not USER, and returns its stored outcomes (none).
+            * OutcomeRepository.summary() and CalibrationRepository.samples(horizon): the joins keep USER runs only, so an outcome row attached to an EVALUATION run by any route still stays out of the aggregates and the calibration.
+            * The watchlist reads nothing from the table; it calls recommend(request), so its runs are USER, and its last-run view holds only its own pass.
+        * The filters are written as purpose = 'USER', so a purpose added later is excluded from product data until someone decides otherwise.
     * Endpoints (same access token as POST)
-        * GET /api/recommendations/{runId}: one stored run; 404 when unknown, 400 for a malformed ID.
-        * GET /api/recommendations?ticker=AAPL&limit=20: newest stored runs for a ticker.
+        * GET /api/recommendations/{runId}: one stored run of either purpose, with its purpose; 404 when unknown, 400 for a malformed ID.
+        * GET /api/recommendations?ticker=AAPL&limit=20: newest stored USER runs for a ticker.
     * Schema
         * Migration V5 creates recommendations with a primary key on run_id, a confidence check in [0,1], and indexes on (ticker, requested_at) and requested_at.
+        * Migration V10 adds purpose VARCHAR(16) NOT NULL DEFAULT 'USER' with a check on the two values. Rows stored before V10, and rows written by code that does not name the column, read back as USER. No index was added: every filtered query already selects by ticker or by the pending-outcome conditions.
     * Point-in-time discipline
         * barsAsOf, quoteAvailability, and citedChunkIds record what the run actually saw; later evaluation must only use bars and filings dated after requestedAt.
         * Stopped and failed runs are stored with their status so the record is complete rather than success-only.
@@ -466,3 +483,8 @@ Qualitative Research + Sources + Quotes + Levels + Confidence (+ Calibrated) + C
     * prefetchFilings(...) closes that gap the way the broker prefetch did: the harness searches the stored filings with the user's question before the RAG specialist model runs (recommendation.prefetch-filings, default true; one budgeted tool call; prefetch:TOOL_LIMIT when none is left) and the specialist is told to search again only for what is missing. PROMPT_VERSION is now manager-specialists-v5-rag-prefetch. Scripted scenarios that script the specialist's own search run with prefetch-filings=false; a dedicated scenario covers a tool-less specialist under a hostile question and the exhausted budget.
     * Same hostile question after the change, run `d7eb8d19-9192-4c95-b6ca-560b0494cb68`: RAG:searchFilings ran before the specialist model, three passages were retrieved (the hostile text embeds near compliance boilerplate: 10-Q Item 3, 10-K Items 1B and 9A), the manager returned INSUFFICIENT_EVIDENCE citing them with reasoning that names them as routine disclosures, the critic accepted, and no forced assessment, citation, confidence, or status got through; 5,463 tokens. The prefetch query is the question itself, so a hostile or vague question retrieves weak passages; scheduled watchlist runs use the directional template and retrieve on-topic passages. Evidence: [response](live-runs/2026-09-12-injection/response-hostile.json), [run log](live-runs/2026-09-12-injection/run.log).
     * Not covered: a poisoned passage inside the RAG store read by a real model (SEC-5 in [Follow_Ups.md](Follow_Ups.md)); the screen is a pattern list, so paraphrased instructions pass it silently, which is why it discloses rather than filters. Full suite: 198 tests, 193 passed, 5 opt-in live tests skipped.
+
+* Run purpose: evaluation runs marked and kept out of product data — 2026-09-19
+    * Milestone 1 of plan [2026-09-19-answer-evaluation](plans/2026-09-19-answer-evaluation.md) (AGENT-10 in [Follow_Ups.md](Follow_Ups.md)). Migration V10 adds recommendations.purpose; RunPurpose (USER, EVALUATION); RecommendationService.recommend(request, purpose) is the only way to store an EVALUATION run and is not reachable from any request; the per-reader treatment is listed under Recommendation Audit Store, Run purpose. No prompt changed, PROMPT_VERSION is unchanged, and no runner or endpoint exists yet.
+    * Tests, no live model call: RunPurposeTests (shared database, rolled back: listing, pending scoring, the real TrackRecordService, summary and calibration joins, the V10 default and check, request bodies carrying a purpose posted through the controller with the application's mapper), a scripted-model scenario in RecommendationServiceTests comparing a USER and an EVALUATION run of the same script, and an OutcomeEvaluationServiceTests scenario for evaluate(runId).
+    * Observed on the shared database after V10 applied (2026-09-19): 21 stored rows, all USER.

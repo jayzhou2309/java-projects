@@ -117,7 +117,18 @@ public class RecommendationService {
         this.ingestion = ingestion;
     }
 
+    /** The public path: the controller and the watchlist call this, and the run is always stored as a user run. */
     public RecommendationResponse recommend(RecommendationRequest request) {
+        return recommend(request, RunPurpose.USER);
+    }
+
+    /**
+     * Internal entry point for callers inside the application that must mark a run, such as an evaluation runner. The
+     * run itself is identical (same validation, tools, passage screen, and citation checks); only the stored purpose
+     * differs. No request body or parameter reaches this argument.
+     */
+    public RecommendationResponse recommend(RecommendationRequest request, RunPurpose purpose) {
+        if (purpose == null) throw new IllegalArgumentException("purpose is required");
         if (request == null || !validator.validate(request).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid recommendation request");
         }
@@ -145,11 +156,12 @@ public class RecommendationService {
             log.debug("Recommendation run={} failure detail", runId, cause);
             response = stopped(runId, normalized.ticker(), "FAILED");
         }
-        return persist(normalized, requestedAt, response);
+        return persist(normalized, requestedAt, response, purpose);
     }
 
     /** Every run is recorded, including stopped ones. A failed write is disclosed in the response, never hidden. */
-    private RecommendationResponse persist(RecommendationRequest request, Instant requestedAt, RecommendationResponse response) {
+    private RecommendationResponse persist(RecommendationRequest request, Instant requestedAt, RecommendationResponse response,
+            RunPurpose purpose) {
         try {
             var analysis = response.priceAnalysis();
             Long conid = null;
@@ -162,7 +174,7 @@ public class RecommendationService {
                     response.sources().stream().map(source -> source.chunkId()).toList(), response.limitations(),
                     response.modelCalls(), response.observedTokens(), PROMPT_VERSION, properties.getModel(),
                     quant == null || quantProperties == null ? null : quantProperties.version(),
-                    ingestion.processingVersion(), json.writeValueAsString(response));
+                    ingestion.processingVersion(), json.writeValueAsString(response), purpose);
             store.save(record);
             return response;
         } catch (Exception ex) {

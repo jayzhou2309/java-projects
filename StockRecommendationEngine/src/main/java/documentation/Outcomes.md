@@ -4,6 +4,7 @@
     * Deterministic scoring of every stored recommendation against stored daily bars at fixed horizons.
     * Consumes the [recommendation audit store](Agent_Harness.md) and the [price bars](Quant.md) the quant layer keeps; refreshes bars through the [broker](IBKR.md) when available.
     * Disabled by default; enabling requires the integration access token like the other integrations.
+    * Only runs stored with purpose USER are scored, shown in the track record, summarised, or used for calibration; EVALUATION runs (see [Agent_Harness.md](Agent_Harness.md), Run purpose) are excluded at every reader listed below.
     * No model is involved in scoring. TrackRecordService (below) shows the manager the ticker's prior runs and outcomes; ConfidenceCalibrationService (below) maps a run's raw confidence to the realized hit rate of runs with similar confidence, once enough directional runs are scored.
     * Every stored run so far is NEUTRAL, so direction and level statistics have no data yet; the pipeline is verified, the numbers are not.
 
@@ -41,8 +42,8 @@
     * upsert(OutcomeRecord): insert or replace one run/horizon row.
     * findByRunId(String runId): stored outcomes for a run, by horizon.
     * evaluatedHorizons(String runId): horizons already stored.
-    * summary(): per assessment and horizon, count, average return, average excess return, direction hit rate, take-profit-first rate, stop-loss-first rate.
-    * RecommendationRepository.findPendingEvaluation(horizonCount, limit): scorable runs (contract, bar date, entry price, BULLISH/BEARISH/NEUTRAL) with fewer stored outcomes than horizons, oldest first.
+    * summary(): over outcomes joined to USER runs only; per assessment and horizon, count, average return, average excess return, direction hit rate, take-profit-first rate, stop-loss-first rate.
+    * RecommendationRepository.findPendingEvaluation(horizonCount, limit): scorable USER runs (contract, bar date, entry price, BULLISH/BEARISH/NEUTRAL) with fewer stored outcomes than horizons, oldest first.
     * Schema: migration V6 recommendation_outcomes, primary key (run_id, horizon_days), foreign key to recommendations, a check on first_touch values.
 
 * OutcomeCalculator
@@ -57,6 +58,7 @@
         * Returns EvaluationRun with counts and elapsed time.
     * evaluate(String runId)
         * Evaluate one run now and return its stored outcomes; unknown run IDs raise NoSuchElementException (HTTP 404).
+        * A run whose purpose is not USER is found but never scored: no bars are loaded, nothing is written, and its stored outcomes (none) are returned.
     * Bar refresh uses BrokerReadService.getDailyBars on the recommendation's conid; without a broker, evaluation uses stored bars only.
 
 * OutcomeScheduler
@@ -64,7 +66,7 @@
 
 * TrackRecordService
     * trackRecord(String ticker, int limit)
-        * Newest limit stored runs for the ticker (any status) with their stored outcomes per horizon.
+        * Newest limit stored USER runs for the ticker (any status) with their stored outcomes per horizon; it reads RecommendationRepository.findByTicker, which never returns an EVALUATION run.
         * Per assessment: runs, scored (having the reference horizon, 20 days when configured), directionCorrect count, averageReturnPct.
         * Carries a fixed caveat so the consumer sees the sample-size warning with the numbers.
     * Consumer: the recommendation loop's look-back, documented in [Agent_Harness.md](Agent_Harness.md).
@@ -80,7 +82,7 @@
         * status: READY when N ≥ min-samples, else INSUFFICIENT_SAMPLE; only READY snapshots are applied. Snapshots are appended to confidence_calibrations (migration V7) with per-assessment and per-prompt-version counts and are never updated, so a response's calibrationId always resolves to the exact mapping used.
     * CalibrationCalculator.compute(samples, horizon, bins, minSamples, priorWeight, computedAt): pure arithmetic, tested against hand-computed values.
     * CalibrationRepository
-        * samples(horizon): the join of recommendation_outcomes and recommendations described above, oldest first.
+        * samples(horizon): the join of recommendation_outcomes and recommendations described above, USER runs only, oldest first. The exclusion is defence in depth: an EVALUATION run gets no outcomes through either scoring path.
         * save(snapshot): append and return with its id. latest(horizon): the newest snapshot for the horizon, whatever its status.
     * ConfidenceCalibrationService
         * compute(): samples at OutcomeProperties.referenceHorizon(), calculator, save; logged with status, samples, base rate, ECE, and Brier.
@@ -90,7 +92,7 @@
 
 * Endpoints (integration access token required)
     * POST /api/outcomes/evaluate: run a pass now; returns the EvaluationRun.
-    * POST /api/outcomes/evaluate/{runId}: evaluate one run now.
+    * POST /api/outcomes/evaluate/{runId}: evaluate one run now; an EVALUATION run returns an empty list and is not scored.
     * GET /api/outcomes/{runId}: stored outcomes for a run.
     * GET /api/outcomes/summary: the aggregate table.
     * POST /api/outcomes/calibration and GET /api/outcomes/calibration: see Confidence Calibration.
@@ -150,6 +152,11 @@ curl -H "Authorization: Bearer $INTEGRATION_ACCESS_TOKEN" http://localhost:8080/
     * Directional AAPL run `20753998-0d12-4ca7-9908-42229adcb127` with that snapshot in place: BULLISH, raw confidence 0.29, calibratedConfidence 0.425 from bin [0.2,0.4) with binSamples 10 and binHitRate 0.3, calibration.status APPLIED, calibrationId 6, MANAGER:calibrateConfidence in 4 ms, CONFIDENCE_UNCALIBRATED absent; HTTP 200 in 6.2 seconds, critic ACCEPT, five model calls ([response](live-runs/2026-09-12-calibration/response-applied.json)). GET by run ID showed the audit row keeps the raw 0.29 in its confidence column and the calibrated 0.425 with calibrationId 6 inside the response JSON ([record](live-runs/2026-09-12-calibration/record-applied.json)).
     * Clean-up: the 40 synthetic runs (outcomes removed by the cascade), snapshot 6, and run 20753998 (a real request whose calibrated figure came from synthetic data) were deleted; a fresh real snapshot (id 7) is INSUFFICIENT_SAMPLE with 0 samples ([snapshot](live-runs/2026-09-12-calibration/calibration-after-cleanup.json)). The tables hold no synthetic rows. Sanitized log: [run.log](live-runs/2026-09-12-calibration/run.log).
     * Full suite after the change: 188 tests, 183 passed, 5 opt-in live tests skipped, no failures.
+
+* Evaluation runs excluded from scoring and calibration — 2026-09-19
+    * Milestone 1 of plan [2026-09-19-answer-evaluation](plans/2026-09-19-answer-evaluation.md): recommendations.purpose (migration V10; USER by default, EVALUATION for runs that measure the loop). findPendingEvaluation, evaluate(runId), the track record, summary(), and calibration samples keep USER runs only; GET /api/outcomes/{runId} is unchanged and reads recommendation_outcomes alone.
+    * summary() and samples(horizon) gained a purpose = 'USER' condition on the joined run; for the rows stored on 2026-09-19 (21, all USER) the results are the same as before.
+    * Tests: RunPurposeTests (PostgreSQL, rolled back) gives an EVALUATION run an outcome directly and checks it is absent from the summary row and the calibration samples while the USER run beside it is present; OutcomeEvaluationServiceTests checks evaluate(runId) writes nothing and loads no bars for an EVALUATION run and scores the same run when it is USER.
 
 * Known Limitations
     * Daily bars only: intraday touch order is unknown, hence BOTH_SAME_DAY; gaps through a level count as touched at the bar's high/low, not at the level.

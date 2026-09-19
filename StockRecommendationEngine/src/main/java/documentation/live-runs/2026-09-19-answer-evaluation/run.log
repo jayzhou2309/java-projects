@@ -1,0 +1,117 @@
+Answer evaluation, Milestone 3 (plan plans/2026-09-19-answer-evaluation.md): pilot, full lean pass
+All times +0800 (UTC+8) unless a line says UTC. Worktree java-projects-answer-eval, branch answer-evaluation, HEAD 0b8a919 at start.
+Budget (plan Status, frozen before the runs): pilot about 45,000 tokens, full pass about 300,000; one pass each, never repeated;
+the full pass only if the pilot's snapshot is not partial and its mean observed tokens per run is at most 10,000.
+Tokens spent on this plan before this milestone: 11,372 (plan Status).
+
+S0 2026-09-19 13:28 +0800 state before any run (read-only queries, psql in trading-postgres)
+  select purpose, count(*) from recommendations group by 1  ->  USER|22  EVALUATION|1
+  select id, attempted, partial from answer_evaluations     ->  36|1|f   (the Milestone 2 UT snapshot, one row)
+  select max(id) from retrieval_evaluations                 ->  1892
+  flyway_schema_history latest versions                     ->  11, 10
+  port 8081: no listener; no spring-boot:run process
+
+A1 2026-09-19 13:29:30 +0800 app start (app shell only; .env exported; no test ran in that shell)
+  SERVER_PORT=8081 INTEGRATION_ACCESS_TOKEN=<48 hex characters, kept outside the repository> RECOMMENDATION_ENABLED=true
+  SPRING_PROFILES_ACTIVE=lean CHAT_MODEL_PROVIDER=openai RECOMMENDATION_MODEL=gpt-4.1 ./mvnw -q -o spring-boot:run
+  IBKR_ENABLED, OUTCOMES_ENABLED, WATCHLIST_ENABLED not set; no RAG_* override.
+  13:29:37.410 Started StockRecommendationEngineApplication in 1.869 seconds
+  13:29:49 GET /api/rag/evaluate/answers -> 200 (snapshot 36, the newest before the pilot; a GET calls no model)
+  13:31 GET /api/rag/evaluate/answers/36 -> 200 (read for the field shape only, not committed; a GET calls no model)
+
+P1 2026-09-19 13:29:56 +0800 PILOT, the one approved call
+  POST /api/rag/evaluate/answers?questions=aapl-01,aapl-08,msft-05,msft-09,nvda-02,nvda-04  (curl --max-time 900)
+  -> HTTP 200 after 129.088 s; ended 13:32:05 +0800
+  app log: "Answer evaluation stored: id=37, attempted=6 of 6, partial=false, reason=null, totalTokens=34855"
+  snapshot id 37. GET /api/rag/evaluate/answers/37 saved verbatim as get-37.json (10,242 bytes); the POST body parsed equal to it.
+  observedTokens per run, in pass order: 5907, 4870, 5822, 5472, 6219, 6565; total 34,855; mean 5,809.17; max 6,565.
+
+G1 2026-09-19 13:32:16 +0800 PILOT GATE
+  partial=false (condition: not partial): met. mean observed tokens per run 5,809.17 (condition: at most 10,000): met.
+  Decision: the full pass runs, no earlier than 13:33:06 +0800 (60 s after the pilot's end at 13:32:05).
+
+F1 2026-09-19 13:33:21 +0800 FULL PASS, the one approved call (76 s after the pilot's end)
+  POST /api/rag/evaluate/answers  (no parameters; curl --max-time 4000, in the background, body to a file outside the repository)
+  -> HTTP 200 after 1017.926 s; ended 13:50:19 +0800
+  app log: "Answer evaluation stored: id=38, attempted=42 of 42, partial=false, reason=null, totalTokens=258639"
+  snapshot id 38. GET /api/rag/evaluate/answers/38 saved verbatim as get-38.json (60,386 bytes); the POST body parsed equal to it.
+  Not partial. 42 runs, 4 model calls each (168); observedTokens total 258,639, mean 6,158.07, max 7,925 (aapl-06).
+  No fallback file: var/answer-evaluations does not exist; no ANSWER_EVALUATION_SNAPSHOT line in the app log.
+  No WARN or ERROR line in either pass window; no MODEL_RATE_LIMITED_RETRIED or MODEL_UNAVAILABLE limitation in either export
+  (limitationCounts of 38: BROKER_DISABLED 42, QUANT_DISABLED 42, NO_VERIFIED_CURRENT_QUOTE 42, CONFIDENCE_UNCALIBRATED 42,
+  POSITION_SIZING_NOT_IMPLEMENTED 42, CRITIC_UNRESOLVED 3).
+
+T1 tokens (C1), from the snapshots
+  pilot (37): 34,855 of about 45,000 approved. full pass (38): 258,639 of about 300,000 approved.
+  this milestone: 293,494. plan running total: 11,372 (before this milestone, plan Status) + 293,494 = 304,866.
+  No other model-reaching call was made in this milestone: two POSTs in total, each once, none retried.
+
+C3 2026-09-19 13:50:36 +0800 product data after the passes (app still up for the listings; psql read-only)
+  select purpose, count(*) from recommendations group by 1          -> EVALUATION|49  USER|22   (before: EVALUATION 1, USER 22)
+  the 48 run ids of get-37.json and get-38.json in recommendations   -> 48 rows, 1 distinct purpose: EVALUATION
+  GET /api/recommendations?ticker=AAPL -> 200, 13 runs listed, purposes {USER}, 0 of the 48 evaluation run ids
+  GET /api/recommendations?ticker=MSFT -> 200,  8 runs listed, purposes {USER}, 0 of the 48
+  GET /api/recommendations?ticker=NVDA -> 200,  1 run listed,  purposes {USER}, 0 of the 48   (13 + 8 + 1 = 22 = the USER rows)
+  select count(*) from recommendation_outcomes where run_id in (select run_id from recommendations where purpose='EVALUATION') -> 0
+  select count(*) from recommendation_outcomes where run_id in (<the 48 ids>) -> 0
+  select count(*) from recommendation_outcomes -> 0 (the table is empty: OUTCOMES_ENABLED was not set, so no scoring ran in this session;
+    the zero above shows no row exists, not that the scorer was exercised against these runs; the exclusion itself is Milestone 1's tests)
+  select count(*) from answer_evaluations -> 3   (36|1 of 1|f, 37|6 of 6|f, 38|42 of 42|f)
+
+A2 2026-09-19 13:50:50 +0800 app stop
+  app-log-37.txt (104 lines) and app-log-38.txt (728 lines): the app log from each pass's "Answer evaluation: set=v2, selected=" line to
+  its "Answer evaluation stored" line. Scanned before commit: the bearer token, OPENAI_API_KEY and POSTGRES_PASSWORD values occur 0 times
+  in the two log windows and the two exports; 0 lines match bearer, sk-<alnum> or api key.
+  pkill -f spring-boot:run (twice); 13:50:55 lsof -nP -iTCP:8081 -sTCP:LISTEN -> empty (exit 1); no spring-boot:run process.
+
+E1 exports and tables (no model call, no application)
+  python3 -B export_phrase_offsets.py get-37.json get-38.json  -> chunks=39 missing=0 (one read-only SELECT on sec_filing_chunks joined
+    to sec_filings; writes phrase-offsets.json). The offsets agree with the snapshots: for every retrieved chunk holding an accepted
+    phrase, "some occurrence ends at or before 1500" equals membership in the snapshot's visibleChunkIds (tables.json,
+    full.amongRetrieved.offsetsAgreeWithSnapshot true).
+  python3 -B answer_tables.py get-37.json get-38.json -> "tables written: pilot 37 full 38 aggregatesMatchStored=True/True offsetsAgree=True"
+    (writes tables.json and tables.txt; run twice, md5 equal both times; no __pycache__).
+  Retrieval reference: ../2026-09-18-rag29-section-key/snapshot-1891-f-defaults-rerank-off.json (no retrieval evaluation was run here;
+    select max(id) from retrieval_evaluations is 1892 as before).
+
+Unexpected or worth a reader's attention (observations, no cause stated)
+  - Every run of both passes retrieved 3 chunks (retrievedCount 3) and made 4 model calls.
+  - 6 of the 28 kind-FIGURE questions have no figure check (figuresInReasoning null: no accepted phrase of theirs has a figure token
+    under the retrieval figure rule), so figureQuestions is 22, not 28.
+  - msft-05 differs between the pilot and the full pass in the cited chunks (3 cited, then 2); the other five pilot questions are equal
+    on every compared field with id lists compared as sets (nvda-04's cited ids are the same set in another order).
+  - chunk 13825 holds accepted phrases of two questions (aapl-02 and aapl-12); aapl-12's phrase spans characters 1465 to 1581, across
+    the 1,500-character cut, and reads not visible, as the measure defines a straddling phrase.
+
+V1 2026-09-19 about 14:20 +0800 checks after the write-up (test shell: .env exported, none of the enable flags, profile, RAG_* or app variables set)
+  ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> CLAIMS_GENERATE changed=1 [Agent_Harness.md], then
+    CLAIMS_CHECK claimsFiles=12 documents=30 problems=0 (claims.json here: 157 claims, C-2101 to C-2257, seven blocks in Agent_Harness.md)
+  ./mvnw -q -o verify -> exit 0; surefire reports: 80 classes, 701 tests, 0 failures, 0 errors, 37 skipped; CLAIMS_CHECK problems=0
+  after verify: port 8081 no listener; recommendations USER 22, EVALUATION 49; answer_evaluations 3 rows; retrieval_evaluations max id 1892
+
+R1 2026-09-19 14:10 to 14:26 +0800 Milestone 3 remediation round 1 (no application start, no model or embedding call, no POST, no database query;
+   test shell: .env exported, none of the enable flags, profile, RAG_* or app variables set). Entries above are left as written.
+  Correction of V1's time: the V1 entry above reads "about 14:20 +0800 checks after the write-up". That time is wrong. This file, with the V1
+    entry in it, was committed in a051c0c at 2026-09-19 14:02:24 +0800 and was not changed by the write-up commit 1965430 (14:02:37 +0800)
+    (git log --format='%h %ad' --date=iso -- run.log), so V1's checks ended before 14:02:24 +0800; they came after A2 (app stop, 13:50:55).
+    The time inside that window is unknown: no timestamp of those commands was recorded.
+  answer_tables.py: full.byReferenceHitAt5.<group> gains citedAndVisible, citedNotVisible, citedNotVisibleIds, citedExpectedStatusCounts and
+    notCitedExpectedStatuses (the split of citedExpected), and tables.txt gains one table after the hit@5 group table of 3a.
+    python3 -B answer_tables.py get-37.json get-38.json -> "tables written: pilot 37 full 38 aggregatesMatchStored=True/True offsetsAgree=True";
+    diff against the committed outputs: additions only (tables.json: the five keys in each of the two groups; tables.txt: the six lines of
+    the new table); run again, md5 equal; no __pycache__. For referenceRank1to5: citedAndVisible 15, citedNotVisible 12 (the same ids as
+    full.amongRetrieved.cutOutOfViewCitedExpectedIds), citedExpectedStatusCounts PARTIAL 18 and INSUFFICIENT_EVIDENCE 9.
+  claims.json: C-2258 to C-2262 appended (fileValue on those keys, block retrieval); C-2101 to C-2257 unchanged in id, order and content
+    (162 claims now).
+  ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> git diff shows Agent_Harness.md changed (five bullets at the
+    end of the retrieval block); CLAIMS_CHECK claimsFiles=12 documents=30 problems=0
+  Documents: Follow_Ups.md (RAG-27 and RAG-30 pointers rewritten with the split; AGENT-10 wording; new rows AGENT-11 and AGENT-12),
+    Agent_Harness.md (Next Harness Milestones sentence; one sentence on the change-log bullet).
+  ./mvnw -q -o verify (14:22:55 to 14:25:40 +0800, after the last document edit) -> exit 0; surefire reports: 80 classes, 701 tests,
+    0 failures, 0 errors, 37 skipped; CLAIMS_CHECK claimsFiles=12 documents=30 problems=0. This line was added after that verify; no
+    other file changed after it.
+
+N1 2026-09-19 16:27 +0800 close-out note on R1's time window (no application start, no model or embedding call, no POST, no database query).
+   Entries above are left as written.
+  R1's header reads "14:10 to 14:26 +0800". Its commit 4260ef5 is at 2026-09-19 14:25:54 +0800
+    (git log --format='%h %ad' --date=iso -1 4260ef5), so R1's work ended by 14:25:54 +0800, not 14:26. The start, 14:10, is not checked here.

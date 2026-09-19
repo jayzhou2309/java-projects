@@ -19,7 +19,9 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * Reads the retrieval evaluation set named by {@code rag.evaluation.set} from the classpath and validates its shape. Every violation is reported as an
  * IllegalStateException that names the offending question id, so a broken set fails fast at load time rather than
- * silently skewing a metric. Nothing loaded here reaches a model prompt.
+ * silently skewing a metric. The retrieval evaluation sends nothing loaded here to a chat model; the answer evaluation
+ * ({@link AnswerEvaluationService}) sends a question's ticker and text through the recommendation service, never its id or
+ * its expected passages.
  */
 @Component
 public class RetrievalEvaluationSetLoader {

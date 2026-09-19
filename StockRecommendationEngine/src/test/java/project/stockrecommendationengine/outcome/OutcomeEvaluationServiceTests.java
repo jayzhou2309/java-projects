@@ -87,6 +87,26 @@ class OutcomeEvaluationServiceTests {
         assertThatThrownBy(() -> service.evaluate("missing")).isInstanceOf(java.util.NoSuchElementException.class);
     }
 
+    @Test void anEvaluationPurposeRunIsNeverScoredEvenWhenAskedForById() {
+        var scorable = record("run-eval", 265598L, "BULLISH");
+        var evaluation = new RecommendationRecord(scorable.runId(), scorable.ticker(), scorable.conid(), scorable.requestedAt(),
+                scorable.completedAt(), scorable.question(), scorable.status(), scorable.assessment(), scorable.takeProfit(),
+                scorable.stopLoss(), scorable.confidence(), scorable.lastClose(), scorable.barsAsOf(), scorable.quoteAvailability(),
+                scorable.citedChunkIds(), scorable.limitations(), scorable.modelCalls(), scorable.observedTokens(),
+                scorable.promptVersion(), scorable.model(), scorable.quantVersion(), scorable.processingVersion(),
+                scorable.responseJson(), project.stockrecommendationengine.recommendation.RunPurpose.EVALUATION);
+        when(recommendations.findByRunId("run-eval")).thenReturn(Optional.of(evaluation));
+        when(outcomes.findByRunId("run-eval")).thenReturn(List.of());
+        when(broker.getDailyBars(anyLong(), anyInt())).thenReturn(history(265598L, 6));
+        assertThat(service.evaluate("run-eval")).isEmpty();
+        verify(outcomes, never()).upsert(any());
+        verifyNoInteractions(broker, bars);
+        // The same run as a user run is scored, so the refusal above comes from the purpose alone.
+        when(recommendations.findByRunId("run-eval")).thenReturn(Optional.of(scorable));
+        service.evaluate("run-eval");
+        verify(outcomes, times(2)).upsert(any());
+    }
+
     private static RecommendationRecord record(String runId, Long conid, String assessment) {
         return new RecommendationRecord(runId, "AAPL", conid, NOW, NOW, "q", "COMPLETE", assessment,
                 assessment.equals("BULLISH") ? new BigDecimal("110") : null, assessment.equals("BULLISH") ? new BigDecimal("95") : null,

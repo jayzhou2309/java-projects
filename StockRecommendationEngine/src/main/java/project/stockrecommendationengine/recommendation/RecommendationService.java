@@ -33,6 +33,7 @@ import project.stockrecommendationengine.rag.freshness.FilingFreshness;
 import project.stockrecommendationengine.rag.freshness.FilingFreshnessService;
 import project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties;
 import project.stockrecommendationengine.rag.ingestion.UnknownTickerException;
+import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
 import tools.jackson.databind.json.JsonMapper;
 import static project.stockrecommendationengine.recommendation.RecommendationResponse.ToolTrace;
@@ -117,7 +118,38 @@ public class RecommendationService {
         this.ingestion = ingestion;
     }
 
+    /** The public path: the controller and the watchlist call this, and the run is always stored as a user run. */
     public RecommendationResponse recommend(RecommendationRequest request) {
+        return recommend(request, RunPurpose.USER);
+    }
+
+    /**
+     * The run with an explicit purpose; package-private, so outside this package the only way to store an EVALUATION run
+     * is {@link #recommendForEvaluation}. The run itself is identical (same validation, tools, passage screen, and
+     * citation checks); only the stored purpose differs. No request body or parameter reaches this argument.
+     */
+    RecommendationResponse recommend(RecommendationRequest request, RunPurpose purpose) {
+        return execute(request, purpose, null);
+    }
+
+    /**
+     * The entry point of the answer evaluation: the same run as {@link #recommend(RecommendationRequest, RunPurpose)},
+     * always stored with purpose EVALUATION, returned with what the public response leaves out: every chunk retrieved
+     * during the run (the response's sources hold only the cited ones) beside the text a model was shown for it, cut
+     * by the same function the tools use ({@link RecommendationTools#forModel(RetrievedFilingChunk, int)}). Nothing
+     * here changes a prompt or the public response. {@code evidenceCaptured} is false when the run ended without the
+     * worker handing its evidence over (the outer deadline fired first, or the run failed outside its own limits).
+     */
+    public EvaluationRun recommendForEvaluation(RecommendationRequest request) {
+        var captured = new java.util.concurrent.atomic.AtomicReference<List<EvaluationRun.ShownPassage>>();
+        RecommendationResponse response = execute(request, RunPurpose.EVALUATION, captured);
+        List<EvaluationRun.ShownPassage> retrieved = captured.get();
+        return new EvaluationRun(response, retrieved != null, retrieved == null ? List.of() : retrieved);
+    }
+
+    private RecommendationResponse execute(RecommendationRequest request, RunPurpose purpose,
+            java.util.concurrent.atomic.AtomicReference<List<EvaluationRun.ShownPassage>> captured) {
+        if (purpose == null) throw new IllegalArgumentException("purpose is required");
         if (request == null || !validator.validate(request).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid recommendation request");
         }
@@ -126,7 +158,7 @@ public class RecommendationService {
         String runId = UUID.randomUUID().toString();
         Instant requestedAt = Instant.now();
         Future<RecommendationResponse> future;
-        try { future = workers.submit(() -> run(runId, normalized)); }
+        try { future = workers.submit(() -> run(runId, normalized, captured)); }
         catch (RejectedExecutionException ex) { throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Recommendation capacity reached"); }
         RecommendationResponse response;
         try { response = future.get(properties.getDeadlineMs(), TimeUnit.MILLISECONDS); }
@@ -145,11 +177,12 @@ public class RecommendationService {
             log.debug("Recommendation run={} failure detail", runId, cause);
             response = stopped(runId, normalized.ticker(), "FAILED");
         }
-        return persist(normalized, requestedAt, response);
+        return persist(normalized, requestedAt, response, purpose);
     }
 
     /** Every run is recorded, including stopped ones. A failed write is disclosed in the response, never hidden. */
-    private RecommendationResponse persist(RecommendationRequest request, Instant requestedAt, RecommendationResponse response) {
+    private RecommendationResponse persist(RecommendationRequest request, Instant requestedAt, RecommendationResponse response,
+            RunPurpose purpose) {
         try {
             var analysis = response.priceAnalysis();
             Long conid = null;
@@ -162,7 +195,7 @@ public class RecommendationService {
                     response.sources().stream().map(source -> source.chunkId()).toList(), response.limitations(),
                     response.modelCalls(), response.observedTokens(), PROMPT_VERSION, properties.getModel(),
                     quant == null || quantProperties == null ? null : quantProperties.version(),
-                    ingestion.processingVersion(), json.writeValueAsString(response));
+                    ingestion.processingVersion(), json.writeValueAsString(response), purpose);
             store.save(record);
             return response;
         } catch (Exception ex) {
@@ -209,10 +242,23 @@ public class RecommendationService {
         synchronized List<ToolTrace> trace() { synchronized (trace) { return List.copyOf(trace); } }
     }
 
-    private RecommendationResponse run(String runId, RecommendationRequest request) {
-        var state = new RunState(runId);
+    private RecommendationResponse run(String runId, RecommendationRequest request,
+            java.util.concurrent.atomic.AtomicReference<List<EvaluationRun.ShownPassage>> captured) {
         var tools = new RecommendationTools(request, filings, broker, quant, properties.getPreferredCurrency(),
                 properties.getSearchTopK(), properties.getModelPassageChars());
+        try { return run(runId, request, tools); }
+        finally {
+            // Read-only hand-over for the answer evaluation. The copy is taken under the evidence map's lock, so a cancelled
+            // search that is still writing cannot tear it; a copy that fails all the same is reported as not captured.
+            if (captured != null) {
+                try { captured.set(tools.shown()); }
+                catch (RuntimeException ex) { log.debug("Recommendation run={} evidence hand-over failed", runId, ex); }
+            }
+        }
+    }
+
+    private RecommendationResponse run(String runId, RecommendationRequest request, RecommendationTools tools) {
+        var state = new RunState(runId);
         state.limitations.add("POSITION_SIZING_NOT_IMPLEMENTED");
         state.limitations.add("CONFIDENCE_UNCALIBRATED");
         if (broker == null) state.limitations.add("BROKER_DISABLED");
@@ -346,7 +392,7 @@ public class RecommendationService {
                         the manager receives original tool evidence separately.
                         """, request, allowed, state, context);
                 // Passage text that reads like instructions is disclosed before the manager reads the specialist's report.
-                for (Long chunkId : tools.instructionLikeEvidence) state.limitations.add("EVIDENCE_INSTRUCTION_LIKE:" + chunkId);
+                for (Long chunkId : tools.instructionLikeCopy()) state.limitations.add("EVIDENCE_INSTRUCTION_LIKE:" + chunkId);
                 tools.jackson.databind.JsonNode report;
                 try { report = json.readTree(summary); }
                 catch (RuntimeException ex) { throw new IllegalArgumentException("INVALID_SPECIALIST_REPORT"); }
@@ -355,8 +401,8 @@ public class RecommendationService {
                     throw new IllegalArgumentException("INVALID_SPECIALIST_REPORT");
                 }
                 return json.writeValueAsString(Map.of("specialist", role, "summary", report.path("summary").asText(),
-                        "evidence", role.equals("RAG") ? tools.forModel(tools.evidence.values()) : List.of(),
-                        "instructionLikePassages", role.equals("RAG") ? List.copyOf(tools.instructionLikeEvidence) : List.of(),
+                        "evidence", role.equals("RAG") ? tools.forModel(tools.evidenceCopy()) : List.of(),
+                        "instructionLikePassages", role.equals("RAG") ? tools.instructionLikeCopy() : List.of(),
                         "quotes", role.equals("BROKER") ? List.copyOf(tools.quotes.values()) : List.of(),
                         "portfolio", role.equals("BROKER") && tools.portfolio != null ? tools.portfolio : Map.of(),
                         "priceAnalysis", role.equals("BROKER") && tools.priceAnalysis != null ? tools.priceAnalysis : Map.of(),
@@ -378,8 +424,8 @@ public class RecommendationService {
         executeCall("RAG", new AssistantMessage.ToolCall("prefetch-search", "function", "searchFilings", arguments), callbacks.get("searchFilings"), state);
         var evidence = new LinkedHashMap<String, Object>();
         evidence.put("query", request.question());
-        evidence.put("passages", tools.forModel(tools.evidence.values()));
-        evidence.put("instructionLikePassages", List.copyOf(tools.instructionLikeEvidence));
+        evidence.put("passages", tools.forModel(tools.evidenceCopy()));
+        evidence.put("instructionLikePassages", tools.instructionLikeCopy());
         evidence.put("limitations", state.limitations());
         return evidence;
     }
@@ -709,7 +755,7 @@ public class RecommendationService {
             evidence.put("draft", Map.of("assessment", draft.assessment(), "reasoning", draft.reasoning()));
             evidence.put("citedPassages", tools.forModel(draft.cited().stream().map(tools.evidence::get).toList()));
             evidence.put("uncitedRetrievedPassages", tools.evidence.size() - draft.cited().size());
-            evidence.put("instructionLikePassages", List.copyOf(tools.instructionLikeEvidence));
+            evidence.put("instructionLikePassages", tools.instructionLikeCopy());
             evidence.put("quotes", List.copyOf(tools.quotes.values()));
             evidence.put("priceAnalysis", tools.priceAnalysis == null ? Map.of() : tools.priceAnalysis);
             // The critic judges anchoring from the statistics; the per-run history would only repeat what the manager saw.

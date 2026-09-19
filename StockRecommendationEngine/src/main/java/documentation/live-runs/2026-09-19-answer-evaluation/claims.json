@@ -1,0 +1,2105 @@
+{
+ "description": "Answer evaluation, first live passes (plan plans/2026-09-19-answer-evaluation.md, Milestone 3; Follow_Ups AGENT-10): the pilot (answer-evaluation snapshot 37, six questions) and the full pass (snapshot 38, the 42 questions of set v2), lean profile, gpt-4.1, broker and quant off, beside retrieval snapshot 1891 (defaults, reranking off, committed under 2026-09-18-rag29-section-key). get-37.json and get-38.json are GET /api/rag/evaluate/answers/{id} saved verbatim; phrase-offsets.json is written by export_phrase_offsets.py from a read-only SELECT on the store; tables.json is written by answer_tables.py from those three files and snapshot 1891, so a fileValue claim on tables.json observes what that file holds, and that the file is the unaltered output of the committed script is a review item (rerun the script and compare). The claims count and list; none states a reason for an answer or for a retrieval result.",
+ "labels": {
+  "get-37.json": "the pilot export",
+  "get-38.json": "the export of the pass over the set",
+  "tables.json": "the tables written by the committed script",
+  "phrase-offsets.json": "the phrase offset export of the store",
+  "../2026-09-18-rag29-section-key/snapshot-1891-f-defaults-rerank-off.json": "the retrieval reference at the defaults"
+ },
+ "claims": [
+  {
+   "id": "C-2101",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "id",
+    "expected": 37
+   }
+  },
+  {
+   "id": "C-2102",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "questionCount",
+    "expected": 6
+   }
+  },
+  {
+   "id": "C-2103",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "attempted",
+    "expected": 6
+   }
+  },
+  {
+   "id": "C-2104",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "partial",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2105",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "aggregates.totalTokens",
+    "expected": 34855
+   }
+  },
+  {
+   "id": "C-2106",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "passes.pilot.tokens.meanPerRun",
+    "expected": 5809.17
+   }
+  },
+  {
+   "id": "C-2107",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "passes.pilot.tokens.maxPerRun",
+    "expected": 6565
+   }
+  },
+  {
+   "id": "C-2108",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "passes.pilot.aggregatesMatchStored",
+    "expected": true
+   }
+  },
+  {
+   "id": "C-2109",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "properties.questions",
+    "expected": [
+     "aapl-01",
+     "aapl-08",
+     "msft-05",
+     "msft-09",
+     "nvda-02",
+     "nvda-04"
+    ]
+   }
+  },
+  {
+   "id": "C-2110",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "id",
+    "expected": 38
+   }
+  },
+  {
+   "id": "C-2111",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "questionCount",
+    "expected": 42
+   }
+  },
+  {
+   "id": "C-2112",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "attempted",
+    "expected": 42
+   }
+  },
+  {
+   "id": "C-2113",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "partial",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2114",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.totalTokens",
+    "expected": 258639
+   }
+  },
+  {
+   "id": "C-2115",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.totalModelCalls",
+    "expected": 168
+   }
+  },
+  {
+   "id": "C-2116",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.totalElapsedMs",
+    "expected": 197539
+   }
+  },
+  {
+   "id": "C-2117",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "passes.full.tokens.meanPerRun",
+    "expected": 6158.07
+   }
+  },
+  {
+   "id": "C-2118",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "passes.full.tokens.maxPerRun",
+    "expected": 7925
+   }
+  },
+  {
+   "id": "C-2119",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "passes.full.tokens.maxPerRunQuestion",
+    "expected": "aapl-06"
+   }
+  },
+  {
+   "id": "C-2120",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "passes.full.aggregatesMatchStored",
+    "expected": true
+   }
+  },
+  {
+   "id": "C-2121",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.questions",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-2122",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.activeProfiles",
+    "expected": [
+     "lean"
+    ]
+   }
+  },
+  {
+   "id": "C-2123",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.chatModel",
+    "expected": "gpt-4.1"
+   }
+  },
+  {
+   "id": "C-2124",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.promptVersion",
+    "expected": "manager-specialists-v5-rag-prefetch"
+   }
+  },
+  {
+   "id": "C-2125",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.searchTopK",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-2126",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.modelPassageChars",
+    "expected": 1500
+   }
+  },
+  {
+   "id": "C-2127",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.criticRounds",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-2128",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.maxOutputTokens",
+    "expected": 700
+   }
+  },
+  {
+   "id": "C-2129",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.pauseMs",
+    "expected": 20000
+   }
+  },
+  {
+   "id": "C-2130",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.setVersion",
+    "expected": "v2"
+   }
+  },
+  {
+   "id": "C-2131",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.storeVersions",
+    "expected": [
+     "sections-v2-context-v2-chunk4000-500"
+    ]
+   }
+  },
+  {
+   "id": "C-2132",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.rerankingEnabled",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2133",
+   "basis": "observed",
+   "block": "passes",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "properties.candidateCount",
+    "expected": 40
+   }
+  },
+  {
+   "id": "C-2134",
+   "basis": "inferred",
+   "block": "passes",
+   "text": "The pilot's 34855 observed tokens are below the approved pilot figure of about 45,000 and the full pass's 258639 are below the approved figure of about 300,000; the approved figures are in the plan's Status (plans/2026-09-19-answer-evaluation.md, not read by a check), and the 11,372 tokens spent on the plan before these passes are recorded there too, so the plan's running total is 34855 + 258639 + 11372 = 304866 (arithmetic on the premises and that Status figure)",
+   "from": [
+    "C-2105",
+    "C-2114"
+   ]
+  },
+  {
+   "id": "C-2135",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.withRun",
+    "expected": 42
+   }
+  },
+  {
+   "id": "C-2136",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.measured",
+    "expected": 42
+   }
+  },
+  {
+   "id": "C-2137",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.retrieved",
+    "expected": 30
+   }
+  },
+  {
+   "id": "C-2138",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.shareRetrieved",
+    "expected": 0.714286
+   }
+  },
+  {
+   "id": "C-2139",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.visible",
+    "expected": 15
+   }
+  },
+  {
+   "id": "C-2140",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.shareVisibleGivenRetrieved",
+    "expected": 0.5
+   }
+  },
+  {
+   "id": "C-2141",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.citedAndVisible",
+    "expected": 15
+   }
+  },
+  {
+   "id": "C-2142",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.shareCitedGivenVisible",
+    "expected": 1.0
+   }
+  },
+  {
+   "id": "C-2143",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.figureQuestions",
+    "expected": 22
+   }
+  },
+  {
+   "id": "C-2144",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.figuresInReasoning",
+    "expected": 5
+   }
+  },
+  {
+   "id": "C-2145",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.shareFiguresInReasoning",
+    "expected": 0.227273
+   }
+  },
+  {
+   "id": "C-2146",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.insufficientEvidence",
+    "expected": 19
+   }
+  },
+  {
+   "id": "C-2147",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.insufficientEvidenceRate",
+    "expected": 0.452381
+   }
+  },
+  {
+   "id": "C-2148",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.invalidCitationRuns",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2149",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.statusCounts",
+    "expected": {
+     "PARTIAL": 23,
+     "INSUFFICIENT_EVIDENCE": 19
+    }
+   }
+  },
+  {
+   "id": "C-2150",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.limitationCounts",
+    "expected": {
+     "QUANT_DISABLED": 42,
+     "BROKER_DISABLED": 42,
+     "CRITIC_UNRESOLVED": 3,
+     "CONFIDENCE_UNCALIBRATED": 42,
+     "NO_VERIFIED_CURRENT_QUOTE": 42,
+     "POSITION_SIZING_NOT_IMPLEMENTED": 42
+    }
+   }
+  },
+  {
+   "id": "C-2151",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.answeredRuns",
+    "expected": 42
+   }
+  },
+  {
+   "id": "C-2152",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.noAnswerRuns",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2153",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.shareRetrievedAmongAnswered",
+    "expected": 0.714286
+   }
+  },
+  {
+   "id": "C-2154",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.shareVisibleGivenRetrievedAmongAnswered",
+    "expected": 0.5
+   }
+  },
+  {
+   "id": "C-2155",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.shareCitedGivenVisibleAmongAnswered",
+    "expected": 1.0
+   }
+  },
+  {
+   "id": "C-2156",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "aggregates.insufficientEvidenceRateAmongAnswered",
+    "expected": 0.452381
+   }
+  },
+  {
+   "id": "C-2157",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "aggregates.retrieved",
+    "expected": 4
+   }
+  },
+  {
+   "id": "C-2158",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "aggregates.visible",
+    "expected": 4
+   }
+  },
+  {
+   "id": "C-2159",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "aggregates.citedAndVisible",
+    "expected": 4
+   }
+  },
+  {
+   "id": "C-2160",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "aggregates.figureQuestions",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-2161",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "aggregates.figuresInReasoning",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2162",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "aggregates.insufficientEvidence",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-2163",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "aggregates.statusCounts",
+    "expected": {
+     "PARTIAL": 4,
+     "INSUFFICIENT_EVIDENCE": 2
+    }
+   }
+  },
+  {
+   "id": "C-2164",
+   "basis": "observed",
+   "block": "aggregates",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "aggregates.noAnswerRuns",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2165",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-18-rag29-section-key/snapshot-1891-f-defaults-rerank-off.json",
+    "metric": "hitAt3",
+    "expected": "0.714286"
+   }
+  },
+  {
+   "id": "C-2166",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "metric",
+    "snapshot": "../2026-09-18-rag29-section-key/snapshot-1891-f-defaults-rerank-off.json",
+    "metric": "hitAt5",
+    "expected": "0.785714"
+   }
+  },
+  {
+   "id": "C-2167",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.top3.questions",
+    "expected": 30
+   }
+  },
+  {
+   "id": "C-2168",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.top3.retrievedExpected",
+    "expected": 30
+   }
+  },
+  {
+   "id": "C-2169",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.top3.referenceMatchedChunkRetrievedInRun",
+    "expected": 30
+   }
+  },
+  {
+   "id": "C-2170",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.top3.citedExpected",
+    "expected": 27
+   }
+  },
+  {
+   "id": "C-2171",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.rank4to10.questions",
+    "expected": 7
+   }
+  },
+  {
+   "id": "C-2172",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.rank4to10.retrievedExpected",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2173",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.rank4to10.notRetrievedIds",
+    "expected": [
+     "aapl-09",
+     "msft-01",
+     "msft-04",
+     "msft-07",
+     "nvda-05",
+     "nvda-08",
+     "nvda-12"
+    ]
+   }
+  },
+  {
+   "id": "C-2174",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.notInWindow.questions",
+    "expected": 5
+   }
+  },
+  {
+   "id": "C-2175",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.notInWindow.retrievedExpected",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2176",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceRank.notInWindow.notRetrievedIds",
+    "expected": [
+     "msft-08",
+     "nvda-02",
+     "nvda-04",
+     "nvda-07",
+     "nvda-09"
+    ]
+   }
+  },
+  {
+   "id": "C-2177",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.questions",
+    "expected": 33
+   }
+  },
+  {
+   "id": "C-2178",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.retrievedExpected",
+    "expected": 30
+   }
+  },
+  {
+   "id": "C-2179",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.visibleToModel",
+    "expected": 15
+   }
+  },
+  {
+   "id": "C-2180",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.citedExpected",
+    "expected": 27
+   }
+  },
+  {
+   "id": "C-2181",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.shareCitedExpected",
+    "expected": 0.818182
+   }
+  },
+  {
+   "id": "C-2182",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.notCitedExpectedIds",
+    "expected": [
+     "aapl-07",
+     "msft-03",
+     "msft-04",
+     "msft-12",
+     "nvda-08",
+     "nvda-12"
+    ]
+   }
+  },
+  {
+   "id": "C-2183",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRankAbove5OrNone.questions",
+    "expected": 9
+   }
+  },
+  {
+   "id": "C-2184",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRankAbove5OrNone.retrievedExpected",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2185",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRankAbove5OrNone.citedExpected",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2186",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRankAbove5OrNone.notCitedExpectedIds",
+    "expected": [
+     "aapl-09",
+     "msft-01",
+     "msft-07",
+     "msft-08",
+     "nvda-02",
+     "nvda-04",
+     "nvda-05",
+     "nvda-07",
+     "nvda-09"
+    ]
+   }
+  },
+  {
+   "id": "C-2187",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.questions",
+    "expected": 30
+   }
+  },
+  {
+   "id": "C-2188",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.modelPassageChars",
+    "expected": 1500
+   }
+  },
+  {
+   "id": "C-2189",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.visible",
+    "expected": 15
+   }
+  },
+  {
+   "id": "C-2190",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.cutOutOfView",
+    "expected": 15
+   }
+  },
+  {
+   "id": "C-2191",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.cutOutOfViewIds",
+    "expected": [
+     "aapl-06",
+     "aapl-07",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-06",
+     "msft-10",
+     "msft-12",
+     "nvda-01",
+     "nvda-10",
+     "nvda-11",
+     "nvda-14"
+    ]
+   }
+  },
+  {
+   "id": "C-2192",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.cutOutOfViewCitedExpectedIds",
+    "expected": [
+     "aapl-06",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-06",
+     "msft-10",
+     "nvda-01",
+     "nvda-10",
+     "nvda-11",
+     "nvda-14"
+    ]
+   }
+  },
+  {
+   "id": "C-2193",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.offsetsAgreeWithSnapshot",
+    "expected": true
+   }
+  },
+  {
+   "id": "C-2194",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.cutOutChunkByQuestion",
+    "expected": {
+     "aapl-06": 13868,
+     "aapl-07": 13839,
+     "aapl-10": 13876,
+     "aapl-11": 13824,
+     "aapl-12": 13825,
+     "aapl-14": 13878,
+     "msft-02": 14013,
+     "msft-03": 14016,
+     "msft-06": 13988,
+     "msft-10": 14136,
+     "msft-12": 14018,
+     "nvda-01": 14254,
+     "nvda-10": 14344,
+     "nvda-11": 14254,
+     "nvda-14": 14321
+    }
+   }
+  },
+  {
+   "id": "C-2195",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.cutOutPhraseSpanByQuestion",
+    "expected": {
+     "aapl-06": [
+      1886,
+      1957
+     ],
+     "aapl-07": [
+      2240,
+      2351
+     ],
+     "aapl-10": [
+      1989,
+      2158
+     ],
+     "aapl-11": [
+      3276,
+      3418
+     ],
+     "aapl-12": [
+      1465,
+      1581
+     ],
+     "aapl-14": [
+      1835,
+      1969
+     ],
+     "msft-02": [
+      1904,
+      1977
+     ],
+     "msft-03": [
+      2283,
+      2421
+     ],
+     "msft-06": [
+      1944,
+      2087
+     ],
+     "msft-10": [
+      3081,
+      3135
+     ],
+     "msft-12": [
+      2827,
+      2902
+     ],
+     "nvda-01": [
+      2131,
+      2170
+     ],
+     "nvda-10": [
+      2497,
+      2642
+     ],
+     "nvda-11": [
+      2538,
+      2635
+     ],
+     "nvda-14": [
+      3289,
+      3322
+     ]
+    }
+   }
+  },
+  {
+   "id": "C-2196",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongRetrieved.cutOutPhrasesStraddlingTheCut",
+    "expected": [
+     "aapl-12"
+    ]
+   }
+  },
+  {
+   "id": "C-2197",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "phrase-offsets.json",
+    "path": "chunks[chunkId=13825].contentChars",
+    "expected": 3348
+   }
+  },
+  {
+   "id": "C-2198",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "phrase-offsets.json",
+    "path": "chunks[chunkId=13825].phrases[question=aapl-12].firstStart",
+    "expected": 1465
+   }
+  },
+  {
+   "id": "C-2199",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "phrase-offsets.json",
+    "path": "chunks[chunkId=13825].phrases[question=aapl-12].firstEnd",
+    "expected": 1581
+   }
+  },
+  {
+   "id": "C-2200",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "phrase-offsets.json",
+    "path": "chunks[chunkId=13825].phrases[question=aapl-12].insideCut",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2201",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.referenceMatchedChunkUnderCut.insideCut",
+    "expected": 14
+   }
+  },
+  {
+   "id": "C-2202",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.referenceMatchedChunkUnderCut.beyondCut",
+    "expected": 23
+   }
+  },
+  {
+   "id": "C-2203",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.referenceMatchedChunkUnderCut.noMatchedChunk",
+    "expected": 5
+   }
+  },
+  {
+   "id": "C-2204",
+   "basis": "observed",
+   "block": "visibility",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.referenceMatchedChunkUnderCut.beyondCutIds",
+    "expected": [
+     "aapl-05",
+     "aapl-06",
+     "aapl-07",
+     "aapl-09",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-01",
+     "msft-02",
+     "msft-03",
+     "msft-04",
+     "msft-06",
+     "msft-07",
+     "msft-10",
+     "msft-12",
+     "msft-13",
+     "nvda-01",
+     "nvda-05",
+     "nvda-10",
+     "nvda-11",
+     "nvda-12",
+     "nvda-14"
+    ]
+   }
+  },
+  {
+   "id": "C-2205",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongVisible.questions",
+    "expected": 15
+   }
+  },
+  {
+   "id": "C-2206",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongVisible.cited",
+    "expected": 15
+   }
+  },
+  {
+   "id": "C-2207",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.amongVisible.notCited",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2208",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.listed.insufficientEvidence",
+    "expected": 19
+   }
+  },
+  {
+   "id": "C-2209",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.listed.insufficientEvidenceIds",
+    "expected": [
+     "aapl-06",
+     "aapl-09",
+     "aapl-11",
+     "aapl-14",
+     "msft-01",
+     "msft-02",
+     "msft-04",
+     "msft-08",
+     "msft-10",
+     "msft-12",
+     "nvda-01",
+     "nvda-02",
+     "nvda-04",
+     "nvda-05",
+     "nvda-09",
+     "nvda-10",
+     "nvda-11",
+     "nvda-12",
+     "nvda-14"
+    ]
+   }
+  },
+  {
+   "id": "C-2210",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.listed.insufficientEvidenceRetrievedIds",
+    "expected": [
+     "aapl-06",
+     "aapl-11",
+     "aapl-14",
+     "msft-02",
+     "msft-10",
+     "msft-12",
+     "nvda-01",
+     "nvda-10",
+     "nvda-11",
+     "nvda-14"
+    ]
+   }
+  },
+  {
+   "id": "C-2211",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.listed.insufficientEvidenceVisibleIds",
+    "expected": []
+   }
+  },
+  {
+   "id": "C-2212",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.listed.insufficientEvidenceCitedIds",
+    "expected": [
+     "aapl-06",
+     "aapl-11",
+     "aapl-14",
+     "msft-02",
+     "msft-10",
+     "nvda-01",
+     "nvda-10",
+     "nvda-11",
+     "nvda-14"
+    ]
+   }
+  },
+  {
+   "id": "C-2213",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.listed.noAnswer",
+    "expected": 0
+   }
+  },
+  {
+   "id": "C-2214",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.figures.kindCounts",
+    "expected": {
+     "FIGURE": 28,
+     "NARRATIVE": 14
+    }
+   }
+  },
+  {
+   "id": "C-2215",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.figures.figureKindWithoutFigureCheckIds",
+    "expected": [
+     "aapl-11",
+     "aapl-12",
+     "aapl-13",
+     "aapl-14",
+     "msft-13",
+     "nvda-12"
+    ]
+   }
+  },
+  {
+   "id": "C-2216",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.figures.figureQuestions",
+    "expected": 22
+   }
+  },
+  {
+   "id": "C-2217",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.figures.figuresInReasoning",
+    "expected": 5
+   }
+  },
+  {
+   "id": "C-2218",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.figures.figuresNotInReasoningIds",
+    "expected": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-06",
+     "aapl-07",
+     "aapl-09",
+     "msft-01",
+     "msft-02",
+     "msft-04",
+     "msft-08",
+     "msft-10",
+     "msft-12",
+     "nvda-01",
+     "nvda-02",
+     "nvda-04",
+     "nvda-09",
+     "nvda-11",
+     "nvda-14"
+    ]
+   }
+  },
+  {
+   "id": "C-2219",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.figures.figureQuestionsCitedExpected",
+    "expected": 12
+   }
+  },
+  {
+   "id": "C-2220",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.figures.figuresInReasoningAmongCitedExpected",
+    "expected": 4
+   }
+  },
+  {
+   "id": "C-2221",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.critic.verdictCounts",
+    "expected": {
+     "ACCEPT": 39,
+     "REVISE": 3
+    }
+   }
+  },
+  {
+   "id": "C-2222",
+   "basis": "observed",
+   "block": "citation",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.critic.unsupportedNumeralIds",
+    "expected": [
+     "aapl-07",
+     "msft-01"
+    ]
+   }
+  },
+  {
+   "id": "C-2223",
+   "basis": "observed",
+   "block": "repeat",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "pilotAgainstFull.questions",
+    "expected": [
+     "aapl-01",
+     "aapl-08",
+     "msft-05",
+     "msft-09",
+     "nvda-02",
+     "nvda-04"
+    ]
+   }
+  },
+  {
+   "id": "C-2224",
+   "basis": "observed",
+   "block": "repeat",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "pilotAgainstFull.equalOnEveryComparedField",
+    "expected": [
+     "aapl-01",
+     "aapl-08",
+     "msft-09",
+     "nvda-02",
+     "nvda-04"
+    ]
+   }
+  },
+  {
+   "id": "C-2225",
+   "basis": "observed",
+   "block": "repeat",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "pilotAgainstFull.differing",
+    "expected": [
+     "msft-05"
+    ]
+   }
+  },
+  {
+   "id": "C-2226",
+   "basis": "observed",
+   "block": "repeat",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "pilotAgainstFull.differingOnHeadlineMeasures",
+    "expected": []
+   }
+  },
+  {
+   "id": "C-2227",
+   "basis": "observed",
+   "block": "repeat",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "results[id=msft-05].citedCount",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-2228",
+   "basis": "observed",
+   "block": "repeat",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=msft-05].citedCount",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-2229",
+   "basis": "observed",
+   "block": "repeat",
+   "check": {
+    "type": "fileValue",
+    "file": "get-37.json",
+    "path": "results[id=msft-05].citedHoldingPhrase",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-2230",
+   "basis": "observed",
+   "block": "repeat",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=msft-05].citedHoldingPhrase",
+    "expected": 2
+   }
+  },
+  {
+   "id": "C-2231",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "rank",
+    "snapshot": "../2026-09-18-rag29-section-key/snapshot-1891-f-defaults-rerank-off.json",
+    "question": "nvda-02",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-2232",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-02].retrievedCount",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-2233",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-02].retrievedExpected",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2234",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-02].visibleToModel",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2235",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-02].citedExpected",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2236",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-02].citedCount",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-2237",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-02].figuresInReasoning",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2238",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-02].figureTokensMissing",
+    "expected": [
+     "68"
+    ]
+   }
+  },
+  {
+   "id": "C-2239",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-02].status",
+    "expected": "INSUFFICIENT_EVIDENCE"
+   }
+  },
+  {
+   "id": "C-2240",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-02].criticVerdict",
+    "expected": "ACCEPT"
+   }
+  },
+  {
+   "id": "C-2241",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "rank",
+    "snapshot": "../2026-09-18-rag29-section-key/snapshot-1891-f-defaults-rerank-off.json",
+    "question": "nvda-04",
+    "expected": null
+   }
+  },
+  {
+   "id": "C-2242",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-04].retrievedCount",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-2243",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-04].retrievedExpected",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2244",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-04].visibleToModel",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2245",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-04].citedExpected",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2246",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-04].citedCount",
+    "expected": 3
+   }
+  },
+  {
+   "id": "C-2247",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-04].figuresInReasoning",
+    "expected": false
+   }
+  },
+  {
+   "id": "C-2248",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-04].figureTokensMissing",
+    "expected": [
+     "42,000",
+     "38",
+     "31,000"
+    ]
+   }
+  },
+  {
+   "id": "C-2249",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-04].status",
+    "expected": "INSUFFICIENT_EVIDENCE"
+   }
+  },
+  {
+   "id": "C-2250",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=nvda-04].criticVerdict",
+    "expected": "ACCEPT"
+   }
+  },
+  {
+   "id": "C-2251",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "rank",
+    "snapshot": "../2026-09-18-rag29-section-key/snapshot-1891-f-defaults-rerank-off.json",
+    "question": "aapl-08",
+    "expected": 1
+   }
+  },
+  {
+   "id": "C-2252",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "matchedChunk",
+    "snapshot": "../2026-09-18-rag29-section-key/snapshot-1891-f-defaults-rerank-off.json",
+    "question": "aapl-08",
+    "expected": 13896
+   }
+  },
+  {
+   "id": "C-2253",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=aapl-08].expectedChunkIds",
+    "expected": [
+     13896
+    ]
+   }
+  },
+  {
+   "id": "C-2254",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=aapl-08].visibleChunkIds",
+    "expected": [
+     13896
+    ]
+   }
+  },
+  {
+   "id": "C-2255",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=aapl-08].citedChunkIds",
+    "expected": [
+     13896
+    ]
+   }
+  },
+  {
+   "id": "C-2256",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=aapl-08].status",
+    "expected": "PARTIAL"
+   }
+  },
+  {
+   "id": "C-2257",
+   "basis": "observed",
+   "block": "calledout",
+   "check": {
+    "type": "fileValue",
+    "file": "get-38.json",
+    "path": "results[id=aapl-08].criticVerdict",
+    "expected": "ACCEPT"
+   }
+  },
+  {
+   "id": "C-2258",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.citedAndVisible",
+    "expected": 15
+   }
+  },
+  {
+   "id": "C-2259",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.citedNotVisible",
+    "expected": 12
+   }
+  },
+  {
+   "id": "C-2260",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.citedNotVisibleIds",
+    "expected": [
+     "aapl-06",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-06",
+     "msft-10",
+     "nvda-01",
+     "nvda-10",
+     "nvda-11",
+     "nvda-14"
+    ]
+   }
+  },
+  {
+   "id": "C-2261",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.citedExpectedStatusCounts",
+    "expected": {
+     "PARTIAL": 18,
+     "INSUFFICIENT_EVIDENCE": 9
+    }
+   }
+  },
+  {
+   "id": "C-2262",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.notCitedExpectedStatuses",
+    "expected": {
+     "aapl-07": "PARTIAL",
+     "msft-03": "PARTIAL",
+     "msft-04": "INSUFFICIENT_EVIDENCE",
+     "msft-12": "INSUFFICIENT_EVIDENCE",
+     "nvda-08": "PARTIAL",
+     "nvda-12": "INSUFFICIENT_EVIDENCE"
+    }
+   }
+  }
+ ]
+}

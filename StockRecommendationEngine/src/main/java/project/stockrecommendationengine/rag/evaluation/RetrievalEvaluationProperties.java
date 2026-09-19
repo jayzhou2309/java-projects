@@ -1,5 +1,6 @@
 package project.stockrecommendationengine.rag.evaluation;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
@@ -52,4 +53,28 @@ public class RetrievalEvaluationProperties {
      */
     @NotNull @DecimalMin("0.0") @DecimalMax("1.0")
     private BigDecimal minNonFigureHitAt5 = new BigDecimal("0.60");
+
+    /** Settings of the answer evaluation ({@code POST /api/rag/evaluate/answers}); see {@link AnswerEvaluationService}. */
+    @Valid @NotNull
+    private Answers answers = new Answers();
+
+    @Getter
+    @Setter
+    public static class Answers {
+        /**
+         * Pause between two recommendation runs of one pass (none after the last). Every run calls the chat model; the
+         * default keeps a lean pass (about 7,000 tokens per run) under a 30,000 tokens-per-minute provider allowance.
+         */
+        @Min(0) @Max(600000)
+        private int pauseMs = 20000;
+
+        /**
+         * Directory a pass's snapshot is written to, as one JSON file named with the evaluation time, when it cannot be
+         * stored in {@code answer_evaluations}; relative paths resolve against the working directory. Created on demand.
+         * The default lies outside {@code target/}, which {@code mvnw clean} deletes, and is ignored by git; a file
+         * written there is the only copy of a paid pass's snapshot outside the log, so keep it.
+         */
+        @NotBlank
+        private String fallbackDir = "var/answer-evaluations";
+    }
 }

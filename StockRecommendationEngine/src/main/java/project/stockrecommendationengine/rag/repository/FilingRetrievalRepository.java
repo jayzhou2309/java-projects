@@ -194,17 +194,8 @@ public class FilingRetrievalRepository {
         if (query == null || query.isBlank()) {
             return "";
         }
-        Set<String> tokens = new LinkedHashSet<>();
-        boolean hasFigureBesidesYears = false;
-        Matcher matcher = KEYWORD_TOKEN.matcher(query.toLowerCase(Locale.ROOT));
-        while (matcher.find()) {
-            String token = matcher.group();
-            if (token.length() >= 2 && NUMERIC_TOKEN.matcher(token).matches()) {
-                tokens.add(token);
-                hasFigureBesidesYears |= !isYear(token);
-            }
-        }
-        if (!hasFigureBesidesYears) {
+        Set<String> tokens = numericTokens(query);
+        if (tokens.stream().allMatch(FilingRetrievalRepository::isYear)) {
             return "";
         }
         StringJoiner termJoiner = new StringJoiner(" & ");
@@ -212,6 +203,39 @@ public class FilingRetrievalRepository {
             termJoiner.add(quoteTerm(token));
         }
         return termJoiner.toString();
+    }
+
+    /**
+     * The figures of a text under the rule {@link #figureTerms} applies: its numeric tokens (length 2 or more, distinct,
+     * in order of first appearance) with the years left out. Empty exactly when {@code figureTerms} is empty. Used by the
+     * answer evaluation to decide which numerals of an accepted phrase must appear in the reasoning, so both read one rule.
+     */
+    public static List<String> figureTokens(String text) {
+        return numericTokens(text).stream().filter(token -> !isYear(token)).toList();
+    }
+
+    /** Every numeric token {@link #KEYWORD_TOKEN} finds, length 2 or more, distinct, in order of first appearance; years included. */
+    public static Set<String> numericTokens(String text) {
+        return numericTokens(text, 2);
+    }
+
+    /**
+     * The same tokens with another minimum length. Retrieval always uses 2 (the method above); the answer evaluation reads
+     * a reasoning's numerals with 1, so a single digit such as the 7 of "$7 billion" can equal a phrase figure 7.0.
+     */
+    public static Set<String> numericTokens(String text, int minLength) {
+        Set<String> tokens = new LinkedHashSet<>();
+        if (text == null) {
+            return tokens;
+        }
+        Matcher matcher = KEYWORD_TOKEN.matcher(text.toLowerCase(Locale.ROOT));
+        while (matcher.find()) {
+            String token = matcher.group();
+            if (token.length() >= minLength && NUMERIC_TOKEN.matcher(token).matches()) {
+                tokens.add(token);
+            }
+        }
+        return tokens;
     }
 
     private static boolean isYear(String token) {

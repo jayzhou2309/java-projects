@@ -38,7 +38,7 @@ public class OutcomeRepository {
         return jdbc.queryForList("SELECT horizon_days FROM recommendation_outcomes WHERE run_id = ? ORDER BY horizon_days", Integer.class, runId);
     }
 
-    /** Per assessment and horizon over every stored outcome joined to its recommendation. */
+    /** Per assessment and horizon over every stored outcome joined to its user recommendation; evaluation runs are excluded. */
     public List<OutcomeSummary> summary() {
         return jdbc.query("""
                 SELECT r.assessment, o.horizon_days, count(*) AS outcomes,
@@ -47,6 +47,7 @@ public class OutcomeRepository {
                        avg(CASE WHEN o.first_touch = 'NO_LEVELS' THEN NULL WHEN o.first_touch = 'TAKE_PROFIT' THEN 1.0 ELSE 0.0 END) AS tp_rate,
                        avg(CASE WHEN o.first_touch = 'NO_LEVELS' THEN NULL WHEN o.first_touch = 'STOP_LOSS' THEN 1.0 ELSE 0.0 END) AS sl_rate
                 FROM recommendation_outcomes o JOIN recommendations r ON r.run_id = o.run_id
+                WHERE r.purpose = 'USER'
                 GROUP BY r.assessment, o.horizon_days ORDER BY r.assessment, o.horizon_days
                 """, (rs, i) -> new OutcomeSummary(rs.getString("assessment"), rs.getInt("horizon_days"), rs.getLong("outcomes"),
                 scaled(rs.getBigDecimal("avg_return")), scaled(rs.getBigDecimal("avg_excess")), scaled(rs.getBigDecimal("hit_rate")),

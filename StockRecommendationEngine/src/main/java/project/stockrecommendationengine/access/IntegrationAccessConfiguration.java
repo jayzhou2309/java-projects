@@ -14,6 +14,7 @@ import project.stockrecommendationengine.broker.api.BrokerController;
 import project.stockrecommendationengine.broker.ibkr.IbkrProperties;
 import project.stockrecommendationengine.outcome.OutcomeController;
 import project.stockrecommendationengine.quant.QuantController;
+import project.stockrecommendationengine.rag.controller.AnswerEvaluationController;
 import project.stockrecommendationengine.rag.controller.RetrievalEvaluationController;
 import project.stockrecommendationengine.recommendation.RecommendationController;
 import project.stockrecommendationengine.recommendation.WatchlistController;
@@ -41,6 +42,7 @@ public class IntegrationAccessConfiguration implements WebMvcConfigurer, Handler
                 || OutcomeController.class.isAssignableFrom(method.getBeanType())
                 || RecommendationController.class.isAssignableFrom(method.getBeanType())
                 || RetrievalEvaluationController.class.isAssignableFrom(method.getBeanType())
+                || AnswerEvaluationController.class.isAssignableFrom(method.getBeanType())
                 || WatchlistController.class.isAssignableFrom(method.getBeanType()))) return true;
         response.setHeader("Cache-Control", "no-store");
         String supplied = request.getHeader("Authorization");

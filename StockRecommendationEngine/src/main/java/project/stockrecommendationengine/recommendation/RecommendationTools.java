@@ -25,9 +25,19 @@ final class RecommendationTools {
     private final int searchTopK;
     private final int modelPassageChars;
     private final JsonMapper json = JsonMapper.builder().build();
-    final Map<Long, RetrievedFilingChunk> evidence = new LinkedHashMap<>();
-    /** Retrieved passages whose text looks like instructions to a model rather than filing prose; disclosed, never acted on. */
-    final Set<Long> instructionLikeEvidence = new LinkedHashSet<>();
+    /**
+     * Every chunk retrieved during the run, in order of first retrieval. Synchronised: searches of one run can execute on
+     * several threads, and a search cancelled by a run limit can still finish and write while the run's end is being read.
+     * Single calls (put, get, containsKey, size) are safe as they are; anything that walks the map reads
+     * {@link #evidenceCopy()} instead, which copies under the map's lock.
+     */
+    final Map<Long, RetrievedFilingChunk> evidence = Collections.synchronizedMap(new LinkedHashMap<>());
+    /**
+     * Retrieved passages whose text looks like instructions to a model rather than filing prose; disclosed, never acted on.
+     * Synchronised for the same reason as {@link #evidence}, in order of first screening: a lost id would drop a screened
+     * passage from the run's disclosure. Anything that walks the set reads {@link #instructionLikeCopy()} instead.
+     */
+    final Set<Long> instructionLikeEvidence = Collections.synchronizedSet(new LinkedHashSet<>());
     final Map<Long, Instrument> instruments = new LinkedHashMap<>();
     final Map<Long, Quote> quotes = new LinkedHashMap<>();
     boolean portfolioRetrieved;
@@ -54,6 +64,23 @@ final class RecommendationTools {
     /** The passages a model sees: full evidence stays in {@link #evidence}; text beyond the limit is cut and marked. */
     List<RetrievedFilingChunk> forModel(Collection<RetrievedFilingChunk> chunks) {
         return chunks.stream().map(chunk -> forModel(chunk, modelPassageChars)).toList();
+    }
+    /**
+     * Every chunk retrieved so far beside the text a model is shown for it, from the same cut as every model-facing copy.
+     * The cut depends only on the chunk and the configured limit, so a chunk returned by several searches is shown the
+     * same text each time. Read by the answer evaluation after the run; it never reaches a prompt.
+     */
+    List<EvaluationRun.ShownPassage> shown() {
+        return evidenceCopy().stream()
+                .map(chunk -> new EvaluationRun.ShownPassage(chunk, forModel(chunk, modelPassageChars).content())).toList();
+    }
+    /** The chunks retrieved so far, copied while holding the map's lock, so a concurrent search cannot change the map mid-copy. */
+    List<RetrievedFilingChunk> evidenceCopy() {
+        synchronized (evidence) { return List.copyOf(evidence.values()); }
+    }
+    /** The screened chunk ids so far, copied while holding the set's lock, so a concurrent search cannot change the set mid-copy. */
+    List<Long> instructionLikeCopy() {
+        synchronized (instructionLikeEvidence) { return List.copyOf(instructionLikeEvidence); }
     }
     static RetrievedFilingChunk forModel(RetrievedFilingChunk chunk, int maxChars) {
         String content = chunk.content();

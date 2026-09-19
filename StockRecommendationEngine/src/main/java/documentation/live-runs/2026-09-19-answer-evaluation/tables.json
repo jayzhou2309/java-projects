@@ -1,0 +1,2560 @@
+{
+ "description": "Written by answer_tables.py from the two answer-evaluation exports, phrase-offsets.json and retrieval snapshot 1891; counts and lists only. referenceRank is the question's stored rank in the retrieval reference (window 10, defaults); the other measures are the full pass's unless a key says pilot.",
+ "inputs": {
+  "pilot": "get-37.json",
+  "full": "get-38.json",
+  "retrievalReference": 1891,
+  "phraseOffsets": "phrase-offsets.json"
+ },
+ "passes": {
+  "pilot": {
+   "snapshot": 37,
+   "evaluatedAt": "2026-09-19T05:32:05.889768Z",
+   "questionCount": 6,
+   "attempted": 6,
+   "partial": false,
+   "partialReason": null,
+   "notAttempted": [],
+   "aggregatesMatchStored": true,
+   "aggregateDifferences": [],
+   "aggregates": {
+    "attempted": 6,
+    "withRun": 6,
+    "measured": 6,
+    "retrieved": 4,
+    "shareRetrieved": 0.666667,
+    "visible": 4,
+    "shareVisibleGivenRetrieved": 1.0,
+    "citedAndVisible": 4,
+    "shareCitedGivenVisible": 1.0,
+    "figureQuestions": 3,
+    "figuresInReasoning": 0,
+    "shareFiguresInReasoning": 0.0,
+    "insufficientEvidence": 2,
+    "insufficientEvidenceRate": 0.333333,
+    "invalidCitationRuns": 0,
+    "statusCounts": {
+     "INSUFFICIENT_EVIDENCE": 2,
+     "PARTIAL": 4
+    },
+    "limitationCounts": {
+     "BROKER_DISABLED": 6,
+     "CONFIDENCE_UNCALIBRATED": 6,
+     "NO_VERIFIED_CURRENT_QUOTE": 6,
+     "POSITION_SIZING_NOT_IMPLEMENTED": 6,
+     "QUANT_DISABLED": 6
+    },
+    "totalTokens": 34855,
+    "totalModelCalls": 24,
+    "totalElapsedMs": 28989,
+    "answeredRuns": 6,
+    "noAnswerRuns": 0,
+    "measuredAmongAnswered": 6,
+    "retrievedAmongAnswered": 4,
+    "shareRetrievedAmongAnswered": 0.666667,
+    "visibleAmongAnswered": 4,
+    "shareVisibleGivenRetrievedAmongAnswered": 1.0,
+    "citedAndVisibleAmongAnswered": 4,
+    "shareCitedGivenVisibleAmongAnswered": 1.0,
+    "figureQuestionsAmongAnswered": 3,
+    "figuresInReasoningAmongAnswered": 0,
+    "shareFiguresInReasoningAmongAnswered": 0.0,
+    "insufficientAmongAnswered": 2,
+    "insufficientEvidenceRateAmongAnswered": 0.333333
+   },
+   "tokens": {
+    "total": 34855,
+    "runs": 6,
+    "meanPerRun": 5809.17,
+    "maxPerRun": 6565,
+    "maxPerRunQuestion": "nvda-04"
+   }
+  },
+  "full": {
+   "snapshot": 38,
+   "evaluatedAt": "2026-09-19T05:50:19.112766Z",
+   "questionCount": 42,
+   "attempted": 42,
+   "partial": false,
+   "partialReason": null,
+   "notAttempted": [],
+   "aggregatesMatchStored": true,
+   "aggregateDifferences": [],
+   "aggregates": {
+    "attempted": 42,
+    "withRun": 42,
+    "measured": 42,
+    "retrieved": 30,
+    "shareRetrieved": 0.714286,
+    "visible": 15,
+    "shareVisibleGivenRetrieved": 0.5,
+    "citedAndVisible": 15,
+    "shareCitedGivenVisible": 1.0,
+    "figureQuestions": 22,
+    "figuresInReasoning": 5,
+    "shareFiguresInReasoning": 0.227273,
+    "insufficientEvidence": 19,
+    "insufficientEvidenceRate": 0.452381,
+    "invalidCitationRuns": 0,
+    "statusCounts": {
+     "INSUFFICIENT_EVIDENCE": 19,
+     "PARTIAL": 23
+    },
+    "limitationCounts": {
+     "BROKER_DISABLED": 42,
+     "CONFIDENCE_UNCALIBRATED": 42,
+     "CRITIC_UNRESOLVED": 3,
+     "NO_VERIFIED_CURRENT_QUOTE": 42,
+     "POSITION_SIZING_NOT_IMPLEMENTED": 42,
+     "QUANT_DISABLED": 42
+    },
+    "totalTokens": 258639,
+    "totalModelCalls": 168,
+    "totalElapsedMs": 197539,
+    "answeredRuns": 42,
+    "noAnswerRuns": 0,
+    "measuredAmongAnswered": 42,
+    "retrievedAmongAnswered": 30,
+    "shareRetrievedAmongAnswered": 0.714286,
+    "visibleAmongAnswered": 15,
+    "shareVisibleGivenRetrievedAmongAnswered": 0.5,
+    "citedAndVisibleAmongAnswered": 15,
+    "shareCitedGivenVisibleAmongAnswered": 1.0,
+    "figureQuestionsAmongAnswered": 22,
+    "figuresInReasoningAmongAnswered": 5,
+    "shareFiguresInReasoningAmongAnswered": 0.227273,
+    "insufficientAmongAnswered": 19,
+    "insufficientEvidenceRateAmongAnswered": 0.452381
+   },
+   "tokens": {
+    "total": 258639,
+    "runs": 42,
+    "meanPerRun": 6158.07,
+    "maxPerRun": 7925,
+    "maxPerRunQuestion": "aapl-06"
+   }
+  }
+ },
+ "full": {
+  "byReferenceRank": {
+   "top3": {
+    "questions": 30,
+    "retrievedExpected": 30,
+    "notRetrieved": 0,
+    "notMeasured": 0,
+    "retrievedExpectedIds": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-04",
+     "aapl-05",
+     "aapl-06",
+     "aapl-07",
+     "aapl-08",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-13",
+     "aapl-14",
+     "msft-02",
+     "msft-03",
+     "msft-05",
+     "msft-06",
+     "msft-09",
+     "msft-10",
+     "msft-11",
+     "msft-12",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-03",
+     "nvda-06",
+     "nvda-10",
+     "nvda-11",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "notRetrievedIds": [],
+    "citedExpected": 27,
+    "citedExpectedIds": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-04",
+     "aapl-05",
+     "aapl-06",
+     "aapl-08",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-13",
+     "aapl-14",
+     "msft-02",
+     "msft-05",
+     "msft-06",
+     "msft-09",
+     "msft-10",
+     "msft-11",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-03",
+     "nvda-06",
+     "nvda-10",
+     "nvda-11",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "referenceMatchedChunkRetrievedInRun": 30,
+    "referenceMatchedChunkNotRetrievedInRunIds": []
+   },
+   "rank4to10": {
+    "questions": 7,
+    "retrievedExpected": 0,
+    "notRetrieved": 7,
+    "notMeasured": 0,
+    "retrievedExpectedIds": [],
+    "notRetrievedIds": [
+     "aapl-09",
+     "msft-01",
+     "msft-04",
+     "msft-07",
+     "nvda-05",
+     "nvda-08",
+     "nvda-12"
+    ],
+    "citedExpected": 0,
+    "citedExpectedIds": [],
+    "referenceMatchedChunkRetrievedInRun": 0,
+    "referenceMatchedChunkNotRetrievedInRunIds": [
+     "aapl-09",
+     "msft-01",
+     "msft-04",
+     "msft-07",
+     "nvda-05",
+     "nvda-08",
+     "nvda-12"
+    ]
+   },
+   "notInWindow": {
+    "questions": 5,
+    "retrievedExpected": 0,
+    "notRetrieved": 5,
+    "notMeasured": 0,
+    "retrievedExpectedIds": [],
+    "notRetrievedIds": [
+     "msft-08",
+     "nvda-02",
+     "nvda-04",
+     "nvda-07",
+     "nvda-09"
+    ],
+    "citedExpected": 0,
+    "citedExpectedIds": [],
+    "referenceMatchedChunkRetrievedInRun": 0,
+    "referenceMatchedChunkNotRetrievedInRunIds": []
+   }
+  },
+  "byReferenceHitAt5": {
+   "referenceRank1to5": {
+    "questions": 33,
+    "retrievedExpected": 30,
+    "visibleToModel": 15,
+    "citedExpected": 27,
+    "shareCitedExpected": 0.818182,
+    "citedExpectedIds": [
+     "aapl-01",
+     "aapl-02",
+     "aapl-03",
+     "aapl-04",
+     "aapl-05",
+     "aapl-06",
+     "aapl-08",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-13",
+     "aapl-14",
+     "msft-02",
+     "msft-05",
+     "msft-06",
+     "msft-09",
+     "msft-10",
+     "msft-11",
+     "msft-13",
+     "msft-14",
+     "nvda-01",
+     "nvda-03",
+     "nvda-06",
+     "nvda-10",
+     "nvda-11",
+     "nvda-13",
+     "nvda-14"
+    ],
+    "notCitedExpectedIds": [
+     "aapl-07",
+     "msft-03",
+     "msft-04",
+     "msft-12",
+     "nvda-08",
+     "nvda-12"
+    ],
+    "citedAndVisible": 15,
+    "citedNotVisible": 12,
+    "citedNotVisibleIds": [
+     "aapl-06",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-06",
+     "msft-10",
+     "nvda-01",
+     "nvda-10",
+     "nvda-11",
+     "nvda-14"
+    ],
+    "citedExpectedStatusCounts": {
+     "PARTIAL": 18,
+     "INSUFFICIENT_EVIDENCE": 9
+    },
+    "notCitedExpectedStatuses": {
+     "aapl-07": "PARTIAL",
+     "msft-03": "PARTIAL",
+     "msft-04": "INSUFFICIENT_EVIDENCE",
+     "msft-12": "INSUFFICIENT_EVIDENCE",
+     "nvda-08": "PARTIAL",
+     "nvda-12": "INSUFFICIENT_EVIDENCE"
+    }
+   },
+   "referenceRankAbove5OrNone": {
+    "questions": 9,
+    "retrievedExpected": 0,
+    "visibleToModel": 0,
+    "citedExpected": 0,
+    "shareCitedExpected": 0.0,
+    "citedExpectedIds": [],
+    "notCitedExpectedIds": [
+     "aapl-09",
+     "msft-01",
+     "msft-07",
+     "msft-08",
+     "nvda-02",
+     "nvda-04",
+     "nvda-05",
+     "nvda-07",
+     "nvda-09"
+    ],
+    "citedAndVisible": 0,
+    "citedNotVisible": 0,
+    "citedNotVisibleIds": [],
+    "citedExpectedStatusCounts": {},
+    "notCitedExpectedStatuses": {
+     "aapl-09": "INSUFFICIENT_EVIDENCE",
+     "msft-01": "INSUFFICIENT_EVIDENCE",
+     "msft-07": "PARTIAL",
+     "msft-08": "INSUFFICIENT_EVIDENCE",
+     "nvda-02": "INSUFFICIENT_EVIDENCE",
+     "nvda-04": "INSUFFICIENT_EVIDENCE",
+     "nvda-05": "INSUFFICIENT_EVIDENCE",
+     "nvda-07": "PARTIAL",
+     "nvda-09": "INSUFFICIENT_EVIDENCE"
+    }
+   }
+  },
+  "amongRetrieved": {
+   "questions": 30,
+   "modelPassageChars": 1500,
+   "visible": 15,
+   "cutOutOfView": 15,
+   "cutOutOfViewIds": [
+    "aapl-06",
+    "aapl-07",
+    "aapl-10",
+    "aapl-11",
+    "aapl-12",
+    "aapl-14",
+    "msft-02",
+    "msft-03",
+    "msft-06",
+    "msft-10",
+    "msft-12",
+    "nvda-01",
+    "nvda-10",
+    "nvda-11",
+    "nvda-14"
+   ],
+   "cutOutOfViewCitedExpectedIds": [
+    "aapl-06",
+    "aapl-10",
+    "aapl-11",
+    "aapl-12",
+    "aapl-14",
+    "msft-02",
+    "msft-06",
+    "msft-10",
+    "nvda-01",
+    "nvda-10",
+    "nvda-11",
+    "nvda-14"
+   ],
+   "cutOutPhrases": [
+    {
+     "question": "aapl-06",
+     "chunk": 13868,
+     "contentChars": 3690,
+     "phraseStart": 1886,
+     "phraseEnd": 1957,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "aapl-07",
+     "chunk": 13839,
+     "contentChars": 3119,
+     "phraseStart": 2240,
+     "phraseEnd": 2351,
+     "occurrences": 1,
+     "cited": false
+    },
+    {
+     "question": "aapl-10",
+     "chunk": 13876,
+     "contentChars": 2973,
+     "phraseStart": 1989,
+     "phraseEnd": 2158,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "aapl-11",
+     "chunk": 13824,
+     "contentChars": 3430,
+     "phraseStart": 3276,
+     "phraseEnd": 3418,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "aapl-12",
+     "chunk": 13825,
+     "contentChars": 3348,
+     "phraseStart": 1465,
+     "phraseEnd": 1581,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "aapl-14",
+     "chunk": 13878,
+     "contentChars": 3923,
+     "phraseStart": 1835,
+     "phraseEnd": 1969,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "msft-02",
+     "chunk": 14013,
+     "contentChars": 3493,
+     "phraseStart": 1904,
+     "phraseEnd": 1977,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "msft-03",
+     "chunk": 14016,
+     "contentChars": 3073,
+     "phraseStart": 2283,
+     "phraseEnd": 2421,
+     "occurrences": 1,
+     "cited": false
+    },
+    {
+     "question": "msft-06",
+     "chunk": 13988,
+     "contentChars": 3936,
+     "phraseStart": 1944,
+     "phraseEnd": 2087,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "msft-10",
+     "chunk": 14136,
+     "contentChars": 3678,
+     "phraseStart": 3081,
+     "phraseEnd": 3135,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "msft-12",
+     "chunk": 14018,
+     "contentChars": 3155,
+     "phraseStart": 2827,
+     "phraseEnd": 2902,
+     "occurrences": 1,
+     "cited": false
+    },
+    {
+     "question": "nvda-01",
+     "chunk": 14254,
+     "contentChars": 3867,
+     "phraseStart": 2131,
+     "phraseEnd": 2170,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "nvda-10",
+     "chunk": 14344,
+     "contentChars": 3863,
+     "phraseStart": 2497,
+     "phraseEnd": 2642,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "nvda-11",
+     "chunk": 14254,
+     "contentChars": 3867,
+     "phraseStart": 2538,
+     "phraseEnd": 2635,
+     "occurrences": 1,
+     "cited": true
+    },
+    {
+     "question": "nvda-14",
+     "chunk": 14321,
+     "contentChars": 3925,
+     "phraseStart": 3289,
+     "phraseEnd": 3322,
+     "occurrences": 1,
+     "cited": true
+    }
+   ],
+   "cutOutPhraseSpanByQuestion": {
+    "aapl-06": [
+     1886,
+     1957
+    ],
+    "aapl-07": [
+     2240,
+     2351
+    ],
+    "aapl-10": [
+     1989,
+     2158
+    ],
+    "aapl-11": [
+     3276,
+     3418
+    ],
+    "aapl-12": [
+     1465,
+     1581
+    ],
+    "aapl-14": [
+     1835,
+     1969
+    ],
+    "msft-02": [
+     1904,
+     1977
+    ],
+    "msft-03": [
+     2283,
+     2421
+    ],
+    "msft-06": [
+     1944,
+     2087
+    ],
+    "msft-10": [
+     3081,
+     3135
+    ],
+    "msft-12": [
+     2827,
+     2902
+    ],
+    "nvda-01": [
+     2131,
+     2170
+    ],
+    "nvda-10": [
+     2497,
+     2642
+    ],
+    "nvda-11": [
+     2538,
+     2635
+    ],
+    "nvda-14": [
+     3289,
+     3322
+    ]
+   },
+   "cutOutChunkByQuestion": {
+    "aapl-06": 13868,
+    "aapl-07": 13839,
+    "aapl-10": 13876,
+    "aapl-11": 13824,
+    "aapl-12": 13825,
+    "aapl-14": 13878,
+    "msft-02": 14013,
+    "msft-03": 14016,
+    "msft-06": 13988,
+    "msft-10": 14136,
+    "msft-12": 14018,
+    "nvda-01": 14254,
+    "nvda-10": 14344,
+    "nvda-11": 14254,
+    "nvda-14": 14321
+   },
+   "cutOutPhrasesStraddlingTheCut": [
+    "aapl-12"
+   ],
+   "offsetsAgreeWithSnapshot": true,
+   "offsetDisagreements": []
+  },
+  "referenceMatchedChunkUnderCut": {
+   "modelPassageChars": 1500,
+   "insideCut": 14,
+   "beyondCut": 23,
+   "noMatchedChunk": 5,
+   "beyondCutIds": [
+    "aapl-05",
+    "aapl-06",
+    "aapl-07",
+    "aapl-09",
+    "aapl-10",
+    "aapl-11",
+    "aapl-12",
+    "aapl-14",
+    "msft-01",
+    "msft-02",
+    "msft-03",
+    "msft-04",
+    "msft-06",
+    "msft-07",
+    "msft-10",
+    "msft-12",
+    "msft-13",
+    "nvda-01",
+    "nvda-05",
+    "nvda-10",
+    "nvda-11",
+    "nvda-12",
+    "nvda-14"
+   ],
+   "noMatchedChunkIds": [
+    "msft-08",
+    "nvda-02",
+    "nvda-04",
+    "nvda-07",
+    "nvda-09"
+   ],
+   "beyondCutPhrases": [
+    {
+     "question": "aapl-05",
+     "chunk": 13789,
+     "contentChars": 3981,
+     "phraseStart": 3121,
+     "phraseEnd": 3219
+    },
+    {
+     "question": "aapl-06",
+     "chunk": 13868,
+     "contentChars": 3690,
+     "phraseStart": 1886,
+     "phraseEnd": 1957
+    },
+    {
+     "question": "aapl-07",
+     "chunk": 13839,
+     "contentChars": 3119,
+     "phraseStart": 2240,
+     "phraseEnd": 2351
+    },
+    {
+     "question": "aapl-09",
+     "chunk": 13879,
+     "contentChars": 3824,
+     "phraseStart": 2531,
+     "phraseEnd": 2622
+    },
+    {
+     "question": "aapl-10",
+     "chunk": 13876,
+     "contentChars": 2973,
+     "phraseStart": 1989,
+     "phraseEnd": 2158
+    },
+    {
+     "question": "aapl-11",
+     "chunk": 13824,
+     "contentChars": 3430,
+     "phraseStart": 3276,
+     "phraseEnd": 3418
+    },
+    {
+     "question": "aapl-12",
+     "chunk": 13825,
+     "contentChars": 3348,
+     "phraseStart": 1465,
+     "phraseEnd": 1581
+    },
+    {
+     "question": "aapl-14",
+     "chunk": 13878,
+     "contentChars": 3923,
+     "phraseStart": 1835,
+     "phraseEnd": 1969
+    },
+    {
+     "question": "msft-01",
+     "chunk": 14013,
+     "contentChars": 3493,
+     "phraseStart": 1845,
+     "phraseEnd": 1900
+    },
+    {
+     "question": "msft-02",
+     "chunk": 14013,
+     "contentChars": 3493,
+     "phraseStart": 1904,
+     "phraseEnd": 1977
+    },
+    {
+     "question": "msft-03",
+     "chunk": 14016,
+     "contentChars": 3073,
+     "phraseStart": 2283,
+     "phraseEnd": 2421
+    },
+    {
+     "question": "msft-04",
+     "chunk": 13965,
+     "contentChars": 3907,
+     "phraseStart": 3503,
+     "phraseEnd": 3613
+    },
+    {
+     "question": "msft-06",
+     "chunk": 13988,
+     "contentChars": 3936,
+     "phraseStart": 1944,
+     "phraseEnd": 2087
+    },
+    {
+     "question": "msft-07",
+     "chunk": 13994,
+     "contentChars": 3959,
+     "phraseStart": 2163,
+     "phraseEnd": 2255
+    },
+    {
+     "question": "msft-10",
+     "chunk": 14136,
+     "contentChars": 3678,
+     "phraseStart": 3081,
+     "phraseEnd": 3135
+    },
+    {
+     "question": "msft-12",
+     "chunk": 14018,
+     "contentChars": 3155,
+     "phraseStart": 2827,
+     "phraseEnd": 2902
+    },
+    {
+     "question": "msft-13",
+     "chunk": 14022,
+     "contentChars": 3823,
+     "phraseStart": 3377,
+     "phraseEnd": 3485
+    },
+    {
+     "question": "nvda-01",
+     "chunk": 14254,
+     "contentChars": 3867,
+     "phraseStart": 2131,
+     "phraseEnd": 2170
+    },
+    {
+     "question": "nvda-05",
+     "chunk": 14198,
+     "contentChars": 3877,
+     "phraseStart": 2401,
+     "phraseEnd": 2554
+    },
+    {
+     "question": "nvda-10",
+     "chunk": 14344,
+     "contentChars": 3863,
+     "phraseStart": 2497,
+     "phraseEnd": 2642
+    },
+    {
+     "question": "nvda-11",
+     "chunk": 14254,
+     "contentChars": 3867,
+     "phraseStart": 2538,
+     "phraseEnd": 2635
+    },
+    {
+     "question": "nvda-12",
+     "chunk": 14251,
+     "contentChars": 3381,
+     "phraseStart": 1549,
+     "phraseEnd": 1634
+    },
+    {
+     "question": "nvda-14",
+     "chunk": 14321,
+     "contentChars": 3925,
+     "phraseStart": 3289,
+     "phraseEnd": 3322
+    }
+   ]
+  },
+  "amongVisible": {
+   "questions": 15,
+   "cited": 15,
+   "notCited": 0,
+   "notCitedIds": [],
+   "notCitedStatuses": {}
+  },
+  "listed": {
+   "insufficientEvidence": 19,
+   "insufficientEvidenceIds": [
+    "aapl-06",
+    "aapl-09",
+    "aapl-11",
+    "aapl-14",
+    "msft-01",
+    "msft-02",
+    "msft-04",
+    "msft-08",
+    "msft-10",
+    "msft-12",
+    "nvda-01",
+    "nvda-02",
+    "nvda-04",
+    "nvda-05",
+    "nvda-09",
+    "nvda-10",
+    "nvda-11",
+    "nvda-12",
+    "nvda-14"
+   ],
+   "insufficientEvidenceRetrievedIds": [
+    "aapl-06",
+    "aapl-11",
+    "aapl-14",
+    "msft-02",
+    "msft-10",
+    "msft-12",
+    "nvda-01",
+    "nvda-10",
+    "nvda-11",
+    "nvda-14"
+   ],
+   "insufficientEvidenceVisibleIds": [],
+   "insufficientEvidenceCitedIds": [
+    "aapl-06",
+    "aapl-11",
+    "aapl-14",
+    "msft-02",
+    "msft-10",
+    "nvda-01",
+    "nvda-10",
+    "nvda-11",
+    "nvda-14"
+   ],
+   "noAnswer": 0,
+   "noAnswerIds": [],
+   "noAnswerStatuses": {}
+  },
+  "figures": {
+   "kindCounts": {
+    "FIGURE": 28,
+    "NARRATIVE": 14
+   },
+   "figureKindWithoutFigureCheckIds": [
+    "aapl-11",
+    "aapl-12",
+    "aapl-13",
+    "aapl-14",
+    "msft-13",
+    "nvda-12"
+   ],
+   "figureQuestions": 22,
+   "figuresInReasoning": 5,
+   "figuresNotInReasoningIds": [
+    "aapl-01",
+    "aapl-02",
+    "aapl-06",
+    "aapl-07",
+    "aapl-09",
+    "msft-01",
+    "msft-02",
+    "msft-04",
+    "msft-08",
+    "msft-10",
+    "msft-12",
+    "nvda-01",
+    "nvda-02",
+    "nvda-04",
+    "nvda-09",
+    "nvda-11",
+    "nvda-14"
+   ],
+   "figuresInReasoningAmongCitedExpected": 4,
+   "figureQuestionsCitedExpected": 12
+  },
+  "critic": {
+   "verdictCounts": {
+    "ACCEPT": 39,
+    "REVISE": 3
+   },
+   "unsupportedNumeralIds": [
+    "aapl-07",
+    "msft-01"
+   ]
+  },
+  "calledOut": {
+   "aapl-08": {
+    "question": "aapl-08",
+    "kind": "NARRATIVE",
+    "referenceRank": 1,
+    "referenceMatchedChunk": 13896,
+    "referenceMatchedChunkRetrievedInRun": true,
+    "retrievedExpected": true,
+    "visibleToModel": true,
+    "citedExpected": true,
+    "figuresInReasoning": null,
+    "status": "PARTIAL",
+    "assessment": "NEUTRAL",
+    "criticVerdict": "ACCEPT",
+    "answered": true,
+    "error": null,
+    "observedTokens": 4892,
+    "expectedChunkIds": [
+     13896
+    ],
+    "visibleChunkIds": [
+     13896
+    ],
+    "citedChunkIds": [
+     13896
+    ],
+    "limitations": [
+     "POSITION_SIZING_NOT_IMPLEMENTED",
+     "CONFIDENCE_UNCALIBRATED",
+     "BROKER_DISABLED",
+     "QUANT_DISABLED",
+     "NO_VERIFIED_CURRENT_QUOTE"
+    ],
+    "unsupportedNumerals": []
+   },
+   "nvda-02": {
+    "question": "nvda-02",
+    "kind": "FIGURE",
+    "referenceRank": null,
+    "referenceMatchedChunk": null,
+    "referenceMatchedChunkRetrievedInRun": null,
+    "retrievedExpected": false,
+    "visibleToModel": false,
+    "citedExpected": false,
+    "figuresInReasoning": false,
+    "status": "INSUFFICIENT_EVIDENCE",
+    "assessment": "INSUFFICIENT_EVIDENCE",
+    "criticVerdict": "ACCEPT",
+    "answered": true,
+    "error": null,
+    "observedTokens": 6176,
+    "expectedChunkIds": [],
+    "visibleChunkIds": [],
+    "citedChunkIds": [
+     14254,
+     14255,
+     14301
+    ],
+    "limitations": [
+     "POSITION_SIZING_NOT_IMPLEMENTED",
+     "CONFIDENCE_UNCALIBRATED",
+     "BROKER_DISABLED",
+     "QUANT_DISABLED",
+     "NO_VERIFIED_CURRENT_QUOTE"
+    ],
+    "unsupportedNumerals": []
+   },
+   "nvda-04": {
+    "question": "nvda-04",
+    "kind": "FIGURE",
+    "referenceRank": null,
+    "referenceMatchedChunk": null,
+    "referenceMatchedChunkRetrievedInRun": null,
+    "retrievedExpected": false,
+    "visibleToModel": false,
+    "citedExpected": false,
+    "figuresInReasoning": false,
+    "status": "INSUFFICIENT_EVIDENCE",
+    "assessment": "INSUFFICIENT_EVIDENCE",
+    "criticVerdict": "ACCEPT",
+    "answered": true,
+    "error": null,
+    "observedTokens": 6582,
+    "expectedChunkIds": [],
+    "visibleChunkIds": [],
+    "citedChunkIds": [
+     14301,
+     14300,
+     14254
+    ],
+    "limitations": [
+     "POSITION_SIZING_NOT_IMPLEMENTED",
+     "CONFIDENCE_UNCALIBRATED",
+     "BROKER_DISABLED",
+     "QUANT_DISABLED",
+     "NO_VERIFIED_CURRENT_QUOTE"
+    ],
+    "unsupportedNumerals": []
+   }
+  }
+ },
+ "pilotAgainstFull": {
+  "questions": [
+   "aapl-01",
+   "aapl-08",
+   "msft-05",
+   "msft-09",
+   "nvda-02",
+   "nvda-04"
+  ],
+  "equalOnEveryComparedField": [
+   "aapl-01",
+   "aapl-08",
+   "msft-09",
+   "nvda-02",
+   "nvda-04"
+  ],
+  "differing": [
+   "msft-05"
+  ],
+  "differingOnHeadlineMeasures": [],
+  "comparedFields": [
+   "retrievedExpected",
+   "visibleToModel",
+   "citedExpected",
+   "figuresInReasoning",
+   "status",
+   "assessment",
+   "criticVerdict",
+   "expectedChunkIds",
+   "visibleChunkIds",
+   "citedChunkIds",
+   "citedCount",
+   "citedHoldingPhrase",
+   "retrievedCount",
+   "limitations",
+   "unsupportedNumerals",
+   "modelCalls"
+  ],
+  "headlineMeasures": [
+   "retrievedExpected",
+   "visibleToModel",
+   "citedExpected",
+   "figuresInReasoning",
+   "status",
+   "assessment",
+   "criticVerdict"
+  ],
+  "perQuestion": [
+   {
+    "question": "aapl-01",
+    "inFullPass": true,
+    "differingFields": [],
+    "pilot": {},
+    "full": {},
+    "pilotTokens": 5907,
+    "fullTokens": 5859
+   },
+   {
+    "question": "aapl-08",
+    "inFullPass": true,
+    "differingFields": [],
+    "pilot": {},
+    "full": {},
+    "pilotTokens": 4870,
+    "fullTokens": 4892
+   },
+   {
+    "question": "msft-05",
+    "inFullPass": true,
+    "differingFields": [
+     "citedChunkIds",
+     "citedCount"
+    ],
+    "pilot": {
+     "citedChunkIds": [
+      14070,
+      13959,
+      14132
+     ],
+     "citedCount": 3
+    },
+    "full": {
+     "citedChunkIds": [
+      13959,
+      14070
+     ],
+     "citedCount": 2
+    },
+    "pilotTokens": 5822,
+    "fullTokens": 5406
+   },
+   {
+    "question": "msft-09",
+    "inFullPass": true,
+    "differingFields": [],
+    "pilot": {},
+    "full": {},
+    "pilotTokens": 5472,
+    "fullTokens": 5544
+   },
+   {
+    "question": "nvda-02",
+    "inFullPass": true,
+    "differingFields": [],
+    "pilot": {},
+    "full": {},
+    "pilotTokens": 6219,
+    "fullTokens": 6176
+   },
+   {
+    "question": "nvda-04",
+    "inFullPass": true,
+    "differingFields": [],
+    "pilot": {},
+    "full": {},
+    "pilotTokens": 6565,
+    "fullTokens": 6582
+   }
+  ]
+ },
+ "rows": [
+  {
+   "question": "aapl-01",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13824,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": false,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5859,
+   "expectedChunkIds": [
+    13824,
+    13845
+   ],
+   "visibleChunkIds": [
+    13824
+   ],
+   "citedChunkIds": [
+    13824
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-02",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13840,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": false,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6502,
+   "expectedChunkIds": [
+    13840,
+    13825
+   ],
+   "visibleChunkIds": [
+    13840
+   ],
+   "citedChunkIds": [
+    13840
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-03",
+   "kind": "NARRATIVE",
+   "referenceRank": 2,
+   "referenceMatchedChunk": 13825,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6121,
+   "expectedChunkIds": [
+    13825
+   ],
+   "visibleChunkIds": [
+    13825
+   ],
+   "citedChunkIds": [
+    13825
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-04",
+   "kind": "NARRATIVE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13809,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5728,
+   "expectedChunkIds": [
+    13809
+   ],
+   "visibleChunkIds": [
+    13809
+   ],
+   "citedChunkIds": [
+    13809,
+    13887
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-05",
+   "kind": "NARRATIVE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13789,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5413,
+   "expectedChunkIds": [
+    13789,
+    13845,
+    13844
+   ],
+   "visibleChunkIds": [
+    13845
+   ],
+   "citedChunkIds": [
+    13845
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-06",
+   "kind": "FIGURE",
+   "referenceRank": 2,
+   "referenceMatchedChunk": 13868,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 7925,
+   "expectedChunkIds": [
+    13868
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    13839,
+    13840,
+    13868
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-07",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13839,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": false,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "REVISE",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6961,
+   "expectedChunkIds": [
+    13839
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    13840
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "CRITIC_UNRESOLVED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": [
+    "10.25"
+   ]
+  },
+  {
+   "question": "aapl-08",
+   "kind": "NARRATIVE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13896,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 4892,
+   "expectedChunkIds": [
+    13896
+   ],
+   "visibleChunkIds": [
+    13896
+   ],
+   "citedChunkIds": [
+    13896
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-09",
+   "kind": "FIGURE",
+   "referenceRank": 8,
+   "referenceMatchedChunk": 13879,
+   "referenceMatchedChunkRetrievedInRun": false,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 7223,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    13843,
+    13821,
+    13871
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-10",
+   "kind": "NARRATIVE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13876,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "REVISE",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6990,
+   "expectedChunkIds": [
+    13876
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    13876,
+    13877
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "CRITIC_UNRESOLVED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-11",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13824,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 7120,
+   "expectedChunkIds": [
+    13824
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    13824,
+    13830,
+    13835
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-12",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13825,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6971,
+   "expectedChunkIds": [
+    13825
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    13825,
+    13878
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-13",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13877,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "BULLISH",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6380,
+   "expectedChunkIds": [
+    13877
+   ],
+   "visibleChunkIds": [
+    13877
+   ],
+   "citedChunkIds": [
+    13877
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "aapl-14",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13878,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6291,
+   "expectedChunkIds": [
+    13878
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    13878
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-01",
+   "kind": "FIGURE",
+   "referenceRank": 6,
+   "referenceMatchedChunk": 14013,
+   "referenceMatchedChunkRetrievedInRun": false,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5978,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14017
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": [
+    "137.8"
+   ]
+  },
+  {
+   "question": "msft-02",
+   "kind": "FIGURE",
+   "referenceRank": 2,
+   "referenceMatchedChunk": 14013,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5634,
+   "expectedChunkIds": [
+    14013
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14015,
+    14013
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-03",
+   "kind": "NARRATIVE",
+   "referenceRank": 2,
+   "referenceMatchedChunk": 14016,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5276,
+   "expectedChunkIds": [
+    14016
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14141
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-04",
+   "kind": "FIGURE",
+   "referenceRank": 4,
+   "referenceMatchedChunk": 13965,
+   "referenceMatchedChunkRetrievedInRun": false,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 7072,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14013,
+    14017,
+    14072
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-05",
+   "kind": "NARRATIVE",
+   "referenceRank": 2,
+   "referenceMatchedChunk": 14070,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5406,
+   "expectedChunkIds": [
+    14070,
+    13959
+   ],
+   "visibleChunkIds": [
+    14070,
+    13959
+   ],
+   "citedChunkIds": [
+    13959,
+    14070
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-06",
+   "kind": "NARRATIVE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 13988,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5484,
+   "expectedChunkIds": [
+    13988
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    13988,
+    13989
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-07",
+   "kind": "NARRATIVE",
+   "referenceRank": 7,
+   "referenceMatchedChunk": 13994,
+   "referenceMatchedChunkRetrievedInRun": false,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5241,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    13959
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-08",
+   "kind": "FIGURE",
+   "referenceRank": null,
+   "referenceMatchedChunk": null,
+   "referenceMatchedChunkRetrievedInRun": null,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6848,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14013,
+    14141,
+    14142
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-09",
+   "kind": "NARRATIVE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14353,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5544,
+   "expectedChunkIds": [
+    14353
+   ],
+   "visibleChunkIds": [
+    14353
+   ],
+   "citedChunkIds": [
+    14353
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-10",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14136,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5814,
+   "expectedChunkIds": [
+    14136
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14141,
+    14136
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-11",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14018,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": true,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6637,
+   "expectedChunkIds": [
+    14018
+   ],
+   "visibleChunkIds": [
+    14018
+   ],
+   "citedChunkIds": [
+    14018,
+    14134
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-12",
+   "kind": "FIGURE",
+   "referenceRank": 2,
+   "referenceMatchedChunk": 14018,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5298,
+   "expectedChunkIds": [
+    14018
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14144
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-13",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14022,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5738,
+   "expectedChunkIds": [
+    14022,
+    14023
+   ],
+   "visibleChunkIds": [
+    14023
+   ],
+   "citedChunkIds": [
+    14023
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "msft-14",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14143,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": true,
+   "status": "PARTIAL",
+   "assessment": "BULLISH",
+   "criticVerdict": "REVISE",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6032,
+   "expectedChunkIds": [
+    14143,
+    14145
+   ],
+   "visibleChunkIds": [
+    14143,
+    14145
+   ],
+   "citedChunkIds": [
+    14143,
+    14145
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "CRITIC_UNRESOLVED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-01",
+   "kind": "FIGURE",
+   "referenceRank": 3,
+   "referenceMatchedChunk": 14254,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6224,
+   "expectedChunkIds": [
+    14254
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14254,
+    14255,
+    14301
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-02",
+   "kind": "FIGURE",
+   "referenceRank": null,
+   "referenceMatchedChunk": null,
+   "referenceMatchedChunkRetrievedInRun": null,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6176,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14254,
+    14255,
+    14301
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-03",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14246,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": true,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6256,
+   "expectedChunkIds": [
+    14246
+   ],
+   "visibleChunkIds": [
+    14246
+   ],
+   "citedChunkIds": [
+    14246
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-04",
+   "kind": "FIGURE",
+   "referenceRank": null,
+   "referenceMatchedChunk": null,
+   "referenceMatchedChunkRetrievedInRun": null,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6582,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14301,
+    14300,
+    14254
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-05",
+   "kind": "NARRATIVE",
+   "referenceRank": 10,
+   "referenceMatchedChunk": 14198,
+   "referenceMatchedChunkRetrievedInRun": false,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": null,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6080,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14191,
+    14192,
+    14194
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-06",
+   "kind": "NARRATIVE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14343,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "BEARISH",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6024,
+   "expectedChunkIds": [
+    14343,
+    14228
+   ],
+   "visibleChunkIds": [
+    14343
+   ],
+   "citedChunkIds": [
+    14343,
+    14228,
+    14347
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-07",
+   "kind": "NARRATIVE",
+   "referenceRank": null,
+   "referenceMatchedChunk": null,
+   "referenceMatchedChunkRetrievedInRun": null,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": null,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5595,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14347,
+    14232
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-08",
+   "kind": "FIGURE",
+   "referenceRank": 5,
+   "referenceMatchedChunk": 14301,
+   "referenceMatchedChunkRetrievedInRun": false,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": true,
+   "status": "PARTIAL",
+   "assessment": "NEUTRAL",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5291,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14255
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-09",
+   "kind": "FIGURE",
+   "referenceRank": null,
+   "referenceMatchedChunk": null,
+   "referenceMatchedChunkRetrievedInRun": null,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6247,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14322,
+    14325,
+    14330
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-10",
+   "kind": "NARRATIVE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14344,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": null,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6429,
+   "expectedChunkIds": [
+    14344
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14344,
+    14230,
+    14201
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-11",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14254,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6657,
+   "expectedChunkIds": [
+    14254
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14254,
+    14300,
+    14330
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-12",
+   "kind": "FIGURE",
+   "referenceRank": 5,
+   "referenceMatchedChunk": 14251,
+   "referenceMatchedChunkRetrievedInRun": false,
+   "retrievedExpected": false,
+   "visibleToModel": false,
+   "citedExpected": false,
+   "figuresInReasoning": null,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6865,
+   "expectedChunkIds": [],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14293,
+    14287,
+    14275
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-13",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14329,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": true,
+   "citedExpected": true,
+   "figuresInReasoning": true,
+   "status": "PARTIAL",
+   "assessment": "BULLISH",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 5546,
+   "expectedChunkIds": [
+    14329,
+    14328
+   ],
+   "visibleChunkIds": [
+    14329
+   ],
+   "citedChunkIds": [
+    14329
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  },
+  {
+   "question": "nvda-14",
+   "kind": "FIGURE",
+   "referenceRank": 1,
+   "referenceMatchedChunk": 14321,
+   "referenceMatchedChunkRetrievedInRun": true,
+   "retrievedExpected": true,
+   "visibleToModel": false,
+   "citedExpected": true,
+   "figuresInReasoning": false,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "assessment": "INSUFFICIENT_EVIDENCE",
+   "criticVerdict": "ACCEPT",
+   "answered": true,
+   "error": null,
+   "observedTokens": 6289,
+   "expectedChunkIds": [
+    14321
+   ],
+   "visibleChunkIds": [],
+   "citedChunkIds": [
+    14321,
+    14322
+   ],
+   "limitations": [
+    "POSITION_SIZING_NOT_IMPLEMENTED",
+    "CONFIDENCE_UNCALIBRATED",
+    "BROKER_DISABLED",
+    "QUANT_DISABLED",
+    "NO_VERIFIED_CURRENT_QUOTE"
+   ],
+   "unsupportedNumerals": []
+  }
+ ]
+}

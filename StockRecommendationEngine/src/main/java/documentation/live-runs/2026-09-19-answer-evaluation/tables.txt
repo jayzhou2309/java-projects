@@ -1,0 +1,217 @@
+Answer evaluation tables (answer_tables.py; inputs get-37.json, get-38.json, phrase-offsets.json, retrieval snapshot 1891)
+Counts and lists only; no table states a reason for an answer or a retrieval result.
+
+1. Passes
+field                                             pilot                        full pass
+------------------------------------------------  ---------------------------  ---------------------------
+snapshot                                          37                           38
+evaluatedAt                                       2026-09-19T05:32:05.889768Z  2026-09-19T05:50:19.112766Z
+questionCount                                     6                            42
+attempted                                         6                            42
+partial                                           no                           no
+partialReason                                     -                            -
+aggregatesMatchStored                             yes                          yes
+tokens.total                                      34855                        258639
+tokens.runs                                       6                            42
+tokens.meanPerRun                                 5809.17                      6158.07
+tokens.maxPerRun                                  6565                         7925
+tokens.maxPerRunQuestion                          nvda-04                      aapl-06
+attempted                                         6                            42
+withRun                                           6                            42
+measured                                          6                            42
+retrieved                                         4                            30
+shareRetrieved                                    0.666667                     0.714286
+visible                                           4                            15
+shareVisibleGivenRetrieved                        1.0                          0.5
+citedAndVisible                                   4                            15
+shareCitedGivenVisible                            1.0                          1.0
+figureQuestions                                   3                            22
+figuresInReasoning                                0                            5
+shareFiguresInReasoning                           0.0                          0.227273
+insufficientEvidence                              2                            19
+insufficientEvidenceRate                          0.333333                     0.452381
+invalidCitationRuns                               0                            0
+totalTokens                                       34855                        258639
+totalModelCalls                                   24                           168
+totalElapsedMs                                    28989                        197539
+answeredRuns                                      6                            42
+noAnswerRuns                                      0                            0
+measuredAmongAnswered                             6                            42
+retrievedAmongAnswered                            4                            30
+shareRetrievedAmongAnswered                       0.666667                     0.714286
+visibleAmongAnswered                              4                            15
+shareVisibleGivenRetrievedAmongAnswered           1.0                          0.5
+citedAndVisibleAmongAnswered                      4                            15
+shareCitedGivenVisibleAmongAnswered               1.0                          1.0
+figureQuestionsAmongAnswered                      3                            22
+figuresInReasoningAmongAnswered                   0                            5
+shareFiguresInReasoningAmongAnswered              0.0                          0.227273
+insufficientAmongAnswered                         2                            19
+insufficientEvidenceRateAmongAnswered             0.333333                     0.452381
+statusCounts.INSUFFICIENT_EVIDENCE                2                            19
+statusCounts.PARTIAL                              4                            23
+limitationCounts.BROKER_DISABLED                  6                            42
+limitationCounts.CONFIDENCE_UNCALIBRATED          6                            42
+limitationCounts.CRITIC_UNRESOLVED                0                            3
+limitationCounts.NO_VERIFIED_CURRENT_QUOTE        6                            42
+limitationCounts.POSITION_SIZING_NOT_IMPLEMENTED  6                            42
+limitationCounts.QUANT_DISABLED                   6                            42
+
+2. Full pass per question (rank: stored rank in retrieval snapshot 1891, window 10; - = none in the window or not applicable)
+question  kind       rank  retrieved  visible  cited  figures  status                 assessment             critic  tokens
+--------  ---------  ----  ---------  -------  -----  -------  ---------------------  ---------------------  ------  ------
+aapl-01   FIGURE     1     yes        yes      yes    no       PARTIAL                NEUTRAL                ACCEPT  5859
+aapl-02   FIGURE     1     yes        yes      yes    no       PARTIAL                NEUTRAL                ACCEPT  6502
+aapl-03   NARRATIVE  2     yes        yes      yes    -        PARTIAL                NEUTRAL                ACCEPT  6121
+aapl-04   NARRATIVE  1     yes        yes      yes    -        PARTIAL                NEUTRAL                ACCEPT  5728
+aapl-05   NARRATIVE  1     yes        yes      yes    -        PARTIAL                NEUTRAL                ACCEPT  5413
+aapl-06   FIGURE     2     yes        no       yes    no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  7925
+aapl-07   FIGURE     1     yes        no       no     no       PARTIAL                NEUTRAL                REVISE  6961
+aapl-08   NARRATIVE  1     yes        yes      yes    -        PARTIAL                NEUTRAL                ACCEPT  4892
+aapl-09   FIGURE     8     no         no       no     no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  7223
+aapl-10   NARRATIVE  1     yes        no       yes    -        PARTIAL                NEUTRAL                REVISE  6990
+aapl-11   FIGURE     1     yes        no       yes    -        INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  7120
+aapl-12   FIGURE     1     yes        no       yes    -        PARTIAL                NEUTRAL                ACCEPT  6971
+aapl-13   FIGURE     1     yes        yes      yes    -        PARTIAL                BULLISH                ACCEPT  6380
+aapl-14   FIGURE     1     yes        no       yes    -        INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6291
+msft-01   FIGURE     6     no         no       no     no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  5978
+msft-02   FIGURE     2     yes        no       yes    no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  5634
+msft-03   NARRATIVE  2     yes        no       no     -        PARTIAL                NEUTRAL                ACCEPT  5276
+msft-04   FIGURE     4     no         no       no     no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  7072
+msft-05   NARRATIVE  2     yes        yes      yes    -        PARTIAL                NEUTRAL                ACCEPT  5406
+msft-06   NARRATIVE  1     yes        no       yes    -        PARTIAL                NEUTRAL                ACCEPT  5484
+msft-07   NARRATIVE  7     no         no       no     -        PARTIAL                NEUTRAL                ACCEPT  5241
+msft-08   FIGURE     -     no         no       no     no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6848
+msft-09   NARRATIVE  1     yes        yes      yes    -        PARTIAL                NEUTRAL                ACCEPT  5544
+msft-10   FIGURE     1     yes        no       yes    no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  5814
+msft-11   FIGURE     1     yes        yes      yes    yes      PARTIAL                NEUTRAL                ACCEPT  6637
+msft-12   FIGURE     2     yes        no       no     no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  5298
+msft-13   FIGURE     1     yes        yes      yes    -        PARTIAL                NEUTRAL                ACCEPT  5738
+msft-14   FIGURE     1     yes        yes      yes    yes      PARTIAL                BULLISH                REVISE  6032
+nvda-01   FIGURE     3     yes        no       yes    no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6224
+nvda-02   FIGURE     -     no         no       no     no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6176
+nvda-03   FIGURE     1     yes        yes      yes    yes      PARTIAL                NEUTRAL                ACCEPT  6256
+nvda-04   FIGURE     -     no         no       no     no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6582
+nvda-05   NARRATIVE  10    no         no       no     -        INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6080
+nvda-06   NARRATIVE  1     yes        yes      yes    -        PARTIAL                BEARISH                ACCEPT  6024
+nvda-07   NARRATIVE  -     no         no       no     -        PARTIAL                NEUTRAL                ACCEPT  5595
+nvda-08   FIGURE     5     no         no       no     yes      PARTIAL                NEUTRAL                ACCEPT  5291
+nvda-09   FIGURE     -     no         no       no     no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6247
+nvda-10   NARRATIVE  1     yes        no       yes    -        INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6429
+nvda-11   FIGURE     1     yes        no       yes    no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6657
+nvda-12   FIGURE     5     no         no       no     -        INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6865
+nvda-13   FIGURE     1     yes        yes      yes    yes      PARTIAL                BULLISH                ACCEPT  5546
+nvda-14   FIGURE     1     yes        no       yes    no       INSUFFICIENT_EVIDENCE  INSUFFICIENT_EVIDENCE  ACCEPT  6289
+
+3a. Rank in retrieval snapshot 1891 against retrievedExpected of the full pass (lean search-top-k 3)
+reference rank  questions  retrieved  not retrieved  not measured  reference chunk retrieved  cited expected  not retrieved ids
+--------------  ---------  ---------  -------------  ------------  -------------------------  --------------  -------------------------------------------------------------
+top3            30         30         0              0             30                         27              -
+rank4to10       7          0          7              0             0                          0               aapl-09, msft-01, msft-04, msft-07, nvda-05, nvda-08, nvda-12
+notInWindow     5          0          5              0             0                          0               msft-08, nvda-02, nvda-04, nvda-07, nvda-09
+
+reference hit@5 group      questions  retrieved  visible  cited expected  share cited  not cited ids
+-------------------------  ---------  ---------  -------  --------------  -----------  -------------------------------------------------------------------------------
+referenceRank1to5          33         30         15       27              0.818182     aapl-07, msft-03, msft-04, msft-12, nvda-08, nvda-12
+referenceRankAbove5OrNone  9          0          0        0               0.0          aapl-09, msft-01, msft-07, msft-08, nvda-02, nvda-04, nvda-05, nvda-07, nvda-09
+
+The cited-expected runs of each group, split (visible: the phrase inside the text shown to a model of the run)
+reference hit@5 group      cited expected  cited and visible  cited, not visible  status of the cited runs                     cited, not visible ids
+-------------------------  --------------  -----------------  ------------------  -------------------------------------------  ----------------------------------------------------------------------------------------------------------
+referenceRank1to5          27              15                 12                  {"PARTIAL": 18, "INSUFFICIENT_EVIDENCE": 9}  aapl-06, aapl-10, aapl-11, aapl-12, aapl-14, msft-02, msft-06, msft-10, nvda-01, nvda-10, nvda-11, nvda-14
+referenceRankAbove5OrNone  0               0                  0                   {}                                           -
+
+3b. Among the 30 retrieved: visible 15, cut out of view 15 (cut at 1500 characters); offsets agree with the snapshot: yes
+cut-out question  chunk  chunk chars  phrase start  phrase end  occurrences  chunk cited
+----------------  -----  -----------  ------------  ----------  -----------  -----------
+aapl-06           13868  3690         1886          1957        1            yes
+aapl-07           13839  3119         2240          2351        1            no
+aapl-10           13876  2973         1989          2158        1            yes
+aapl-11           13824  3430         3276          3418        1            yes
+aapl-12           13825  3348         1465          1581        1            yes
+aapl-14           13878  3923         1835          1969        1            yes
+msft-02           14013  3493         1904          1977        1            yes
+msft-03           14016  3073         2283          2421        1            no
+msft-06           13988  3936         1944          2087        1            yes
+msft-10           14136  3678         3081          3135        1            yes
+msft-12           14018  3155         2827          2902        1            no
+nvda-01           14254  3867         2131          2170        1            yes
+nvda-10           14344  3863         2497          2642        1            yes
+nvda-11           14254  3867         2538          2635        1            yes
+nvda-14           14321  3925         3289          3322        1            yes
+
+Reference matched chunks under the same cut (whether or not a run retrieved them): inside 14, beyond 23, no matched chunk 5
+question  reference chunk  chunk chars  phrase start  phrase end
+--------  ---------------  -----------  ------------  ----------
+aapl-05   13789            3981         3121          3219
+aapl-06   13868            3690         1886          1957
+aapl-07   13839            3119         2240          2351
+aapl-09   13879            3824         2531          2622
+aapl-10   13876            2973         1989          2158
+aapl-11   13824            3430         3276          3418
+aapl-12   13825            3348         1465          1581
+aapl-14   13878            3923         1835          1969
+msft-01   14013            3493         1845          1900
+msft-02   14013            3493         1904          1977
+msft-03   14016            3073         2283          2421
+msft-04   13965            3907         3503          3613
+msft-06   13988            3936         1944          2087
+msft-07   13994            3959         2163          2255
+msft-10   14136            3678         3081          3135
+msft-12   14018            3155         2827          2902
+msft-13   14022            3823         3377          3485
+nvda-01   14254            3867         2131          2170
+nvda-05   14198            3877         2401          2554
+nvda-10   14344            3863         2497          2642
+nvda-11   14254            3867         2538          2635
+nvda-12   14251            3381         1549          1634
+nvda-14   14321            3925         3289          3322
+
+3c. Among the 15 visible: cited 15, not cited 0
+visible, not cited  status
+------------------  ------
+
+3d. INSUFFICIENT_EVIDENCE runs (19) and runs without an answer (0)
+question  status                 answered  rank  retrieved  visible  cited  figures  critic  tokens
+--------  ---------------------  --------  ----  ---------  -------  -----  -------  ------  ------
+aapl-06   INSUFFICIENT_EVIDENCE  yes       2     yes        no       yes    no       ACCEPT  7925
+aapl-09   INSUFFICIENT_EVIDENCE  yes       8     no         no       no     no       ACCEPT  7223
+aapl-11   INSUFFICIENT_EVIDENCE  yes       1     yes        no       yes    -        ACCEPT  7120
+aapl-14   INSUFFICIENT_EVIDENCE  yes       1     yes        no       yes    -        ACCEPT  6291
+msft-01   INSUFFICIENT_EVIDENCE  yes       6     no         no       no     no       ACCEPT  5978
+msft-02   INSUFFICIENT_EVIDENCE  yes       2     yes        no       yes    no       ACCEPT  5634
+msft-04   INSUFFICIENT_EVIDENCE  yes       4     no         no       no     no       ACCEPT  7072
+msft-08   INSUFFICIENT_EVIDENCE  yes       -     no         no       no     no       ACCEPT  6848
+msft-10   INSUFFICIENT_EVIDENCE  yes       1     yes        no       yes    no       ACCEPT  5814
+msft-12   INSUFFICIENT_EVIDENCE  yes       2     yes        no       no     no       ACCEPT  5298
+nvda-01   INSUFFICIENT_EVIDENCE  yes       3     yes        no       yes    no       ACCEPT  6224
+nvda-02   INSUFFICIENT_EVIDENCE  yes       -     no         no       no     no       ACCEPT  6176
+nvda-04   INSUFFICIENT_EVIDENCE  yes       -     no         no       no     no       ACCEPT  6582
+nvda-05   INSUFFICIENT_EVIDENCE  yes       10    no         no       no     -        ACCEPT  6080
+nvda-09   INSUFFICIENT_EVIDENCE  yes       -     no         no       no     no       ACCEPT  6247
+nvda-10   INSUFFICIENT_EVIDENCE  yes       1     yes        no       yes    -        ACCEPT  6429
+nvda-11   INSUFFICIENT_EVIDENCE  yes       1     yes        no       yes    no       ACCEPT  6657
+nvda-12   INSUFFICIENT_EVIDENCE  yes       5     no         no       no     -        ACCEPT  6865
+nvda-14   INSUFFICIENT_EVIDENCE  yes       1     yes        no       yes    no       ACCEPT  6289
+
+3e. The pilot's questions against the same questions of the full pass (two runs of one question; id and code lists compared as sets; compared fields: retrievedExpected, visibleToModel, citedExpected, figuresInReasoning, status, assessment, criticVerdict, expectedChunkIds, visibleChunkIds, citedChunkIds, citedCount, citedHoldingPhrase, retrievedCount, limitations, unsupportedNumerals, modelCalls)
+question  compared fields  pilot tokens  full tokens  pilot -> full
+--------  ---------------  ------------  -----------  ------------------------------------------------------------------------
+aapl-01   equal            5907          5859         -
+aapl-08   equal            4870          4892         -
+msft-05   differ           5822          5406         citedChunkIds [14070, 13959, 14132] -> [13959, 14070]; citedCount 3 -> 2
+msft-09   equal            5472          5544         -
+nvda-02   equal            6219          6176         -
+nvda-04   equal            6565          6582         -
+
+3f. Called out: nvda-02, nvda-04, aapl-08 (full pass)
+question  kind       rank  reference chunk  retrieved  visible  cited  figures  status                 critic  expected chunks  cited chunks
+--------  ---------  ----  ---------------  ---------  -------  -----  -------  ---------------------  ------  ---------------  ---------------------
+aapl-08   NARRATIVE  1     13896            yes        yes      yes    -        PARTIAL                ACCEPT  [13896]          [13896]
+nvda-02   FIGURE     -     -                no         no       no     no       INSUFFICIENT_EVIDENCE  ACCEPT  []               [14254, 14255, 14301]
+nvda-04   FIGURE     -     -                no         no       no     no       INSUFFICIENT_EVIDENCE  ACCEPT  []               [14301, 14300, 14254]
+
+4. Kinds in the set: {"FIGURE": 28, "NARRATIVE": 14}; questions with a figure check (an accepted phrase has a figure token): 22; figures in the reasoning: 5; not: aapl-01, aapl-02, aapl-06, aapl-07, aapl-09, msft-01, msft-02, msft-04, msft-08, msft-10, msft-12, nvda-01, nvda-02, nvda-04, nvda-09, nvda-11, nvda-14
+   Kind FIGURE without a figure check (figuresInReasoning null): aapl-11, aapl-12, aapl-13, aapl-14, msft-13, nvda-12
+   FIGURE questions citing an expected chunk: 12; of them with the figures in the reasoning: 4
+   Critic verdicts: {"ACCEPT": 39, "REVISE": 3}; runs with unsupported numerals: aapl-07, msft-01

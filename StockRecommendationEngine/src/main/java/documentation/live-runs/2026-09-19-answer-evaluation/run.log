@@ -110,3 +110,8 @@ R1 2026-09-19 14:10 to 14:26 +0800 Milestone 3 remediation round 1 (no applicati
   ./mvnw -q -o verify (14:22:55 to 14:25:40 +0800, after the last document edit) -> exit 0; surefire reports: 80 classes, 701 tests,
     0 failures, 0 errors, 37 skipped; CLAIMS_CHECK claimsFiles=12 documents=30 problems=0. This line was added after that verify; no
     other file changed after it.
+
+N1 2026-09-19 16:27 +0800 close-out note on R1's time window (no application start, no model or embedding call, no POST, no database query).
+   Entries above are left as written.
+  R1's header reads "14:10 to 14:26 +0800". Its commit 4260ef5 is at 2026-09-19 14:25:54 +0800
+    (git log --format='%h %ad' --date=iso -1 4260ef5), so R1's work ended by 14:25:54 +0800, not 14:26. The start, 14:10, is not checked here.

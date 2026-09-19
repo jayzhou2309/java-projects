@@ -241,17 +241,26 @@ one-line fix, a typo, or a question, just do it directly.
   series that spends chat-model tokens, with the milestones, the frozen measure definitions and a
   token budget approved before any run. M1 (evaluation runs marked by `recommendations.purpose`,
   V10, and kept out of scoring, the track record and the listings) passed Scrutiny and UT on the
-  first round; the Worker also guarded a score-by-id path the plan had not listed. M2 (runner
-  `POST /api/rag/evaluate/answers`, deterministic measures, `answer_evaluations`, V11) passed both
-  with eight low findings, fixed before any paid pass because three protected the budget (a failed
-  snapshot save keeps a fallback file, a retrieval outage stops a pass, shares also among answered
-  runs); the scoped re-check found a pre-existing race on the instruction-like passage ids, fixed
-  too. M3 froze the pilot questions and the gate (not partial, mean at most 10,000 tokens per run)
-  before the runs, then ran the pilot (snapshot 37, 34,855 tokens) and one lean pass of 42
-  (snapshot 38, 258,639 tokens), neither partial; plan total 304,866 tokens. Results only in the
-  generated blocks of Agent_Harness.md, Answer Evaluation, First live passes (M3's validator
-  outcomes are for the Orchestrator to add at close-out). Lessons so far: a
-  live app needs `CHAT_MODEL_PROVIDER` and `RECOMMENDATION_MODEL` as well as the enable flag (the
-  first UT instruction lacked them); protect the write at the end of a paid pass before the pass
-  is run; freeze the gate between a pilot and the full spend in a commit. Plan in
+  first round; the Worker found and guarded a score-by-id path the plan had missed. M2 (runner
+  `POST /api/rag/evaluate/answers`, deterministic measures, `answer_evaluations`, V11) passed
+  Scrutiny with eight low findings, fixed before any paid pass because three protected the token
+  budget (a failed snapshot save, a retrieval outage, no-answer runs in the share denominators);
+  the scoped re-check found a pre-existing race on the instruction-like passage ids, also fixed,
+  and UT passed with one live run. M3 froze the pilot questions and the gate before the runs, then
+  ran the pilot of 6 and one full lean pass of 42; the whole plan spent 304,866 tokens against
+  about 359,000 approved. M3 failed Scrutiny once although every number and all 48 runs' measures
+  were re-derived equal: the RAG-27 and RAG-30 pointers gave the cited count (27 of 33) without
+  its split (15 cited and visible; 12 cited with the phrase not wholly inside the text shown; 9
+  of the 27 INSUFFICIENT_EVIDENCE). The remediation passed a scoped re-check, and UT passed with
+  zero model calls. Result: under the lean profile the expected chunk was retrieved for 30 of 42
+  questions, visible for 15 of those 30, and cited for all 15 visible; 19 runs were
+  INSUFFICIENT_EVIDENCE, none of them among the visible (generated blocks in Agent_Harness.md,
+  Answer Evaluation, First live passes). Follow-ups AGENT-11 (judged support metric) and AGENT-12
+  (default-profile pass) opened. Lessons: evaluation traffic must be marked and excluded before
+  the first run; fix budget-protecting low findings before spending tokens; a headline on a new
+  measure goes into a decision row only with its split (the RAG-11 lesson again); a validator cut
+  off by a usage limit can be resumed with its context. Kept from Milestone 3's entry: a live app
+  needs `CHAT_MODEL_PROVIDER` and `RECOMMENDATION_MODEL` as well as the enable flag (the first UT
+  instruction lacked them); protect the write at the end of a paid pass before the pass is run;
+  freeze the gate between a pilot and the full spend in a commit. Plan in
   `documentation/plans/2026-09-19-answer-evaluation.md`.

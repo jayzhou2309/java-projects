@@ -2022,6 +2022,84 @@
     "path": "results[id=aapl-08].criticVerdict",
     "expected": "ACCEPT"
    }
+  },
+  {
+   "id": "C-2258",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.citedAndVisible",
+    "expected": 15
+   }
+  },
+  {
+   "id": "C-2259",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.citedNotVisible",
+    "expected": 12
+   }
+  },
+  {
+   "id": "C-2260",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.citedNotVisibleIds",
+    "expected": [
+     "aapl-06",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-06",
+     "msft-10",
+     "nvda-01",
+     "nvda-10",
+     "nvda-11",
+     "nvda-14"
+    ]
+   }
+  },
+  {
+   "id": "C-2261",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.citedExpectedStatusCounts",
+    "expected": {
+     "PARTIAL": 18,
+     "INSUFFICIENT_EVIDENCE": 9
+    }
+   }
+  },
+  {
+   "id": "C-2262",
+   "basis": "observed",
+   "block": "retrieval",
+   "check": {
+    "type": "fileValue",
+    "file": "tables.json",
+    "path": "full.byReferenceHitAt5.referenceRank1to5.notCitedExpectedStatuses",
+    "expected": {
+     "aapl-07": "PARTIAL",
+     "msft-03": "PARTIAL",
+     "msft-04": "INSUFFICIENT_EVIDENCE",
+     "msft-12": "INSUFFICIENT_EVIDENCE",
+     "nvda-08": "PARTIAL",
+     "nvda-12": "INSUFFICIENT_EVIDENCE"
+    }
+   }
   }
  ]
 }

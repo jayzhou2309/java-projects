@@ -190,6 +190,18 @@ def main(argv):
             "citedExpectedIds": [m["question"] for m in members if m["citedExpected"] is True],
             "notCitedExpectedIds": [m["question"] for m in members if m["citedExpected"] is not True],
         }
+        # the split of citedExpected (added in Milestone 3 remediation round 1): visible or not, and the runs' statuses
+        cited = [m for m in members if m["citedExpected"] is True]
+        statuses = {}
+        for m in cited:
+            statuses[m["status"]] = statuses.get(m["status"], 0) + 1
+        by_hit[name].update({
+            "citedAndVisible": sum(1 for m in cited if m["visibleToModel"] is True),
+            "citedNotVisible": sum(1 for m in cited if m["visibleToModel"] is not True),
+            "citedNotVisibleIds": [m["question"] for m in cited if m["visibleToModel"] is not True],
+            "citedExpectedStatusCounts": dict(sorted(statuses.items(), key=lambda kv: (-kv[1], kv[0]))),
+            "notCitedExpectedStatuses": {m["question"]: m["status"] for m in members if m["citedExpected"] is not True},
+        })
 
     # (b) among retrieved: visible or cut out of view, with the phrase offsets of the cut-out questions
     retrieved = [row for row in rows if row["retrievedExpected"] is True]
@@ -379,6 +391,10 @@ def render(t, pilot, full):
     lines = [[g, v["questions"], v["retrievedExpected"], v["visibleToModel"], v["citedExpected"], show(v["shareCitedExpected"]), ", ".join(v["notCitedExpectedIds"]) or "-"]
              for g, v in t["full"]["byReferenceHitAt5"].items()]
     out.append("\n" + table(["reference hit@5 group", "questions", "retrieved", "visible", "cited expected", "share cited", "not cited ids"], lines))
+    lines = [[g, v["citedExpected"], v["citedAndVisible"], v["citedNotVisible"], json.dumps(v["citedExpectedStatusCounts"]), ", ".join(v["citedNotVisibleIds"]) or "-"]
+             for g, v in t["full"]["byReferenceHitAt5"].items()]
+    out.append("\nThe cited-expected runs of each group, split (visible: the phrase inside the text shown to a model of the run)\n")
+    out.append(table(["reference hit@5 group", "cited expected", "cited and visible", "cited, not visible", "status of the cited runs", "cited, not visible ids"], lines))
 
     a = t["full"]["amongRetrieved"]
     out.append("\n3b. Among the %d retrieved: visible %d, cut out of view %d (cut at %d characters); offsets agree with the snapshot: %s\n" % (

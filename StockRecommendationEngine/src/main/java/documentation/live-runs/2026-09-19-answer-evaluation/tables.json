@@ -298,7 +298,35 @@
      "msft-12",
      "nvda-08",
      "nvda-12"
-    ]
+    ],
+    "citedAndVisible": 15,
+    "citedNotVisible": 12,
+    "citedNotVisibleIds": [
+     "aapl-06",
+     "aapl-10",
+     "aapl-11",
+     "aapl-12",
+     "aapl-14",
+     "msft-02",
+     "msft-06",
+     "msft-10",
+     "nvda-01",
+     "nvda-10",
+     "nvda-11",
+     "nvda-14"
+    ],
+    "citedExpectedStatusCounts": {
+     "PARTIAL": 18,
+     "INSUFFICIENT_EVIDENCE": 9
+    },
+    "notCitedExpectedStatuses": {
+     "aapl-07": "PARTIAL",
+     "msft-03": "PARTIAL",
+     "msft-04": "INSUFFICIENT_EVIDENCE",
+     "msft-12": "INSUFFICIENT_EVIDENCE",
+     "nvda-08": "PARTIAL",
+     "nvda-12": "INSUFFICIENT_EVIDENCE"
+    }
    },
    "referenceRankAbove5OrNone": {
     "questions": 9,
@@ -317,7 +345,22 @@
      "nvda-05",
      "nvda-07",
      "nvda-09"
-    ]
+    ],
+    "citedAndVisible": 0,
+    "citedNotVisible": 0,
+    "citedNotVisibleIds": [],
+    "citedExpectedStatusCounts": {},
+    "notCitedExpectedStatuses": {
+     "aapl-09": "INSUFFICIENT_EVIDENCE",
+     "msft-01": "INSUFFICIENT_EVIDENCE",
+     "msft-07": "PARTIAL",
+     "msft-08": "INSUFFICIENT_EVIDENCE",
+     "nvda-02": "INSUFFICIENT_EVIDENCE",
+     "nvda-04": "INSUFFICIENT_EVIDENCE",
+     "nvda-05": "INSUFFICIENT_EVIDENCE",
+     "nvda-07": "PARTIAL",
+     "nvda-09": "INSUFFICIENT_EVIDENCE"
+    }
    }
   },
   "amongRetrieved": {

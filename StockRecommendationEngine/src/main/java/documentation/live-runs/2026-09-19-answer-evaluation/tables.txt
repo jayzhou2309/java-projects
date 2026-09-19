@@ -115,6 +115,12 @@ reference hit@5 group      questions  retrieved  visible  cited expected  share 
 referenceRank1to5          33         30         15       27              0.818182     aapl-07, msft-03, msft-04, msft-12, nvda-08, nvda-12
 referenceRankAbove5OrNone  9          0          0        0               0.0          aapl-09, msft-01, msft-07, msft-08, nvda-02, nvda-04, nvda-05, nvda-07, nvda-09
 
+The cited-expected runs of each group, split (visible: the phrase inside the text shown to a model of the run)
+reference hit@5 group      cited expected  cited and visible  cited, not visible  status of the cited runs                     cited, not visible ids
+-------------------------  --------------  -----------------  ------------------  -------------------------------------------  ----------------------------------------------------------------------------------------------------------
+referenceRank1to5          27              15                 12                  {"PARTIAL": 18, "INSUFFICIENT_EVIDENCE": 9}  aapl-06, aapl-10, aapl-11, aapl-12, aapl-14, msft-02, msft-06, msft-10, nvda-01, nvda-10, nvda-11, nvda-14
+referenceRankAbove5OrNone  0               0                  0                   {}                                           -
+
 3b. Among the 30 retrieved: visible 15, cut out of view 15 (cut at 1500 characters); offsets agree with the snapshot: yes
 cut-out question  chunk  chunk chars  phrase start  phrase end  occurrences  chunk cited
 ----------------  -----  -----------  ------------  ----------  -----------  -----------

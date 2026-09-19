@@ -88,3 +88,25 @@ V1 2026-09-19 about 14:20 +0800 checks after the write-up (test shell: .env expo
     CLAIMS_CHECK claimsFiles=12 documents=30 problems=0 (claims.json here: 157 claims, C-2101 to C-2257, seven blocks in Agent_Harness.md)
   ./mvnw -q -o verify -> exit 0; surefire reports: 80 classes, 701 tests, 0 failures, 0 errors, 37 skipped; CLAIMS_CHECK problems=0
   after verify: port 8081 no listener; recommendations USER 22, EVALUATION 49; answer_evaluations 3 rows; retrieval_evaluations max id 1892
+
+R1 2026-09-19 14:10 to 14:26 +0800 Milestone 3 remediation round 1 (no application start, no model or embedding call, no POST, no database query;
+   test shell: .env exported, none of the enable flags, profile, RAG_* or app variables set). Entries above are left as written.
+  Correction of V1's time: the V1 entry above reads "about 14:20 +0800 checks after the write-up". That time is wrong. This file, with the V1
+    entry in it, was committed in a051c0c at 2026-09-19 14:02:24 +0800 and was not changed by the write-up commit 1965430 (14:02:37 +0800)
+    (git log --format='%h %ad' --date=iso -- run.log), so V1's checks ended before 14:02:24 +0800; they came after A2 (app stop, 13:50:55).
+    The time inside that window is unknown: no timestamp of those commands was recorded.
+  answer_tables.py: full.byReferenceHitAt5.<group> gains citedAndVisible, citedNotVisible, citedNotVisibleIds, citedExpectedStatusCounts and
+    notCitedExpectedStatuses (the split of citedExpected), and tables.txt gains one table after the hit@5 group table of 3a.
+    python3 -B answer_tables.py get-37.json get-38.json -> "tables written: pilot 37 full 38 aggregatesMatchStored=True/True offsetsAgree=True";
+    diff against the committed outputs: additions only (tables.json: the five keys in each of the two groups; tables.txt: the six lines of
+    the new table); run again, md5 equal; no __pycache__. For referenceRank1to5: citedAndVisible 15, citedNotVisible 12 (the same ids as
+    full.amongRetrieved.cutOutOfViewCitedExpectedIds), citedExpectedStatusCounts PARTIAL 18 and INSUFFICIENT_EVIDENCE 9.
+  claims.json: C-2258 to C-2262 appended (fileValue on those keys, block retrieval); C-2101 to C-2257 unchanged in id, order and content
+    (162 claims now).
+  ./mvnw -q -o test -Dtest=DocumentationClaimsTests -Dclaims.generate=true -> git diff shows Agent_Harness.md changed (five bullets at the
+    end of the retrieval block); CLAIMS_CHECK claimsFiles=12 documents=30 problems=0
+  Documents: Follow_Ups.md (RAG-27 and RAG-30 pointers rewritten with the split; AGENT-10 wording; new rows AGENT-11 and AGENT-12),
+    Agent_Harness.md (Next Harness Milestones sentence; one sentence on the change-log bullet).
+  ./mvnw -q -o verify (14:22:55 to 14:25:40 +0800, after the last document edit) -> exit 0; surefire reports: 80 classes, 701 tests,
+    0 failures, 0 errors, 37 skipped; CLAIMS_CHECK claimsFiles=12 documents=30 problems=0. This line was added after that verify; no
+    other file changed after it.

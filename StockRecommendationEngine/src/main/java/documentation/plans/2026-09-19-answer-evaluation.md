@@ -120,3 +120,12 @@ Correctness contract:
   one live lean run in each of the Milestone 1 and Milestone 2 UT checks (about 7,000 tokens each), the 6-question
   pilot (about 45,000), and one full lean pass of 42 (about 300,000), paced; a rate-limit rejection stops a pass, which
   is then recorded as partial and not repeated without approval. Milestone 1 starts.
+- 2026-09-19, Milestone 1 closed (b912937): Scrutiny PASS on A1 to A3 (every reader of `recommendations` tabled; the
+  Worker also guarded `OutcomeEvaluationService.evaluate(runId)`, a score-by-id path the plan had not listed; V10
+  applied on the shared database, and Flyway's default ignores it as a future migration for checkouts still at V9);
+  UT PASS with exactly one live lean run (6,529 tokens, run 7560e103, sent with a purpose in body and query, stored
+  USER; it is a genuine user-path AAPL run, status PARTIAL with the broker off). Low notes carried into Milestone 2:
+  the shorter `RecommendationRecord` constructor defaults to USER, so the runner's stored purpose must be asserted;
+  evaluation runs share the two worker slots with user requests, so the runner states and tests that behaviour.
+  Correction to the UT instruction: a live app also needs `CHAT_MODEL_PROVIDER=openai` and
+  `RECOMMENDATION_MODEL=gpt-4.1`; CLAUDE.md's run bullet gains this at close-out. Milestone 2 starts.

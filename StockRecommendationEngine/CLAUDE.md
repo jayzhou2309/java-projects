@@ -47,13 +47,18 @@ one-line fix, a typo, or a question, just do it directly.
   of 32+ characters, `./mvnw -q -o spring-boot:run`, wait for
   `Started StockRecommendationEngineApplication`, stop with
   `pkill -f spring-boot:run` and confirm port 8081 is free. Gated endpoints need
-  `Authorization: Bearer <token>`.
+  `Authorization: Bearer <token>`. A live recommendation run (anything that reaches
+  the chat model, `RECOMMENDATION_ENABLED=true`) also needs `CHAT_MODEL_PROVIDER=openai` and
+  `RECOMMENDATION_MODEL=gpt-4.1` in the app shell (added 2026-09-19).
 - Token discipline (Jay's rule): anything under `/api/recommendations` calls the
   chat model; for testing use `SPRING_PROFILES_ACTIVE=lean` (about 7k tokens per
   run instead of 15k to 29k) and keep live runs to a handful. The OpenAI account is
   limited to 30,000 tokens per minute for gpt-4.1, so back-to-back default-profile
   runs hit HTTP 429. `POST /api/rag/evaluate` only embeds 30 questions and is cheap.
-  Nothing else should call a model.
+  `POST /api/rag/evaluate/answers` (since 2026-09-19) calls the chat model once per question run:
+  a lean pass over the 42 questions used 258,639 tokens on 2026-09-19 (about 6,200 per run, paced
+  20 s), so every pass needs a budget Jay approved first and is never repeated or retried without
+  approval; its `GET` endpoints are free. Nothing else should call a model.
 - Validators run one at a time, not in parallel: both use Maven and the same
   `target/` directory, and the UT Validator keeps the app running from it.
 - Documentation conventions: module docs in `src/main/java/documentation/*.md`
@@ -232,3 +237,21 @@ one-line fix, a typo, or a question, just do it directly.
   a reference that records a list property broke `TraceReproductionCheck` until it read lists as text;
   subset metrics needed a check type (`subsetMetric`); export content hashes before a rebuild so a
   rollback can be compared in whole text. Plan in `documentation/plans/2026-09-17-chunk-size-pool.md`.
+- 2026-09-19, answer-level evaluation (AGENT-10): three milestones, the first plan in the retrieval
+  series that spends chat-model tokens, with the milestones, the frozen measure definitions and a
+  token budget approved before any run. M1 (evaluation runs marked by `recommendations.purpose`,
+  V10, and kept out of scoring, the track record and the listings) passed Scrutiny and UT on the
+  first round; the Worker also guarded a score-by-id path the plan had not listed. M2 (runner
+  `POST /api/rag/evaluate/answers`, deterministic measures, `answer_evaluations`, V11) passed both
+  with eight low findings, fixed before any paid pass because three protected the budget (a failed
+  snapshot save keeps a fallback file, a retrieval outage stops a pass, shares also among answered
+  runs); the scoped re-check found a pre-existing race on the instruction-like passage ids, fixed
+  too. M3 froze the pilot questions and the gate (not partial, mean at most 10,000 tokens per run)
+  before the runs, then ran the pilot (snapshot 37, 34,855 tokens) and one lean pass of 42
+  (snapshot 38, 258,639 tokens), neither partial; plan total 304,866 tokens. Results only in the
+  generated blocks of Agent_Harness.md, Answer Evaluation, First live passes (M3's validator
+  outcomes are for the Orchestrator to add at close-out). Lessons so far: a
+  live app needs `CHAT_MODEL_PROVIDER` and `RECOMMENDATION_MODEL` as well as the enable flag (the
+  first UT instruction lacked them); protect the write at the end of a paid pass before the pass
+  is run; freeze the gate between a pilot and the full spend in a commit. Plan in
+  `documentation/plans/2026-09-19-answer-evaluation.md`.

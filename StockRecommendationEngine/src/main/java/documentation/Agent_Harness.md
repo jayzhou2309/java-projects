@@ -324,7 +324,7 @@ curl -X POST http://localhost:8080/api/recommendations \
 * Answer Evaluation (since 2026-09-19; plan [2026-09-19-answer-evaluation](plans/2026-09-19-answer-evaluation.md), Milestone 2; AGENT-10 in [Follow_Ups.md](Follow_Ups.md))
     * Purpose
         * The retrieval evaluation ([RAG.md](RAG.md), Retrieval Evaluation) measures whether the expected chunk is returned. This pass runs the same set's questions through the recommendation loop and records, per question, whether the expected chunk was retrieved during the run, whether the accepted phrase was inside the text the model was shown, and whether the answer cites a chunk holding it.
-        * Every question is one recommendation run and calls the chat model (the retrieval evaluation never does). Token discipline applies: lean profile, paced runs, a budget approved before any live pass (plan, Boundaries). No live pass has been run at this milestone; the measures below are defined and tested on scripted runs only.
+        * Every question is one recommendation run and calls the chat model (the retrieval evaluation never does). Token discipline applies: lean profile, paced runs, a budget approved before any live pass (plan, Boundaries). The measures below are defined and tested on scripted runs; the first live passes (a pilot and one pass over the set, 2026-09-19) are under First live passes below. (Changed 2026-09-19, Milestone 3: this bullet said no live pass had been run.)
     * Path to the model (no new one)
         * AnswerEvaluationService (`rag.evaluation`) builds RecommendationRequest(ticker, question, conid null, includePortfolio false) from a set question and calls RecommendationService.recommendForEvaluation. It builds no prompt and calls no model. The service validates the request as any other, runs the same tool allowlist, prefetch, instruction-like passage screen, citation validation and critic, and stores the run with purpose EVALUATION (Recommendation Audit Store, Run purpose).
         * Only the set's ticker and question text enter the run. The question id, the expected passages, and the purpose never reach a prompt (AnswerEvaluationServiceTests reads every prompt of a scripted run, and asserts EVIDENCE_INSTRUCTION_LIKE:<chunkId> and instructionLikePassages for an instruction-like passage retrieved for an evaluation question).
@@ -371,9 +371,193 @@ curl -X POST http://localhost:8080/api/recommendations \
     * Tests (scripted chat model, the seam RecommendationServiceTests uses; no live model call)
         * AnswerEvaluationServiceTests: the real RecommendationService under the real runner on scripted questions: expected chunk retrieved and cited; retrieved but cut out of view; retrieved, visible, not cited; an invalid citation; INSUFFICIENT_EVIDENCE with the phrase present only in another section; FIGURE with and without the figures in the reasoning; the critic verdict and unsupported numerals; a provider 429 after the retry, at the manager and at the critic; a saturated worker pool (two blocked user runs); a second pass while one runs; the disabled refusal; filter, limit and an invalid request; the pause count; the stored purpose of every run. Since the low-findings round: a pass mixing one answered run with two stopped ones (an invalid citation on a FIGURE question, invalid output before any search) asserting both families of shares; a rejected specialist report recorded as researchFilings:INVALID_ARGUMENT while visibleToModel reads true and the manager's prompt lacks the passage; a scripted retrieval failure stopping the pass; a reasoning carrying U+0000; a repository that throws (file, log line, exception, no failure message leaked, guard released) and one whose fallback directory cannot be written; the interrupt flag cleared during the save and restored, after an interrupted pause and after an interrupted service call.
         * AnswerEvaluationMeasureTests (a phrase straddling the cut, uncaptured evidence, the figure rule and its formatting cases including 7.0 against "$7 billion" and against 17, U+0000 removed from every run string, the figure check on the stored reasoning ("4", U+0000, "2"), the answered-runs numerator of the INSUFFICIENT_EVIDENCE rate with a run whose reasoning is blank after cleaning, the answered predicate per status, aggregates without the answered fields still readable), AnswerEvaluationDatabaseTests (V11, round trip, a snapshot with U+0000 in a reasoning, a limitation code, a property and the partial reason stored and read back, the partial check constraint, a scripted pass against the shared database storing exactly one snapshot whose runs read back as EVALUATION and stay out of the ticker listing, the wired runner's refusal under the default disabled flag), AnswerEvaluationEndpointTests, and IntegrationAccessTests for the token gate.
+    * First live passes (2026-09-19; plan Milestone 3; evidence [answer evaluation](live-runs/2026-09-19-answer-evaluation/))
+        * What ran: the pilot (`?questions=aapl-01,aapl-08,msft-05,msft-09,nvda-02,nvda-04`) and then one pass over the set with no parameters, once each, on the lean profile with `CHAT_MODEL_PROVIDER=openai` and `RECOMMENDATION_MODEL=gpt-4.1`, broker and quant off, under the token budget and the run conditions frozen in the plan's Status before the runs (the pass over the set only when the pilot is not partial and its mean observed tokens per run is at most 10,000). `run.log` has the times, the settings of the one application start, the gate decision with its numbers, and the product-data queries after the passes.
+        * Files (all under the evidence directory): `get-37.json` and `get-38.json` are `GET /api/rag/evaluate/answers/{id}` saved verbatim (each parsed equal to its POST body); `app-log-37.txt` and `app-log-38.txt` are the application log from each pass's start line to its stored line; `phrase-offsets.json` is written by `export_phrase_offsets.py` from one read-only SELECT on `sec_filing_chunks` (the character span of each accepted phrase in the chunks the runs retrieved that hold one, and in the matched chunks of the retrieval reference); `tables.json` and `tables.txt` are written by `answer_tables.py` from those files and the retrieval reference, snapshot 1891 (`live-runs/2026-09-18-rag29-section-key/`), and from nothing else. Recompute with `python3 -B answer_tables.py get-37.json get-38.json` in that directory: the output files come back byte for byte, and the script recomputes every stored aggregate of both exports from their per-question rows and records whether they match (`aggregatesMatchStored`). `tables.txt` holds the per-question table (question, kind, rank in the reference, the measures, status, assessment, critic verdict, tokens).
+        * How to read them. The retrieval reference ran each question's text through the retrieval endpoint at the defaults with a window of 10. An answer-evaluation run retrieves with the lean `search-top-k` and with the queries the run itself made (the prefetch and the specialist's searches), so a rank in the reference and a run's `retrievedExpected` are set side by side and are not one measurement. The blocks below count and list. They give no reason for an answer or for a retrieval result. They describe two passes on one profile, one chat model, one set and one store; they do not say what another profile, passage cut, model, or a repeated pass would record, and the pilot block shows that two runs of one question can differ. The bullets that read `tables.json` observe what that file holds; that the file is the committed script's unaltered output is a review item (rerun the script and compare), as [RAG.md](RAG.md), Claims, says of `fileValue`.
+        * The passes, their recorded settings and their observed tokens, from the exports and the script's tables:
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#passes start -->
+        * In the pilot export (the file get-37.json), id is 37. (C-2101, observed)
+        * In the pilot export (the file get-37.json), questionCount is 6. (C-2102, observed)
+        * In the pilot export (the file get-37.json), attempted is 6. (C-2103, observed)
+        * In the pilot export (the file get-37.json), partial is false. (C-2104, observed)
+        * In the pilot export (the file get-37.json), aggregates.totalTokens is 34855. (C-2105, observed)
+        * In the tables written by the committed script (the file tables.json), passes.pilot.tokens.meanPerRun is 5809.17. (C-2106, observed)
+        * In the tables written by the committed script (the file tables.json), passes.pilot.tokens.maxPerRun is 6565. (C-2107, observed)
+        * In the tables written by the committed script (the file tables.json), passes.pilot.aggregatesMatchStored is true. (C-2108, observed)
+        * In the pilot export (the file get-37.json), properties.questions is [aapl-01, aapl-08, msft-05, msft-09, nvda-02, nvda-04]. (C-2109, observed)
+        * In the export of the pass over the set (the file get-38.json), id is 38. (C-2110, observed)
+        * In the export of the pass over the set (the file get-38.json), questionCount is 42. (C-2111, observed)
+        * In the export of the pass over the set (the file get-38.json), attempted is 42. (C-2112, observed)
+        * In the export of the pass over the set (the file get-38.json), partial is false. (C-2113, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.totalTokens is 258639. (C-2114, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.totalModelCalls is 168. (C-2115, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.totalElapsedMs is 197539. (C-2116, observed)
+        * In the tables written by the committed script (the file tables.json), passes.full.tokens.meanPerRun is 6158.07. (C-2117, observed)
+        * In the tables written by the committed script (the file tables.json), passes.full.tokens.maxPerRun is 7925. (C-2118, observed)
+        * In the tables written by the committed script (the file tables.json), passes.full.tokens.maxPerRunQuestion is aapl-06. (C-2119, observed)
+        * In the tables written by the committed script (the file tables.json), passes.full.aggregatesMatchStored is true. (C-2120, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.questions is null. (C-2121, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.activeProfiles is [lean]. (C-2122, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.chatModel is gpt-4.1. (C-2123, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.promptVersion is manager-specialists-v5-rag-prefetch. (C-2124, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.searchTopK is 3. (C-2125, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.modelPassageChars is 1500. (C-2126, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.criticRounds is 1. (C-2127, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.maxOutputTokens is 700. (C-2128, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.pauseMs is 20000. (C-2129, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.setVersion is v2. (C-2130, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.storeVersions is [sections-v2-context-v2-chunk4000-500]. (C-2131, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.rerankingEnabled is false. (C-2132, observed)
+        * In the export of the pass over the set (the file get-38.json), properties.candidateCount is 40. (C-2133, observed)
+        * The pilot's 34855 observed tokens are below the approved pilot figure of about 45,000 and the full pass's 258639 are below the approved figure of about 300,000; the approved figures are in the plan's Status (plans/2026-09-19-answer-evaluation.md, not read by a check), and the 11,372 tokens spent on the plan before these passes are recorded there too, so the plan's running total is 34855 + 258639 + 11372 = 304866 (arithmetic on the premises and that Status figure) (inferred from C-2105 and C-2114) (C-2134, inferred)
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#passes end -->
+        * The stored aggregates of the pass over the set, and the pilot's after them:
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#aggregates start -->
+        * In the export of the pass over the set (the file get-38.json), aggregates.withRun is 42. (C-2135, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.measured is 42. (C-2136, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.retrieved is 30. (C-2137, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.shareRetrieved is 0.714286. (C-2138, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.visible is 15. (C-2139, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.shareVisibleGivenRetrieved is 0.500000. (C-2140, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.citedAndVisible is 15. (C-2141, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.shareCitedGivenVisible is 1.000000. (C-2142, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.figureQuestions is 22. (C-2143, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.figuresInReasoning is 5. (C-2144, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.shareFiguresInReasoning is 0.227273. (C-2145, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.insufficientEvidence is 19. (C-2146, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.insufficientEvidenceRate is 0.452381. (C-2147, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.invalidCitationRuns is 0. (C-2148, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.statusCounts is {"PARTIAL":23,"INSUFFICIENT_EVIDENCE":19}. (C-2149, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.limitationCounts is {"QUANT_DISABLED":42,"BROKER_DISABLED":42,"CRITIC_UNRESOLVED":3,"CONFIDENCE_UNCALIBRATED":42,"NO_VERIFIED_CURRENT_QUOTE":42,"POSITION_SIZING_NOT_IMPLEMENTED":42}. (C-2150, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.answeredRuns is 42. (C-2151, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.noAnswerRuns is 0. (C-2152, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.shareRetrievedAmongAnswered is 0.714286. (C-2153, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.shareVisibleGivenRetrievedAmongAnswered is 0.500000. (C-2154, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.shareCitedGivenVisibleAmongAnswered is 1.000000. (C-2155, observed)
+        * In the export of the pass over the set (the file get-38.json), aggregates.insufficientEvidenceRateAmongAnswered is 0.452381. (C-2156, observed)
+        * In the pilot export (the file get-37.json), aggregates.retrieved is 4. (C-2157, observed)
+        * In the pilot export (the file get-37.json), aggregates.visible is 4. (C-2158, observed)
+        * In the pilot export (the file get-37.json), aggregates.citedAndVisible is 4. (C-2159, observed)
+        * In the pilot export (the file get-37.json), aggregates.figureQuestions is 3. (C-2160, observed)
+        * In the pilot export (the file get-37.json), aggregates.figuresInReasoning is 0. (C-2161, observed)
+        * In the pilot export (the file get-37.json), aggregates.insufficientEvidence is 2. (C-2162, observed)
+        * In the pilot export (the file get-37.json), aggregates.statusCounts is {"PARTIAL":4,"INSUFFICIENT_EVIDENCE":2}. (C-2163, observed)
+        * In the pilot export (the file get-37.json), aggregates.noAnswerRuns is 0. (C-2164, observed)
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#aggregates end -->
+        * Rank in the retrieval reference beside what the runs retrieved and cited:
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#retrieval start -->
+        * The hit@3 of the retrieval reference at the defaults (snapshot 1891) is 0.714286. (C-2165, observed)
+        * The hit@5 of the retrieval reference at the defaults (snapshot 1891) is 0.785714. (C-2166, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.top3.questions is 30. (C-2167, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.top3.retrievedExpected is 30. (C-2168, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.top3.referenceMatchedChunkRetrievedInRun is 30. (C-2169, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.top3.citedExpected is 27. (C-2170, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.rank4to10.questions is 7. (C-2171, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.rank4to10.retrievedExpected is 0. (C-2172, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.rank4to10.notRetrievedIds is [aapl-09, msft-01, msft-04, msft-07, nvda-05, nvda-08, nvda-12]. (C-2173, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.notInWindow.questions is 5. (C-2174, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.notInWindow.retrievedExpected is 0. (C-2175, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceRank.notInWindow.notRetrievedIds is [msft-08, nvda-02, nvda-04, nvda-07, nvda-09]. (C-2176, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRank1to5.questions is 33. (C-2177, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRank1to5.retrievedExpected is 30. (C-2178, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRank1to5.visibleToModel is 15. (C-2179, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRank1to5.citedExpected is 27. (C-2180, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRank1to5.shareCitedExpected is 0.818182. (C-2181, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRank1to5.notCitedExpectedIds is [aapl-07, msft-03, msft-04, msft-12, nvda-08, nvda-12]. (C-2182, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRankAbove5OrNone.questions is 9. (C-2183, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRankAbove5OrNone.retrievedExpected is 0. (C-2184, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRankAbove5OrNone.citedExpected is 0. (C-2185, observed)
+        * In the tables written by the committed script (the file tables.json), full.byReferenceHitAt5.referenceRankAbove5OrNone.notCitedExpectedIds is [aapl-09, msft-01, msft-07, msft-08, nvda-02, nvda-04, nvda-05, nvda-07, nvda-09]. (C-2186, observed)
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#retrieval end -->
+        * Among the questions for which a run retrieved a chunk holding an accepted phrase, the phrase inside or beyond the lean cut, with the starting character of the phrase in its chunk:
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#visibility start -->
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.questions is 30. (C-2187, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.modelPassageChars is 1500. (C-2188, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.visible is 15. (C-2189, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.cutOutOfView is 15. (C-2190, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.cutOutOfViewIds is [aapl-06, aapl-07, aapl-10, aapl-11, aapl-12, aapl-14, msft-02, msft-03, msft-06, msft-10, msft-12, nvda-01, nvda-10, nvda-11, nvda-14]. (C-2191, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.cutOutOfViewCitedExpectedIds is [aapl-06, aapl-10, aapl-11, aapl-12, aapl-14, msft-02, msft-06, msft-10, nvda-01, nvda-10, nvda-11, nvda-14]. (C-2192, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.offsetsAgreeWithSnapshot is true. (C-2193, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.cutOutChunkByQuestion is {"aapl-06":13868,"aapl-07":13839,"aapl-10":13876,"aapl-11":13824,"aapl-12":13825,"aapl-14":13878,"msft-02":14013,"msft-03":14016,"msft-06":13988,"msft-10":14136,"msft-12":14018,"nvda-01":14254,"nvda-10":14344,"nvda-11":14254,"nvda-14":14321}. (C-2194, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.cutOutPhraseSpanByQuestion is {"aapl-06":[1886,1957],"aapl-07":[2240,2351],"aapl-10":[1989,2158],"aapl-11":[3276,3418],"aapl-12":[1465,1581],"aapl-14":[1835,1969],"msft-02":[1904,1977],"msft-03":[2283,2421],"msft-06":[1944,2087],"msft-10":[3081,3135],"msft-12":[2827,2902],"nvda-01":[2131,2170],"nvda-10":[2497,2642],"nvda-11":[2538,2635],"nvda-14":[3289,3322]}. (C-2195, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongRetrieved.cutOutPhrasesStraddlingTheCut is [aapl-12]. (C-2196, observed)
+        * In the phrase offset export of the store (the file phrase-offsets.json), chunks[chunkId=13825].contentChars is 3348. (C-2197, observed)
+        * In the phrase offset export of the store (the file phrase-offsets.json), chunks[chunkId=13825].phrases[question=aapl-12].firstStart is 1465. (C-2198, observed)
+        * In the phrase offset export of the store (the file phrase-offsets.json), chunks[chunkId=13825].phrases[question=aapl-12].firstEnd is 1581. (C-2199, observed)
+        * In the phrase offset export of the store (the file phrase-offsets.json), chunks[chunkId=13825].phrases[question=aapl-12].insideCut is false. (C-2200, observed)
+        * In the tables written by the committed script (the file tables.json), full.referenceMatchedChunkUnderCut.insideCut is 14. (C-2201, observed)
+        * In the tables written by the committed script (the file tables.json), full.referenceMatchedChunkUnderCut.beyondCut is 23. (C-2202, observed)
+        * In the tables written by the committed script (the file tables.json), full.referenceMatchedChunkUnderCut.noMatchedChunk is 5. (C-2203, observed)
+        * In the tables written by the committed script (the file tables.json), full.referenceMatchedChunkUnderCut.beyondCutIds is [aapl-05, aapl-06, aapl-07, aapl-09, aapl-10, aapl-11, aapl-12, aapl-14, msft-01, msft-02, msft-03, msft-04, msft-06, msft-07, msft-10, msft-12, msft-13, nvda-01, nvda-05, nvda-10, nvda-11, nvda-12, nvda-14]. (C-2204, observed)
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#visibility end -->
+        * Citation among the visible, the INSUFFICIENT_EVIDENCE runs, the figure check and the critic:
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#citation start -->
+        * In the tables written by the committed script (the file tables.json), full.amongVisible.questions is 15. (C-2205, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongVisible.cited is 15. (C-2206, observed)
+        * In the tables written by the committed script (the file tables.json), full.amongVisible.notCited is 0. (C-2207, observed)
+        * In the tables written by the committed script (the file tables.json), full.listed.insufficientEvidence is 19. (C-2208, observed)
+        * In the tables written by the committed script (the file tables.json), full.listed.insufficientEvidenceIds is [aapl-06, aapl-09, aapl-11, aapl-14, msft-01, msft-02, msft-04, msft-08, msft-10, msft-12, nvda-01, nvda-02, nvda-04, nvda-05, nvda-09, nvda-10, nvda-11, nvda-12, nvda-14]. (C-2209, observed)
+        * In the tables written by the committed script (the file tables.json), full.listed.insufficientEvidenceRetrievedIds is [aapl-06, aapl-11, aapl-14, msft-02, msft-10, msft-12, nvda-01, nvda-10, nvda-11, nvda-14]. (C-2210, observed)
+        * In the tables written by the committed script (the file tables.json), full.listed.insufficientEvidenceVisibleIds is []. (C-2211, observed)
+        * In the tables written by the committed script (the file tables.json), full.listed.insufficientEvidenceCitedIds is [aapl-06, aapl-11, aapl-14, msft-02, msft-10, nvda-01, nvda-10, nvda-11, nvda-14]. (C-2212, observed)
+        * In the tables written by the committed script (the file tables.json), full.listed.noAnswer is 0. (C-2213, observed)
+        * In the tables written by the committed script (the file tables.json), full.figures.kindCounts is {"FIGURE":28,"NARRATIVE":14}. (C-2214, observed)
+        * In the tables written by the committed script (the file tables.json), full.figures.figureKindWithoutFigureCheckIds is [aapl-11, aapl-12, aapl-13, aapl-14, msft-13, nvda-12]. (C-2215, observed)
+        * In the tables written by the committed script (the file tables.json), full.figures.figureQuestions is 22. (C-2216, observed)
+        * In the tables written by the committed script (the file tables.json), full.figures.figuresInReasoning is 5. (C-2217, observed)
+        * In the tables written by the committed script (the file tables.json), full.figures.figuresNotInReasoningIds is [aapl-01, aapl-02, aapl-06, aapl-07, aapl-09, msft-01, msft-02, msft-04, msft-08, msft-10, msft-12, nvda-01, nvda-02, nvda-04, nvda-09, nvda-11, nvda-14]. (C-2218, observed)
+        * In the tables written by the committed script (the file tables.json), full.figures.figureQuestionsCitedExpected is 12. (C-2219, observed)
+        * In the tables written by the committed script (the file tables.json), full.figures.figuresInReasoningAmongCitedExpected is 4. (C-2220, observed)
+        * In the tables written by the committed script (the file tables.json), full.critic.verdictCounts is {"ACCEPT":39,"REVISE":3}. (C-2221, observed)
+        * In the tables written by the committed script (the file tables.json), full.critic.unsupportedNumeralIds is [aapl-07, msft-01]. (C-2222, observed)
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#citation end -->
+        * The pilot's questions beside the same questions of the later pass, a pair of runs per question (id and code lists compared as sets):
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#repeat start -->
+        * In the tables written by the committed script (the file tables.json), pilotAgainstFull.questions is [aapl-01, aapl-08, msft-05, msft-09, nvda-02, nvda-04]. (C-2223, observed)
+        * In the tables written by the committed script (the file tables.json), pilotAgainstFull.equalOnEveryComparedField is [aapl-01, aapl-08, msft-09, nvda-02, nvda-04]. (C-2224, observed)
+        * In the tables written by the committed script (the file tables.json), pilotAgainstFull.differing is [msft-05]. (C-2225, observed)
+        * In the tables written by the committed script (the file tables.json), pilotAgainstFull.differingOnHeadlineMeasures is []. (C-2226, observed)
+        * In the pilot export (the file get-37.json), results[id=msft-05].citedCount is 3. (C-2227, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=msft-05].citedCount is 2. (C-2228, observed)
+        * In the pilot export (the file get-37.json), results[id=msft-05].citedHoldingPhrase is 2. (C-2229, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=msft-05].citedHoldingPhrase is 2. (C-2230, observed)
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#repeat end -->
+        * The rows of the questions the plan names:
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#calledout start -->
+        * The retrieval reference at the defaults (snapshot 1891) ranks nvda-02 outside its window of 10 results (no matching chunk). (C-2231, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-02].retrievedCount is 3. (C-2232, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-02].retrievedExpected is false. (C-2233, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-02].visibleToModel is false. (C-2234, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-02].citedExpected is false. (C-2235, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-02].citedCount is 3. (C-2236, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-02].figuresInReasoning is false. (C-2237, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-02].figureTokensMissing is [68]. (C-2238, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-02].status is INSUFFICIENT_EVIDENCE. (C-2239, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-02].criticVerdict is ACCEPT. (C-2240, observed)
+        * The retrieval reference at the defaults (snapshot 1891) ranks nvda-04 outside its window of 10 results (no matching chunk). (C-2241, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-04].retrievedCount is 3. (C-2242, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-04].retrievedExpected is false. (C-2243, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-04].visibleToModel is false. (C-2244, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-04].citedExpected is false. (C-2245, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-04].citedCount is 3. (C-2246, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-04].figuresInReasoning is false. (C-2247, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-04].figureTokensMissing is [42,000, 38, 31,000]. (C-2248, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-04].status is INSUFFICIENT_EVIDENCE. (C-2249, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=nvda-04].criticVerdict is ACCEPT. (C-2250, observed)
+        * The retrieval reference at the defaults (snapshot 1891) ranks aapl-08 1st. (C-2251, observed)
+        * The retrieval reference at the defaults (snapshot 1891) records chunk 13896 as the matched chunk of aapl-08. (C-2252, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=aapl-08].expectedChunkIds is [13896]. (C-2253, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=aapl-08].visibleChunkIds is [13896]. (C-2254, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=aapl-08].citedChunkIds is [13896]. (C-2255, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=aapl-08].status is PARTIAL. (C-2256, observed)
+        * In the export of the pass over the set (the file get-38.json), results[id=aapl-08].criticVerdict is ACCEPT. (C-2257, observed)
+        <!-- generated:live-runs/2026-09-19-answer-evaluation/claims.json#calledout end -->
+        * Product data after the passes (observed in `run.log`, section C3; database queries and listings, not read by a check): `recommendations` held USER 22 and EVALUATION 1 before the passes and USER 22 and EVALUATION 49 after them; the 48 run ids of the two exports are 48 rows of purpose EVALUATION; `GET /api/recommendations?ticker=` for AAPL, MSFT and NVDA listed 13, 8 and 1 runs, each of purpose USER and none of them a run id of the exports; `recommendation_outcomes` held 0 rows, so also 0 for those run ids; `answer_evaluations` held 3 rows (36, 37, 38).
+        * Not measured here: judged support of a claim by its cited passage (What the measures do not show); the default profile; a second pass, so run-to-run variation beyond the pilot's questions is not recorded.
 
 * Next Harness Milestones
-    * Before expanding prompts/models: run the versioned retrieval evaluation set (RAG.md, Retrieval Evaluation: 30 filing questions with expected passages, `POST /api/rag/evaluate`, baseline snapshot 13 with hit@5 0.6, floor test `RetrievalEvaluationLiveTests`) and compare against the baseline; the answer-level runner exists (Answer Evaluation above) and its first live pass is Milestone 3 of plan [2026-09-19-answer-evaluation](plans/2026-09-19-answer-evaluation.md) (Follow_Ups AGENT-10).
+    * Before expanding prompts/models: run the versioned retrieval evaluation set (RAG.md, Retrieval Evaluation: 30 filing questions with expected passages, `POST /api/rag/evaluate`, baseline snapshot 13 with hit@5 0.6, floor test `RetrievalEvaluationLiveTests`) and compare against the baseline; the answer-level runner exists (Answer Evaluation above) and its first live passes ran on 2026-09-19 under the lean profile (Answer Evaluation, First live passes; Follow_Ups AGENT-10), so a prompt change can be compared with them on the same measures (Follow_Ups AGENT-8).
     * Before adding MCP: select a server, configure its client/authentication, and explicitly map approved tools into this allowlist.
     * Apply the same timeout, payload, argument, permission, and provenance checks to MCP callbacks.
     * Before multiple users: implement user identities, account bindings, per-user quotas, and retention policies.
@@ -559,3 +743,8 @@ Qualitative Research + Sources + Quotes + Levels + Confidence (+ Calibrated) + C
 * Answer-evaluation second low findings — 2026-09-19
     * Four low findings of the scoped Scrutiny pass on the round above, fixed before any live pass; described under Prompt Injection Posture and Answer Evaluation above. RecommendationTools.instructionLikeEvidence is a synchronised set read through instructionLikeCopy(), so parallel filing searches cannot drop a screened chunk id from the disclosure. `insufficientEvidenceRateAmongAnswered` counts its numerator over answered runs (new count `insufficientAmongAnswered`, boxed like its neighbours). The figure check reads the cleaned reasoning that is stored. The fallback directory defaults to `var/answer-evaluations` (git-ignored, outside `target/`), and the 500 detail and the ERROR log line say to keep the file. Documented, not changed: a run ending as DEADLINE_EXCEEDED or FAILED hides a retrieval outage from the runner for one run.
     * No prompt or profile changed, PROMPT_VERSION is unchanged, no migration was added, and no live model call was made: scripted model only.
+
+* Answer-evaluation first live passes — 2026-09-19
+    * Milestone 3 of plan [2026-09-19-answer-evaluation](plans/2026-09-19-answer-evaluation.md) (AGENT-10 in [Follow_Ups.md](Follow_Ups.md), now DONE): the pilot and one pass over the set on the lean profile, each run once under the budget and conditions frozen in the plan's Status; the counts are in the generated blocks under Answer Evaluation, First live passes, and are not restated here. Evidence: [answer evaluation](live-runs/2026-09-19-answer-evaluation/) (`run.log`; `get-37.json`, `get-38.json`; `app-log-37.txt`, `app-log-38.txt`; `phrase-offsets.json` with `export_phrase_offsets.py`; `tables.json` and `tables.txt` with `answer_tables.py`; `claims.json`).
+    * No code, prompt, profile, or migration changed; PROMPT_VERSION is unchanged. The claims use the existing `fileValue`, `metric`, `rank` and `matchedChunk` check types (no new check type); [RAG.md](RAG.md), Claims, `fileValue`, says what such a claim does not read when the file is an answer-evaluation export or a script's table.
+    * Documentation: Answer Evaluation, Purpose no longer says no live pass has run; Next Harness Milestones points prompt comparisons at the stored lean pass; Follow_Ups AGENT-10 DONE, AGENT-8 OPEN, AGENT-9, RAG-27 and RAG-30 with pointers; the PRD's evaluation row; CLAUDE.md's run and token bullets.

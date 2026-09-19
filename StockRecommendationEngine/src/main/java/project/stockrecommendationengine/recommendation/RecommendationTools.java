@@ -55,6 +55,15 @@ final class RecommendationTools {
     List<RetrievedFilingChunk> forModel(Collection<RetrievedFilingChunk> chunks) {
         return chunks.stream().map(chunk -> forModel(chunk, modelPassageChars)).toList();
     }
+    /**
+     * Every chunk retrieved so far beside the text a model is shown for it, from the same cut as every model-facing copy.
+     * The cut depends only on the chunk and the configured limit, so a chunk returned by several searches is shown the
+     * same text each time. Read by the answer evaluation after the run; it never reaches a prompt.
+     */
+    List<EvaluationRun.ShownPassage> shown() {
+        return evidence.values().stream()
+                .map(chunk -> new EvaluationRun.ShownPassage(chunk, forModel(chunk, modelPassageChars).content())).toList();
+    }
     static RetrievedFilingChunk forModel(RetrievedFilingChunk chunk, int maxChars) {
         String content = chunk.content();
         if (content == null || content.length() <= maxChars) return chunk;

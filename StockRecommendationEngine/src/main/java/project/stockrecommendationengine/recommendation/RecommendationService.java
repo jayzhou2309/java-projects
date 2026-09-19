@@ -33,6 +33,7 @@ import project.stockrecommendationengine.rag.freshness.FilingFreshness;
 import project.stockrecommendationengine.rag.freshness.FilingFreshnessService;
 import project.stockrecommendationengine.rag.ingestion.FilingIngestionProperties;
 import project.stockrecommendationengine.rag.ingestion.UnknownTickerException;
+import project.stockrecommendationengine.rag.dto.RetrievedFilingChunk;
 import project.stockrecommendationengine.rag.retrieval.FilingRetrievalService;
 import tools.jackson.databind.json.JsonMapper;
 import static project.stockrecommendationengine.recommendation.RecommendationResponse.ToolTrace;
@@ -128,6 +129,26 @@ public class RecommendationService {
      * differs. No request body or parameter reaches this argument.
      */
     public RecommendationResponse recommend(RecommendationRequest request, RunPurpose purpose) {
+        return execute(request, purpose, null);
+    }
+
+    /**
+     * The entry point of the answer evaluation: the same run as {@link #recommend(RecommendationRequest, RunPurpose)},
+     * always stored with purpose EVALUATION, returned with what the public response leaves out: every chunk retrieved
+     * during the run (the response's sources hold only the cited ones) beside the text a model was shown for it, cut
+     * by the same function the tools use ({@link RecommendationTools#forModel(RetrievedFilingChunk, int)}). Nothing
+     * here changes a prompt or the public response. {@code evidenceCaptured} is false when the run ended without the
+     * worker handing its evidence over (the outer deadline fired first, or the run failed outside its own limits).
+     */
+    public EvaluationRun recommendForEvaluation(RecommendationRequest request) {
+        var captured = new java.util.concurrent.atomic.AtomicReference<List<EvaluationRun.ShownPassage>>();
+        RecommendationResponse response = execute(request, RunPurpose.EVALUATION, captured);
+        List<EvaluationRun.ShownPassage> retrieved = captured.get();
+        return new EvaluationRun(response, retrieved != null, retrieved == null ? List.of() : retrieved);
+    }
+
+    private RecommendationResponse execute(RecommendationRequest request, RunPurpose purpose,
+            java.util.concurrent.atomic.AtomicReference<List<EvaluationRun.ShownPassage>> captured) {
         if (purpose == null) throw new IllegalArgumentException("purpose is required");
         if (request == null || !validator.validate(request).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid recommendation request");
@@ -137,7 +158,7 @@ public class RecommendationService {
         String runId = UUID.randomUUID().toString();
         Instant requestedAt = Instant.now();
         Future<RecommendationResponse> future;
-        try { future = workers.submit(() -> run(runId, normalized)); }
+        try { future = workers.submit(() -> run(runId, normalized, captured)); }
         catch (RejectedExecutionException ex) { throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Recommendation capacity reached"); }
         RecommendationResponse response;
         try { response = future.get(properties.getDeadlineMs(), TimeUnit.MILLISECONDS); }
@@ -221,10 +242,22 @@ public class RecommendationService {
         synchronized List<ToolTrace> trace() { synchronized (trace) { return List.copyOf(trace); } }
     }
 
-    private RecommendationResponse run(String runId, RecommendationRequest request) {
-        var state = new RunState(runId);
+    private RecommendationResponse run(String runId, RecommendationRequest request,
+            java.util.concurrent.atomic.AtomicReference<List<EvaluationRun.ShownPassage>> captured) {
         var tools = new RecommendationTools(request, filings, broker, quant, properties.getPreferredCurrency(),
                 properties.getSearchTopK(), properties.getModelPassageChars());
+        try { return run(runId, request, tools); }
+        finally {
+            // Read-only hand-over for the answer evaluation; a copy that fails (a cancelled specialist still writing) is reported as not captured.
+            if (captured != null) {
+                try { captured.set(tools.shown()); }
+                catch (RuntimeException ex) { log.debug("Recommendation run={} evidence hand-over failed", runId, ex); }
+            }
+        }
+    }
+
+    private RecommendationResponse run(String runId, RecommendationRequest request, RecommendationTools tools) {
+        var state = new RunState(runId);
         state.limitations.add("POSITION_SIZING_NOT_IMPLEMENTED");
         state.limitations.add("CONFIDENCE_UNCALIBRATED");
         if (broker == null) state.limitations.add("BROKER_DISABLED");

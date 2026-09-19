@@ -1,0 +1,1038 @@
+{
+ "description": "Character offsets of accepted phrases in stored chunk content, written by export_phrase_offsets.py from a read-only SELECT on sec_filing_chunks; offsets 0-based, end exclusive; insideCut: some occurrence ends at or before modelPassageChars.",
+ "exports": [
+  37,
+  38
+ ],
+ "retrievalReference": 1891,
+ "modelPassageChars": 1500,
+ "chunks": [
+  {
+   "chunkId": 13789,
+   "inStore": true,
+   "accessionNo": "0000320193-25-000079",
+   "sectionKey": "ITEM_1",
+   "chunkIndex": 0,
+   "contentChars": 3981,
+   "contentMd5": "7b50ad13b0810bfc0a73253e2e8697a0",
+   "phrases": [
+    {
+     "question": "aapl-05",
+     "phrase": "reportable segments consist of the Americas, Europe, Greater China, Japan and Rest of Asia Pacific",
+     "occurrences": [
+      [
+       3121,
+       3219
+      ]
+     ],
+     "firstStart": 3121,
+     "firstEnd": 3219,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13809,
+   "inStore": true,
+   "accessionNo": "0000320193-25-000079",
+   "sectionKey": "ITEM_1A",
+   "chunkIndex": 20,
+   "contentChars": 3984,
+   "contentMd5": "2ac3c8c01ca930299459a240b68f17b9",
+   "phrases": [
+    {
+     "question": "aapl-04",
+     "phrase": "in the EU as it seeks to comply with the Digital Markets Act",
+     "occurrences": [
+      [
+       592,
+       652
+      ]
+     ],
+     "firstStart": 592,
+     "firstEnd": 652,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 13824,
+   "inStore": true,
+   "accessionNo": "0000320193-25-000079",
+   "sectionKey": "ITEM_7",
+   "chunkIndex": 35,
+   "contentChars": 3430,
+   "contentMd5": "14083f468f56e691ab9ec471a68b7bd7",
+   "phrases": [
+    {
+     "question": "aapl-01",
+     "phrase": "Greater China 64,377 (4) % 66,952 (8) % 72,559",
+     "occurrences": [
+      [
+       1080,
+       1126
+      ]
+     ],
+     "firstStart": 1080,
+     "firstEnd": 1126,
+     "insideCut": true
+    },
+    {
+     "question": "aapl-11",
+     "phrase": "Services net sales increased during 2025 compared to 2024 primarily due to higher net sales from advertising, the App Store and cloud services",
+     "occurrences": [
+      [
+       3276,
+       3418
+      ]
+     ],
+     "firstStart": 3276,
+     "firstEnd": 3418,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13825,
+   "inStore": true,
+   "accessionNo": "0000320193-25-000079",
+   "sectionKey": "ITEM_7",
+   "chunkIndex": 36,
+   "contentChars": 3348,
+   "contentMd5": "5399cb9bbc1dca48835920eb12ee984e",
+   "phrases": [
+    {
+     "question": "aapl-02",
+     "phrase": "Effective tax rate 15.6 % 24.1 % 14.7 %",
+     "occurrences": [
+      [
+       3015,
+       3054
+      ]
+     ],
+     "firstStart": 3015,
+     "firstEnd": 3054,
+     "insideCut": false
+    },
+    {
+     "question": "aapl-03",
+     "phrase": "Products gross margin percentage decreased during 2025 compared to 2024 primarily due to a different mix of products and tariff costs",
+     "occurrences": [
+      [
+       1128,
+       1261
+      ]
+     ],
+     "firstStart": 1128,
+     "firstEnd": 1261,
+     "insideCut": true
+    },
+    {
+     "question": "aapl-12",
+     "phrase": "Services gross margin percentage increased during 2025 compared to 2024 primarily due to a different mix of services",
+     "occurrences": [
+      [
+       1465,
+       1581
+      ]
+     ],
+     "firstStart": 1465,
+     "firstEnd": 1581,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13839,
+   "inStore": true,
+   "accessionNo": "0000320193-25-000079",
+   "sectionKey": "ITEM_8",
+   "chunkIndex": 50,
+   "contentChars": 3119,
+   "contentMd5": "8630519b893fbb47cd4ee56d5b38e165",
+   "phrases": [
+    {
+     "question": "aapl-07",
+     "phrase": "recorded a one-time income tax charge of $10.2 billion, net, which represented $15.8 billion payable to Ireland",
+     "occurrences": [
+      [
+       2240,
+       2351
+      ]
+     ],
+     "firstStart": 2240,
+     "firstEnd": 2351,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13840,
+   "inStore": true,
+   "accessionNo": "0000320193-25-000079",
+   "sectionKey": "ITEM_8",
+   "chunkIndex": 51,
+   "contentChars": 3679,
+   "contentMd5": "407c2ab44e28c3c2ae7d4995f3920088",
+   "phrases": [
+    {
+     "question": "aapl-02",
+     "phrase": "Provision for income taxes $ 20,719 $ 29,749 $ 16,741 Effective tax rate 15.6 %",
+     "occurrences": [
+      [
+       1070,
+       1149
+      ]
+     ],
+     "firstStart": 1070,
+     "firstEnd": 1149,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 13844,
+   "inStore": true,
+   "accessionNo": "0000320193-25-000079",
+   "sectionKey": "ITEM_8",
+   "chunkIndex": 55,
+   "contentChars": 3969,
+   "contentMd5": "975464328f4d7ff47302de8d782019e0",
+   "phrases": [
+    {
+     "question": "aapl-05",
+     "phrase": "The Company manages its business primarily on a geographic basis",
+     "occurrences": [
+      [
+       3568,
+       3632
+      ]
+     ],
+     "firstStart": 3568,
+     "firstEnd": 3632,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13845,
+   "inStore": true,
+   "accessionNo": "0000320193-25-000079",
+   "sectionKey": "ITEM_8",
+   "chunkIndex": 56,
+   "contentChars": 3848,
+   "contentMd5": "787f17a93f9a4c855c896a4b8a21e5b0",
+   "phrases": [
+    {
+     "question": "aapl-01",
+     "phrase": "China (1) 64,377 66,952 72,559",
+     "occurrences": [
+      [
+       3537,
+       3567
+      ]
+     ],
+     "firstStart": 3537,
+     "firstEnd": 3567,
+     "insideCut": false
+    },
+    {
+     "question": "aapl-05",
+     "phrase": "The Company manages its business primarily on a geographic basis",
+     "occurrences": [
+      [
+       99,
+       163
+      ]
+     ],
+     "firstStart": 99,
+     "firstEnd": 163,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 13868,
+   "inStore": true,
+   "accessionNo": "0000320193-26-000020",
+   "sectionKey": "ITEM_1",
+   "chunkIndex": 3,
+   "contentChars": 3690,
+   "contentMd5": "1643e5f4d48215808717c1e1e4f85c2e",
+   "phrases": [
+    {
+     "question": "aapl-06",
+     "phrase": "total deferred revenue of $14.9 billion and $13.7 billion, respectively",
+     "occurrences": [
+      [
+       1886,
+       1957
+      ]
+     ],
+     "firstStart": 1886,
+     "firstEnd": 1957,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13876,
+   "inStore": true,
+   "accessionNo": "0000320193-26-000020",
+   "sectionKey": "ITEM_2",
+   "chunkIndex": 11,
+   "contentChars": 2973,
+   "contentMd5": "5aa851a620829adf830b44c559dd6b86",
+   "phrases": [
+    {
+     "question": "aapl-10",
+     "phrase": "Greater China net sales increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 primarily due to higher net sales of iPhone",
+     "occurrences": [
+      [
+       1989,
+       2158
+      ]
+     ],
+     "firstStart": 1989,
+     "firstEnd": 2158,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13877,
+   "inStore": true,
+   "accessionNo": "0000320193-26-000020",
+   "sectionKey": "ITEM_2",
+   "chunkIndex": 12,
+   "contentChars": 3596,
+   "contentMd5": "c2ae3ebecc8df79e00421ac4839c238a",
+   "phrases": [
+    {
+     "question": "aapl-13",
+     "phrase": "iPhone net sales increased during the third quarter and first nine months of 2026 compared to the same periods in 2025 primarily due to higher net sales of Pro models",
+     "occurrences": [
+      [
+       1216,
+       1382
+      ]
+     ],
+     "firstStart": 1216,
+     "firstEnd": 1382,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 13878,
+   "inStore": true,
+   "accessionNo": "0000320193-26-000020",
+   "sectionKey": "ITEM_2",
+   "chunkIndex": 13,
+   "contentChars": 3923,
+   "contentMd5": "1a4c9d1593e0960c985f5adc375ce876",
+   "phrases": [
+    {
+     "question": "aapl-14",
+     "phrase": "primarily due to higher infrastructure-related costs, including investments in artificial intelligence, and headcount-related expenses",
+     "occurrences": [
+      [
+       1835,
+       1969
+      ]
+     ],
+     "firstStart": 1835,
+     "firstEnd": 1969,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13879,
+   "inStore": true,
+   "accessionNo": "0000320193-26-000020",
+   "sectionKey": "ITEM_2",
+   "chunkIndex": 14,
+   "contentChars": 3824,
+   "contentMd5": "392fa6a13d4160a74c0edf91604f551c",
+   "phrases": [
+    {
+     "question": "aapl-09",
+     "phrase": "During the third quarter of 2026, the Company repurchased $25.8 billion of its common stock",
+     "occurrences": [
+      [
+       2531,
+       2622
+      ]
+     ],
+     "firstStart": 2531,
+     "firstEnd": 2622,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13896,
+   "inStore": true,
+   "accessionNo": "0000320193-26-000018",
+   "sectionKey": "ITEM_2_02",
+   "chunkIndex": 0,
+   "contentChars": 581,
+   "contentMd5": "39a2e1e911c2d7f060ebc13b8ba7b4a9",
+   "phrases": [
+    {
+     "question": "aapl-08",
+     "phrase": "financial results for its third fiscal quarter ended June 27, 2026",
+     "occurrences": [
+      [
+       80,
+       146
+      ]
+     ],
+     "firstStart": 80,
+     "firstEnd": 146,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 13959,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_1",
+   "chunkIndex": 26,
+   "contentChars": 3781,
+   "contentMd5": "97c1b33feb8211d3fbaf1bd20adade16",
+   "phrases": [
+    {
+     "question": "msft-05",
+     "phrase": "using three segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing",
+     "occurrences": [
+      [
+       624,
+       729
+      ]
+     ],
+     "firstStart": 624,
+     "firstEnd": 729,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 13965,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_1",
+   "chunkIndex": 32,
+   "contentChars": 3907,
+   "contentMd5": "09fafbd63d1b0050e136b4af867ea64f",
+   "phrases": [
+    {
+     "question": "msft-04",
+     "phrase": "we employed approximately 223,000 people on a full-time basis, 121,000 in the U.S. and 102,000 internationally",
+     "occurrences": [
+      [
+       3503,
+       3613
+      ]
+     ],
+     "firstStart": 3503,
+     "firstEnd": 3613,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13988,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_1A",
+   "chunkIndex": 55,
+   "contentChars": 3936,
+   "contentMd5": "c035f4111ffe851f730729ef28271eed",
+   "phrases": [
+    {
+     "question": "msft-06",
+     "phrase": "requirements imposed by utilities, regulators, or other market participants could restrict our ability to develop or expand datacenter capacity",
+     "occurrences": [
+      [
+       1944,
+       2087
+      ]
+     ],
+     "firstStart": 1944,
+     "firstEnd": 2087,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 13994,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_1A",
+   "chunkIndex": 61,
+   "contentChars": 3959,
+   "contentMd5": "a4f3891d097aa12307222cb7225a0a0b",
+   "phrases": [
+    {
+     "question": "msft-07",
+     "phrase": "in 2020 we announced goals to become carbon negative, water positive, and zero waste by 2030",
+     "occurrences": [
+      [
+       2163,
+       2255
+      ]
+     ],
+     "firstStart": 2163,
+     "firstEnd": 2255,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14013,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_7",
+   "chunkIndex": 80,
+   "contentChars": 3493,
+   "contentMd5": "1838e9ec7ec50a5505192c3d0065fceb",
+   "phrases": [
+    {
+     "question": "msft-01",
+     "phrase": "Microsoft Cloud revenue increased 27% to $214.4 billion",
+     "occurrences": [
+      [
+       1845,
+       1900
+      ]
+     ],
+     "firstStart": 1845,
+     "firstEnd": 1900,
+     "insideCut": false
+    },
+    {
+     "question": "msft-02",
+     "phrase": "Commercial remaining performance obligation increased 84% to $678 billion",
+     "occurrences": [
+      [
+       1904,
+       1977
+      ]
+     ],
+     "firstStart": 1904,
+     "firstEnd": 1977,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14016,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_7",
+   "chunkIndex": 83,
+   "contentChars": 3073,
+   "contentMd5": "46c97e9b95199cad0ce050f6bf77852c",
+   "phrases": [
+    {
+     "question": "msft-03",
+     "phrase": "Microsoft Cloud gross margin percentage decreased to 66% driven by continued investments in AI infrastructure and growing AI product usage",
+     "occurrences": [
+      [
+       2283,
+       2421
+      ]
+     ],
+     "firstStart": 2283,
+     "firstEnd": 2421,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14018,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_7",
+   "chunkIndex": 85,
+   "contentChars": 3155,
+   "contentMd5": "d5ddce56e94ada8010b8a863f11b4324",
+   "phrases": [
+    {
+     "question": "msft-11",
+     "phrase": "Server products and cloud services revenue increased $31.0 billion or 31% driven by Azure and other cloud services",
+     "occurrences": [
+      [
+       981,
+       1095
+      ]
+     ],
+     "firstStart": 981,
+     "firstEnd": 1095,
+     "insideCut": true
+    },
+    {
+     "question": "msft-12",
+     "phrase": "XBOX hardware revenue decreased 29% driven by lower volume of consoles sold",
+     "occurrences": [
+      [
+       2827,
+       2902
+      ]
+     ],
+     "firstStart": 2827,
+     "firstEnd": 2902,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14022,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_7",
+   "chunkIndex": 89,
+   "contentChars": 3823,
+   "contentMd5": "3a8ea8e46bbc3dc215b5fc79a9b842ad",
+   "phrases": [
+    {
+     "question": "msft-13",
+     "phrase": "primarily due to an increase in cash received from customers and a decrease in cash used to pay income taxes",
+     "occurrences": [
+      [
+       3377,
+       3485
+      ]
+     ],
+     "firstStart": 3377,
+     "firstEnd": 3485,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14023,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_7",
+   "chunkIndex": 90,
+   "contentChars": 1538,
+   "contentMd5": "6e9b1d9bdf54e99b3ceba052e9541a25",
+   "phrases": [
+    {
+     "question": "msft-13",
+     "phrase": "primarily due to an increase in cash received from customers and a decrease in cash used to pay income taxes",
+     "occurrences": [
+      [
+       54,
+       162
+      ]
+     ],
+     "firstStart": 54,
+     "firstEnd": 162,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 14070,
+   "inStore": true,
+   "accessionNo": "0001193125-26-323660",
+   "sectionKey": "ITEM_8",
+   "chunkIndex": 137,
+   "contentChars": 3684,
+   "contentMd5": "c5064ce6e387463700dec7bdfe783a77",
+   "phrases": [
+    {
+     "question": "msft-05",
+     "phrase": "we reported our financial performance based on the following three segments",
+     "occurrences": [
+      [
+       680,
+       755
+      ]
+     ],
+     "firstStart": 680,
+     "firstEnd": 755,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 14136,
+   "inStore": true,
+   "accessionNo": "0001193125-26-191507",
+   "sectionKey": "ITEM_2",
+   "chunkIndex": 40,
+   "contentChars": 3678,
+   "contentMd5": "6e9364d1af5e41d21d0d0db6100f8760",
+   "phrases": [
+    {
+     "question": "msft-10",
+     "phrase": "Microsoft Cloud revenue increased 29% to $54.5 billion",
+     "occurrences": [
+      [
+       3081,
+       3135
+      ]
+     ],
+     "firstStart": 3081,
+     "firstEnd": 3135,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14143,
+   "inStore": true,
+   "accessionNo": "0001193125-26-191507",
+   "sectionKey": "ITEM_2",
+   "chunkIndex": 47,
+   "contentChars": 2783,
+   "contentMd5": "46c1c267ecce800fa3e88dcaf68fd7ad",
+   "phrases": [
+    {
+     "question": "msft-14",
+     "phrase": "Azure and other cloud services revenue grew 40% driven by demand for services across the platform",
+     "occurrences": [
+      [
+       1113,
+       1210
+      ]
+     ],
+     "firstStart": 1113,
+     "firstEnd": 1210,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 14145,
+   "inStore": true,
+   "accessionNo": "0001193125-26-191507",
+   "sectionKey": "ITEM_2",
+   "chunkIndex": 49,
+   "contentChars": 2847,
+   "contentMd5": "15af655e566fb4419273687ffd094643",
+   "phrases": [
+    {
+     "question": "msft-14",
+     "phrase": "Azure and other cloud services revenue grew 40% driven by demand for services across the platform",
+     "occurrences": [
+      [
+       176,
+       273
+      ]
+     ],
+     "firstStart": 176,
+     "firstEnd": 273,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 14198,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000021",
+   "sectionKey": "ITEM_1",
+   "chunkIndex": 7,
+   "contentChars": 3877,
+   "contentMd5": "e3159ae8471676a23a463aa4173e8fa4",
+   "phrases": [
+    {
+     "question": "nvda-05",
+     "phrase": "We utilize a fabless and contracting manufacturing strategy, whereby we employ and partner with key suppliers for all phases of the manufacturing process",
+     "occurrences": [
+      [
+       2401,
+       2554
+      ]
+     ],
+     "firstStart": 2401,
+     "firstEnd": 2554,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14228,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000021",
+   "sectionKey": "ITEM_1A",
+   "chunkIndex": 37,
+   "contentChars": 3886,
+   "contentMd5": "d2c29d52a46cc2285adb2d3434e1497e",
+   "phrases": [
+    {
+     "question": "nvda-06",
+     "phrase": "Export controls have and could in the future disrupt our supply chain and distribution channels, negatively impacting our ability to serve demand",
+     "occurrences": [
+      [
+       3435,
+       3580
+      ]
+     ],
+     "firstStart": 3435,
+     "firstEnd": 3580,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14246,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000021",
+   "sectionKey": "ITEM_5",
+   "chunkIndex": 55,
+   "contentChars": 3448,
+   "contentMd5": "26037ad91ae81108ac4463a4396587b4",
+   "phrases": [
+    {
+     "question": "nvda-03",
+     "phrase": "In fiscal year 2026, we repurchased 282 million shares of our common stock for $40.4 billion",
+     "occurrences": [
+      [
+       1284,
+       1376
+      ]
+     ],
+     "firstStart": 1284,
+     "firstEnd": 1376,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 14251,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000021",
+   "sectionKey": "ITEM_7",
+   "chunkIndex": 60,
+   "contentChars": 3381,
+   "contentMd5": "ac59ad9290ff6631ed718db41edb6040",
+   "phrases": [
+    {
+     "question": "nvda-12",
+     "phrase": "driven by exceptional demand for Blackwell as well as the launch of our new DGX Spark",
+     "occurrences": [
+      [
+       1549,
+       1634
+      ]
+     ],
+     "firstStart": 1549,
+     "firstEnd": 1634,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14254,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000021",
+   "sectionKey": "ITEM_7",
+   "chunkIndex": 63,
+   "contentChars": 3867,
+   "contentMd5": "fe4f9fe21233b474c7cd2d84dd21e289",
+   "phrases": [
+    {
+     "question": "nvda-01",
+     "phrase": "Total $ 215,938 $ 130,497 $ 85,441 65 %",
+     "occurrences": [
+      [
+       2131,
+       2170
+      ]
+     ],
+     "firstStart": 2131,
+     "firstEnd": 2170,
+     "insideCut": false
+    },
+    {
+     "question": "nvda-11",
+     "phrase": "Revenue from Data Center computing grew 59% driven by demand for our Blackwell computing platform",
+     "occurrences": [
+      [
+       2538,
+       2635
+      ]
+     ],
+     "firstStart": 2538,
+     "firstEnd": 2635,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14301,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000021",
+   "sectionKey": "ITEM_15",
+   "chunkIndex": 110,
+   "contentChars": 3585,
+   "contentMd5": "64f9a234991872e809bc0a16196f5831",
+   "phrases": [
+    {
+     "question": "nvda-08",
+     "phrase": "sales to one direct customer represented 22% of total revenue and sales to another direct customer represented 14% of total revenue",
+     "occurrences": [
+      [
+       975,
+       1106
+      ]
+     ],
+     "firstStart": 975,
+     "firstEnd": 1106,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 14321,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000075",
+   "sectionKey": "ITEM_1",
+   "chunkIndex": 15,
+   "contentChars": 3925,
+   "contentMd5": "a2b8a2f25130921ed8e6957f48e7f50f",
+   "phrases": [
+    {
+     "question": "nvda-14",
+     "phrase": "Taiwan 26,985 8,902 38,991 16,550",
+     "occurrences": [
+      [
+       3289,
+       3322
+      ]
+     ],
+     "firstStart": 3289,
+     "firstEnd": 3322,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14328,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000075",
+   "sectionKey": "ITEM_2",
+   "chunkIndex": 22,
+   "contentChars": 3827,
+   "contentMd5": "0634c92e9f39858b5562f090790ad8e3",
+   "phrases": [
+    {
+     "question": "nvda-13",
+     "phrase": "Edge Computing revenue was $7.2 billion, up 27% from a year ago and up 13% sequentially",
+     "occurrences": [
+      [
+       3739,
+       3826
+      ]
+     ],
+     "firstStart": 3739,
+     "firstEnd": 3826,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14329,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000075",
+   "sectionKey": "ITEM_2",
+   "chunkIndex": 23,
+   "contentChars": 3937,
+   "contentMd5": "2d155d1bb85daac926a6ceee6793fc53",
+   "phrases": [
+    {
+     "question": "nvda-13",
+     "phrase": "Edge Computing revenue was $7.2 billion, up 27% from a year ago and up 13% sequentially",
+     "occurrences": [
+      [
+       412,
+       499
+      ]
+     ],
+     "firstStart": 412,
+     "firstEnd": 499,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 14343,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000075",
+   "sectionKey": "ITEM_1A",
+   "chunkIndex": 37,
+   "contentChars": 3883,
+   "contentMd5": "f583d3107ada7a462432adf0a74fafba",
+   "phrases": [
+    {
+     "question": "nvda-06",
+     "phrase": "Export controls have and could in the future disrupt our supply chain and distribution channels, negatively impacting our ability to serve demand, including in markets outside China",
+     "occurrences": [
+      [
+       743,
+       924
+      ]
+     ],
+     "firstStart": 743,
+     "firstEnd": 924,
+     "insideCut": true
+    }
+   ]
+  },
+  {
+   "chunkId": 14344,
+   "inStore": true,
+   "accessionNo": "0001045810-26-000075",
+   "sectionKey": "ITEM_1A",
+   "chunkIndex": 38,
+   "contentChars": 3863,
+   "contentMd5": "42de5a9494a0c8f7ff494960a11678af",
+   "phrases": [
+    {
+     "question": "nvda-10",
+     "phrase": "Beginning in February 2026, the USG granted licenses that would allow us to ship small amounts of H200 products to specific China-based customers",
+     "occurrences": [
+      [
+       2497,
+       2642
+      ]
+     ],
+     "firstStart": 2497,
+     "firstEnd": 2642,
+     "insideCut": false
+    }
+   ]
+  },
+  {
+   "chunkId": 14353,
+   "inStore": true,
+   "accessionNo": "0001193125-26-380280",
+   "sectionKey": "ITEM_7_01",
+   "chunkIndex": 0,
+   "contentChars": 1347,
+   "contentMd5": "3d78d95e9381e28db3e380953b002771",
+   "phrases": [
+    {
+     "question": "msft-09",
+     "phrase": "two reportable segments: (1) Agents and Infra and (2) Devices and Consumer",
+     "occurrences": [
+      [
+       388,
+       462
+      ]
+     ],
+     "firstStart": 388,
+     "firstEnd": 462,
+     "insideCut": true
+    }
+   ]
+  }
+ ]
+}

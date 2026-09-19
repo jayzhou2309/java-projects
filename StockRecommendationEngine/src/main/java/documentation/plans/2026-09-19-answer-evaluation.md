@@ -129,3 +129,16 @@ Correctness contract:
   evaluation runs share the two worker slots with user requests, so the runner states and tests that behaviour.
   Correction to the UT instruction: a live app also needs `CHAT_MODEL_PROVIDER=openai` and
   `RECOMMENDATION_MODEL=gpt-4.1`; CLAUDE.md's run bullet gains this at close-out. Milestone 2 starts.
+- 2026-09-19, Milestone 2 closed (2842f4f runner; 392de26 and e759b06 low findings): Scrutiny PASS on B1 to B4 with
+  eight low findings, fixed before any paid pass because three protect the budget (a failed snapshot save no longer
+  loses a pass: log line plus a kept fallback file; a retrieval outage stops a pass; shares are also reported among
+  answered runs); the scoped re-check PASSED and found a pre-existing race on the set of instruction-like passage
+  ids, fixed with three small measure and storage details (e759b06, the concurrency test fails 3 of 3 with the fix
+  reverted). UT PASS with exactly one live lean evaluation of aapl-08 (snapshot 36, run 14e2da76, 4,843 tokens:
+  retrieved, visible, cited, critic ACCEPT; stored EVALUATION and absent from the AAPL listing; the validator
+  re-derived `citedExpected` from the stored run). Tokens spent so far on this plan: 11,372.
+- 2026-09-19, Milestone 3 frozen before its runs: pilot questions aapl-01, aapl-08, msft-05, msft-09, nvda-02, nvda-04
+  (two per ticker; nvda-04 and nvda-02 are the long-standing retrieval misses, aapl-08 the corrected set entry); the
+  full pass follows only if the pilot stored a snapshot that is not partial and its mean observed tokens per run is at
+  most 10,000; the full pass is all 42 questions in set order, lean profile, `pause-ms` 20,000, broker and quant off.
+  One pass each; a partial pass is reported and not repeated.

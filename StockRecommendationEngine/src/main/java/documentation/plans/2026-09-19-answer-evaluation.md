@@ -142,3 +142,27 @@ Correctness contract:
   full pass follows only if the pilot stored a snapshot that is not partial and its mean observed tokens per run is at
   most 10,000; the full pass is all 42 questions in set order, lean profile, `pause-ms` 20,000, broker and quant off.
   One pass each; a partial pass is reported and not repeated.
+- 2026-09-19, Milestone 3 handed off (a051c0c evidence, 1965430 write-up): the pilot (snapshot 37, six questions,
+  34,855 tokens, mean 5,809 per run) met the frozen gate, and the full lean pass (snapshot 38, 42 questions, 258,639
+  tokens) ran once, 76 seconds later; neither pass was partial and no rate-limit rejection occurred. Tokens for the
+  whole plan: 304,866, against the approved components of about 7,000 + 7,000 + 45,000 + 300,000 (about 359,000).
+  Recorded under the lean profile: the expected chunk retrieved for 30 of 42 questions, the accepted phrase visible
+  to a model for 15 of those 30, the expected chunk cited for all 15 visible, 19 runs INSUFFICIENT_EVIDENCE with none
+  of them among the 15 visible; all 48 evaluation runs marked EVALUATION and absent from listings and outcomes.
+- 2026-09-19, Milestone 3 Scrutiny round 1: FAIL on one blocking documentation finding, with every data check
+  passing: both exports equal the database rows; every aggregate and cross-tabulation recomputed equal; all 15
+  cut-out phrase spans confirmed against the store; the four measures re-derived for all 48 runs from the stored runs
+  and chunk text with no difference; exactly two passes; no secret in the committed logs. The finding: the pointers
+  added to Follow_Ups RAG-27 and RAG-30 gave the cited count (27 of the 33 questions ranked 1 to 5 in the retrieval
+  reference) without its split: 15 cited and visible, 12 cited with the phrase not wholly inside the text shown, and 9
+  of the 27 citing runs INSUFFICIENT_EVIDENCE. Remediation round 1 (4260ef5) rewrote both pointers with the split,
+  opened AGENT-11 (judged support metric) and AGENT-12 (default-profile pass, estimated at about 630,000 to 1,220,000
+  tokens), and fixed four low notes; the scoped re-check PASSED with every number and id list recomputed equal.
+- 2026-09-19, Milestone 3 UT: PASS with zero model calls (the app ran with recommendations disabled): snapshots 37 and
+  38 read back equal to the committed exports; all 42 rows and the aggregates re-derived; evaluation runs absent from
+  product data; the disabled refusal creates nothing; `verify` exit 0 (701 tests, 37 skipped). The validator was cut
+  off once by a usage limit and resumed with its context.
+- 2026-09-19, plan closed: close-out commit 77d4da7 (four low wording notes from the scoped re-check; CLAUDE.md loop
+  history with the validator outcomes), checked by `verify` and the claims check only, not by a further validator
+  round. Open for Jay: AGENT-11, AGENT-12, and the retrieval decisions RAG-27 and RAG-30, which now point at this
+  measurement. Branch `answer-evaluation` goes to a pull request against `main`.

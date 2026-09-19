@@ -62,6 +62,7 @@ final class ScriptedAnswers {
     final List<Long> pauses = new ArrayList<>();
     final List<Prompt> prompts = java.util.Collections.synchronizedList(new ArrayList<>());
     private final Map<String, List<RetrievedFilingChunk>> chunksByQuery = new LinkedHashMap<>();
+    private final Map<String, RuntimeException> failingQueries = new LinkedHashMap<>();
     private final Deque<Object> manager = new ArrayDeque<>();
     private final Deque<Object> rag = new ArrayDeque<>();
     private final Deque<Object> critic = new ArrayDeque<>();
@@ -77,6 +78,8 @@ final class ScriptedAnswers {
         when(filings.findDistinctProcessingVersionsOfEmbeddedFilings()).thenReturn(List.of("scripted-store-v1"));
         when(retrieval.retrieve(any())).thenAnswer(invocation -> {
             RetrievalRequest request = invocation.getArgument(0);
+            RuntimeException outage = failingQueries.get(request.query());
+            if (outage != null) throw outage;
             List<RetrievedFilingChunk> chunks = chunksByQuery.getOrDefault(request.query(), List.of());
             return new RetrievalResponse(request.ticker(), request.query(), "HYBRID_RRF", true, request.topK(), chunks.size(), chunks);
         });
@@ -113,6 +116,9 @@ final class ScriptedAnswers {
         return this;
     }
 
+    /** Every filing search with this query text fails with the exception, as an embedding or database outage does. */
+    ScriptedAnswers retrievalFails(String text, RuntimeException outage) { failingQueries.put(text, outage); return this; }
+
     ScriptedAnswers managerSays(Object response) { manager.add(response); return this; }
     ScriptedAnswers ragSays(Object response) { rag.add(response); return this; }
     ScriptedAnswers criticSays(Object response) { critic.add(response); return this; }
@@ -133,12 +139,17 @@ final class ScriptedAnswers {
 
     /** The runner over the given recommendation service (null: recommendations disabled), recording pauses instead of sleeping. */
     AnswerEvaluationService runner(RecommendationService service, AnswerEvaluationRepository snapshots) {
+        return runner(service, snapshots, pauses::add);
+    }
+
+    /** The same runner with another pause, for a test that interrupts it. */
+    AnswerEvaluationService runner(RecommendationService service, AnswerEvaluationRepository snapshots, AnswerEvaluationService.Pauser pauser) {
         when(loader.load()).thenReturn(new RetrievalEvaluationSet("scripted-v1", LocalDate.of(2026, 9, 19), List.copyOf(questions)));
         var beans = new StaticListableBeanFactory();
         if (service != null) beans.addBean("recommendations", service);
         return new AnswerEvaluationService(loader, beans.getBeanProvider(RecommendationService.class), snapshots, evaluationProperties,
                 recommendationProperties, new FilingRetrievalProperties(), new FilingIngestionProperties(), filings,
-                new MockEnvironment(), pauses::add);
+                new MockEnvironment(), pauser);
     }
 
     static RetrievedFilingChunk chunk(long id, String section, String content) {

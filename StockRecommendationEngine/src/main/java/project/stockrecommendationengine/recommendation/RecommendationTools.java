@@ -25,7 +25,13 @@ final class RecommendationTools {
     private final int searchTopK;
     private final int modelPassageChars;
     private final JsonMapper json = JsonMapper.builder().build();
-    final Map<Long, RetrievedFilingChunk> evidence = new LinkedHashMap<>();
+    /**
+     * Every chunk retrieved during the run, in order of first retrieval. Synchronised: searches of one run can execute on
+     * several threads, and a search cancelled by a run limit can still finish and write while the run's end is being read.
+     * Single calls (put, get, containsKey, size) are safe as they are; anything that walks the map reads
+     * {@link #evidenceCopy()} instead, which copies under the map's lock.
+     */
+    final Map<Long, RetrievedFilingChunk> evidence = Collections.synchronizedMap(new LinkedHashMap<>());
     /** Retrieved passages whose text looks like instructions to a model rather than filing prose; disclosed, never acted on. */
     final Set<Long> instructionLikeEvidence = new LinkedHashSet<>();
     final Map<Long, Instrument> instruments = new LinkedHashMap<>();
@@ -61,8 +67,12 @@ final class RecommendationTools {
      * same text each time. Read by the answer evaluation after the run; it never reaches a prompt.
      */
     List<EvaluationRun.ShownPassage> shown() {
-        return evidence.values().stream()
+        return evidenceCopy().stream()
                 .map(chunk -> new EvaluationRun.ShownPassage(chunk, forModel(chunk, modelPassageChars).content())).toList();
+    }
+    /** The chunks retrieved so far, copied while holding the map's lock, so a concurrent search cannot change the map mid-copy. */
+    List<RetrievedFilingChunk> evidenceCopy() {
+        synchronized (evidence) { return List.copyOf(evidence.values()); }
     }
     static RetrievedFilingChunk forModel(RetrievedFilingChunk chunk, int maxChars) {
         String content = chunk.content();

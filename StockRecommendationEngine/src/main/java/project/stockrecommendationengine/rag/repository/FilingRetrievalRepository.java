@@ -216,6 +216,14 @@ public class FilingRetrievalRepository {
 
     /** Every numeric token {@link #KEYWORD_TOKEN} finds, length 2 or more, distinct, in order of first appearance; years included. */
     public static Set<String> numericTokens(String text) {
+        return numericTokens(text, 2);
+    }
+
+    /**
+     * The same tokens with another minimum length. Retrieval always uses 2 (the method above); the answer evaluation reads
+     * a reasoning's numerals with 1, so a single digit such as the 7 of "$7 billion" can equal a phrase figure 7.0.
+     */
+    public static Set<String> numericTokens(String text, int minLength) {
         Set<String> tokens = new LinkedHashSet<>();
         if (text == null) {
             return tokens;
@@ -223,7 +231,7 @@ public class FilingRetrievalRepository {
         Matcher matcher = KEYWORD_TOKEN.matcher(text.toLowerCase(Locale.ROOT));
         while (matcher.find()) {
             String token = matcher.group();
-            if (token.length() >= 2 && NUMERIC_TOKEN.matcher(token).matches()) {
+            if (token.length() >= minLength && NUMERIC_TOKEN.matcher(token).matches()) {
                 tokens.add(token);
             }
         }

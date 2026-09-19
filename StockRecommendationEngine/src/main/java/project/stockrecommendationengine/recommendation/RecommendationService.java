@@ -124,11 +124,11 @@ public class RecommendationService {
     }
 
     /**
-     * Internal entry point for callers inside the application that must mark a run, such as an evaluation runner. The
-     * run itself is identical (same validation, tools, passage screen, and citation checks); only the stored purpose
-     * differs. No request body or parameter reaches this argument.
+     * The run with an explicit purpose; package-private, so outside this package the only way to store an EVALUATION run
+     * is {@link #recommendForEvaluation}. The run itself is identical (same validation, tools, passage screen, and
+     * citation checks); only the stored purpose differs. No request body or parameter reaches this argument.
      */
-    public RecommendationResponse recommend(RecommendationRequest request, RunPurpose purpose) {
+    RecommendationResponse recommend(RecommendationRequest request, RunPurpose purpose) {
         return execute(request, purpose, null);
     }
 
@@ -248,7 +248,8 @@ public class RecommendationService {
                 properties.getSearchTopK(), properties.getModelPassageChars());
         try { return run(runId, request, tools); }
         finally {
-            // Read-only hand-over for the answer evaluation; a copy that fails (a cancelled specialist still writing) is reported as not captured.
+            // Read-only hand-over for the answer evaluation. The copy is taken under the evidence map's lock, so a cancelled
+            // search that is still writing cannot tear it; a copy that fails all the same is reported as not captured.
             if (captured != null) {
                 try { captured.set(tools.shown()); }
                 catch (RuntimeException ex) { log.debug("Recommendation run={} evidence hand-over failed", runId, ex); }
@@ -400,7 +401,7 @@ public class RecommendationService {
                     throw new IllegalArgumentException("INVALID_SPECIALIST_REPORT");
                 }
                 return json.writeValueAsString(Map.of("specialist", role, "summary", report.path("summary").asText(),
-                        "evidence", role.equals("RAG") ? tools.forModel(tools.evidence.values()) : List.of(),
+                        "evidence", role.equals("RAG") ? tools.forModel(tools.evidenceCopy()) : List.of(),
                         "instructionLikePassages", role.equals("RAG") ? List.copyOf(tools.instructionLikeEvidence) : List.of(),
                         "quotes", role.equals("BROKER") ? List.copyOf(tools.quotes.values()) : List.of(),
                         "portfolio", role.equals("BROKER") && tools.portfolio != null ? tools.portfolio : Map.of(),
@@ -423,7 +424,7 @@ public class RecommendationService {
         executeCall("RAG", new AssistantMessage.ToolCall("prefetch-search", "function", "searchFilings", arguments), callbacks.get("searchFilings"), state);
         var evidence = new LinkedHashMap<String, Object>();
         evidence.put("query", request.question());
-        evidence.put("passages", tools.forModel(tools.evidence.values()));
+        evidence.put("passages", tools.forModel(tools.evidenceCopy()));
         evidence.put("instructionLikePassages", List.copyOf(tools.instructionLikeEvidence));
         evidence.put("limitations", state.limitations());
         return evidence;

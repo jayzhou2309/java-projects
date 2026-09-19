@@ -30,7 +30,8 @@ public class AnswerEvaluationController {
      * full pass takes many minutes; the snapshot is stored even if the caller has gone). {@code questions} is an optional
      * comma-separated list of question ids, {@code limit} then keeps the first so many in set order. 503 when
      * recommendations are disabled, 400 for an unknown id or a limit below 1, 409 while another pass runs; none of these
-     * starts a run or calls a model.
+     * starts a run or calls a model. 500 with the fallback file's path when the pass ended but its snapshot could not be
+     * stored (the snapshot is then in that file and in the log, not in the table).
      */
     @PostMapping
     public AnswerEvaluation evaluate(@RequestParam(required = false) String questions, @RequestParam(required = false) Integer limit) {

@@ -292,6 +292,16 @@ class RecommendationServiceTests {
         verify(store, times(2)).save(any());
     }
 
+    @Test void outsideThePackageTheOnlyWayToStoreAnEvaluationRunIsRecommendForEvaluation() throws Exception {
+        var internal = RecommendationService.class.getDeclaredMethod("recommend", RecommendationRequest.class, RunPurpose.class);
+        assertThat(java.lang.reflect.Modifier.isPublic(internal.getModifiers())).isFalse();
+        assertThat(java.lang.reflect.Modifier.isProtected(internal.getModifiers())).isFalse();
+        assertThat(java.util.Arrays.stream(RecommendationService.class.getMethods())
+                .filter(method -> java.util.Arrays.asList(method.getParameterTypes()).contains(RunPurpose.class)))
+                .as("no public method takes a purpose").isEmpty();
+        assertThat(RecommendationService.class.getMethod("recommendForEvaluation", RecommendationRequest.class).getReturnType()).isEqualTo(EvaluationRun.class);
+    }
+
     @Test void criticReviewsTheDraftWithoutToolsAndTheVerdictIsEchoed() {
         properties.setCriticRounds(2);
         scriptByRole(withCritic(fullRunScript("BULLISH"), verdict("ACCEPT", "[\"Reasoning matches the cited passage.\"]")));

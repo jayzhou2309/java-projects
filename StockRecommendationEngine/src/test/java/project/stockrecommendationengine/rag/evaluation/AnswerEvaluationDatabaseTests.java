@@ -45,7 +45,8 @@ class AnswerEvaluationDatabaseTests {
                 new QuestionResult("nvda-04", "NVDA", Kind.FIGURE, null, "RECOMMENDATION_CAPACITY_REACHED", null, null, false, 0, null, null, null, null,
                         null, 0, 0, List.of(), null, null, null, List.of(), null, null, 0, 0, 3, null));
         var aggregates = new Aggregates(2, 1, 1, 1, new BigDecimal("1.000000"), 0, new BigDecimal("0.000000"), 0, null, 0, 0, null, 0,
-                new BigDecimal("0.000000"), 0, Map.of("PARTIAL", 1), Map.of("BROKER_DISABLED", 1), 6500, 4, 31003);
+                new BigDecimal("0.000000"), 0, Map.of("PARTIAL", 1), Map.of("BROKER_DISABLED", 1), 6500, 4, 31003,
+                1, 0, 1, 1, new BigDecimal("1.000000"), 0, new BigDecimal("0.000000"), 0, null, 0, 0, null, new BigDecimal("0.000000"));
         var partial = repository.save(new AnswerEvaluation(null, base, "v2", 3, 2, true, "RECOMMENDATION_CAPACITY_REACHED at nvda-04", aggregates,
                 Map.of("searchTopK", 3, "chatModel", "scripted"), results, List.of("msft-01")));
         var complete = repository.save(new AnswerEvaluation(null, base.plusSeconds(60), "v2", 1, 1, false, null, aggregates, Map.of(), results.subList(0, 1), List.of()));
@@ -60,6 +61,24 @@ class AnswerEvaluationDatabaseTests {
         // A partial row always says why, and a complete one never carries a reason.
         assertThatThrownBy(() -> jdbc.update("UPDATE answer_evaluations SET partial_reason = NULL WHERE id = ?", partial.id()))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test void aNulCharacterInAnyStringDoesNotMakeTheWriteFail() {
+        // PostgreSQL's jsonb refuses the escape of U+0000; the repository removes it, and leaves a literal backslash-u text alone.
+        String nul = String.valueOf((char) 0);
+        var result = new QuestionResult("aapl-08", "AAPL", Kind.NARRATIVE, "00000000-0000-0000-0000-00000000000b", null, "PARTIAL", "NEUTRAL", true, 0, false,
+                List.of(), false, List.of(), false, 0, 0, List.of(), null, null, null, List.of("CODE" + nul), null, null, 1, 100, 5,
+                "Reasoning" + nul + " with a path C:\\u0000 kept.");
+        var snapshot = new AnswerEvaluation(null, Instant.parse("2099-02-01T00:00:00Z"), "v2", 1, 1, true, "stopped" + nul + " here",
+                AnswerEvaluationService.aggregate(List.of(result)), Map.of("chatModel", "scripted" + nul), List.of(result), List.of());
+        long id = repository.save(snapshot).id();
+        AnswerEvaluation read = repository.findById(id).orElseThrow();
+        assertThat(read.results().get(0).reasoning()).isEqualTo("Reasoning with a path C:\\u0000 kept.");
+        assertThat(read.results().get(0).limitations()).containsExactly("CODE");
+        assertThat(read.partialReason()).isEqualTo("stopped here");
+        assertThat(read.properties()).containsEntry("chatModel", "scripted");
+        assertThat(read.aggregates().limitationCounts()).as("a map key is a string too").containsOnly(entry("CODE", 1));
+        assertThat(read.aggregates().answeredRuns()).isEqualTo(1);
     }
 
     @Test void aScriptedPassStoresExactlyOneSnapshotAndItsRunsAreEvaluationRunsKeptOutOfTheListing() {

@@ -148,6 +148,9 @@ rag:
     # Runs are sequential with this pause between them; 20 seconds keeps a lean pass under 30,000 tokens per minute.
     answers:
       pause-ms: 20000
+      # Where a pass's snapshot is written (one JSON file) if it cannot be stored in answer_evaluations; the pass has
+      # spent its tokens by then. Relative to the working directory.
+      fallback-dir: target/answer-evaluations
     # Classpath resource of the evaluation set to run (recorded as properties.set in every snapshot). v2 is the default;
     # evaluation/retrieval-set-v1.json stays bundled for comparison. Metrics are only comparable within one set.
     set: evaluation/retrieval-set-v2.json

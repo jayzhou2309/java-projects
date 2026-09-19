@@ -1,5 +1,7 @@
 package project.stockrecommendationengine.rag.evaluation;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -7,9 +9,13 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpStatus;
 import project.stockrecommendationengine.rag.evaluation.AnswerEvaluation.QuestionResult;
 import project.stockrecommendationengine.rag.evaluation.RetrievalEvaluationQuestion.Kind;
@@ -18,6 +24,7 @@ import project.stockrecommendationengine.recommendation.RecommendationRepository
 import project.stockrecommendationengine.recommendation.RecommendationRequest;
 import project.stockrecommendationengine.recommendation.RecommendationService;
 import project.stockrecommendationengine.recommendation.RunPurpose;
+import tools.jackson.databind.json.JsonMapper;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -29,6 +36,7 @@ import static project.stockrecommendationengine.rag.evaluation.ScriptedAnswers.c
  * The answer-evaluation runner over the real recommendation harness with a scripted chat model (plan 2026-09-19,
  * Milestone 2, B1 to B4). Nothing here calls a live model or the database.
  */
+@ExtendWith(OutputCaptureExtension.class)
 class AnswerEvaluationServiceTests {
     private static final String FILLER = "Filler sentence about general operations. ".repeat(8);
     private final ScriptedAnswers scripted = new ScriptedAnswers();
@@ -155,6 +163,18 @@ class AnswerEvaluationServiceTests {
         assertThat(aggregates.limitationCounts()).containsEntry("BROKER_DISABLED", 7).containsEntry("INVALID_CITATION", 1).containsEntry("NO_FILING_EVIDENCE", 1);
         assertThat(aggregates.totalTokens()).isEqualTo(7L * 3 * ScriptedAnswers.TOKENS_PER_CALL);
         assertThat(aggregates.totalModelCalls()).isEqualTo(21);
+        // The same shares among the six answered runs: t-invalid (retrieved, visible, stopped before an answer) leaves each denominator.
+        assertThat(aggregates.answeredRuns()).isEqualTo(6);
+        assertThat(aggregates.noAnswerRuns()).isEqualTo(1);
+        assertThat(aggregates.measuredAmongAnswered()).isEqualTo(6);
+        assertThat(aggregates.retrievedAmongAnswered()).isEqualTo(5);
+        assertThat(aggregates.shareRetrievedAmongAnswered()).isEqualByComparingTo("0.833333");
+        assertThat(aggregates.visibleAmongAnswered()).isEqualTo(4);
+        assertThat(aggregates.shareVisibleGivenRetrievedAmongAnswered()).isEqualByComparingTo("0.8");
+        assertThat(aggregates.citedAndVisibleAmongAnswered()).isEqualTo(3);
+        assertThat(aggregates.shareCitedGivenVisibleAmongAnswered()).isEqualByComparingTo("0.75");
+        assertThat(aggregates.shareFiguresInReasoningAmongAnswered()).isEqualByComparingTo("0.5");
+        assertThat(aggregates.insufficientEvidenceRateAmongAnswered()).isEqualByComparingTo("0.166667");
 
         // B2: exactly one snapshot, complete, and every run of the pass stored as an EVALUATION run with the set's question.
         ArgumentCaptor<AnswerEvaluation> saved = ArgumentCaptor.forClass(AnswerEvaluation.class);
@@ -389,6 +409,205 @@ class AnswerEvaluationServiceTests {
         assertThat(evaluation.aggregates().attempted()).isEqualTo(2);
         assertThat(evaluation.aggregates().withRun()).isEqualTo(1);
         assertThat(evaluation.properties()).containsEntry("limit", 2);
+    }
+
+    @Test void aPassMixingAnsweredAndStoppedRunsReportsEachShareOverAllRunsAndAmongAnsweredRuns() {
+        scripted.question("t-answered", Kind.FIGURE, "How many stores are there?", List.of("we operated 535 stores in 27 countries"),
+                        List.of(chunk(141, SECTION, "At year end we operated 535 stores in 27 countries.")),
+                        answer("NEUTRAL", "It operates 535 stores in 27 countries.", "[141]"))
+                .question("t-stopped-figure", Kind.FIGURE, "What was the backlog?", List.of("backlog of $18.6 billion at year end"),
+                        List.of(chunk(142, SECTION, "We had a backlog of $18.6 billion at year end.")),
+                        answer("NEUTRAL", "Backlog was 18.6 billion.", "[999]"))
+                // Stopped at the manager's first response, before any search: nothing was retrieved, and that reads false, not unknown.
+                .question("t-stopped-early", Kind.NARRATIVE, "What is the outlook?", List.of("the outlook phrase"),
+                        List.of(chunk(143, SECTION, "Here is the outlook phrase.")), null)
+                .managerSays(ScriptedAnswers.text("this is not the JSON answer"));
+
+        AnswerEvaluation evaluation = scripted.runner(recommendations, snapshots).evaluate(null, null);
+
+        assertThat(evaluation.partial()).as("per-run stops do not stop the pass").isFalse();
+        QuestionResult stoppedFigure = result(evaluation, "t-stopped-figure");
+        assertThat(stoppedFigure.status()).isEqualTo("INVALID_CITATION");
+        assertThat(stoppedFigure.reasoning()).isEmpty();
+        assertThat(stoppedFigure.retrievedExpected()).isTrue();
+        assertThat(stoppedFigure.visibleToModel()).isTrue();
+        assertThat(stoppedFigure.citedExpected()).as("no answer reads false, by the frozen definition").isFalse();
+        assertThat(stoppedFigure.figuresInReasoning()).as("an empty reasoning holds no figure").isFalse();
+        QuestionResult stoppedEarly = result(evaluation, "t-stopped-early");
+        assertThat(stoppedEarly.status()).isEqualTo("INVALID_MODEL_OUTPUT");
+        assertThat(stoppedEarly.evidenceCaptured()).isTrue();
+        assertThat(stoppedEarly.retrievedCount()).isZero();
+        assertThat(stoppedEarly.retrievedExpected()).isFalse();
+        assertThat(evaluation.results()).filteredOn(AnswerEvaluationService::answered).extracting(QuestionResult::id).containsExactly("t-answered");
+
+        var aggregates = evaluation.aggregates();
+        assertThat(aggregates.withRun()).isEqualTo(3);
+        assertThat(aggregates.measured()).isEqualTo(3);
+        assertThat(aggregates.retrieved()).isEqualTo(2);
+        assertThat(aggregates.shareRetrieved()).isEqualByComparingTo("0.666667");
+        assertThat(aggregates.visible()).isEqualTo(2);
+        assertThat(aggregates.shareVisibleGivenRetrieved()).isEqualByComparingTo("1");
+        assertThat(aggregates.citedAndVisible()).isEqualTo(1);
+        assertThat(aggregates.shareCitedGivenVisible()).isEqualByComparingTo("0.5");
+        assertThat(aggregates.figureQuestions()).isEqualTo(2);
+        assertThat(aggregates.figuresInReasoning()).isEqualTo(1);
+        assertThat(aggregates.shareFiguresInReasoning()).isEqualByComparingTo("0.5");
+        assertThat(aggregates.insufficientEvidenceRate()).isEqualByComparingTo("0");
+
+        assertThat(aggregates.answeredRuns()).isEqualTo(1);
+        assertThat(aggregates.noAnswerRuns()).isEqualTo(2);
+        assertThat(aggregates.measuredAmongAnswered()).isEqualTo(1);
+        assertThat(aggregates.retrievedAmongAnswered()).isEqualTo(1);
+        assertThat(aggregates.shareRetrievedAmongAnswered()).isEqualByComparingTo("1");
+        assertThat(aggregates.visibleAmongAnswered()).isEqualTo(1);
+        assertThat(aggregates.shareVisibleGivenRetrievedAmongAnswered()).isEqualByComparingTo("1");
+        assertThat(aggregates.citedAndVisibleAmongAnswered()).isEqualTo(1);
+        assertThat(aggregates.shareCitedGivenVisibleAmongAnswered()).isEqualByComparingTo("1");
+        assertThat(aggregates.figureQuestionsAmongAnswered()).isEqualTo(1);
+        assertThat(aggregates.figuresInReasoningAmongAnswered()).isEqualTo(1);
+        assertThat(aggregates.shareFiguresInReasoningAmongAnswered()).isEqualByComparingTo("1");
+        assertThat(aggregates.insufficientEvidenceRateAmongAnswered()).isEqualByComparingTo("0");
+    }
+
+    @Test void aRejectedSpecialistReportIsInTheLimitationCodesWhileVisibleToModelStillReadsTrue() {
+        // The RAG specialist was shown the passage; its report is rejected, so the manager never receives the passages.
+        scripted.question("t-rejected-report", Kind.NARRATIVE, "What changed in pricing?", List.of("list prices rose in the second half"),
+                        List.of(chunk(151, SECTION, "Our list prices rose in the second half.")), null)
+                .managerSays(ScriptedAnswers.calls(new org.springframework.ai.chat.messages.AssistantMessage.ToolCall("delegate-x", "function", "researchFilings", "{}")))
+                .ragSays(ScriptedAnswers.text("a report that is not the required JSON"))
+                .managerSays(ScriptedAnswers.text(answer("INSUFFICIENT_EVIDENCE", "The specialist returned nothing usable.", "[]")));
+        AnswerEvaluation evaluation = scripted.runner(recommendations, snapshots).evaluate(null, null);
+        QuestionResult result = result(evaluation, "t-rejected-report");
+        assertThat(result.limitations()).contains("researchFilings:INVALID_ARGUMENT");
+        assertThat(result.visibleToModel()).as("shown to the specialist that retrieved it").isTrue();
+        assertThat(scripted.prompts.get(2).toString()).as("the manager's next prompt carries the rejection, not the passage")
+                .contains("INVALID_ARGUMENT").doesNotContain("list prices rose");
+        assertThat(evaluation.aggregates().limitationCounts()).containsEntry("researchFilings:INVALID_ARGUMENT", 1);
+    }
+
+    @Test void aRetrievalOutageStopsThePassAfterThatRunAsPartial() {
+        scripted.question("t-before", Kind.NARRATIVE, "First question?", List.of("the first expected phrase"),
+                        List.of(chunk(161, SECTION, "Here is the first expected phrase.")), answer("NEUTRAL", "Fine.", "[161]"))
+                .question("t-outage", Kind.NARRATIVE, "Second question?", List.of("the second expected phrase"),
+                        List.of(chunk(162, SECTION, "Here is the second expected phrase.")), answer("INSUFFICIENT_EVIDENCE", "No passages were returned.", "[]"))
+                .retrievalFails("Second question?", new IllegalStateException("Embedding request failed"))
+                .unscripted("t-never", "TSTA", "Never asked?");
+
+        AnswerEvaluation evaluation = scripted.runner(recommendations, snapshots).evaluate(null, null);
+
+        assertThat(evaluation.partial()).isTrue();
+        assertThat(evaluation.partialReason()).isEqualTo("RETRIEVAL_UNAVAILABLE at t-outage");
+        assertThat(evaluation.results()).extracting(QuestionResult::id).containsExactly("t-before", "t-outage");
+        assertThat(evaluation.notAttempted()).containsExactly("t-never");
+        QuestionResult outage = result(evaluation, "t-outage");
+        assertThat(outage.limitations()).contains("searchFilings:TOOL_UNAVAILABLE");
+        assertThat(outage.runId()).as("the run is stored and listed with its measures").isNotNull();
+        assertThat(outage.retrievedCount()).isZero();
+        assertThat(scripted.pauses).as("no pause after the run that stopped the pass").hasSize(1);
+        verify(scripted.model, times(6)).call(any(Prompt.class));
+        verify(snapshots, times(1)).save(any());
+    }
+
+    @Test void aNulCharacterInModelTextIsRemovedBeforeTheSnapshotIsStored() {
+        // The model's JSON carries the escape of U+0000, which PostgreSQL's jsonb refuses; the parsed reasoning holds the character.
+        scripted.question("t-nul", Kind.NARRATIVE, "Why did margin rise?", List.of("margin rose on mix"),
+                List.of(chunk(171, SECTION, "Gross margin rose on mix.")), answer("NEUTRAL", "Margin\\u0000 rose on mix.", "[171]"));
+        AnswerEvaluation evaluation = scripted.runner(recommendations, snapshots).evaluate(null, null);
+        ArgumentCaptor<AnswerEvaluation> saved = ArgumentCaptor.forClass(AnswerEvaluation.class);
+        verify(snapshots).save(saved.capture());
+        assertThat(result(saved.getValue(), "t-nul").reasoning()).isEqualTo("Margin rose on mix.");
+        assertThat(JsonMapper.builder().build().writeValueAsString(saved.getValue())).doesNotContain("\\u0000");
+        assertThat(evaluation).isEqualTo(saved.getValue().withId(7L));
+    }
+
+    @Test void aSnapshotThatCannotBeStoredIsLoggedAndWrittenToTheFallbackDirectoryAndTheCallerIsToldWhere(@TempDir Path directory, CapturedOutput output)
+            throws Exception {
+        Path fallback = directory.resolve("not-yet-created");
+        scripted.evaluationProperties.getAnswers().setFallbackDir(fallback.toString());
+        scripted.question("t-kept", Kind.NARRATIVE, "First question?", List.of("the first expected phrase"),
+                List.of(chunk(181, SECTION, "Here is the first expected phrase.")), answer("NEUTRAL", "Fine.", "[181]"));
+        reset(snapshots);
+        when(snapshots.save(any())).thenThrow(new org.springframework.dao.DataIntegrityViolationException("unsupported Unicode escape sequence; secret SQL detail"));
+
+        AnswerEvaluationService runner = scripted.runner(recommendations, snapshots);
+        AnswerEvaluationNotStoredException notStored = catchThrowableOfType(AnswerEvaluationNotStoredException.class, () -> runner.evaluate(null, null));
+
+        ArgumentCaptor<AnswerEvaluation> attempted = ArgumentCaptor.forClass(AnswerEvaluation.class);
+        verify(snapshots, times(1)).save(attempted.capture());
+        assertThat(notStored.fallbackFile()).isNotNull().hasParent(fallback).isRegularFile();
+        assertThat(notStored.fallbackFile().getFileName().toString()).matches("answer-evaluation-\\d{8}T\\d{6}\\.\\d{6}Z\\.json");
+        assertThat(notStored.getMessage()).contains(notStored.fallbackFile().toString()).contains("ANSWER_EVALUATION_SNAPSHOT").doesNotContain("secret SQL detail");
+        String written = Files.readString(notStored.fallbackFile());
+        assertThat(JsonMapper.builder().build().readValue(written, AnswerEvaluation.class)).as("the file holds the whole snapshot").isEqualTo(attempted.getValue());
+        assertThat(written).doesNotContain("\n");
+        assertThat(output.getOut()).contains("ANSWER_EVALUATION_SNAPSHOT " + written).contains(notStored.fallbackFile().toString())
+                .doesNotContain("secret SQL detail");
+        try (var files = Files.list(fallback)) { assertThat(files).hasSize(1); }
+        // The guard is released, so a later pass can run.
+        reset(snapshots);
+        when(snapshots.save(any())).thenAnswer(invocation -> invocation.<AnswerEvaluation>getArgument(0).withId(8L));
+        assertThat(runner.evaluate("t-kept", null).id()).isEqualTo(8L);
+    }
+
+    @Test void whenTheFallbackFileCannotBeWrittenEitherTheSnapshotIsStillLoggedAndTheCallerIsTold(@TempDir Path directory, CapturedOutput output) throws Exception {
+        Path notADirectory = Files.writeString(directory.resolve("a-file"), "x");
+        scripted.evaluationProperties.getAnswers().setFallbackDir(notADirectory.toString());
+        scripted.unscripted("t-bad-ticker", "NOT A TICKER", "Rejected by request validation?");
+        reset(snapshots);
+        when(snapshots.save(any())).thenThrow(new IllegalStateException("database is down"));
+        AnswerEvaluationNotStoredException notStored = catchThrowableOfType(AnswerEvaluationNotStoredException.class,
+                () -> scripted.runner(recommendations, snapshots).evaluate(null, null));
+        assertThat(notStored.fallbackFile()).isNull();
+        assertThat(notStored.getMessage()).contains("ANSWER_EVALUATION_SNAPSHOT").contains(notADirectory.toString());
+        assertThat(output.getOut()).contains("ANSWER_EVALUATION_SNAPSHOT {").contains("\"t-bad-ticker\"");
+    }
+
+    @Test void afterAnInterruptedPauseTheSnapshotIsSavedWithTheInterruptFlagClearedAndTheFlagIsRestored() {
+        scripted.question("t-first", Kind.NARRATIVE, "First question?", List.of("the first expected phrase"),
+                        List.of(chunk(191, SECTION, "Here is the first expected phrase.")), answer("NEUTRAL", "Fine.", "[191]"))
+                .unscripted("t-never", "TSTA", "Never asked?");
+        var flagDuringSave = new java.util.concurrent.atomic.AtomicReference<Boolean>();
+        doAnswer(invocation -> {
+            flagDuringSave.set(Thread.currentThread().isInterrupted());
+            return invocation.<AnswerEvaluation>getArgument(0).withId(7L);
+        }).when(snapshots).save(any());
+        var runner = scripted.runner(recommendations, snapshots, millis -> { throw new InterruptedException("stopping"); });
+        try {
+            AnswerEvaluation evaluation = runner.evaluate(null, null);
+            assertThat(evaluation.partialReason()).isEqualTo("INTERRUPTED before t-never");
+            assertThat(flagDuringSave.get()).as("the write ran with the flag cleared").isFalse();
+            assertThat(Thread.currentThread().isInterrupted()).as("and the flag is back for the caller").isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test void afterAnInterruptedServiceCallTheSnapshotIsSavedWithTheInterruptFlagClearedAndTheFlagIsRestored() {
+        Thread caller = Thread.currentThread();
+        var release = new CountDownLatch(1);
+        when(scripted.model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            caller.interrupt();
+            release.await(20, TimeUnit.SECONDS);
+            throw new IllegalStateException("released");
+        });
+        scripted.unscripted("t-interrupted", "TSTA", "Interrupted question?").unscripted("t-never", "TSTA", "Never asked?");
+        var flagDuringSave = new java.util.concurrent.atomic.AtomicReference<Boolean>();
+        doAnswer(invocation -> {
+            flagDuringSave.set(Thread.currentThread().isInterrupted());
+            return invocation.<AnswerEvaluation>getArgument(0).withId(7L);
+        }).when(snapshots).save(any());
+        try {
+            AnswerEvaluation evaluation = scripted.runner(recommendations, snapshots).evaluate(null, null);
+            assertThat(evaluation.partial()).isTrue();
+            assertThat(evaluation.partialReason()).isEqualTo("HTTP_503 at t-interrupted");
+            assertThat(result(evaluation, "t-interrupted").runId()).isNull();
+            assertThat(evaluation.notAttempted()).containsExactly("t-never");
+            assertThat(flagDuringSave.get()).as("the write ran with the flag cleared").isFalse();
+            assertThat(Thread.currentThread().isInterrupted()).as("and the flag is back for the caller").isTrue();
+        } finally {
+            Thread.interrupted();
+            release.countDown();
+        }
     }
 
     private static QuestionResult result(AnswerEvaluation evaluation, String id) {

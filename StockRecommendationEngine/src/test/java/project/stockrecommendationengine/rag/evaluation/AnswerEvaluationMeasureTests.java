@@ -75,6 +75,19 @@ class AnswerEvaluationMeasureTests {
         assertThat(check(question(Kind.FIGURE, "revenue was up 65% from a year ago"), "Revenue rose 65% year over year.").missing()).isEmpty();
         assertThat(check(question(Kind.FIGURE, "sales in the year 2,000 units"), "It sold 2000 units.").missing()).as("years are kept on the reasoning side").isEmpty();
 
+        // A reasoning numeral of any length counts, by value: the phrase figure 7.0 is met by "$7 billion", and not by 17 or 70.
+        var sevenPointZero = question(Kind.FIGURE, "revenue of $ 7.0 billion for the segment");
+        assertThat(FilingRetrievalRepository.figureTokens("revenue of $ 7.0 billion for the segment")).containsExactly("7.0");
+        assertThat(check(sevenPointZero, "Segment revenue was $7 billion.").missing()).isEmpty();
+        assertThat(check(sevenPointZero, "Segment revenue was 7.00 billion.").missing()).isEmpty();
+        assertThat(check(sevenPointZero, "Segment revenue was $17 billion.").missing()).as("7 inside 17 is another numeral").containsExactly("7.0");
+        assertThat(check(sevenPointZero, "Segment revenue was $70 billion, or 0.7 of the total, in 17 markets.").missing()).containsExactly("7.0");
+        assertThat(check(sevenPointZero, "Revenue grew in Q7 of the plan.").missing()).as("a digit inside a word token is not a numeral").containsExactly("7.0");
+        // The phrase side is unchanged: a one-character numeral is not a figure under the retrieval rule, and retrieval still drops it.
+        assertThat(FilingRetrievalRepository.figureTokens("revenue of $7 billion")).isEmpty();
+        assertThat(FilingRetrievalRepository.numericTokens("revenue of $7 billion and 12 units")).containsExactly("12");
+        assertThat(FilingRetrievalRepository.numericTokens("revenue of $7 billion and 12 units", 1)).containsExactly("7", "12");
+
         // Any one accepted phrase is enough; a phrase without a figure is skipped; none with a figure means no check.
         var alternatives = new RetrievalEvaluationQuestion("q", "TSTA", Kind.FIGURE, "Q?", List.of(
                 new ExpectedPassage(ACCESSION, SECTION, "increased during 2025 compared to 2024"),
@@ -90,6 +103,43 @@ class AnswerEvaluationMeasureTests {
         assertThat(AnswerEvaluationService.measure(question(Kind.NARRATIVE, "revenue was up 65% from a year ago"),
                 new EvaluationRun(response("PARTIAL", "NEUTRAL", "Revenue rose 65%.", List.of()), true, List.of()), 0).figuresInReasoning())
                 .as("only FIGURE questions are checked").isNull();
+    }
+
+    @Test void nulCharactersAreRemovedFromEveryRunStringOfAResult() {
+        var response = new RecommendationResponse("00000000-0000-0000-0000-000000000002", "TSTA", "PARTIAL", "NEUTRAL", "Reason\0ing.", List.of(), List.of(),
+                List.of("CODE\0:1", "BROKER_DISABLED"), List.of(), 1, 100, null, null, null, null, null, null,
+                new RecommendationResponse.Critique("REV\0ISE", List.of(), List.of(), false, List.of("1\0" + "2")), null, null);
+        QuestionResult result = AnswerEvaluationService.measure(question(Kind.NARRATIVE, "a phrase"), new EvaluationRun(response, true, List.of()), 0);
+        assertThat(result.reasoning()).isEqualTo("Reasoning.");
+        assertThat(result.limitations()).containsExactly("CODE:1", "BROKER_DISABLED");
+        assertThat(result.criticVerdict()).isEqualTo("REVISE");
+        assertThat(result.unsupportedNumerals()).containsExactly("12");
+        assertThat(AnswerEvaluationService.clean(null)).isNull();
+    }
+
+    @Test void anAnsweredRunHasAnAnswerStatusAndAReasoningAndAggregatesStoredBeforeTheAnsweredSharesStillRead() {
+        var question = question(Kind.NARRATIVE, "a phrase");
+        for (String status : List.of("COMPLETE", "PARTIAL", "INSUFFICIENT_EVIDENCE")) {
+            assertThat(AnswerEvaluationService.answered(AnswerEvaluationService.measure(question,
+                    new EvaluationRun(response(status, "NEUTRAL", "Some reasoning.", List.of()), true, List.of()), 0))).as(status).isTrue();
+        }
+        for (String status : List.of("INVALID_CITATION", "TOKEN_LIMIT", "MODEL_UNAVAILABLE", "DEADLINE_EXCEEDED", "FAILED", "INVALID_MODEL_OUTPUT")) {
+            assertThat(AnswerEvaluationService.answered(AnswerEvaluationService.measure(question,
+                    new EvaluationRun(response(status, "INSUFFICIENT_EVIDENCE", "", List.of()), true, List.of()), 0))).as(status).isFalse();
+        }
+        assertThat(AnswerEvaluationService.answered(AnswerEvaluationService.measure(question,
+                new EvaluationRun(response("PARTIAL", "NEUTRAL", " ", List.of()), true, List.of()), 0))).as("a blank reasoning is no answer").isFalse();
+
+        // Aggregates written before the answered shares existed lack those fields; they read as null (unknown), not as an error.
+        String before = "{\"attempted\":1,\"withRun\":1,\"measured\":1,\"retrieved\":1,\"shareRetrieved\":1.000000,\"visible\":0,"
+                + "\"shareVisibleGivenRetrieved\":0.000000,\"citedAndVisible\":0,\"shareCitedGivenVisible\":null,\"figureQuestions\":0,"
+                + "\"figuresInReasoning\":0,\"shareFiguresInReasoning\":null,\"insufficientEvidence\":0,\"insufficientEvidenceRate\":0.000000,"
+                + "\"invalidCitationRuns\":0,\"statusCounts\":{\"PARTIAL\":1},\"limitationCounts\":{},\"totalTokens\":6500,\"totalModelCalls\":4,\"totalElapsedMs\":31003}";
+        var read = tools.jackson.databind.json.JsonMapper.builder().build().readValue(before, AnswerEvaluation.Aggregates.class);
+        assertThat(read.withRun()).isEqualTo(1);
+        assertThat(read.answeredRuns()).isNull();
+        assertThat(read.noAnswerRuns()).isNull();
+        assertThat(read.shareRetrievedAmongAnswered()).isNull();
     }
 
     private static FigureCheck check(RetrievalEvaluationQuestion question, String reasoning) {

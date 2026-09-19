@@ -51,12 +51,29 @@ public record AnswerEvaluation(Long id, Instant evaluatedAt, String setVersion, 
      * (status INSUFFICIENT_EVIDENCE) / withRun. {@code statusCounts} counts every run status, so stop codes such as
      * INVALID_CITATION or TOKEN_LIMIT appear there ({@code invalidCitationRuns} repeats the first); {@code limitationCounts}
      * counts limitation codes with a trailing numeric id removed.
+     *
+     * <p>A run that produced no answer (stopped by INVALID_CITATION, TOKEN_LIMIT, MODEL_UNAVAILABLE and the like) still sits
+     * in the denominators above with the literal values its per-question measures have ({@code citedExpected} false,
+     * {@code figuresInReasoning} false on its empty reasoning). The {@code ...AmongAnswered} fields are the same counts and
+     * shares restricted to answered runs, each with its own numerator and denominator: {@code answeredRuns} counts runs
+     * whose status is COMPLETE, PARTIAL or INSUFFICIENT_EVIDENCE (the statuses given to a validated answer) with a
+     * non-blank reasoning, {@code noAnswerRuns} = withRun - answeredRuns. {@code shareRetrievedAmongAnswered} =
+     * retrievedAmongAnswered / measuredAmongAnswered; {@code shareVisibleGivenRetrievedAmongAnswered} =
+     * visibleAmongAnswered / retrievedAmongAnswered; {@code shareCitedGivenVisibleAmongAnswered} =
+     * citedAndVisibleAmongAnswered / visibleAmongAnswered; {@code shareFiguresInReasoningAmongAnswered} =
+     * figuresInReasoningAmongAnswered / figureQuestionsAmongAnswered; {@code insufficientEvidenceRateAmongAnswered} =
+     * insufficientEvidence / answeredRuns. These counts are boxed: a row written before they existed reads them as null
+     * (unknown), where a primitive would make the row unreadable.
      */
     public record Aggregates(int attempted, int withRun, int measured, int retrieved, BigDecimal shareRetrieved, int visible,
             BigDecimal shareVisibleGivenRetrieved, int citedAndVisible, BigDecimal shareCitedGivenVisible, int figureQuestions,
             int figuresInReasoning, BigDecimal shareFiguresInReasoning, int insufficientEvidence, BigDecimal insufficientEvidenceRate,
             int invalidCitationRuns, Map<String, Integer> statusCounts, Map<String, Integer> limitationCounts, long totalTokens,
-            long totalModelCalls, long totalElapsedMs) { }
+            long totalModelCalls, long totalElapsedMs, Integer answeredRuns, Integer noAnswerRuns, Integer measuredAmongAnswered,
+            Integer retrievedAmongAnswered, BigDecimal shareRetrievedAmongAnswered, Integer visibleAmongAnswered,
+            BigDecimal shareVisibleGivenRetrievedAmongAnswered, Integer citedAndVisibleAmongAnswered,
+            BigDecimal shareCitedGivenVisibleAmongAnswered, Integer figureQuestionsAmongAnswered, Integer figuresInReasoningAmongAnswered,
+            BigDecimal shareFiguresInReasoningAmongAnswered, BigDecimal insufficientEvidenceRateAmongAnswered) { }
 
     AnswerEvaluation withId(long newId) {
         return new AnswerEvaluation(newId, evaluatedAt, setVersion, questionCount, attempted, partial, partialReason, aggregates,

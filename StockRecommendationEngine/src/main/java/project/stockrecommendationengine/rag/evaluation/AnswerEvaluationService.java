@@ -1,8 +1,15 @@
 package project.stockrecommendationengine.rag.evaluation;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -34,6 +41,7 @@ import project.stockrecommendationengine.recommendation.RecommendationProperties
 import project.stockrecommendationengine.recommendation.RecommendationRequest;
 import project.stockrecommendationengine.recommendation.RecommendationResponse;
 import project.stockrecommendationengine.recommendation.RecommendationService;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Runs evaluation-set questions through the recommendation loop and stores one snapshot per pass. Each question is sent
@@ -45,8 +53,15 @@ import project.stockrecommendationengine.recommendation.RecommendationService;
  * <p>Runs are sequential with {@code rag.evaluation.answers.pause-ms} between them (none after the last). A pass stops
  * and is stored partial when the service answers HTTP 429 (both worker slots busy; that question is listed with the
  * error and no run), when a run reports MODEL_UNAVAILABLE (the provider failed after the service's single rate-limit
- * retry, at any role), when any other exception leaves the service, or when the pause is interrupted. A request the
- * service rejects as invalid (HTTP 400) is listed with the error and the pass continues. One pass runs at a time.
+ * retry, at any role), when a run reports searchFilings:TOOL_UNAVAILABLE (retrieval or its embedding call failed, so
+ * further runs would spend chat tokens on no evidence), when any other exception leaves the service, or when the pause
+ * is interrupted. A request the service rejects as invalid (HTTP 400) is listed with the error and the pass continues.
+ * One pass runs at a time.
+ *
+ * <p>The snapshot is written once, at the end. NUL characters are removed from run text first (PostgreSQL's jsonb
+ * refuses them), the write runs with the thread's interrupt flag cleared (restored afterwards), and when the write
+ * still fails the snapshot is kept: logged on one line after {@value #SNAPSHOT_LOG_PREFIX}, written to a file under
+ * {@code rag.evaluation.answers.fallback-dir}, and reported by {@link AnswerEvaluationNotStoredException} (HTTP 500).
  */
 @Service
 @Slf4j
@@ -57,6 +72,14 @@ public class AnswerEvaluationService {
     static final String RATE_LIMIT_RETRIED = "MODEL_RATE_LIMITED_RETRIED";
     static final String CAPACITY_REACHED = "RECOMMENDATION_CAPACITY_REACHED";
     static final String INVALID_REQUEST = "INVALID_REQUEST";
+    /** The limitation a run carries when a filing search failed for a reason other than its arguments (RecommendationService.executeCall). */
+    static final String RETRIEVAL_TOOL_UNAVAILABLE = "searchFilings:TOOL_UNAVAILABLE";
+    static final String RETRIEVAL_UNAVAILABLE = "RETRIEVAL_UNAVAILABLE";
+    /** Prefix of the one INFO line that carries the whole serialised snapshot when it could not be stored. */
+    static final String SNAPSHOT_LOG_PREFIX = "ANSWER_EVALUATION_SNAPSHOT ";
+    /** Statuses RecommendationService gives a validated answer; every other status is a stop code with an empty reasoning. */
+    private static final Set<String> ANSWER_STATUSES = Set.of("COMPLETE", "PARTIAL", INSUFFICIENT_EVIDENCE);
+    private static final DateTimeFormatter FILE_STAMP = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss.SSSSSS'Z'").withZone(ZoneOffset.UTC);
     private static final int SCALE = 6;
 
     /** The wait between runs; a seam so tests record pauses instead of sleeping. */
@@ -75,6 +98,7 @@ public class AnswerEvaluationService {
     private final SECFilingRepository filings;
     private final Environment environment;
     private final Pauser pauser;
+    private final JsonMapper json = JsonMapper.builder().build();
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Autowired
@@ -156,6 +180,8 @@ public class AnswerEvaluationService {
                 if (providerUnavailable(result)) {
                     stopped = MODEL_UNAVAILABLE + " at " + question.id()
                             + (result.limitations().contains(RATE_LIMIT_RETRIED) ? " after the rate-limit retry" : "");
+                } else if (result.limitations().contains(RETRIEVAL_TOOL_UNAVAILABLE)) {
+                    stopped = RETRIEVAL_UNAVAILABLE + " at " + question.id();
                 }
             } catch (ResponseStatusException refused) {
                 int code = refused.getStatusCode().value();
@@ -174,13 +200,60 @@ public class AnswerEvaluationService {
                     result.figuresInReasoning(), result.observedTokens(), result.elapsedMs());
         }
         List<String> notAttempted = selected.stream().skip(results.size()).map(RetrievalEvaluationQuestion::id).toList();
-        AnswerEvaluation stored = repository.save(new AnswerEvaluation(null,
+        AnswerEvaluation stored = store(new AnswerEvaluation(null,
                 // Microseconds are what the column keeps, so the snapshot returned equals the one read back.
                 Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS), set.version(), selected.size(), results.size(),
                 stopped != null, stopped, aggregate(results), runProperties(set, pauseMs, filter, limit), List.copyOf(results), notAttempted));
         log.info("Answer evaluation stored: id={}, attempted={} of {}, partial={}, reason={}, totalTokens={}", stored.id(), stored.attempted(),
                 stored.questionCount(), stored.partial(), stored.partialReason(), stored.aggregates().totalTokens());
         return stored;
+    }
+
+    /**
+     * Write the snapshot, or keep it another way. An interrupted service call or pause leaves the thread's interrupt flag
+     * set, and a JDBC write on such a thread can fail, so the flag is cleared for the write and restored after it. When
+     * the write fails the pass has already spent its tokens: the snapshot goes to the log and to a file, and the caller
+     * is told where (exception messages can carry SQL detail, so only the class is logged above debug).
+     */
+    private AnswerEvaluation store(AnswerEvaluation snapshot) {
+        boolean interrupted = Thread.interrupted();
+        try {
+            return repository.save(snapshot);
+        } catch (RuntimeException failure) {
+            log.error("Answer evaluation snapshot not stored: {}", failure.getClass().getSimpleName());
+            log.debug("Answer evaluation snapshot write failure detail", failure);
+            throw keep(snapshot, failure);
+        } finally {
+            if (interrupted) Thread.currentThread().interrupt();
+        }
+    }
+
+    private AnswerEvaluationNotStoredException keep(AnswerEvaluation snapshot, RuntimeException failure) {
+        String serialised;
+        try {
+            serialised = json.writeValueAsString(snapshot);
+        } catch (RuntimeException unserialisable) {
+            log.error("Answer evaluation snapshot could not be serialised: {}", unserialisable.getClass().getSimpleName());
+            return new AnswerEvaluationNotStoredException("The pass ended but its snapshot could not be stored or serialised; "
+                    + "the per-question INFO log lines of the pass are what remains.", null, failure);
+        }
+        log.info("{}{}", SNAPSHOT_LOG_PREFIX, serialised);
+        try {
+            Path directory = Path.of(properties.getAnswers().getFallbackDir()).toAbsolutePath().normalize();
+            Files.createDirectories(directory);
+            Path file = directory.resolve("answer-evaluation-" + FILE_STAMP.format(snapshot.evaluatedAt()) + ".json");
+            if (Files.exists(file)) file = directory.resolve("answer-evaluation-" + FILE_STAMP.format(snapshot.evaluatedAt()) + "-" + System.nanoTime() + ".json");
+            Files.writeString(file, serialised, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
+            log.error("Answer evaluation snapshot not stored; written to {}", file);
+            return new AnswerEvaluationNotStoredException("The pass ended but its snapshot could not be stored in answer_evaluations. "
+                    + "It was written to " + file + " and logged on one line after \"" + SNAPSHOT_LOG_PREFIX.trim() + "\". "
+                    + "The runs of the pass are stored; do not repeat the pass to recover it.", file, failure);
+        } catch (IOException | RuntimeException unwritable) {
+            log.error("Answer evaluation snapshot not stored and the fallback file could not be written: {}", unwritable.getClass().getSimpleName());
+            return new AnswerEvaluationNotStoredException("The pass ended but its snapshot could not be stored in answer_evaluations or "
+                    + "written to " + properties.getAnswers().getFallbackDir() + ". It was logged on one line after \""
+                    + SNAPSHOT_LOG_PREFIX.trim() + "\". The runs of the pass are stored; do not repeat the pass to recover it.", null, failure);
+        }
     }
 
     /** A blank filter or an id the set does not hold is refused rather than ignored: a typo must not widen a pass that spends tokens. */
@@ -227,13 +300,32 @@ public class AnswerEvaluationService {
         boolean captured = run.evidenceCaptured();
         FigureCheck figures = question.kind() == Kind.FIGURE ? figures(question, response.reasoning()) : null;
         var critique = response.critique();
-        return new QuestionResult(question.id(), question.ticker(), question.kind(), response.runId(), null, response.status(),
-                response.assessment(), captured, run.retrieved().size(), captured ? !expected.isEmpty() : null, captured ? List.copyOf(expected) : null,
+        return new QuestionResult(question.id(), question.ticker(), question.kind(), response.runId(), null, clean(response.status()),
+                clean(response.assessment()), captured, run.retrieved().size(), captured ? !expected.isEmpty() : null, captured ? List.copyOf(expected) : null,
                 captured ? !visible.isEmpty() : null, captured ? List.copyOf(visible) : null, citedHolding > 0, cited.size(), citedHolding, citedIds,
                 figures == null ? null : figures.missing().isEmpty(), figures == null ? null : figures.tokens(),
-                figures == null ? null : figures.missing(), response.limitations() == null ? List.of() : List.copyOf(response.limitations()),
-                critique == null ? null : critique.verdict(), critique == null ? null : critique.unsupportedNumerals(),
-                response.modelCalls(), response.observedTokens(), elapsedMs, response.reasoning());
+                figures == null ? null : figures.missing(), clean(response.limitations()),
+                critique == null ? null : clean(critique.verdict()), critique == null ? null : clean(critique.unsupportedNumerals()),
+                response.modelCalls(), response.observedTokens(), elapsedMs, clean(response.reasoning()));
+    }
+
+    /** Text without NUL characters: PostgreSQL's jsonb refuses U+0000, and model text is the one place it can come from. */
+    static String clean(String text) {
+        return text == null || text.indexOf('\0') < 0 ? text : text.replace("\0", "");
+    }
+
+    private static List<String> clean(List<String> texts) {
+        return texts == null ? List.of() : texts.stream().map(AnswerEvaluationService::clean).toList();
+    }
+
+    /**
+     * The run produced an answer: its status is one RecommendationService gives a validated draft (COMPLETE, PARTIAL, or
+     * INSUFFICIENT_EVIDENCE when that is the model's own assessment) and its reasoning is not blank. A run stopped by a
+     * limit or a failure has the stop code as its status and an empty reasoning.
+     */
+    static boolean answered(QuestionResult result) {
+        return result.runId() != null && result.status() != null && ANSWER_STATUSES.contains(result.status())
+                && result.reasoning() != null && !result.reasoning().isBlank();
     }
 
     private static QuestionResult notRun(RetrievalEvaluationQuestion question, String error, long elapsedMs) {
@@ -246,15 +338,16 @@ public class AnswerEvaluationService {
     /**
      * {@code figuresInReasoning}: the figures of an accepted phrase are its numeric tokens under the retrieval figure rule
      * ({@link FilingRetrievalRepository#figureTokens}: length 2 or more, years left out). A figure appears in the reasoning when
-     * a numeric token of the reasoning (same tokeniser, years kept) has the same numeric value once thousands commas are
-     * dropped: 42,000 matches 42000, 40.4 matches "$40.4 billion" and 40.40, 65 matches 65%. A rescaled or rounded figure
-     * (64.4 billion for 64,377) does not match. The check holds when every figure of some accepted phrase appears; phrases
+     * a numeric token of the reasoning (same tokeniser, any length, years kept) has the same numeric value once thousands
+     * commas are dropped: 42,000 matches 42000, 40.4 matches "$40.4 billion" and 40.40, 65 matches 65%, 7.0 matches
+     * "$7 billion". Tokens are whole numerals, so 7.0 does not match 17. A rescaled or rounded figure (64.4 billion for
+     * 64,377) does not match. The check holds when every figure of some accepted phrase appears; phrases
      * without a figure are skipped, and null is returned when no accepted phrase has one. When it does not hold, the phrase
      * with the fewest missing figures (the first on a tie) is the one reported.
      */
     static FigureCheck figures(RetrievalEvaluationQuestion question, String reasoning) {
         Set<String> inReasoning = new LinkedHashSet<>();
-        FilingRetrievalRepository.numericTokens(reasoning).forEach(token -> inReasoning.add(canonical(token)));
+        FilingRetrievalRepository.numericTokens(reasoning, 1).forEach(token -> inReasoning.add(canonical(token)));
         FigureCheck best = null;
         for (ExpectedPassage passage : question.expected()) {
             List<String> tokens = FilingRetrievalRepository.figureTokens(passage.phrase());
@@ -285,6 +378,13 @@ public class AnswerEvaluationService {
         int figureQuestions = count(withRun, r -> r.figuresInReasoning() != null);
         int figuresInReasoning = count(withRun, r -> Boolean.TRUE.equals(r.figuresInReasoning()));
         int insufficient = count(withRun, r -> INSUFFICIENT_EVIDENCE.equals(r.status()));
+        List<QuestionResult> answered = withRun.stream().filter(AnswerEvaluationService::answered).toList();
+        List<QuestionResult> measuredAnswered = answered.stream().filter(QuestionResult::evidenceCaptured).toList();
+        int retrievedAnswered = count(measuredAnswered, r -> Boolean.TRUE.equals(r.retrievedExpected()));
+        int visibleAnswered = count(measuredAnswered, r -> Boolean.TRUE.equals(r.visibleToModel()));
+        int citedAndVisibleAnswered = count(measuredAnswered, r -> Boolean.TRUE.equals(r.visibleToModel()) && Boolean.TRUE.equals(r.citedExpected()));
+        int figureQuestionsAnswered = count(answered, r -> r.figuresInReasoning() != null);
+        int figuresInReasoningAnswered = count(answered, r -> Boolean.TRUE.equals(r.figuresInReasoning()));
         Map<String, Integer> statuses = new TreeMap<>();
         Map<String, Integer> limitations = new TreeMap<>();
         for (QuestionResult result : withRun) {
@@ -296,7 +396,11 @@ public class AnswerEvaluationService {
                 share(figuresInReasoning, figureQuestions), insufficient, share(insufficient, withRun.size()),
                 statuses.getOrDefault(INVALID_CITATION, 0), statuses, limitations,
                 withRun.stream().mapToLong(QuestionResult::observedTokens).sum(), withRun.stream().mapToLong(QuestionResult::modelCalls).sum(),
-                results.stream().mapToLong(QuestionResult::elapsedMs).sum());
+                results.stream().mapToLong(QuestionResult::elapsedMs).sum(), answered.size(), withRun.size() - answered.size(),
+                measuredAnswered.size(), retrievedAnswered, share(retrievedAnswered, measuredAnswered.size()), visibleAnswered,
+                share(visibleAnswered, retrievedAnswered), citedAndVisibleAnswered, share(citedAndVisibleAnswered, visibleAnswered),
+                figureQuestionsAnswered, figuresInReasoningAnswered, share(figuresInReasoningAnswered, figureQuestionsAnswered),
+                share(insufficient, answered.size()));
     }
 
     private static int count(List<QuestionResult> results, java.util.function.Predicate<QuestionResult> test) {

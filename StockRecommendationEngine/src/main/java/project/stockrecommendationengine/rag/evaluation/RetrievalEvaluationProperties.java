@@ -67,5 +67,12 @@ public class RetrievalEvaluationProperties {
          */
         @Min(0) @Max(600000)
         private int pauseMs = 20000;
+
+        /**
+         * Directory a pass's snapshot is written to, as one JSON file named with the evaluation time, when it cannot be
+         * stored in {@code answer_evaluations}; relative paths resolve against the working directory. Created on demand.
+         */
+        @NotBlank
+        private String fallbackDir = "target/answer-evaluations";
     }
 }

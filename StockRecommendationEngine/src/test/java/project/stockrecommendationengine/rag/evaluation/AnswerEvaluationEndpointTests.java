@@ -47,6 +47,19 @@ class AnswerEvaluationEndpointTests {
         mvc.perform(post("/api/rag/evaluate/answers")).andExpect(status().isConflict()).andExpect(jsonPath("$.detail").value("already running"));
     }
 
+    @Test void aPassWhoseSnapshotCouldNotBeStoredAnswers500NamingTheFallbackFile() throws Exception {
+        var file = java.nio.file.Path.of("target", "answer-evaluations", "answer-evaluation-20260919T120000.000000Z.json").toAbsolutePath();
+        when(service.evaluate(any(), any())).thenThrow(new AnswerEvaluationNotStoredException("It was written to " + file, file,
+                new IllegalStateException("SQL detail that must not reach the body")));
+        mvc.perform(post("/api/rag/evaluate/answers")).andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.detail").value("It was written to " + file)).andExpect(jsonPath("$.fallbackFile").value(file.toString()))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("SQL detail"))));
+        reset(service);
+        when(service.evaluate(any(), any())).thenThrow(new AnswerEvaluationNotStoredException("Only in the log", null, null));
+        mvc.perform(post("/api/rag/evaluate/answers")).andExpect(status().isInternalServerError()).andExpect(jsonPath("$.detail").value("Only in the log"))
+                .andExpect(jsonPath("$.fallbackFile").doesNotExist());
+    }
+
     @Test void latestAndByIdReadStoredSnapshotsWithoutTouchingTheRunner() throws Exception {
         when(repository.latest()).thenReturn(Optional.empty());
         mvc.perform(get("/api/rag/evaluate/answers")).andExpect(status().isNotFound());
